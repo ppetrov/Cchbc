@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Text;
+using System.Threading;
 using Cchbc.Data;
 using Cchbc.Helpers;
 using Cchbc.Objects;
@@ -11,90 +11,74 @@ namespace Cchbc
 {
 	public sealed class ArticlesContext
 	{
-		private readonly ArticleManager _manager = new ArticleManager();
+		private ArticleManager _manager;
 
-		public void Load()
+		public void Load(ILogger logger)
 		{
-			_manager.Load();
+			if (logger == null) throw new ArgumentNullException(nameof(logger));
+
+			var brandHelper = new BrandHelper(new BrandAdapter(logger));
+			var flavorHelper = new FlavorHelper(new FlavorAdapter(logger));
+
+			_manager = new ArticleManager(logger);
+			_manager.Load(brandHelper, flavorHelper, new ArticleHelper(new ArticleAdapter(logger, brandHelper.Items, flavorHelper.Items)));
 		}
-	}
-
-	public sealed class LogLevel
-	{
-		public static readonly LogLevel Trace = new LogLevel(0, @"Trace");
-		public static readonly LogLevel Info = new LogLevel(1, @"Info");
-		public static readonly LogLevel Warn = new LogLevel(2, @"Warn");
-		public static readonly LogLevel Error = new LogLevel(3, @"Error");
-
-		public int Id { get; private set; }
-		public string Name { get; private set; }
-
-		public LogLevel(int id, string name)
-		{
-			if (id < 0) throw new ArgumentNullException(nameof(name));
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			this.Id = id;
-			this.Name = name;
-		}
-	}
-
-	public sealed class SortOption
-	{
-
 	}
 
 	public sealed class ArticleManager
 	{
+		private readonly ILogger _logger;
 		public ObservableCollection<ArticleViewItem> Articles { get; }
 
-		private readonly StringBuilder _log = new StringBuilder();
+		// TODO : !!! User settings
+		// TODO : !!! Filter && Sorter
 
-		public ArticleManager()
+		public ArticleManager(ILogger logger)
 		{
+			if (logger == null) throw new ArgumentNullException(nameof(logger));
+
+			this._logger = logger;
 			this.Articles = new ObservableCollection<ArticleViewItem>();
 		}
 
-		// TODO : !!! Filter && Sort
-		// TODO : !!! Log
-
-		public void Load()
+		public void Load(IHelper<Brand> brandHelper, IHelper<Flavor> flavorHelper, IHelper<Article> articleHelper)
 		{
-			_log.AppendLine(@"Loading articles manager...");
+			if (articleHelper == null) throw new ArgumentNullException(nameof(articleHelper));
+			if (brandHelper == null) throw new ArgumentNullException(nameof(brandHelper));
+			if (flavorHelper == null) throw new ArgumentNullException(nameof(flavorHelper));
 
 			var s = Stopwatch.StartNew();
 
-			var brandHelper = new BrandHelper();
-			brandHelper.Load(new BrandAdapter());
+			_logger.Info(@"Loading ArticleManager");
 
-			var flavorHelper = new FlavorHelper();
-			flavorHelper.Load(new FlavorAdapter());
+			_logger.Info(@"Load BrandHelper");
+			brandHelper.Load();
 
-			var articleHelper = new ArticleHelper();
-			articleHelper.Load(new ArticleAdapter(brandHelper.Items, flavorHelper.Items));
+			_logger.Info(@"Load FlavorHelper");
+			flavorHelper.Load();
+
+			_logger.Info(@"Load ArticleHelper");
+			articleHelper.Load();
 
 			this.Articles.Clear();
-			foreach (var article in GetSortedArticles(articleHelper))
+			foreach (var article in GetSorted(articleHelper.Items))
 			{
 				this.Articles.Add(new ArticleViewItem(article));
 			}
 
-			s.Stop();
-
-			_log.AppendLine(string.Format(@"ArticleManager loaded in {0} ms", s.ElapsedMilliseconds));
+			_logger.Info($@"ArticleManager loaded in {s.ElapsedMilliseconds} ms");
 		}
 
-		private IEnumerable<Article> GetSortedArticles(ArticleHelper articleHelper)
+		private Article[] GetSorted(Dictionary<long, Article> items)
 		{
-			var articles = new Article[articleHelper.Items.Count];
+			_logger.Info(@"Sorting articles...");
 
-			_log.AppendLine(@"Sorting articles...");
-
-			var w = Stopwatch.StartNew();
-			articleHelper.Items.Values.CopyTo(articles, 0);
+			var s = Stopwatch.StartNew();
+			var articles = new Article[items.Count];
+			items.Values.CopyTo(articles, 0);
 			Array.Sort(articles, (x, y) =>
 								 {
-									 var cmp = string.Compare(x.Name, y.Name, StringComparison.Ordinal);
+									 var cmp = string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
 
 									 if (cmp == 0)
 									 {
@@ -103,10 +87,7 @@ namespace Cchbc
 
 									 return cmp;
 								 });
-			w.Stop();
-			_log.AppendLine(string.Format(@"{0} articles sorted in {1} ms", articles.Length, w.ElapsedMilliseconds));
-
-			Debug.WriteLine(_log);
+			_logger.Info($@"{articles.Length} articles sorted in {s.ElapsedMilliseconds} ms");
 
 			return articles;
 		}
@@ -180,93 +161,124 @@ namespace Cchbc
 		}
 	}
 
+	public interface ILogger
+	{
+		bool IsDebugEnabled { get; }
+		bool IsInfoEnabled { get; }
+		bool IsWarnEnabled { get; }
+		bool IsErrorEnabled { get; }
+
+		void Debug(string message);
+		void Info(string message);
+		void Warn(string message);
+		void Error(string message);
+	}
 
 	public sealed class BrandAdapter : IReadOnlyAdapter<Brand>
 	{
-		private readonly StringBuilder _log = new StringBuilder();
+		private readonly ILogger _logger;
+
+		public BrandAdapter(ILogger logger)
+		{
+			if (logger == null) throw new ArgumentNullException(nameof(logger));
+
+			_logger = logger;
+		}
 
 		public void Fill(Dictionary<long, Brand> items)
 		{
-			_log.AppendLine(@"Getting brands from db...");
-
 			var s = Stopwatch.StartNew();
+			_logger.Info(@"Getting brands from db...");
 
 			// TODO : !!!
+			// TODO : !!!
+			using (var mre = new ManualResetEvent(false))
+			{
+				mre.WaitOne(235);
+			}
 
-
-			s.Stop();
-
-			_log.AppendLine(string.Format(@"{0} brands retrieved from db in {1} ms", items.Count, s.ElapsedMilliseconds));
-
-			Debug.WriteLine(_log);
+			_logger.Info($@"{items.Count} brands retrieved from db in {s.ElapsedMilliseconds} ms");
 		}
 	}
 
 	public sealed class BrandHelper : Helper<Brand>
 	{
-
+		public BrandHelper(IReadOnlyAdapter<Brand> adapter) : base(adapter)
+		{
+		}
 	}
 
 	public sealed class FlavorAdapter : IReadOnlyAdapter<Flavor>
 	{
-		private readonly StringBuilder _log = new StringBuilder();
+		private readonly ILogger _logger;
+
+		public FlavorAdapter(ILogger logger)
+		{
+			if (logger == null) throw new ArgumentNullException(nameof(logger));
+
+			_logger = logger;
+		}
 
 		public void Fill(Dictionary<long, Flavor> items)
 		{
-			_log.AppendLine(@"Getting flavors from db...");
+			_logger.Info(@"Getting flavors from db...");
 
 			var s = Stopwatch.StartNew();
 
 			// TODO : !!!
+			using (var mre = new ManualResetEvent(false))
+			{
+				mre.WaitOne(127);
+			}
 
-
-			s.Stop();
-
-			_log.AppendLine(string.Format(@"{0} flavors retrieved from db in {1} ms", items.Count, s.ElapsedMilliseconds));
-
-			Debug.WriteLine(_log);
+			_logger.Info($@"{items.Count} flavors retrieved from db in {s.ElapsedMilliseconds} ms");
 		}
 	}
 
 	public sealed class FlavorHelper : Helper<Flavor>
 	{
-
+		public FlavorHelper(IReadOnlyAdapter<Flavor> adapter) : base(adapter)
+		{
+		}
 	}
 
 	public sealed class ArticleAdapter : IReadOnlyAdapter<Article>
 	{
-		private readonly StringBuilder _log = new StringBuilder();
-
+		private readonly ILogger _logger;
 		public Dictionary<long, Brand> Brands { get; private set; }
 		public Dictionary<long, Flavor> Flavors { get; private set; }
 
-		public ArticleAdapter(Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
+		public ArticleAdapter(ILogger logger, Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
 		{
+			if (logger == null) throw new ArgumentNullException(nameof(logger));
 			if (brands == null) throw new ArgumentNullException(nameof(brands));
 			if (flavors == null) throw new ArgumentNullException(nameof(flavors));
 
+			_logger = logger;
 			this.Brands = brands;
 			this.Flavors = flavors;
 		}
 
 		public void Fill(Dictionary<long, Article> items)
 		{
-			_log.AppendLine(@"Getting articles from db...");
+			_logger.Info(@"Getting articles from db...");
 
 			var s = Stopwatch.StartNew();
 
 			// TODO : !!!
+			using (var mre = new ManualResetEvent(false))
+			{
+				mre.WaitOne(574);
+			}
 
-			s.Stop();
-
-			_log.AppendLine(string.Format(@"{0} articles retrieved from db in {1} ms", items.Count, s.ElapsedMilliseconds));
-
-			Debug.WriteLine(_log);
+			_logger.Info($@"{items.Count} articles retrieved from db in {s.ElapsedMilliseconds} ms");
 		}
 	}
 
 	public sealed class ArticleHelper : Helper<Article>
 	{
-
+		public ArticleHelper(IReadOnlyAdapter<Article> adapter) : base(adapter)
+		{
+		}
 	}
 }

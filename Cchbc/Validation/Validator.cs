@@ -7,7 +7,7 @@ namespace Cchbc.Validation
 	{
 		public static ValidationResult ValidateNotNull(object value, string message)
 		{
-			if (message == null) throw new ArgumentNullException("message");
+			if (message == null) throw new ArgumentNullException(nameof(message));
 
 			return value == null ? new ValidationResult(message) : ValidationResult.Success;
 		}
@@ -19,8 +19,8 @@ namespace Cchbc.Validation
 
 		public static ValidationResult[] GetResults(ValidationResult[] results)
 		{
-			if (results == null) throw new ArgumentNullException("results");
-			if (results.Length == 0) throw new ArgumentOutOfRangeException("results");
+			if (results == null) throw new ArgumentNullException(nameof(results));
+			if (results.Length == 0) throw new ArgumentOutOfRangeException(nameof(results));
 
 			var totalViolations = 0;
 			foreach (var result in results)
@@ -50,7 +50,7 @@ namespace Cchbc.Validation
 
 		public static string CombineResults(ValidationResult[] results)
 		{
-			if (results == null) throw new ArgumentNullException("results");
+			if (results == null) throw new ArgumentNullException(nameof(results));
 
 			if (results.Length == 0)
 			{
@@ -76,7 +76,7 @@ namespace Cchbc.Validation
 
 		public static ValidationResult ValidateMinLength(string value, int minLength, string message)
 		{
-			if (value == null) throw new ArgumentNullException("value");
+			if (value == null) throw new ArgumentNullException(nameof(value));
 
 			if (value.Length < minLength)
 			{

@@ -10,7 +10,7 @@ namespace Cchbc.Validation
 
 		public ValidationResult(string errorMessage)
 		{
-			if (errorMessage == null) throw new ArgumentNullException("errorMessage");
+			if (errorMessage == null) throw new ArgumentNullException(nameof(errorMessage));
 
 			this.ErrorMessage = errorMessage;
 		}

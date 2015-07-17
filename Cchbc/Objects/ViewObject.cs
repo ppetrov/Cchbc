@@ -11,7 +11,7 @@ namespace Cchbc.Objects
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			var handler = PropertyChanged;
-			if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+			handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
 		protected void SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)

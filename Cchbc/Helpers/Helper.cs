@@ -7,18 +7,20 @@ namespace Cchbc.Helpers
 {
 	public abstract class Helper<T> : IHelper<T> where T : IReadOnlyObject
 	{
-		private readonly Dictionary<long, T> _items = new Dictionary<long, T>();
+		public Dictionary<long, T> Items { get; } = new Dictionary<long, T>();
 
-		public Dictionary<long, T> Items
+		public IReadOnlyAdapter<T> Adapter { get; }
+
+		protected Helper(IReadOnlyAdapter<T> adapter)
 		{
-			get { return _items; }
+			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
+
+			this.Adapter = adapter;
 		}
 
-		public void Load(IReadOnlyAdapter<T> adapter)
+		public void Load()
 		{
-			if (adapter == null) throw new ArgumentNullException("adapter");
-
-			adapter.Fill(this.Items);
+			this.Adapter.Fill(this.Items);
 		}
 	}
 }
