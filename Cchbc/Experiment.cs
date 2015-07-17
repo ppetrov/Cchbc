@@ -31,17 +31,22 @@ namespace Cchbc
 
 		public LogLevel(int id, string name)
 		{
-			if (id < 0) throw new ArgumentNullException("name");
-			if (name == null) throw new ArgumentNullException("name");
+			if (id < 0) throw new ArgumentNullException(nameof(name));
+			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			this.Id = id;
 			this.Name = name;
 		}
 	}
 
+	public sealed class SortOption
+	{
+
+	}
+
 	public sealed class ArticleManager
 	{
-		public ObservableCollection<ArticleViewItem> Articles { get; private set; }
+		public ObservableCollection<ArticleViewItem> Articles { get; }
 
 		private readonly StringBuilder _log = new StringBuilder();
 
@@ -115,7 +120,7 @@ namespace Cchbc
 
 		public ArticleViewItem(Article article)
 		{
-			if (article == null) throw new ArgumentNullException("article");
+			if (article == null) throw new ArgumentNullException(nameof(article));
 
 			this.Name = article.Name;
 			this.Brand = article.Brand.Name;
@@ -125,16 +130,16 @@ namespace Cchbc
 
 	public sealed class Article : IReadOnlyObject
 	{
-		public long Id { get; private set; }
-		public string Name { get; private set; }
-		public Brand Brand { get; private set; }
-		public Flavor Flavor { get; private set; }
+		public long Id { get; }
+		public string Name { get; }
+		public Brand Brand { get; }
+		public Flavor Flavor { get; }
 
 		public Article(long id, string name, Brand brand, Flavor flavor)
 		{
-			if (name == null) throw new ArgumentNullException("name");
-			if (brand == null) throw new ArgumentNullException("brand");
-			if (flavor == null) throw new ArgumentNullException("flavor");
+			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (brand == null) throw new ArgumentNullException(nameof(brand));
+			if (flavor == null) throw new ArgumentNullException(nameof(flavor));
 
 			this.Id = id;
 			this.Name = name;
@@ -147,12 +152,12 @@ namespace Cchbc
 	{
 		public static readonly Brand Empty = new Brand(-1, string.Empty);
 
-		public long Id { get; private set; }
-		public string Name { get; private set; }
+		public long Id { get; }
+		public string Name { get; }
 
 		public Brand(long id, string name)
 		{
-			if (name == null) throw new ArgumentNullException("name");
+			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			this.Id = id;
 			this.Name = name;
@@ -163,12 +168,12 @@ namespace Cchbc
 	{
 		public static readonly Flavor Empty = new Flavor(-1, string.Empty);
 
-		public long Id { get; private set; }
-		public string Name { get; private set; }
+		public long Id { get; }
+		public string Name { get; }
 
 		public Flavor(long id, string name)
 		{
-			if (name == null) throw new ArgumentNullException("name");
+			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			this.Id = id;
 			this.Name = name;
@@ -237,8 +242,8 @@ namespace Cchbc
 
 		public ArticleAdapter(Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
 		{
-			if (brands == null) throw new ArgumentNullException("brands");
-			if (flavors == null) throw new ArgumentNullException("flavors");
+			if (brands == null) throw new ArgumentNullException(nameof(brands));
+			if (flavors == null) throw new ArgumentNullException(nameof(flavors));
 
 			this.Brands = brands;
 			this.Flavors = flavors;
