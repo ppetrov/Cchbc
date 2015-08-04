@@ -5,17 +5,17 @@ namespace Cchbc.Dialog
 {
 	public abstract class DialogBase
 	{
+		private static readonly Action EmptyAction = () => { };
+
 		public Action AcceptAction { get; set; }
 		public Action DeclineAction { get; set; }
 		public Action CancelAction { get; set; }
 
-		private readonly Action _emptyAction = () => { };
-
 		protected DialogBase()
 		{
-			this.AcceptAction = _emptyAction;
-			this.DeclineAction = _emptyAction;
-			this.CancelAction = _emptyAction;
+			this.AcceptAction = EmptyAction;
+			this.DeclineAction = EmptyAction;
+			this.CancelAction = EmptyAction;
 		}
 
 		public Task DisplayAsync(string message)
