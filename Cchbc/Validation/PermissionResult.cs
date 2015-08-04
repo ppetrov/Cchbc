@@ -17,14 +17,14 @@ namespace Cchbc.Validation
 
 		public static PermissionResult Deny(string message)
 		{
-			if (message == null) throw new ArgumentNullException("message");
+			if (message == null) throw new ArgumentNullException(nameof(message));
 
 			return new PermissionResult(PermissionStatus.Deny, message);
 		}
 
 		public static PermissionResult Confirm(string message)
 		{
-			if (message == null) throw new ArgumentNullException("message");
+			if (message == null) throw new ArgumentNullException(nameof(message));
 
 			return new PermissionResult(PermissionStatus.Confirm, message);
 		}
