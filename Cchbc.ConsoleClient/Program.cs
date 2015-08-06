@@ -1,175 +1,255 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cchbc;
+using Cchbc.Sort;
 
 namespace Cchbc.ConsoleClient
 {
-	class Program
-	{
-		static void Main(string[] args)
-		{
-			// TODO : !!! Deging loggin system
-			var ctx = new ArticlesContext();
-			try
-			{
-				ILogger logger = new ConsoleBufferedLogger();
-				ctx.Load(logger);
+    //public sealed class ArticleViewItemSorter : Sorter<ArticleViewItem>
+    //{
+    //    public ArticleViewItemSorter(SortOption<ArticleViewItem>[] options) : base(options)
+    //    {
+    //    }
+    //}
 
-				Thread.Sleep(1000);
+    public sealed class ArticleViewItemSortOption : SortOption<ArticleViewItem>
+    {
+        public static readonly Func<ArticleViewItem, ArticleViewItem, int> ByDefault = (x, y) =>
+        {
+            var cmp = string.Compare(x.Name, y.Name, StringComparison.Ordinal);
+            return cmp;
+        };
 
-				//var logger = new ConsoleBufferedLogger();
+        public static readonly Func<ArticleViewItem, ArticleViewItem, int> ByBrand = (x, y) =>
+        {
+            var cmp = string.Compare(x.Brand, y.Brand, StringComparison.Ordinal);
+            if (cmp == 0)
+            {
+                cmp = ByDefault(x, y);
+            }
+            return cmp;
+        };
 
-				//using (var ce = new CountdownEvent(2))
-				//{
-				//	ThreadPool.QueueUserWorkItem(_ =>
-				//	{
-				//		var e = (_ as CountdownEvent);
-				//		try
-				//		{
-				//			for (var i = 0; i < 10000; i++)
-				//			{
-				//				logger.Trace(i.ToString());
-				//			}
-				//		}
-				//		finally
-				//		{
-				//			if (e != null)
-				//			{
-				//				e.Signal();
-				//			}
-				//		}
-				//	}, ce);
-				//	ThreadPool.QueueUserWorkItem(_ =>
-				//	{
-				//		var e = _ as CountdownEvent;
-				//		try
-				//		{
-				//			for (var i = 10000; i < 20000; i++)
-				//			{
-				//				logger.Trace(i.ToString());
-				//			}
-				//		}
-				//		finally
-				//		{
-				//			if (e != null)
-				//			{
-				//				e.Signal();
-				//			}
-				//		}
-				//	}, ce);
+        public static readonly Func<ArticleViewItem, ArticleViewItem, int> ByFlavor = (x, y) =>
+        {
+            var cmp = string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal);
+            if (cmp == 0)
+            {
+                cmp = ByDefault(x, y);
+            }
+            return cmp;
+        };
 
-				//	Thread.Sleep(5000);
+        public ArticleViewItemSortOption(string displayName, Func<ArticleViewItem, ArticleViewItem, int> comparison)
+            : base(displayName, comparison)
+        {
+        }
+    }
 
-				//	ce.Wait();
-				//}
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine(ex);
-			}
-		}
-	}
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // TODO : !!! Deging loggin system
+            
+            try
+            {
+                ILogger logger = new ConsoleBufferedLogger();
+                var viewModel = new ArticlesViewModel(logger);
+                viewModel.Load();
 
-	public abstract class BufferedLogger : ILogger
-	{
-		protected readonly ConcurrentQueue<string> Buffer = new ConcurrentQueue<string>();
+                //Thread.Sleep(1000);
 
-		public bool IsDebugEnabled { get; protected set; }
-		public bool IsInfoEnabled { get; protected set; }
-		public bool IsWarnEnabled { get; protected set; }
-		public bool IsErrorEnabled { get; protected set; }
+                // TODO : Customization of display names!?!? 
+                var options = new SortOption<ArticleViewItem>[]
+                {
+                    new ArticleViewItemSortOption(@"Name", ArticleViewItemSortOption.ByDefault),
+                    new ArticleViewItemSortOption(@"Brand", ArticleViewItemSortOption.ByBrand),
+                    new ArticleViewItemSortOption(@"Flavor", ArticleViewItemSortOption.ByFlavor),
+                };
+                var sorter = new Sorter<ArticleViewItem>(options);
 
-		public void Debug(string message)
-		{
-			if (this.IsDebugEnabled)
-			{
-				Buffer.Enqueue(message);
-			}
-		}
+                var items = new ObservableCollection<ArticleViewItem>(new[]
+                {
+                    new ArticleViewItem(new Article(1, @"Fanta", new Brand(1, @"CCHBC"), new Flavor(1, @"CCHBC"))),
+                    new ArticleViewItem(new Article(2, @"Coca Cola", new Brand(1, @"CCHBC"), new Flavor(1, @"CCHBC"))),
+                    new ArticleViewItem(new Article(3, @"Sprite", new Brand(1, @"CCHBC"), new Flavor(1, @"CCHBC"))),
+                });
 
-		public void Info(string message)
-		{
-			if (this.IsInfoEnabled)
-			{
-				Buffer.Enqueue(message);
-			}
-		}
+                Thread.Sleep(100);
 
-		public void Warn(string message)
-		{
-			if (this.IsWarnEnabled)
-			{
-				Buffer.Enqueue(message);
-			}
-		}
+                Console.WriteLine();
+                Console.WriteLine();
+                Console.WriteLine();
 
-		public void Error(string message)
-		{
-			if (this.IsErrorEnabled)
-			{
-				Buffer.Enqueue(message);
-			}
-		}
-	}
+                foreach (var viewItem in items)
+                {
+                    Console.WriteLine(viewItem.Name);
+                }
 
-	public sealed class ConsoleBufferedLogger : BufferedLogger
-	{
-		public ConsoleBufferedLogger()
-		{
-			this.IsInfoEnabled = true;
-			this.IsWarnEnabled = true;
-			this.IsErrorEnabled = true;
+                sorter.Sort(items, options[0]);
 
-			ThreadPool.QueueUserWorkItem(_ =>
-			{
-				while (true)
-				{
-					Flush();
-					Thread.Sleep(100);
-				}
-			});
-		}
+                Console.WriteLine();
 
-		public void Flush()
-		{
-			var local = new StringBuilder();
+                foreach (var viewItem in items)
+                {
+                    Console.WriteLine(viewItem.Name);
+                }
 
-			string message;
-			while (Buffer.TryDequeue(out message))
-			{
-				local.AppendLine(message);
-			}
-			if (local.Length > 0)
-			{
-				Console.Write(local);
-			}
-		}
-	}
+                //var logger = new ConsoleBufferedLogger();
+
+                //using (var ce = new CountdownEvent(2))
+                //{
+                //	ThreadPool.QueueUserWorkItem(_ =>
+                //	{
+                //		var e = (_ as CountdownEvent);
+                //		try
+                //		{
+                //			for (var i = 0; i < 10000; i++)
+                //			{
+                //				logger.Trace(i.ToString());
+                //			}
+                //		}
+                //		finally
+                //		{
+                //			if (e != null)
+                //			{
+                //				e.Signal();
+                //			}
+                //		}
+                //	}, ce);
+                //	ThreadPool.QueueUserWorkItem(_ =>
+                //	{
+                //		var e = _ as CountdownEvent;
+                //		try
+                //		{
+                //			for (var i = 10000; i < 20000; i++)
+                //			{
+                //				logger.Trace(i.ToString());
+                //			}
+                //		}
+                //		finally
+                //		{
+                //			if (e != null)
+                //			{
+                //				e.Signal();
+                //			}
+                //		}
+                //	}, ce);
+
+                //	Thread.Sleep(5000);
+
+                //	ce.Wait();
+                //}
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+    }
+
+    public abstract class BufferedLogger : ILogger
+    {
+        protected readonly ConcurrentQueue<string> Buffer = new ConcurrentQueue<string>();
+
+        public bool IsDebugEnabled { get; protected set; }
+        public bool IsInfoEnabled { get; protected set; }
+        public bool IsWarnEnabled { get; protected set; }
+        public bool IsErrorEnabled { get; protected set; }
+
+        public void Debug(string message)
+        {
+            if (this.IsDebugEnabled)
+            {
+                Buffer.Enqueue(message);
+            }
+        }
+
+        public void Info(string message)
+        {
+            if (this.IsInfoEnabled)
+            {
+                Buffer.Enqueue(message);
+            }
+        }
+
+        public void Warn(string message)
+        {
+            if (this.IsWarnEnabled)
+            {
+                Buffer.Enqueue(message);
+            }
+        }
+
+        public void Error(string message)
+        {
+            if (this.IsErrorEnabled)
+            {
+                Buffer.Enqueue(message);
+            }
+        }
+    }
+
+    public sealed class ConsoleBufferedLogger : BufferedLogger
+    {
+        public ConsoleBufferedLogger()
+        {
+            this.IsInfoEnabled = true;
+            this.IsWarnEnabled = true;
+            this.IsErrorEnabled = true;
+
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                while (true)
+                {
+                    Flush();
+                    Thread.Sleep(20);
+                }
+            });
+        }
+
+        public void Flush()
+        {
+            var local = new StringBuilder();
+
+            string message;
+            while (Buffer.TryDequeue(out message))
+            {
+                local.AppendLine(message);
+            }
+            if (local.Length > 0)
+            {
+                Console.Write(local);
+            }
+        }
+    }
 
 
 
-	public sealed class LogLevel
-	{
-		public static readonly LogLevel Trace = new LogLevel(0, @"Trace");
-		public static readonly LogLevel Info = new LogLevel(1, @"Info");
-		public static readonly LogLevel Warn = new LogLevel(2, @"Warn");
-		public static readonly LogLevel Error = new LogLevel(3, @"Error");
+    public sealed class LogLevel
+    {
+        public static readonly LogLevel Trace = new LogLevel(0, @"Trace");
+        public static readonly LogLevel Info = new LogLevel(1, @"Info");
+        public static readonly LogLevel Warn = new LogLevel(2, @"Warn");
+        public static readonly LogLevel Error = new LogLevel(3, @"Error");
 
-		public int Id { get; private set; }
-		public string Name { get; private set; }
+        public int Id { get; private set; }
+        public string Name { get; private set; }
 
-		public LogLevel(int id, string name)
-		{
-			if (id < 0) throw new ArgumentNullException(nameof(name));
-			if (name == null) throw new ArgumentNullException(nameof(name));
+        public LogLevel(int id, string name)
+        {
+            if (id < 0) throw new ArgumentNullException(nameof(name));
+            if (name == null) throw new ArgumentNullException(nameof(name));
 
-			this.Id = id;
-			this.Name = name;
-		}
-	}
+            this.Id = id;
+            this.Name = name;
+        }
+    }
 }
