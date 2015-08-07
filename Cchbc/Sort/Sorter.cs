@@ -4,7 +4,7 @@ using Cchbc.Objects;
 
 namespace Cchbc.Sort
 {
-    public class Sorter<T> : ViewObject where T : ViewObject
+    public sealed class Sorter<T> : ViewObject where T : ViewObject
     {
         public SortOption<T>[] Options { get; private set; }
 

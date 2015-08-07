@@ -13,7 +13,7 @@ namespace Cchbc
 {
     public sealed class ArticlesViewModel
     {
-        private ArticleManager Manager { get; }
+        private ReadOnlyManager<ArticleViewItem> Manager { get; }
 
         public ILogger Logger { get; }
         public ObservableCollection<ArticleViewItem> Articles { get; } = new ObservableCollection<ArticleViewItem>();
@@ -24,39 +24,24 @@ namespace Cchbc
             if (logger == null) throw new ArgumentNullException(nameof(logger));
 
             this.Logger = logger;
-            this.Manager = new ArticleManager(logger);
+            this.Manager = new ArticleReadOnlyManager(logger);
         }
 
         public void Load()
         {
-            var brandHelper = new BrandHelper(new BrandAdapter(this.Logger));
-            var flavorHelper = new FlavorHelper(new FlavorAdapter(this.Logger));
-
-            // Load articles
-            this.Manager.Load(brandHelper, flavorHelper, new ArticleHelper(new ArticleAdapter(this.Logger, brandHelper.Items, flavorHelper.Items)));
-
             this.FilterOptions.Add(new SearcherOption<ArticleViewItem>(@"All", v => true));
             this.FilterOptions.Add(new SearcherOption<ArticleViewItem>(@"Coca Cola", v => v.Brand[0] == 'C'));
             this.FilterOptions.Add(new SearcherOption<ArticleViewItem>(@"Fanta", v => v.Brand[0] == 'F'));
             this.FilterOptions.Add(new SearcherOption<ArticleViewItem>(@"Sprite", v => v.Brand[0] == 'S'));
 
             // Create the filter from this.Manager.Article(All articles)
-            this.Manager.Searcher = new Searcher<ArticleViewItem>(this.Manager.Articles, this.FilterOptions, (vi, s) => vi.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-            var viewItems = this.Manager.Articles;
+            this.Manager.Searcher = new Searcher<ArticleViewItem>(this.Manager.ViewItems, this.FilterOptions, (vi, s) => vi.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
 
-            // Apply any initial filter
-            if (this.Manager.Searcher != null)
-            {
-                var filter = this.Manager.Searcher;
-                if (filter.CurrentOption != null || filter.Search != string.Empty)
-                {
-                    viewItems = new ObservableCollection<ArticleViewItem>(filter.FindAll(filter.CurrentOption, filter.Search, this.Manager.Articles));
-                }
-            }
+            this.Manager.Load();
 
             // Add articles to collection
             this.Articles.Clear();
-            foreach (var viewItem in viewItems)
+            foreach (var viewItem in this.Manager.ViewItems)
             {
                 this.Articles.Add(viewItem);
             }
@@ -89,31 +74,53 @@ namespace Cchbc
         }
     }
 
-    public sealed class ArticleManager
+    public abstract class ReadOnlyManager<T> where T : ViewObject
     {
-        public ILogger Logger { get; }
-        public ObservableCollection<ArticleViewItem> Articles { get; }
+        protected ILogger Logger { get; }
 
-        public Sorter<ArticleViewItem> Sorter { get; set; }
-        public Searcher<ArticleViewItem> Searcher { get; set; }
+        public ObservableCollection<T> ViewItems { get; } = new ObservableCollection<T>();
+        public Sorter<T> Sorter { get; set; }
+        public Searcher<T> Searcher { get; set; }
 
-        public ArticleManager(ILogger logger)
+        protected ReadOnlyManager(ILogger logger)
         {
             if (logger == null) throw new ArgumentNullException(nameof(logger));
 
             this.Logger = logger;
-            this.Articles = new ObservableCollection<ArticleViewItem>();
         }
 
-        public void Load(IHelper<Brand> brandHelper, IHelper<Flavor> flavorHelper, IHelper<Article> articleHelper)
+        public void Load()
         {
-            if (articleHelper == null) throw new ArgumentNullException(nameof(articleHelper));
-            if (brandHelper == null) throw new ArgumentNullException(nameof(brandHelper));
-            if (flavorHelper == null) throw new ArgumentNullException(nameof(flavorHelper));
+            // Sort data
+            var viewItems = new ObservableCollection<T>(this.GetData());
+            this.Sorter?.Sort(viewItems, this.Sorter.DefaultOption);
+
+            // Add items to the collection
+            this.ViewItems.Clear();
+            foreach (var viewItem in viewItems)
+            {
+                this.ViewItems.Add(viewItem);
+            }
+        }
+
+        public abstract IEnumerable<T> GetData();
+    }
+
+    public class ArticleReadOnlyManager : ReadOnlyManager<ArticleViewItem>
+    {
+        public ArticleReadOnlyManager(ILogger logger)
+            : base(logger)
+        {
+        }
+
+        public override IEnumerable<ArticleViewItem> GetData()
+        {
+            var brandHelper = new BrandHelper(new BrandAdapter(this.Logger));
+            var flavorHelper = new FlavorHelper(new FlavorAdapter(this.Logger));
 
             var s = Stopwatch.StartNew();
 
-            this.Logger.Info(@"Loading ArticleManager");
+            this.Logger.Info(@"Loading ArticleManager...");
 
             this.Logger.Info(@"Load BrandHelper");
             brandHelper.Load();
@@ -122,20 +129,11 @@ namespace Cchbc
             flavorHelper.Load();
 
             this.Logger.Info(@"Load ArticleHelper");
+            var articleHelper = new ArticleHelper(new ArticleAdapter(this.Logger, brandHelper.Items, flavorHelper.Items));
             articleHelper.Load();
-
-            // Sort articles
-            var viewItems = new ObservableCollection<ArticleViewItem>(articleHelper.Items.Values.Select(v => new ArticleViewItem(v)).ToList());
-            this.Sorter?.Sort(viewItems, this.Sorter.DefaultOption);
-
-            // Add articles to the collection
-            this.Articles.Clear();
-            foreach (var viewItem in viewItems)
-            {
-                this.Articles.Add(viewItem);
-            }
-
             this.Logger.Info($@"ArticleManager loaded in {s.ElapsedMilliseconds} ms");
+
+            return articleHelper.Items.Values.Select(v => new ArticleViewItem(v));
         }
     }
 
