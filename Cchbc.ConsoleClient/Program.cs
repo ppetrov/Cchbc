@@ -93,7 +93,7 @@ namespace Cchbc.ConsoleClient
                     Console.WriteLine(viewItem.Name);
                 }
 
-                sorter.Sort(items, options[0]);
+                //sorter.Sort(items, options[0]);
 
                 Console.WriteLine();
 
