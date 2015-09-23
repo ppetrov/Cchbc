@@ -20,16 +20,16 @@ namespace Cchbc.Dialog
 
 		public Task DisplayAsync(string message)
 		{
-			if (message == null) throw new ArgumentNullException("message");
+			if (message == null) throw new ArgumentNullException(nameof(message));
 
-			return this.ShowAsync(message, DialogType.None);
+			return this.ShowAsync(message, DialogType.Message);
 		}
 
 		public Task ConfirmAsync(string message, DialogType? type = null)
 		{
-			if (message == null) throw new ArgumentNullException("message");
+			if (message == null) throw new ArgumentNullException(nameof(message));
 
-			return this.ShowAsync(message, type ?? DialogType.YesNo);
+			return this.ShowAsync(message, type ?? DialogType.AcceptDecline);
 		}
 
 		public abstract Task ShowAsync(string message, DialogType? type = null);

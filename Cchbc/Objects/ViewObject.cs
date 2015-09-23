@@ -19,7 +19,7 @@ namespace Cchbc.Objects
 			if (EqualityComparer<T>.Default.Equals(field, value)) return;
 
 			field = value;
-			OnPropertyChanged(propertyName);
+			this.OnPropertyChanged(propertyName);
 		}
 	}
 }

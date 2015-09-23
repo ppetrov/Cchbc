@@ -15,65 +15,63 @@ namespace Cchbc
 	{
 		private ReadOnlyManager<ArticleViewItem> Manager { get; }
 
-		public ILogger Logger { get; }
 		public ObservableCollection<ArticleViewItem> Articles { get; } = new ObservableCollection<ArticleViewItem>();
-		public ObservableCollection<SearcherOption<ArticleViewItem>> FilterOptions { get; } = new ObservableCollection<SearcherOption<ArticleViewItem>>();
+
+		public Searcher<ArticleViewItem> Searcher { get; } = new Searcher<ArticleViewItem>(new[]
+		{
+			new SearcherOption<ArticleViewItem>(@"All", v => true),
+			new SearcherOption<ArticleViewItem>(@"Coca Cola", v => v.Brand[0] == 'C'),
+			new SearcherOption<ArticleViewItem>(@"Fanta", v => v.Brand[0] == 'F'),
+			new SearcherOption<ArticleViewItem>(@"Sprite", v => v.Brand[0] == 'S'),
+		}, (item, search) => item.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
+
+		public Sorter<ArticleViewItem> Sorter { get; } = new Sorter<ArticleViewItem>(new[]
+		{
+			new SortOption<ArticleViewItem>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
+			new SortOption<ArticleViewItem>(@"Brand", (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
+			new SortOption<ArticleViewItem>(@"Flavor", (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
+		});
 
 		public ArticlesViewModel(ILogger logger)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
-			this.Logger = logger;
 			this.Manager = new ArticleReadOnlyManager(logger);
-
-			// Setup Sort & Filter
-			this.FilterOptions.Add(new SearcherOption<ArticleViewItem>(@"All", v => true));
-			this.FilterOptions.Add(new SearcherOption<ArticleViewItem>(@"Coca Cola", v => v.Brand[0] == 'C'));
-			this.FilterOptions.Add(new SearcherOption<ArticleViewItem>(@"Fanta", v => v.Brand[0] == 'F'));
-			this.FilterOptions.Add(new SearcherOption<ArticleViewItem>(@"Sprite", v => v.Brand[0] == 'S'));
 		}
 
 		public void Load()
 		{
 			this.Manager.Load();
 
-			this.Manager.Searcher = new Searcher<ArticleViewItem>(new ObservableCollection<ArticleViewItem>(this.Manager.ViewItems), this.FilterOptions, (vi, s) => vi.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-
-
-
-			// Add articles to collection
-			this.Articles.Clear();
-			foreach (var viewItem in this.Manager.ViewItems)
-			{
-				this.Articles.Add(viewItem);
-			}
+			Load(this.Manager.ViewItems);
 		}
 
-		public void ApplyFilter(SearcherOption<ArticleViewItem> searcherOption)
-		{
-			if (searcherOption == null) throw new ArgumentNullException(nameof(searcherOption));
-
-			this.ApplyFilter(searcherOption, this.Manager.Searcher.Search);
-		}
-
-		public void ApplyFilter(string search)
+		public void PerformSearch(string search)
 		{
 			if (search == null) throw new ArgumentNullException(nameof(search));
 
-			this.ApplyFilter(this.Manager.Searcher.CurrentOption, search);
+			this.PerformSearch(this.Searcher.CurrentOption, search);
 		}
 
-		private void ApplyFilter(SearcherOption<ArticleViewItem> searcherOption, string search)
+		public void PerformSearch(SearcherOption<ArticleViewItem> searcherOption)
 		{
-			if (this.Manager.Searcher.IsChanged(searcherOption, search))
-			{
-				var result = this.Manager.Searcher.FindAll(searcherOption, this.Manager.Searcher.Search);
+			if (searcherOption == null) throw new ArgumentNullException(nameof(searcherOption));
 
-				this.Articles.Clear();
-				foreach (var viewItem in result)
-				{
-					this.Articles.Add(viewItem);
-				}
+			this.PerformSearch(searcherOption, this.Searcher.Search);
+		}
+
+		private void PerformSearch(SearcherOption<ArticleViewItem> searcherOption, string search)
+		{
+			Load(this.Searcher.FindAll(this.Manager.ViewItems, search, searcherOption));
+		}
+
+		private void Load(IEnumerable<ArticleViewItem> viewItems)
+		{
+			this.Articles.Clear();
+
+			foreach (var viewItem in viewItems)
+			{
+				this.Articles.Add(viewItem);
 			}
 		}
 	}
@@ -84,7 +82,6 @@ namespace Cchbc
 
 		public T[] ViewItems { get; set; }
 		public Sorter<T> Sorter { get; set; }
-		public Searcher<T> Searcher { get; set; }
 
 		protected ReadOnlyManager(ILogger logger)
 		{
@@ -97,7 +94,7 @@ namespace Cchbc
 		{
 			// Sort data
 			this.ViewItems = this.GetData();
-			this.Sorter?.Sort(this.ViewItems, this.Sorter.DefaultOption);
+			this.Sorter?.Sort(this.ViewItems, this.Sorter.CurrentOption);
 		}
 
 		public abstract T[] GetData();
@@ -112,22 +109,21 @@ namespace Cchbc
 
 		public override ArticleViewItem[] GetData()
 		{
-			var brandHelper = new BrandHelper(new BrandAdapter(this.Logger));
-			var flavorHelper = new FlavorHelper(new FlavorAdapter(this.Logger));
-
 			var s = Stopwatch.StartNew();
 
 			this.Logger.Info(@"Loading ArticleManager...");
 
 			this.Logger.Info(@"Load BrandHelper");
-			brandHelper.Load();
+			var brandHelper = new BrandHelper();
+			brandHelper.Load(new BrandAdapter(this.Logger));
 
 			this.Logger.Info(@"Load FlavorHelper");
-			flavorHelper.Load();
+			var flavorHelper = new FlavorHelper();
+			flavorHelper.Load(new FlavorAdapter(this.Logger));
 
 			this.Logger.Info(@"Load ArticleHelper");
-			var articleHelper = new ArticleHelper(new ArticleAdapter(this.Logger, brandHelper.Items, flavorHelper.Items));
-			articleHelper.Load();
+			var articleHelper = new ArticleHelper();
+			articleHelper.Load(new ArticleAdapter(this.Logger, brandHelper.Items, flavorHelper.Items));
 			this.Logger.Info($@"ArticleManager loaded in {s.ElapsedMilliseconds} ms");
 
 			return articleHelper.Items.Values.Select(v => new ArticleViewItem(v)).ToArray();
@@ -241,9 +237,7 @@ namespace Cchbc
 
 	public sealed class BrandHelper : Helper<Brand>
 	{
-		public BrandHelper(IReadOnlyAdapter<Brand> adapter) : base(adapter)
-		{
-		}
+
 	}
 
 	public sealed class FlavorAdapter : IReadOnlyAdapter<Flavor>
@@ -272,16 +266,13 @@ namespace Cchbc
 
 	public sealed class FlavorHelper : Helper<Flavor>
 	{
-		public FlavorHelper(IReadOnlyAdapter<Flavor> adapter) : base(adapter)
-		{
-		}
 	}
 
 	public sealed class ArticleAdapter : IReadOnlyAdapter<Article>
 	{
 		private readonly ILogger _logger;
-		public Dictionary<long, Brand> Brands { get; private set; }
-		public Dictionary<long, Flavor> Flavors { get; private set; }
+		public Dictionary<long, Brand> Brands { get; }
+		public Dictionary<long, Flavor> Flavors { get; }
 
 		public ArticleAdapter(ILogger logger, Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
 		{
@@ -310,8 +301,5 @@ namespace Cchbc
 
 	public sealed class ArticleHelper : Helper<Article>
 	{
-		public ArticleHelper(IReadOnlyAdapter<Article> adapter) : base(adapter)
-		{
-		}
 	}
 }

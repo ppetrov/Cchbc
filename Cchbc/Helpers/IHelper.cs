@@ -7,8 +7,7 @@ namespace Cchbc.Helpers
 	public interface IHelper<T> where T : IReadOnlyObject
 	{
 		Dictionary<long, T> Items { get; }
-		IReadOnlyAdapter<T> Adapter { get; }
 
-		void Load();
+		void Load(IReadOnlyAdapter<T> adapter);
 	}
 }

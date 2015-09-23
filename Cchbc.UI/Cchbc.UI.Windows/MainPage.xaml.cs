@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Text;
 using Windows.System.Threading;
 using Windows.UI.Xaml;
@@ -10,101 +11,115 @@ using Cchbc.Search;
 
 namespace Cchbc.UI
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class MainPage : Page
-    {
-        private readonly ArticlesViewModel _viewModel = new ArticlesViewModel(new DirectDebugLogger());
+	/// <summary>
+	/// An empty page that can be used on its own or navigated to within a Frame.
+	/// </summary>
+	public sealed partial class MainPage : Page
+	{
+		private readonly ArticlesViewModel _viewModel = new ArticlesViewModel(new DirectDebugLogger());
 
-        public MainPage()
-        {
-            this.InitializeComponent();
+		public MainPage()
+		{
+			this.InitializeComponent();
 
-            this.DataContext = _viewModel;
-        }
+			this.DataContext = _viewModel;
+		}
 
-        private void MainPage_OnLoaded(object sender, RoutedEventArgs e)
-        {
-            _viewModel.Load();
-        }
+		private void MainPage_OnLoaded(object sender, RoutedEventArgs e)
+		{
+			_viewModel.Load();
+		}
 
-        private void ListViewBase_OnItemClick(object sender, ItemClickEventArgs e)
-        {
-            _viewModel.ApplyFilter(e.ClickedItem as SearcherOption<ArticleViewItem>);
-        }
+		private void SearchOptionItemClick(object sender, ItemClickEventArgs e)
+		{
+			try
+			{
+				_viewModel.PerformSearch(e.ClickedItem as SearcherOption<ArticleViewItem>);
+			}
+			catch (Exception ex)
+			{
 
-        private void TextBox_OnTextChanged(object sender, TextChangedEventArgs e)
-        {
-            _viewModel.ApplyFilter((sender as TextBox).Text);
-        }
-    }
+			}
+		}
 
-    public abstract class BufferedLogger : ILogger
-    {
-        //protected readonly ConcurrentQueue<string> Buffer = new ConcurrentQueue<string>();
+		private void TbSearchTextChanged(object sender, TextChangedEventArgs e)
+		{
+			try
+			{
+				_viewModel.PerformSearch((sender as TextBox).Text);
+			}
+			catch (Exception ex)
+			{
 
-        public bool IsDebugEnabled { get; protected set; }
-        public bool IsInfoEnabled { get; protected set; }
-        public bool IsWarnEnabled { get; protected set; }
-        public bool IsErrorEnabled { get; protected set; }
+			}
+		}
+	}
 
-        public void Debug(string message)
-        {
-            if (this.IsDebugEnabled)
-            {
-                System.Diagnostics.Debug.WriteLine(message);
-            }
-        }
+	public abstract class BufferedLogger : ILogger
+	{
+		//protected readonly ConcurrentQueue<string> Buffer = new ConcurrentQueue<string>();
 
-        public void Info(string message)
-        {
-            if (this.IsInfoEnabled)
-            {
-                System.Diagnostics.Debug.WriteLine(message);
-            }
-        }
+		public bool IsDebugEnabled { get; protected set; }
+		public bool IsInfoEnabled { get; protected set; }
+		public bool IsWarnEnabled { get; protected set; }
+		public bool IsErrorEnabled { get; protected set; }
 
-        public void Warn(string message)
-        {
-            if (this.IsWarnEnabled)
-            {
-                System.Diagnostics.Debug.WriteLine(message);
-            }
-        }
+		public void Debug(string message)
+		{
+			if (this.IsDebugEnabled)
+			{
+				System.Diagnostics.Debug.WriteLine(message);
+			}
+		}
 
-        public void Error(string message)
-        {
-            if (this.IsErrorEnabled)
-            {
-                System.Diagnostics.Debug.WriteLine(message);
-            }
-        }
-    }
+		public void Info(string message)
+		{
+			if (this.IsInfoEnabled)
+			{
+				System.Diagnostics.Debug.WriteLine(message);
+			}
+		}
 
-    public sealed class DirectDebugLogger : BufferedLogger
-    {
-        public DirectDebugLogger()
-        {
-            this.IsDebugEnabled = true;
-            this.IsInfoEnabled = true;
-            this.IsWarnEnabled = true;
-            this.IsErrorEnabled = true;
-        }
+		public void Warn(string message)
+		{
+			if (this.IsWarnEnabled)
+			{
+				System.Diagnostics.Debug.WriteLine(message);
+			}
+		}
 
-        public void Flush()
-        {
-            var local = new StringBuilder();
+		public void Error(string message)
+		{
+			if (this.IsErrorEnabled)
+			{
+				System.Diagnostics.Debug.WriteLine(message);
+			}
+		}
+	}
 
-            //string message;
-            //while (Buffer.TryDequeue(out message))
-            //{
-            //    local.AppendLine(message);
-            //}
-            //if (local.Length > 0)
-            //{
-            //    Console.Write(local);
-            //}
-        }
-    }
+	public sealed class DirectDebugLogger : BufferedLogger
+	{
+		public DirectDebugLogger()
+		{
+			this.IsDebugEnabled = true;
+			this.IsInfoEnabled = true;
+			this.IsWarnEnabled = true;
+			this.IsErrorEnabled = true;
+		}
+
+		public void Flush()
+		{
+			var local = new StringBuilder();
+
+			//string message;
+			//while (Buffer.TryDequeue(out message))
+			//{
+			//    local.AppendLine(message);
+			//}
+			//if (local.Length > 0)
+			//{
+			//    Console.Write(local);
+			//}
+		}
+	}
 }

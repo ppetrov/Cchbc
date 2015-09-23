@@ -20,8 +20,8 @@
             <ColumnDefinition></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
-        <TextBox Grid.Column="2" Margin="40" TextChanged="TextBox_OnTextChanged">
-            
+        <TextBox Grid.Column="2" Margin="40" TextChanged="TbSearchTextChanged">
+
         </TextBox>
         <!--Filter-->
         <!--<StackPanel Orientation="Horizontal" Grid.Column="1" Margin="15">
@@ -29,7 +29,7 @@
             <Button Tapped="FilterTapped" Width="150" Margin="10">Fanta</Button>
             <Button Tapped="FilterTapped" Width="150" Margin="10">Sprite</Button>
         </StackPanel>-->
-        <ListView ItemsSource="{Binding FilterOptions}" Grid.Column="1" Background="Orange" Margin="40" IsItemClickEnabled="True" ItemClick="ListViewBase_OnItemClick">
+        <ListView ItemsSource="{Binding Searcher.Options}" Grid.Row="0" Grid.Column="1" Background="Orange" Margin="40" IsItemClickEnabled="True" ItemClick="SearchOptionItemClick">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" Width="150">

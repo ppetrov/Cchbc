@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Cchbc.Objects;
 
 namespace Cchbc.Sort
@@ -14,8 +15,6 @@ namespace Cchbc.Sort
 			private set { this.SetField(ref _currentOption, value); }
 		}
 
-		public SortOption<T> DefaultOption { get; }
-
 		private bool? _ascending;
 		public bool? Ascending
 		{
@@ -29,13 +28,19 @@ namespace Cchbc.Sort
 			if (options.Length == 0) throw new ArgumentOutOfRangeException(nameof(options));
 
 			this.Options = options;
+
 			foreach (var option in options)
 			{
 				if (option.IsDefault)
 				{
-					this.DefaultOption = option;
+					this.CurrentOption = option;
 					break;
 				}
+			}
+
+			if (this.CurrentOption == null)
+			{
+				this.CurrentOption = options.First();
 			}
 		}
 

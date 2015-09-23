@@ -2,8 +2,8 @@
 {
 	public enum DialogType
 	{
-		None,
-		YesNo,
-		YesNoCancel
+		Message,
+		AcceptDecline,
+		AcceptDeclineCancel
 	}
 }

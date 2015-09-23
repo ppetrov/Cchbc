@@ -101,7 +101,7 @@ namespace Cchbc.Validation
 			{
 				return ValidationResult.Success;
 			}
-			return new ValidationResult(message + string.Format(@"({0}:{1})", min, max));
+			return new ValidationResult(message + $@"({min}:{max})");
 		}
 	}
 }
