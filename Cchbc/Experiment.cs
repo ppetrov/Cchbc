@@ -11,61 +11,67 @@ using Cchbc.Sort;
 
 namespace Cchbc
 {
-	public sealed class ArticlesViewModel
+	public sealed class ArticlesViewModel : ViewObject
 	{
 		private ReadOnlyManager<ArticleViewItem> Manager { get; }
 
 		public ObservableCollection<ArticleViewItem> Articles { get; } = new ObservableCollection<ArticleViewItem>();
+		public SortOption<ArticleViewItem>[] SortOptions => this.Manager.SortOptions;
+		public SearchOption<ArticleViewItem>[] SearchOptions => this.Manager.SearchOptions;
 
-		public Searcher<ArticleViewItem> Searcher { get; } = new Searcher<ArticleViewItem>(new[]
+		private string _textSearch = string.Empty;
+		public string TextSearch
 		{
-			new SearcherOption<ArticleViewItem>(@"All", v => true),
-			new SearcherOption<ArticleViewItem>(@"Coca Cola", v => v.Brand[0] == 'C'),
-			new SearcherOption<ArticleViewItem>(@"Fanta", v => v.Brand[0] == 'F'),
-			new SearcherOption<ArticleViewItem>(@"Sprite", v => v.Brand[0] == 'S'),
-		}, (item, search) => item.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
+			get { return _textSearch; }
+			set
+			{
+				this.SetField(ref _textSearch, value);
+				this.Display(this.Manager.PerformSearch(this.SearchOption, value));
+			}
+		}
 
-		public Sorter<ArticleViewItem> Sorter { get; } = new Sorter<ArticleViewItem>(new[]
+		private SearchOption<ArticleViewItem> _searchOption;
+		public SearchOption<ArticleViewItem> SearchOption
 		{
-			new SortOption<ArticleViewItem>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
-			new SortOption<ArticleViewItem>(@"Brand", (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
-			new SortOption<ArticleViewItem>(@"Flavor", (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
-		});
+			get { return _searchOption; }
+			set
+			{
+				this.SetField(ref _searchOption, value);
+				this.Display(this.Manager.PerformSearch(value, this.TextSearch));
+			}
+		}
 
 		public ArticlesViewModel(ILogger logger)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
 			this.Manager = new ArticleReadOnlyManager(logger);
+			this.Manager.Searcher = new Searcher<ArticleViewItem>(new[]
+			{
+				new SearchOption<ArticleViewItem>(@"All", v => true, true),
+				new SearchOption<ArticleViewItem>(@"Coca Cola", v => v.Brand[0] == 'C'),
+				new SearchOption<ArticleViewItem>(@"Fanta", v => v.Brand[0] == 'F'),
+				new SearchOption<ArticleViewItem>(@"Sprite", v => v.Brand[0] == 'S'),
+			}, (item, search) => item.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
+
+			this.Manager.Sorter = new Sorter<ArticleViewItem>(new[]
+			{
+				new SortOption<ArticleViewItem>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
+				new SortOption<ArticleViewItem>(@"Brand", (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
+				new SortOption<ArticleViewItem>(@"Flavor", (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
+			});
 		}
 
 		public void Load()
 		{
+			// Load data
 			this.Manager.Load();
 
-			Load(this.Manager.ViewItems);
+			// Display data
+			Display(this.Manager.ViewItems);
 		}
 
-		public void PerformSearch(string search)
-		{
-			if (search == null) throw new ArgumentNullException(nameof(search));
-
-			this.PerformSearch(this.Searcher.CurrentOption, search);
-		}
-
-		public void PerformSearch(SearcherOption<ArticleViewItem> searcherOption)
-		{
-			if (searcherOption == null) throw new ArgumentNullException(nameof(searcherOption));
-
-			this.PerformSearch(searcherOption, this.Searcher.Search);
-		}
-
-		private void PerformSearch(SearcherOption<ArticleViewItem> searcherOption, string search)
-		{
-			Load(this.Searcher.FindAll(this.Manager.ViewItems, search, searcherOption));
-		}
-
-		private void Load(IEnumerable<ArticleViewItem> viewItems)
+		private void Display(IEnumerable<ArticleViewItem> viewItems)
 		{
 			this.Articles.Clear();
 
@@ -80,8 +86,13 @@ namespace Cchbc
 	{
 		protected ILogger Logger { get; }
 
-		public T[] ViewItems { get; set; }
+		public T[] ViewItems { get; private set; }
+
 		public Sorter<T> Sorter { get; set; }
+		public SortOption<T>[] SortOptions => this.Sorter != null ? this.Sorter.Options : Enumerable.Empty<SortOption<T>>().ToArray();
+
+		public Searcher<T> Searcher { get; set; }
+		public SearchOption<T>[] SearchOptions => this.Searcher != null ? this.Searcher.Options : Enumerable.Empty<SearchOption<T>>().ToArray();
 
 		protected ReadOnlyManager(ILogger logger)
 		{
@@ -92,12 +103,21 @@ namespace Cchbc
 
 		public void Load()
 		{
-			// Sort data
 			this.ViewItems = this.GetData();
 			this.Sorter?.Sort(this.ViewItems, this.Sorter.CurrentOption);
+			this.Searcher?.SetupCounts(this.ViewItems);
 		}
 
 		public abstract T[] GetData();
+
+		public IEnumerable<T> PerformSearch(SearchOption<T> searchOption, string textSearch)
+		{
+			if (this.Searcher == null)
+			{
+				return Enumerable.Empty<T>().ToArray();
+			}
+			return this.Searcher.FindAll(this.ViewItems, textSearch, searchOption);
+		}
 	}
 
 	public class ArticleReadOnlyManager : ReadOnlyManager<ArticleViewItem>

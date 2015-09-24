@@ -4,26 +4,14 @@ using Cchbc.Objects;
 
 namespace Cchbc.Search
 {
-	public sealed class Searcher<T> : ViewObject where T : ViewObject
+	public sealed class Searcher<T> where T : ViewObject
 	{
 		private Func<T, string, bool> IsMatch { get; } = (item, search) => true;
-		public SearcherOption<T>[] Options { get; } = new SearcherOption<T>[0];
+		public SearchOption<T>[] Options { get; } = new SearchOption<T>[0];
+		public SearchOption<T> CurrentOption { get; set; }
+		public string TextSearch { get; set; } = string.Empty;
 
-		private SearcherOption<T> _currentOption;
-		public SearcherOption<T> CurrentOption
-		{
-			get { return _currentOption; }
-			set { this.SetField(ref _currentOption, value); }
-		}
-
-		private string _search = string.Empty;
-		public string Search
-		{
-			get { return _search; }
-			set { this.SetField(ref _search, value); }
-		}
-
-		public Searcher(SearcherOption<T>[] options)
+		public Searcher(SearchOption<T>[] options)
 		{
 			if (options == null) throw new ArgumentNullException(nameof(options));
 
@@ -37,7 +25,7 @@ namespace Cchbc.Search
 			this.IsMatch = isMatch;
 		}
 
-		public Searcher(SearcherOption<T>[] options, Func<T, string, bool> isMatch)
+		public Searcher(SearchOption<T>[] options, Func<T, string, bool> isMatch)
 		{
 			if (options == null) throw new ArgumentNullException(nameof(options));
 			if (isMatch == null) throw new ArgumentNullException(nameof(isMatch));
@@ -46,22 +34,34 @@ namespace Cchbc.Search
 			this.IsMatch = isMatch;
 		}
 
-		public List<T> FindAll(T[] viewItems, string search, SearcherOption<T> option)
+		public List<T> FindAll(T[] viewItems, string textSearch, SearchOption<T> option)
 		{
 			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
-			if (search == null) throw new ArgumentNullException(nameof(search));
+			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
 
 			this.CurrentOption = option;
-			this.Search = search;
+			if (option != null)
+			{
+				option.IsSelected = true;
+			}
+			foreach (var o in this.Options)
+			{
+				if (o != option)
+				{
+					o.IsSelected = false;
+				}
+			}
+
+			this.TextSearch = textSearch;
 
 			var items = new List<T>();
 
 			// Filter by text
-			if (search != string.Empty)
+			if (textSearch != string.Empty)
 			{
 				foreach (var item in viewItems)
 				{
-					if (this.IsMatch(item, search))
+					if (this.IsMatch(item, textSearch))
 					{
 						items.Add(item);
 					}
@@ -93,8 +93,10 @@ namespace Cchbc.Search
 			return items;
 		}
 
-		private void SetupCounts(IEnumerable<T> items)
+		public void SetupCounts(IEnumerable<T> items)
 		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
+
 			foreach (var option in this.Options)
 			{
 				var count = 0;

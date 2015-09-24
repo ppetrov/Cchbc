@@ -39,7 +39,7 @@
   <ItemGroup>
     <Compile Include="Experiment.cs" />
     <Compile Include="Search\Searcher.cs" />
-    <Compile Include="Search\SearcherOption.cs" />
+    <Compile Include="Search\SearchOption.cs" />
     <Compile Include="IManager.cs" />
     <Compile Include="Data\IReadOnlyAdapter.cs" />
     <Compile Include="Dialog\DialogBase.cs" />

@@ -4,23 +4,11 @@ using Cchbc.Objects;
 
 namespace Cchbc.Sort
 {
-	public sealed class Sorter<T> : ViewObject where T : ViewObject
+	public sealed class Sorter<T> where T : ViewObject
 	{
 		public SortOption<T>[] Options { get; private set; }
-
-		private SortOption<T> _currentOption;
-		public SortOption<T> CurrentOption
-		{
-			get { return _currentOption; }
-			private set { this.SetField(ref _currentOption, value); }
-		}
-
-		private bool? _ascending;
-		public bool? Ascending
-		{
-			get { return _ascending; }
-			private set { this.SetField(ref _ascending, value); }
-		}
+		public SortOption<T> CurrentOption { get; private set; }
+		public bool? Ascending { get; private set; }
 
 		public Sorter(SortOption<T>[] options)
 		{

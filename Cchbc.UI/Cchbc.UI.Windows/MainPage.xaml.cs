@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Text;
-using Windows.System.Threading;
+﻿using System.Text;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Input;
 using Cchbc.Search;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
@@ -30,28 +26,9 @@ namespace Cchbc.UI
 			_viewModel.Load();
 		}
 
-		private void SearchOptionItemClick(object sender, ItemClickEventArgs e)
+		private void ListViewBase_OnItemClick(object sender, ItemClickEventArgs e)
 		{
-			try
-			{
-				_viewModel.PerformSearch(e.ClickedItem as SearcherOption<ArticleViewItem>);
-			}
-			catch (Exception ex)
-			{
-
-			}
-		}
-
-		private void TbSearchTextChanged(object sender, TextChangedEventArgs e)
-		{
-			try
-			{
-				_viewModel.PerformSearch((sender as TextBox).Text);
-			}
-			catch (Exception ex)
-			{
-
-			}
+			_viewModel.SearchOption = e.ClickedItem as SearchOption<ArticleViewItem>;
 		}
 	}
 

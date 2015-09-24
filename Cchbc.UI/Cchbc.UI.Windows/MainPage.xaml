@@ -20,19 +20,19 @@
             <ColumnDefinition></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
-        <TextBox Grid.Column="2" Margin="40" TextChanged="TbSearchTextChanged">
+        <TextBox Grid.Column="2" Margin="40" Text="{Binding TextSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
 
         </TextBox>
-        <!--Filter-->
-        <!--<StackPanel Orientation="Horizontal" Grid.Column="1" Margin="15">
-            <Button Tapped="FilterTapped" Width="150" Margin="10">Coca Cola</Button>
-            <Button Tapped="FilterTapped" Width="150" Margin="10">Fanta</Button>
-            <Button Tapped="FilterTapped" Width="150" Margin="10">Sprite</Button>
-        </StackPanel>-->
-        <ListView ItemsSource="{Binding Searcher.Options}" Grid.Row="0" Grid.Column="1" Background="Orange" Margin="40" IsItemClickEnabled="True" ItemClick="SearchOptionItemClick">
+        <ListView ItemsSource="{Binding SearchOptions}" Grid.Row="0" Grid.Column="1" Background="Orange" Margin="40" 
+                  IsItemClickEnabled="True"
+                  ItemClick="ListViewBase_OnItemClick"
+                  SelectionMode="Single"
+                  SelectedItem="{Binding SearchOption, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                  >
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" Width="150">
+                        <TextBlock Text="{Binding IsSelected}"></TextBlock>
                         <TextBlock Text="{Binding DisplayName}"></TextBlock>
                         <TextBlock Text="("></TextBlock>
                         <TextBlock Text="{Binding Count}"></TextBlock>

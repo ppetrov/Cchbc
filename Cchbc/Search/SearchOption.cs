@@ -3,7 +3,7 @@ using Cchbc.Objects;
 
 namespace Cchbc.Search
 {
-	public sealed class SearcherOption<T> : ViewObject where T : ViewObject
+	public sealed class SearchOption<T> : ViewObject where T : ViewObject
 	{
 		public string DisplayName { get; }
 		public Func<T, bool> IsMatch { get; }
@@ -15,13 +15,21 @@ namespace Cchbc.Search
 			set { this.SetField(ref _count, value); }
 		}
 
-		public SearcherOption(string displayName, Func<T, bool> isMatch)
+		private bool _isSelected;
+		public bool IsSelected
+		{
+			get { return _isSelected; }
+			set { this.SetField(ref _isSelected, value); }
+		}
+
+		public SearchOption(string displayName, Func<T, bool> isMatch, bool isSelected = false)
 		{
 			if (displayName == null) throw new ArgumentNullException(nameof(displayName));
 			if (isMatch == null) throw new ArgumentNullException(nameof(isMatch));
 
 			this.DisplayName = displayName;
 			this.IsMatch = isMatch;
+			this.IsSelected = isSelected;
 		}
 	}
 }
