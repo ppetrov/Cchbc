@@ -16,8 +16,8 @@ namespace Cchbc
 		private ReadOnlyManager<ArticleViewItem> Manager { get; }
 
 		public ObservableCollection<ArticleViewItem> Articles { get; } = new ObservableCollection<ArticleViewItem>();
-		public SortOption<ArticleViewItem>[] SortOptions => this.Manager.SortOptions;
-		public SearchOption<ArticleViewItem>[] SearchOptions => this.Manager.SearchOptions;
+		public SortOption<ArticleViewItem>[] SortOptions => this.Manager.Sorter.Options;
+		public SearchOption<ArticleViewItem>[] SearchOptions => this.Manager.Searcher.Options;
 
 		private string _textSearch = string.Empty;
 		public string TextSearch
@@ -106,15 +106,12 @@ namespace Cchbc
 
 	public class ReadOnlyManager<T> where T : ViewObject
 	{
-		public T[] ViewItems { get; private set; }
 		public ILogger Logger { get; }
 		public Func<ILogger, T[]> DataLoader { get; }
-
 		public Sorter<T> Sorter { get; }
-		public SortOption<T>[] SortOptions => this.Sorter.Options;
-
 		public Searcher<T> Searcher { get; }
-		public SearchOption<T>[] SearchOptions => this.Searcher.Options;
+
+		public T[] ViewItems { get; private set; }
 
 		public ReadOnlyManager(ILogger logger, Func<ILogger, T[]> dataLoader, Sorter<T> sorter, Searcher<T> searcher)
 		{
@@ -133,9 +130,9 @@ namespace Cchbc
 		{
 			this.ViewItems = this.DataLoader(this.Logger);
 			this.Logger.Info(@"Sort items");
-			this.Sorter?.Sort(this.ViewItems, this.Sorter.CurrentOption);
+			this.Sorter.Sort(this.ViewItems, this.Sorter.CurrentOption);
 			this.Logger.Info(@"Setup counts for options");
-			this.Searcher?.SetupCounts(this.ViewItems);
+			this.Searcher.SetupCounts(this.ViewItems);
 
 			return this.ViewItems;
 		}
@@ -160,7 +157,6 @@ namespace Cchbc
 		public string Name { get; }
 		public string Brand { get; }
 		public string Flavor { get; }
-		public int Quantity { get; set; }
 
 		public ArticleViewItem(Article article)
 		{
