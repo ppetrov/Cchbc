@@ -26,7 +26,7 @@ namespace Cchbc
 			set
 			{
 				this.SetField(ref _textSearch, value);
-				this.Display(this.Manager.PerformSearch(this.SearchOption, value));
+				this.ApplySearch();
 			}
 		}
 
@@ -37,15 +37,18 @@ namespace Cchbc
 			set
 			{
 				this.SetField(ref _searchOption, value);
-				this.Display(this.Manager.PerformSearch(value, this.TextSearch));
+				this.ApplySearch();
 			}
 		}
+
+
 
 		public ArticlesViewModel(ILogger logger)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
 			this.Manager = new ArticleReadOnlyManager(logger, DataLoader, CreateSorter(), CreateSearcher());
+			this.Manager.FilterOptions = CreateFilterOptions();
 		}
 
 		private static ArticleViewItem[] DataLoader(ILogger logger)
@@ -53,6 +56,10 @@ namespace Cchbc
 			var s = Stopwatch.StartNew();
 
 			logger.Info(@"Loading articles...");
+
+			// TODO : Options
+			// TODO : Add support for Show/Hide suppressed
+			// TODO : Add support for Show/Hide not in territory
 
 			var brandHelper = new BrandHelper();
 			brandHelper.Load(new BrandAdapter(logger));
@@ -67,6 +74,16 @@ namespace Cchbc
 			return articleHelper.Items.Values.Select(v => new ArticleViewItem(v)).ToArray();
 		}
 
+		private static Sorter<ArticleViewItem> CreateSorter()
+		{
+			return new Sorter<ArticleViewItem>(new[]
+			{
+				new SortOption<ArticleViewItem>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
+				new SortOption<ArticleViewItem>(@"Brand", (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
+				new SortOption<ArticleViewItem>(@"Flavor", (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
+			});
+		}
+
 		private static Searcher<ArticleViewItem> CreateSearcher()
 		{
 			return new Searcher<ArticleViewItem>(new[]
@@ -78,25 +95,40 @@ namespace Cchbc
 			}, (item, search) => item.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
 		}
 
-		private static Sorter<ArticleViewItem> CreateSorter()
+		private static FilterOption<ArticleViewItem>[] CreateFilterOptions()
 		{
-			return new Sorter<ArticleViewItem>(new[]
+			return new[]
 			{
-				new SortOption<ArticleViewItem>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
-				new SortOption<ArticleViewItem>(@"Brand", (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
-				new SortOption<ArticleViewItem>(@"Flavor", (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
-			});
+				new FilterOption<ArticleViewItem>(@"Show/Hide suppressed", v => v.Name.IndexOf('S') >= 0),
+				new FilterOption<ArticleViewItem>(@"In territory", v => v.Name.IndexOf('F') >= 0),
+			};
 		}
 
 		public void Load()
 		{
-			this.Display(this.Manager.Load());
+			this.Manager.Load();
+			this.ApplySearch();
 		}
 
-		private void Display(IEnumerable<ArticleViewItem> viewItems)
+		public void ShowHideSuppressed()
 		{
-			this.Articles.Clear();
+			this.Manager.FilterOptions.First().Flip();
+			this.ApplySearch();
+		}
 
+		public void InTerritory()
+		{
+			this.Manager.FilterOptions.Last().Flip();
+			this.ApplySearch();
+		}
+
+		private void ApplySearch()
+		{
+			var s = Stopwatch.StartNew();
+			var viewItems = this.Manager.PerformSearch(this.TextSearch, this.SearchOption);
+			this.Manager.Logger.Info($@"Searching for text:'{this.TextSearch}', option: '{this.SearchOption?.DisplayName}' in {s.ElapsedMilliseconds} ms");
+
+			this.Articles.Clear();
 			foreach (var viewItem in viewItems)
 			{
 				this.Articles.Add(viewItem);
@@ -106,12 +138,13 @@ namespace Cchbc
 
 	public class ReadOnlyManager<T> where T : ViewObject
 	{
+		private T[] ViewItems { get; set; }
+
 		public ILogger Logger { get; }
 		public Func<ILogger, T[]> DataLoader { get; }
 		public Sorter<T> Sorter { get; }
 		public Searcher<T> Searcher { get; }
-
-		public T[] ViewItems { get; private set; }
+		public FilterOption<T>[] FilterOptions { get; set; }
 
 		public ReadOnlyManager(ILogger logger, Func<ILogger, T[]> dataLoader, Sorter<T> sorter, Searcher<T> searcher)
 		{
@@ -126,21 +159,47 @@ namespace Cchbc
 			this.Searcher = searcher;
 		}
 
-		public T[] Load()
+		public void Load()
 		{
 			this.ViewItems = this.DataLoader(this.Logger);
-			this.Logger.Info(@"Sort items");
 			this.Sorter.Sort(this.ViewItems, this.Sorter.CurrentOption);
-			this.Logger.Info(@"Setup counts for options");
-			this.Searcher.SetupCounts(this.ViewItems);
-
-			return this.ViewItems;
 		}
 
-		public IEnumerable<T> PerformSearch(SearchOption<T> searchOption, string textSearch)
+		public IEnumerable<T> PerformSearch(string textSearch, SearchOption<T> searchOption)
 		{
-			this.Logger.Info(@"Searching for items...");
-			return this.Searcher.FindAll(this.ViewItems, textSearch, searchOption);
+			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
+
+			ICollection<T> viewItems = this.ViewItems;
+
+			if (this.FilterOptions != null && this.FilterOptions.Length > 0)
+			{
+				viewItems = new List<T>();
+
+				foreach (var item in this.ViewItems)
+				{
+					var include = true;
+
+					foreach (var filter in this.FilterOptions)
+					{
+						if (filter.IsSelected)
+						{
+							include &= filter.IsMatch(item);
+							if (!include)
+							{
+								break;
+							}
+						}
+					}
+
+					if (include)
+					{
+						viewItems.Add(item);
+					}
+				}
+
+			}
+
+			return this.Searcher.FindAll(viewItems, textSearch, searchOption);
 		}
 	}
 

@@ -63,5 +63,10 @@
                 </ItemsPanelTemplate>
             </ListView.ItemsPanel>
         </ListView>
+
+        <StackPanel Grid.Column="1" Grid.Row="2" Background="IndianRed" Margin="20" Orientation="Horizontal">
+            <Button Margin="10" Tapped="UIElement_OnTapped">Show/Hide suppressed</Button>
+            <Button Margin="10" Tapped="UIElement_OnTapped2">In territory</Button>
+        </StackPanel>
     </Grid>
 </Page>

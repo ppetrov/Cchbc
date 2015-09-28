@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Input;
 using Cchbc.Search;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
@@ -30,6 +31,17 @@ namespace Cchbc.UI
 		{
 			_viewModel.SearchOption = e.ClickedItem as SearchOption<ArticleViewItem>;
 		}
+
+		private void UIElement_OnTapped(object sender, TappedRoutedEventArgs e)
+		{
+			_viewModel.ShowHideSuppressed();
+		}
+
+		private void UIElement_OnTapped2(object sender, TappedRoutedEventArgs e)
+		{
+			_viewModel.InTerritory();
+		}
+		
 	}
 
 	public abstract class BufferedLogger : ILogger

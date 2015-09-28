@@ -34,7 +34,7 @@ namespace Cchbc.Search
 			this.IsMatch = isMatch;
 		}
 
-		public List<T> FindAll(T[] viewItems, string textSearch, SearchOption<T> option)
+		public IEnumerable<T> FindAll(ICollection<T> viewItems, string textSearch, SearchOption<T> option)
 		{
 			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
@@ -54,43 +54,44 @@ namespace Cchbc.Search
 
 			this.TextSearch = textSearch;
 
-			var items = new List<T>();
+			IEnumerable<T> currentViewItems;
 
-			// Filter by text
-			if (textSearch != string.Empty)
+			if (textSearch == string.Empty)
 			{
+				this.SetupCounts(viewItems);
+				currentViewItems = viewItems;
+			}
+			else
+			{
+				var filteredByTextViewItems = new List<T>();
+
 				foreach (var item in viewItems)
 				{
 					if (this.IsMatch(item, textSearch))
 					{
-						items.Add(item);
+						filteredByTextViewItems.Add(item);
 					}
 				}
-			}
-			else
-			{
-				items.AddRange(viewItems);
+
+				this.SetupCounts(filteredByTextViewItems);
+				currentViewItems = filteredByTextViewItems;
 			}
 
-			this.SetupCounts(items);
-
-			if (option != null)
+			if (option == null)
 			{
-				for (var i = 0; i < items.Count; i++)
+				foreach (var item in currentViewItems)
 				{
-					var item = items[i];
-					if (!option.IsMatch(item))
-					{
-						// Mark the item for removal
-						items[i] = null;
-					}
+					yield return item;
 				}
-
-				// Remove all marked items
-				items.RemoveAll(v => v == null);
+				yield break;
 			}
-
-			return items;
+			foreach (var item in currentViewItems)
+			{
+				if (option.IsMatch(item))
+				{
+					yield return item;
+				}
+			}
 		}
 
 		public void SetupCounts(IEnumerable<T> items)
