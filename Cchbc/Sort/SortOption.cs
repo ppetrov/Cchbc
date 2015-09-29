@@ -3,11 +3,18 @@ using Cchbc.Objects;
 
 namespace Cchbc.Sort
 {
-	public sealed class SortOption<T> where T : ViewObject
+	public sealed class SortOption<T> : ViewObject where T : ViewObject
 	{
-		public string Name { get; private set; }
-		public Func<T, T, int> Comparison { get; private set; }
-		public bool IsDefault { get; private set; }
+		public string Name { get; }
+		public Func<T, T, int> Comparison { get; }
+		public bool IsDefault { get; }
+
+		private bool? _ascending;
+		public bool? Ascending
+		{
+			get { return _ascending; }
+			set { this.SetField(ref _ascending, value); }
+		}
 
 		public SortOption(string name, Func<T, T, int> comparison, bool isDefault = false)
 		{

@@ -2,6 +2,8 @@
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using Cchbc.ArticlesModule;
+using Cchbc.ArticlesModule.ViewModel;
 using Cchbc.Search;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
@@ -22,31 +24,26 @@ namespace Cchbc.UI
 			this.DataContext = _viewModel;
 		}
 
-		private void MainPage_OnLoaded(object sender, RoutedEventArgs e)
+		private async void MainPage_OnLoaded(object sender, RoutedEventArgs e)
 		{
-			_viewModel.Load();
-		}
-
-		private void ListViewBase_OnItemClick(object sender, ItemClickEventArgs e)
-		{
-			_viewModel.SearchOption = e.ClickedItem as SearchOption<ArticleViewItem>;
+			await _viewModel.LoadDataAsync();
 		}
 
 		private void UIElement_OnTapped(object sender, TappedRoutedEventArgs e)
 		{
-			_viewModel.ShowHideSuppressed();
+			_viewModel.ExcludeSuppressed();
 		}
 
 		private void UIElement_OnTapped2(object sender, TappedRoutedEventArgs e)
 		{
-			_viewModel.InTerritory();
+			_viewModel.ExcludeNotInTerritory();
 		}
-		
+
 	}
 
 	public abstract class BufferedLogger : ILogger
 	{
-		//protected readonly ConcurrentQueue<string> Buffer = new ConcurrentQueue<string>();
+		public string Context { get; } = @"Articles";
 
 		public bool IsDebugEnabled { get; protected set; }
 		public bool IsInfoEnabled { get; protected set; }
@@ -65,7 +62,7 @@ namespace Cchbc.UI
 		{
 			if (this.IsInfoEnabled)
 			{
-				System.Diagnostics.Debug.WriteLine(message);
+				System.Diagnostics.Debug.WriteLine(this.Context + ":" + message);
 			}
 		}
 
@@ -88,6 +85,8 @@ namespace Cchbc.UI
 
 	public sealed class DirectDebugLogger : BufferedLogger
 	{
+
+
 		public DirectDebugLogger()
 		{
 			this.IsDebugEnabled = true;

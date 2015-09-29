@@ -8,7 +8,6 @@ namespace Cchbc.Sort
 	{
 		public SortOption<T>[] Options { get; private set; }
 		public SortOption<T> CurrentOption { get; private set; }
-		public bool? Ascending { get; private set; }
 
 		public Sorter(SortOption<T>[] options)
 		{
@@ -32,40 +31,22 @@ namespace Cchbc.Sort
 			}
 		}
 
-		public void Sort(T[] items, SortOption<T> option, bool? descending = null)
+		public void Sort(T[] items, SortOption<T> option)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (option == null) throw new ArgumentNullException(nameof(option));
 
-			var ascending = (this.CurrentOption != option);
-			if (descending.HasValue && descending.Value)
-			{
-				ascending = false;
-			}
-
 			// Set the current option
 			this.CurrentOption = option;
-			this.Ascending = ascending;
 
-			if (ascending)
+			var cmp = new Comparison<T>(option.Comparison);
+			if (!(option.Ascending ?? true))
 			{
-				// Sort the copy in ascending order
-				Array.Sort(items, new Comparison<T>(option.Comparison));
+				// Sort in descending order
+				cmp = (x, y) => option.Comparison(y, x);
 			}
-			else
-			{
-				if (descending ?? false)
-				{
-					// Sort the copy in descending order
-					var cmp = new Comparison<T>((x, y) => option.Comparison(y, x));
-					Array.Sort(items, cmp);
-				}
-				else
-				{
-					// The array is already sorted, just reverse it.
-					Array.Reverse(items);
-				}
-			}
+
+			Array.Sort(items, cmp);
 		}
 	}
 }

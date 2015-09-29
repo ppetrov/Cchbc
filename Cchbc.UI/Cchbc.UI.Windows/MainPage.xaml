@@ -10,22 +10,22 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
             <RowDefinition Height="4*"></RowDefinition>
-            <RowDefinition></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition></ColumnDefinition>
-            <ColumnDefinition Width="4*"></ColumnDefinition>
-            <ColumnDefinition></ColumnDefinition>
+            <ColumnDefinition Width="Auto"></ColumnDefinition>
+            <ColumnDefinition Width="5*"></ColumnDefinition>
+            <ColumnDefinition Width="Auto"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
-        <TextBox Grid.Column="2" Margin="40" Text="{Binding TextSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+        <StackPanel Grid.Column="2" Margin="40">
+            <TextBox  Text="{Binding TextSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+        </StackPanel>
 
-        </TextBox>
         <ListView ItemsSource="{Binding SearchOptions}" Grid.Row="0" Grid.Column="1" Background="Orange" Margin="40" 
-                  IsItemClickEnabled="True"
-                  ItemClick="ListViewBase_OnItemClick"
+                  
                   SelectionMode="Single"
                   SelectedItem="{Binding SearchOption, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                   >
@@ -50,7 +50,7 @@
         <ListView Grid.Row="1" Grid.Column="1" Margin="10" ItemsSource="{Binding Articles}">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel Width="320" Height="200" Background="Teal" Orientation="Vertical">
+                    <StackPanel Width="240" Height="160" Background="Teal" Orientation="Vertical">
                         <TextBlock Text="{Binding Name}" FontSize="20" FontWeight="Bold" Margin="10"></TextBlock>
                         <TextBlock Text="{Binding Brand}" FontSize="16" Margin="10,0,0,0"></TextBlock>
                         <TextBlock Text="{Binding Flavor}" FontSize="16" Margin="10,0,0,0"></TextBlock>
@@ -65,8 +65,17 @@
         </ListView>
 
         <StackPanel Grid.Column="1" Grid.Row="2" Background="IndianRed" Margin="20" Orientation="Horizontal">
-            <Button Margin="10" Tapped="UIElement_OnTapped">Show/Hide suppressed</Button>
-            <Button Margin="10" Tapped="UIElement_OnTapped2">In territory</Button>
+            <ToggleButton Margin="10" Tapped="UIElement_OnTapped">Exclude suppressed</ToggleButton>
+            <ToggleButton Margin="10" Tapped="UIElement_OnTapped2">Exclude not in territory</ToggleButton>
         </StackPanel>
+        
+
+        <ListBox Grid.Row="1" Grid.Column="2" Margin="20" ItemsSource="{Binding SortOptions}" DisplayMemberPath="Name" SelectedItem="{Binding SortOption, Mode=TwoWay}">
+            <!--<ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{}"></TextBlock>
+                </DataTemplate>
+            </ListBox.ItemTemplate>-->
+        </ListBox>
     </Grid>
 </Page>

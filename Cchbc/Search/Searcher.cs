@@ -34,7 +34,7 @@ namespace Cchbc.Search
 			this.IsMatch = isMatch;
 		}
 
-		public IEnumerable<T> FindAll(ICollection<T> viewItems, string textSearch, SearchOption<T> option)
+		public IEnumerable<T> Search(ICollection<T> viewItems, string textSearch, SearchOption<T> option)
 		{
 			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
