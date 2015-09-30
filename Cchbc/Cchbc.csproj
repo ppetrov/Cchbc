@@ -37,20 +37,8 @@
     <!-- A reference to the entire .NET Framework is automatically included -->
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArticlesModule\Objects\Article.cs" />
-    <Compile Include="ArticlesModule\Data\ArticleAdapter.cs" />
-    <Compile Include="ArticlesModule\ArticlesReadOnlyModule.cs" />
-    <Compile Include="ArticlesModule\ViewModel\ArticlesViewModel.cs" />
-    <Compile Include="ArticlesModule\ViewModel\ArticleViewModel.cs" />
-    <Compile Include="ArticlesModule\Objects\Brand.cs" />
-    <Compile Include="ArticlesModule\Data\BrandAdapter.cs" />
-    <Compile Include="ArticlesModule\Helpers\BrandHelper.cs" />
-    <Compile Include="ArticlesModule\Helpers\ArticleHelper.cs" />
-    <Compile Include="ArticlesModule\Objects\Flavor.cs" />
-    <Compile Include="ArticlesModule\Data\FlavorAdapter.cs" />
-    <Compile Include="ArticlesModule\Helpers\FlavorHelper.cs" />
     <Compile Include="ILogger.cs" />
-    <Compile Include="ReadOnlyModule.cs" />
+    <Compile Include="Module.cs" />
     <Compile Include="Search\FilterOption.cs" />
     <Compile Include="Search\Searcher.cs" />
     <Compile Include="Search\SearchOption.cs" />

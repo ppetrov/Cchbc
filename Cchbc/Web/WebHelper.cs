@@ -19,7 +19,7 @@ namespace Cchbc.Web
 				{
 					using (var ms = new MemoryStream())
 					{
-						var buffer = new byte[1024 * 8];
+						var buffer = new byte[8 * 1024];
 
 						int readedBytes;
 						while ((readedBytes = dataStream.Read(buffer, 0, buffer.Length)) != 0)

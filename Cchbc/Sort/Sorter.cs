@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Cchbc.Objects;
 
 namespace Cchbc.Sort
@@ -27,7 +26,7 @@ namespace Cchbc.Sort
 
 			if (this.CurrentOption == null)
 			{
-				this.CurrentOption = options.First();
+				this.CurrentOption = options[0];
 			}
 		}
 

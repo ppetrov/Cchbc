@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Cchbc.Objects;
 using Cchbc.Search;
@@ -8,7 +7,7 @@ using Cchbc.Sort;
 
 namespace Cchbc
 {
-	public class ReadOnlyModule<T> where T : ViewObject
+	public class Module<T> where T : ViewObject
 	{
 		private T[] ViewItems { get; set; }
 
@@ -18,7 +17,7 @@ namespace Cchbc
 		public Searcher<T> Searcher { get; }
 		public FilterOption<T>[] FilterOptions { get; set; }
 
-		public ReadOnlyModule(ILogger logger, Func<ILogger, Task<T[]>> dataLoader, Sorter<T> sorter, Searcher<T> searcher)
+		public Module(ILogger logger, Func<ILogger, Task<T[]>> dataLoader, Sorter<T> sorter, Searcher<T> searcher)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 			if (dataLoader == null) throw new ArgumentNullException(nameof(dataLoader));
@@ -86,17 +85,17 @@ namespace Cchbc
 
 		private ICollection<T> GetInputViewItems(ICollection<T> viewItems)
 		{
-			if (this.FilterOptions != null)
+			if (this.FilterOptions != null && this.FilterOptions.Length > 0)
 			{
-				var selectedFilterOptions = this.FilterOptions.Where(f => f.IsSelected).ToList();
-				if (selectedFilterOptions.Count > 0)
-				{
-					viewItems = new List<T>();
-					foreach (var item in this.ViewItems)
-					{
-						var include = true;
+				viewItems = new List<T>();
 
-						foreach (var filter in selectedFilterOptions)
+				foreach (var item in this.ViewItems)
+				{
+					var include = true;
+
+					foreach (var filter in this.FilterOptions)
+					{
+						if (filter.IsSelected)
 						{
 							include &= filter.IsMatch(item);
 							if (!include)
@@ -104,11 +103,11 @@ namespace Cchbc
 								break;
 							}
 						}
+					}
 
-						if (include)
-						{
-							viewItems.Add(item);
-						}
+					if (include)
+					{
+						viewItems.Add(item);
 					}
 				}
 			}

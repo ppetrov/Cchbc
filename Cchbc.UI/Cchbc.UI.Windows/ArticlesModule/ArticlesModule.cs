@@ -4,11 +4,11 @@ using Cchbc.ArticlesModule.ViewModel;
 using Cchbc.Search;
 using Cchbc.Sort;
 
-namespace Cchbc.ArticlesModule
+namespace Cchbc.UI.ArticlesModule
 {
-	public sealed class ArticlesReadOnlyModule : ReadOnlyModule<ArticleViewModel>
+	public sealed class ArticlesModule : Module<ArticleViewModel>
 	{
-		public ArticlesReadOnlyModule(ILogger logger, Func<ILogger, Task<ArticleViewModel[]>> dataLoader,
+		public ArticlesModule(ILogger logger, Func<ILogger, Task<ArticleViewModel[]>> dataLoader,
 			Sorter<ArticleViewModel> sorter, Searcher<ArticleViewModel> searcher) : base(logger, dataLoader, sorter, searcher)
 		{
 		}

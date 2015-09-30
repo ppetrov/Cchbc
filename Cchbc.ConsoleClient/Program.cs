@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
 using System.Threading;
-using Cchbc.ArticlesModule;
-using Cchbc.ArticlesModule.ViewModel;
-using Cchbc.Sort;
 
 namespace Cchbc.ConsoleClient
 {
@@ -50,48 +45,7 @@ namespace Cchbc.ConsoleClient
 		{
 			try
 			{
-				var ds = new[] { DateTime.Today, DateTime.Today.AddDays(1), DateTime.Today.AddDays(-1) };
-				var tmp = ds.OrderBy(v => v).ToList();
-				var logger = new ConsoleBufferedLogger();
-				var viewModel = new ArticlesViewModel(logger);
-				viewModel.LoadDataAsync().Wait();
-
-				//Thread.Sleep(1000);
-
-				// TODO : Customization of display names!?!? 
-				var sorter = new Sorter<ArticleViewModel>(new[]
-				{
-					new SortOption<ArticleViewModel>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
-					new SortOption<ArticleViewModel>(@"Brand", (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
-					new SortOption<ArticleViewModel>(@"Flavor", (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
-				});
-
-				var items = new ObservableCollection<ArticleViewModel>(new[]
-				{
-					new ArticleViewModel(new Article(1, @"Fanta", new Brand(1, @"CCHBC"), new Flavor(1, @"CCHBC"))),
-					new ArticleViewModel(new Article(2, @"Coca Cola", new Brand(1, @"CCHBC"), new Flavor(1, @"CCHBC"))),
-					new ArticleViewModel(new Article(3, @"Sprite", new Brand(1, @"CCHBC"), new Flavor(1, @"CCHBC"))),
-				});
-
-				Thread.Sleep(100);
-
-				Console.WriteLine();
-				Console.WriteLine();
-				Console.WriteLine();
-
-				foreach (var viewItem in items)
-				{
-					Console.WriteLine(viewItem.Name);
-				}
-
-				//sorter.Sort(items, options[0]);
-
-				Console.WriteLine();
-
-				foreach (var viewItem in items)
-				{
-					Console.WriteLine(viewItem.Name);
-				}
+				
 
 				//var logger = new ConsoleBufferedLogger();
 

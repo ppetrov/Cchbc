@@ -1,17 +1,18 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
+using Cchbc.ArticlesModule;
+using Cchbc.ArticlesModule.ViewModel;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
 
-namespace Cchbc.ArticlesModule.ViewModel
+namespace Cchbc.UI.ArticlesModule.ViewModel
 {
 	public sealed class ArticlesViewModel : ViewObject
 	{
-		private ReadOnlyModule<ArticleViewModel> Module { get; }
+		private Module<ArticleViewModel> Module { get; }
 
 		public ObservableCollection<ArticleViewModel> Articles { get; } = new ObservableCollection<ArticleViewModel>();
 		public SortOption<ArticleViewModel>[] SortOptions => this.Module.Sorter.Options;
@@ -63,7 +64,7 @@ namespace Cchbc.ArticlesModule.ViewModel
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
-			this.Module = new ArticlesReadOnlyModule(logger, CreateDataLoader, CreateSorter(), CreateSearcher());
+			this.Module = new ArticlesModule(logger, CreateDataLoader, CreateSorter(), CreateSearcher());
 			this.Module.FilterOptions = CreateFilterOptions();
 		}
 
@@ -78,7 +79,13 @@ namespace Cchbc.ArticlesModule.ViewModel
 			var articleHelper = new ArticleHelper();
 			await articleHelper.LoadAsync(new ArticleAdapter(logger, brandHelper.Items, flavorHelper.Items));
 
-			return articleHelper.Items.Values.Select(v => new ArticleViewModel(v)).ToArray();
+			var items = new ArticleViewModel[articleHelper.Items.Count];
+			var index = 0;
+			foreach (var item in articleHelper.Items.Values)
+			{
+				items[index++] = new ArticleViewModel(item);
+			}
+			return items;
 		}
 
 		private static Sorter<ArticleViewModel> CreateSorter()
@@ -132,7 +139,7 @@ namespace Cchbc.ArticlesModule.ViewModel
 			this.Module.Logger.Info(@"Loading articles...");
 
 			// TODO : !!! Log operation & time
-			this.Module.FilterOptions.First().Flip();
+			this.Module.FilterOptions[0].Flip();
 			this.ApplySearch();
 
 			// TODO : Logger
@@ -143,7 +150,7 @@ namespace Cchbc.ArticlesModule.ViewModel
 		public void ExcludeNotInTerritory()
 		{
 			// TODO : !!! Log operation & time
-			this.Module.FilterOptions.Last().Flip();
+			this.Module.FilterOptions[1].Flip();
 			this.ApplySearch();
 		}
 

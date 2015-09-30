@@ -5,6 +5,7 @@ using Windows.UI.Xaml.Input;
 using Cchbc.ArticlesModule;
 using Cchbc.ArticlesModule.ViewModel;
 using Cchbc.Search;
+using Cchbc.UI.ArticlesModule.ViewModel;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
