@@ -1,0 +1,80 @@
+﻿<Page
+    x:Class="Cchbc.UI.CommentsScreen"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Loaded="CommentsScreen_OnLoaded"
+    mc:Ignorable="d">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="4*"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"></ColumnDefinition>
+            <ColumnDefinition Width="5*"></ColumnDefinition>
+            <ColumnDefinition Width="Auto"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="2" Margin="40">
+            <TextBox  Text="{Binding TextSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+        </StackPanel>
+
+        <ListView ItemsSource="{Binding SearchOptions}" Grid.Row="0" Grid.Column="1" Background="Orange" Margin="40" 
+                  
+                  SelectionMode="Single"
+                  SelectedItem="{Binding SearchOption, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                  >
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Width="150">
+                        <TextBlock Text="{Binding IsSelected}"></TextBlock>
+                        <TextBlock Text="{Binding DisplayName}"></TextBlock>
+                        <TextBlock Text="("></TextBlock>
+                        <TextBlock Text="{Binding Count}"></TextBlock>
+                        <TextBlock Text=")"></TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel Orientation="Horizontal"></VirtualizingStackPanel>
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+        </ListView>
+
+        <ListView Grid.Row="1" Grid.Column="1" Margin="10" ItemsSource="{Binding Articles}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Width="240" Height="160" Background="Teal" Orientation="Vertical">
+                        <TextBlock Text="{Binding Name}" FontSize="20" FontWeight="Bold" Margin="10"></TextBlock>
+                        <TextBlock Text="{Binding Brand}" FontSize="16" Margin="10,0,0,0"></TextBlock>
+                        <TextBlock Text="{Binding Flavor}" FontSize="16" Margin="10,0,0,0"></TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapGrid></WrapGrid>
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+        </ListView>
+
+        <StackPanel Grid.Column="1" Grid.Row="2" Background="IndianRed" Margin="20" Orientation="Horizontal">
+            <!--<ToggleButton Margin="10" Tapped="UIElement_OnTapped">Exclude suppressed</ToggleButton>
+            <ToggleButton Margin="10" Tapped="UIElement_OnTapped2">Exclude not in territory</ToggleButton>-->
+        </StackPanel>
+
+
+        <ListBox Grid.Row="1" Grid.Column="2" Margin="20" ItemsSource="{Binding SortOptions}" DisplayMemberPath="Name" SelectedItem="{Binding SortOption, Mode=TwoWay}">
+            <!--<ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{}"></TextBlock>
+                </DataTemplate>
+            </ListBox.ItemTemplate>-->
+        </ListBox>
+    </Grid>
+</Page>

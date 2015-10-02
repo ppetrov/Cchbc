@@ -110,20 +110,24 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArticlesModule\ArticlesModule.cs" />
-    <Compile Include="ArticlesModule\Data\ArticleAdapter.cs" />
-    <Compile Include="ArticlesModule\Data\BrandAdapter.cs" />
-    <Compile Include="ArticlesModule\Data\FlavorAdapter.cs" />
-    <Compile Include="ArticlesModule\Helpers\ArticleHelper.cs" />
-    <Compile Include="ArticlesModule\Helpers\BrandHelper.cs" />
-    <Compile Include="ArticlesModule\Helpers\FlavorHelper.cs" />
-    <Compile Include="ArticlesModule\Objects\Article.cs" />
-    <Compile Include="ArticlesModule\Objects\Brand.cs" />
-    <Compile Include="ArticlesModule\Objects\Flavor.cs" />
-    <Compile Include="ArticlesModule\ViewModel\ArticlesViewModel.cs" />
-    <Compile Include="ArticlesModule\ViewModel\ArticleViewModel.cs" />
-    <Compile Include="MainPage.xaml.cs">
-      <DependentUpon>MainPage.xaml</DependentUpon>
+    <Compile Include="Articles\ArticlesModule.cs" />
+    <Compile Include="Articles\Data\ArticleAdapter.cs" />
+    <Compile Include="Articles\Data\BrandAdapter.cs" />
+    <Compile Include="Articles\Data\FlavorAdapter.cs" />
+    <Compile Include="Articles\Helpers\ArticleHelper.cs" />
+    <Compile Include="Articles\Helpers\BrandHelper.cs" />
+    <Compile Include="Articles\Helpers\FlavorHelper.cs" />
+    <Compile Include="Articles\Objects\Article.cs" />
+    <Compile Include="Articles\Objects\Brand.cs" />
+    <Compile Include="Articles\Objects\Flavor.cs" />
+    <Compile Include="Articles\ViewModel\ArticlesViewModel.cs" />
+    <Compile Include="Articles\ViewModel\ArticleViewModel.cs" />
+    <Compile Include="Comments\CommentsModule.cs" />
+    <Compile Include="ArticlesScreen.xaml.cs">
+      <DependentUpon>ArticlesScreen.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CommentsScreen.xaml.cs">
+      <DependentUpon>CommentsScreen.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -140,9 +144,13 @@
     <Content Include="Assets\StoreLogo.scale-100.png" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="MainPage.xaml">
+    <Page Include="ArticlesScreen.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="CommentsScreen.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '12.0' ">

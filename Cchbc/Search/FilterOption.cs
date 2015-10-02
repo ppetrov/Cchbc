@@ -3,11 +3,8 @@ using Cchbc.Objects;
 
 namespace Cchbc.Search
 {
-	public sealed class FilterOption<T> : ViewObject where T : ViewObject
+	public sealed class FilterOption<T> : ViewObject
 	{
-		//public string DisplayName => this.IsSelected ? this.SelectedName : this.UnselectedName;
-		//public string SelectedName { get; }
-		//public string UnselectedName { get; }
 		public string DisplayName { get; }
 		public Func<T, bool> IsMatch { get; }
 

@@ -1,38 +1,34 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
 
 namespace Cchbc
 {
-	public class Module<T> where T : ViewObject
+	public class Module<T> where T : IReadOnlyObject
 	{
 		private T[] ViewItems { get; set; }
 
-		public ILogger Logger { get; }
-		public Func<ILogger, Task<T[]>> DataLoader { get; }
 		public Sorter<T> Sorter { get; }
 		public Searcher<T> Searcher { get; }
-		public FilterOption<T>[] FilterOptions { get; set; }
+		public FilterOption<T>[] FilterOptions { get; }
 
-		public Module(ILogger logger, Func<ILogger, Task<T[]>> dataLoader, Sorter<T> sorter, Searcher<T> searcher)
+		public Module(Sorter<T> sorter, Searcher<T> searcher, FilterOption<T>[] filterOptions = null)
 		{
-			if (logger == null) throw new ArgumentNullException(nameof(logger));
-			if (dataLoader == null) throw new ArgumentNullException(nameof(dataLoader));
 			if (sorter == null) throw new ArgumentNullException(nameof(sorter));
 			if (searcher == null) throw new ArgumentNullException(nameof(searcher));
 
-			this.Logger = logger;
-			this.DataLoader = dataLoader;
 			this.Sorter = sorter;
 			this.Searcher = searcher;
+			this.FilterOptions = filterOptions;
 		}
 
-		public async Task LoadDataAsync()
+		public void LoadData(T[] viewItems)
 		{
-			this.ViewItems = await this.DataLoader(this.Logger);
+			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
+
+			this.ViewItems = viewItems;
 			this.Sorter.Sort(this.ViewItems, this.Sorter.CurrentOption);
 		}
 

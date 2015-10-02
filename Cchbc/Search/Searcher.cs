@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Cchbc.Objects;
 
 namespace Cchbc.Search
 {
-	public sealed class Searcher<T> where T : ViewObject
+	public sealed class Searcher<T>
 	{
 		private Func<T, string, bool> IsMatch { get; } = (item, search) => true;
 		public SearchOption<T>[] Options { get; } = new SearchOption<T>[0];

@@ -1,9 +1,9 @@
 using System;
-using Cchbc.Objects;
+using System.Collections.Generic;
 
 namespace Cchbc.Sort
 {
-	public sealed class Sorter<T> where T : ViewObject
+	public sealed class Sorter<T>
 	{
 		public SortOption<T>[] Options { get; private set; }
 		public SortOption<T> CurrentOption { get; private set; }
@@ -35,6 +35,19 @@ namespace Cchbc.Sort
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (option == null) throw new ArgumentNullException(nameof(option));
 
+			Array.Sort(items, GetComparison(option));
+		}
+
+		public void Sort(List<T> items, SortOption<T> option)
+		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
+			if (option == null) throw new ArgumentNullException(nameof(option));
+
+			items.Sort(GetComparison(option));
+		}
+
+		private Comparison<T> GetComparison(SortOption<T> option)
+		{
 			// Set the current option
 			this.CurrentOption = option;
 
@@ -44,8 +57,7 @@ namespace Cchbc.Sort
 				// Sort in descending order
 				cmp = (x, y) => option.Comparison(y, x);
 			}
-
-			Array.Sort(items, cmp);
+			return cmp;
 		}
 	}
 }

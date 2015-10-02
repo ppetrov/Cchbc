@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Cchbc.Dialog
 {
-	public abstract class DialogBase
+	public abstract class ModalDialog
 	{
 		private static readonly Action EmptyAction = () => { };
 
@@ -11,7 +11,7 @@ namespace Cchbc.Dialog
 		public Action DeclineAction { get; set; }
 		public Action CancelAction { get; set; }
 
-		protected DialogBase()
+		protected ModalDialog()
 		{
 			this.AcceptAction = EmptyAction;
 			this.DeclineAction = EmptyAction;

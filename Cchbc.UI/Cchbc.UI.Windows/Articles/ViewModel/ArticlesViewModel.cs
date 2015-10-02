@@ -12,7 +12,8 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 {
 	public sealed class ArticlesViewModel : ViewObject
 	{
-		private Module<ArticleViewModel> Module { get; }
+		private ILogger Logger { get; }
+		private Module<ArticleViewModel> Module { get; }		
 
 		public ObservableCollection<ArticleViewModel> Articles { get; } = new ObservableCollection<ArticleViewModel>();
 		public SortOption<ArticleViewModel>[] SortOptions => this.Module.Sorter.Options;
@@ -41,6 +42,8 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 				this.SetField(ref _searchOption, value);
 				// TODO : Logger
 				// TODO : Statistics to track functionality usage
+				//this.Logger.Info($@"Apply filter options:{string.Join(@",", selectedFilterOptions.Select(f => @"'" + f.DisplayName + @"'"))}");
+				//this.Manager.Logger.Info($@"Searching for text:'{this.TextSearch}', option: '{this.SearchOption?.DisplayName}'");
 				//this.Stats[ExcludeSuppressed]++;
 				this.ApplySearch();
 			}
@@ -55,6 +58,8 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 				this.SetField(ref _sortOption, value);
 				// TODO : Logger
 				// TODO : Statistics to track functionality usage
+				//this.Logger.Info($@"Apply filter options:{string.Join(@",", selectedFilterOptions.Select(f => @"'" + f.DisplayName + @"'"))}");
+				//this.Manager.Logger.Info($@"Searching for text:'{this.TextSearch}', option: '{this.SearchOption?.DisplayName}'");
 				//this.Stats[ExcludeSuppressed]++;
 				this.ApplySort();
 			}
@@ -64,79 +69,57 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
-			this.Module = new ArticlesModule(logger, CreateDataLoader, CreateSorter(), CreateSearcher());
-			this.Module.FilterOptions = CreateFilterOptions();
-		}
-
-		private static async Task<ArticleViewModel[]> CreateDataLoader(ILogger logger)
-		{
-			var brandHelper = new BrandHelper();
-			await brandHelper.LoadAsync(new BrandAdapter(logger));
-
-			var flavorHelper = new FlavorHelper();
-			await flavorHelper.LoadAsync(new FlavorAdapter(logger));
-
-			var articleHelper = new ArticleHelper();
-			await articleHelper.LoadAsync(new ArticleAdapter(logger, brandHelper.Items, flavorHelper.Items));
-
-			var items = new ArticleViewModel[articleHelper.Items.Count];
-			var index = 0;
-			foreach (var item in articleHelper.Items.Values)
-			{
-				items[index++] = new ArticleViewModel(item);
-			}
-			return items;
-		}
-
-		private static Sorter<ArticleViewModel> CreateSorter()
-		{
-			return new Sorter<ArticleViewModel>(new[]
-			{
-				new SortOption<ArticleViewModel>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
-				new SortOption<ArticleViewModel>(@"Brand", (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
-				new SortOption<ArticleViewModel>(@"Flavor", (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
-			});
-		}
-
-		private static Searcher<ArticleViewModel> CreateSearcher()
-		{
-			return new Searcher<ArticleViewModel>(new[]
-			{
-				new SearchOption<ArticleViewModel>(@"All", v => true, true),
-				new SearchOption<ArticleViewModel>(@"Coca Cola", v => v.Brand[0] == 'C'),
-				new SearchOption<ArticleViewModel>(@"Fanta", v => v.Brand[0] == 'F'),
-				new SearchOption<ArticleViewModel>(@"Sprite", v => v.Brand[0] == 'S'),
-			}, (item, search) => item.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
-		}
-
-		private static FilterOption<ArticleViewModel>[] CreateFilterOptions()
-		{
-			return new[]
-			{
-				new FilterOption<ArticleViewModel>(@"Exclude suppressed", v => v.Name.IndexOf('S') >= 0),
-				new FilterOption<ArticleViewModel>(@"Exclude not in territory", v => v.Name.IndexOf('F') >= 0),
-			};
+			this.Logger = logger;
+			this.Module = new Articles.ArticlesModule(
+				new Sorter<ArticleViewModel>(new[]
+				{
+					new SortOption<ArticleViewModel>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
+					new SortOption<ArticleViewModel>(@"Brand", (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
+					new SortOption<ArticleViewModel>(@"Flavor", (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
+				}), new Searcher<ArticleViewModel>(new[]
+				{
+					new SearchOption<ArticleViewModel>(@"All", v => true, true),
+					new SearchOption<ArticleViewModel>(@"Coca Cola", v => v.Brand[0] == 'C'),
+					new SearchOption<ArticleViewModel>(@"Fanta", v => v.Brand[0] == 'F'),
+					new SearchOption<ArticleViewModel>(@"Sprite", v => v.Brand[0] == 'S'),
+				}, (item, search) => item.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0), new[]
+				{
+					new FilterOption<ArticleViewModel>(@"Exclude suppressed", v => v.Name.IndexOf('S') >= 0),
+					new FilterOption<ArticleViewModel>(@"Exclude not in territory", v => v.Name.IndexOf('F') >= 0),
+				});
 		}
 
 		public async Task LoadDataAsync()
 		{
 			// TODO : Log operation & time
 			var s = Stopwatch.StartNew();
+			this.Logger.Info(@"Loading articles...");
 
-			await this.Module.LoadDataAsync();
+			var brandHelper = new BrandHelper();
+			await brandHelper.LoadAsync(new BrandAdapter(this.Logger));
 
-			//logger.Info(@"Loading articles...");
-			//logger.Info($@"Articles loaded in {s.ElapsedMilliseconds} ms");
-			//this.Logger.Info($@"Apply filter options:{string.Join(@",", selectedFilterOptions.Select(f => @"'" + f.DisplayName + @"'"))}");
-			//this.Manager.Logger.Info($@"Searching for text:'{this.TextSearch}', option: '{this.SearchOption?.DisplayName}'");
+			var flavorHelper = new FlavorHelper();
+			await flavorHelper.LoadAsync(new FlavorAdapter(this.Logger));
+
+			var articleHelper = new ArticleHelper();
+			await articleHelper.LoadAsync(new ArticleAdapter(this.Logger, brandHelper.Items, flavorHelper.Items));
+
+			var index = 0;
+			var items = new ArticleViewModel[articleHelper.Items.Count];
+			foreach (var item in articleHelper.Items.Values)
+			{
+				items[index++] = new ArticleViewModel(item);
+			}
+			this.Module.LoadData(items);
 
 			this.ApplySearch();
+			this.Logger.Info($@"Articles loaded in {s.ElapsedMilliseconds} ms");
 		}
 
 		public void ExcludeSuppressed()
 		{
-			var s = Stopwatch.StartNew();
-			this.Module.Logger.Info(@"Loading articles...");
+			//var s = Stopwatch.StartNew();
+			//this.Logger.Info(@"Loading articles...");
 
 			// TODO : !!! Log operation & time
 			this.Module.FilterOptions[0].Flip();

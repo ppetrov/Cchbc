@@ -14,18 +14,18 @@ namespace Cchbc.UI
 	/// <summary>
 	/// An empty page that can be used on its own or navigated to within a Frame.
 	/// </summary>
-	public sealed partial class MainPage : Page
+	public sealed partial class ArticlesScreen : Page
 	{
 		private readonly ArticlesViewModel _viewModel = new ArticlesViewModel(new DirectDebugLogger());
 
-		public MainPage()
+		public ArticlesScreen()
 		{
 			this.InitializeComponent();
 
 			this.DataContext = _viewModel;
 		}
 
-		private async void MainPage_OnLoaded(object sender, RoutedEventArgs e)
+		private async void ArticlesScreenOnLoaded(object sender, RoutedEventArgs e)
 		{
 			await _viewModel.LoadDataAsync();
 		}
