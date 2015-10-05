@@ -39,7 +39,8 @@
   <ItemGroup>
     <Compile Include="Data\IModifiableAdapter.cs" />
     <Compile Include="ILogger.cs" />
-    <Compile Include="Module.cs" />
+    <Compile Include="Helper.cs" />
+    <Compile Include="Objects\ViewItem.cs" />
     <Compile Include="Search\FilterOption.cs" />
     <Compile Include="Search\Searcher.cs" />
     <Compile Include="Search\SearchOption.cs" />
@@ -47,10 +48,9 @@
     <Compile Include="Data\IReadOnlyAdapter.cs" />
     <Compile Include="Dialog\ModalDialog.cs" />
     <Compile Include="Dialog\DialogType.cs" />
-    <Compile Include="Helpers\Helper.cs" />
-    <Compile Include="Helpers\IHelper.cs" />
-    <Compile Include="Objects\IModifiableObject.cs" />
-    <Compile Include="Objects\IReadOnlyObject.cs" />
+    <Compile Include="Helpers\DataHelper.cs" />
+    <Compile Include="Helpers\IDataHelper.cs" />
+    <Compile Include="Objects\IDbObject.cs" />
     <Compile Include="Objects\ObjectEventArgs.cs" />
     <Compile Include="Objects\ViewObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

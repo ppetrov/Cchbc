@@ -7,17 +7,18 @@ using Cchbc.ArticlesModule.ViewModel;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
+using Cchbc.UI.Articles;
 
 namespace Cchbc.UI.ArticlesModule.ViewModel
 {
 	public sealed class ArticlesViewModel : ViewObject
 	{
 		private ILogger Logger { get; }
-		private Module<ArticleViewModel> Module { get; }		
+		private Helper<Article, ArticleViewItem> Helper { get; }
 
-		public ObservableCollection<ArticleViewModel> Articles { get; } = new ObservableCollection<ArticleViewModel>();
-		public SortOption<ArticleViewModel>[] SortOptions => this.Module.Sorter.Options;
-		public SearchOption<ArticleViewModel>[] SearchOptions => this.Module.Searcher.Options;
+		public ObservableCollection<ArticleViewItem> Articles { get; } = new ObservableCollection<ArticleViewItem>();
+		public SortOption<ArticleViewItem>[] SortOptions => this.Helper.Sorter.Options;
+		public SearchOption<ArticleViewItem>[] SearchOptions => this.Helper.Searcher.Options;
 
 		private string _textSearch = string.Empty;
 		public string TextSearch
@@ -33,8 +34,8 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 			}
 		}
 
-		private SearchOption<ArticleViewModel> _searchOption;
-		public SearchOption<ArticleViewModel> SearchOption
+		private SearchOption<ArticleViewItem> _searchOption;
+		public SearchOption<ArticleViewItem> SearchOption
 		{
 			get { return _searchOption; }
 			set
@@ -49,8 +50,8 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 			}
 		}
 
-		private SortOption<ArticleViewModel> _sortOption;
-		public SortOption<ArticleViewModel> SortOption
+		private SortOption<ArticleViewItem> _sortOption;
+		public SortOption<ArticleViewItem> SortOption
 		{
 			get { return _sortOption; }
 			set
@@ -70,22 +71,22 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
 			this.Logger = logger;
-			this.Module = new Articles.ArticlesModule(
-				new Sorter<ArticleViewModel>(new[]
+			this.Helper = new ArticlesHelper(
+				new Sorter<ArticleViewItem>(new[]
 				{
-					new SortOption<ArticleViewModel>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
-					new SortOption<ArticleViewModel>(@"Brand", (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
-					new SortOption<ArticleViewModel>(@"Flavor", (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
-				}), new Searcher<ArticleViewModel>(new[]
+					new SortOption<ArticleViewItem>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
+					new SortOption<ArticleViewItem>(@"Brand", (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
+					new SortOption<ArticleViewItem>(@"Flavor", (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
+				}), new Searcher<ArticleViewItem>(new[]
 				{
-					new SearchOption<ArticleViewModel>(@"All", v => true, true),
-					new SearchOption<ArticleViewModel>(@"Coca Cola", v => v.Brand[0] == 'C'),
-					new SearchOption<ArticleViewModel>(@"Fanta", v => v.Brand[0] == 'F'),
-					new SearchOption<ArticleViewModel>(@"Sprite", v => v.Brand[0] == 'S'),
+					new SearchOption<ArticleViewItem>(@"All", v => true, true),
+					new SearchOption<ArticleViewItem>(@"Coca Cola", v => v.Brand[0] == 'C'),
+					new SearchOption<ArticleViewItem>(@"Fanta", v => v.Brand[0] == 'F'),
+					new SearchOption<ArticleViewItem>(@"Sprite", v => v.Brand[0] == 'S'),
 				}, (item, search) => item.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0), new[]
 				{
-					new FilterOption<ArticleViewModel>(@"Exclude suppressed", v => v.Name.IndexOf('S') >= 0),
-					new FilterOption<ArticleViewModel>(@"Exclude not in territory", v => v.Name.IndexOf('F') >= 0),
+					new FilterOption<ArticleViewItem>(@"Exclude suppressed", v => v.Name.IndexOf('S') >= 0),
+					new FilterOption<ArticleViewItem>(@"Exclude not in territory", v => v.Name.IndexOf('F') >= 0),
 				});
 		}
 
@@ -95,22 +96,22 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 			var s = Stopwatch.StartNew();
 			this.Logger.Info(@"Loading articles...");
 
-			var brandHelper = new BrandHelper();
+			var brandHelper = new BrandDataHelper();
 			await brandHelper.LoadAsync(new BrandAdapter(this.Logger));
 
-			var flavorHelper = new FlavorHelper();
+			var flavorHelper = new FlavorDataHelper();
 			await flavorHelper.LoadAsync(new FlavorAdapter(this.Logger));
 
-			var articleHelper = new ArticleHelper();
+			var articleHelper = new ArticleDataHelper();
 			await articleHelper.LoadAsync(new ArticleAdapter(this.Logger, brandHelper.Items, flavorHelper.Items));
 
 			var index = 0;
-			var items = new ArticleViewModel[articleHelper.Items.Count];
+			var items = new ArticleViewItem[articleHelper.Items.Count];
 			foreach (var item in articleHelper.Items.Values)
 			{
-				items[index++] = new ArticleViewModel(item);
+				items[index++] = new ArticleViewItem(item);
 			}
-			this.Module.LoadData(items);
+			this.Helper.LoadData(items);
 
 			this.ApplySearch();
 			this.Logger.Info($@"Articles loaded in {s.ElapsedMilliseconds} ms");
@@ -122,7 +123,7 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 			//this.Logger.Info(@"Loading articles...");
 
 			// TODO : !!! Log operation & time
-			this.Module.FilterOptions[0].Flip();
+			this.Helper.FilterOptions[0].Flip();
 			this.ApplySearch();
 
 			// TODO : Logger
@@ -133,28 +134,28 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 		public void ExcludeNotInTerritory()
 		{
 			// TODO : !!! Log operation & time
-			this.Module.FilterOptions[1].Flip();
+			this.Helper.FilterOptions[1].Flip();
 			this.ApplySearch();
 		}
 
 		private void ApplySearch()
 		{
-			var viewItems = this.Module.Search(this.TextSearch, this.SearchOption);
+			//var viewItems = this.ReadOnlyManager.Search(this.TextSearch, this.SearchOption);
 
-			this.Articles.Clear();
-			foreach (var viewItem in viewItems)
-			{
-				this.Articles.Add(viewItem);
-			}
+			//this.Articles.Clear();
+			//foreach (var viewItem in viewItems)
+			//{
+			//	this.Articles.Add(viewItem);
+			//}
 		}
 
 		private void ApplySort()
 		{
-			var index = 0;
-			foreach (var viewItem in this.Module.Sort(this.Articles, this.SortOption))
-			{
-				this.Articles[index++] = viewItem;
-			}
+			//var index = 0;
+			//foreach (var viewItem in this.ReadOnlyManager.Sort(this.Articles, this.SortOption))
+			//{
+			//	this.Articles[index++] = viewItem;
+			//}
 		}
 	}
 }

@@ -6,15 +6,15 @@ using Cchbc.Sort;
 
 namespace Cchbc
 {
-	public class Module<T> where T : IReadOnlyObject
+	public class Helper<T, TViewItem> where T : IDbObject where TViewItem : ViewItem<T>
 	{
-		private T[] ViewItems { get; set; }
+		private TViewItem[] ViewItems { get; set; }
 
-		public Sorter<T> Sorter { get; }
-		public Searcher<T> Searcher { get; }
-		public FilterOption<T>[] FilterOptions { get; }
+		public Sorter<TViewItem> Sorter { get; }
+		public Searcher<TViewItem> Searcher { get; }
+		public FilterOption<TViewItem>[] FilterOptions { get; }
 
-		public Module(Sorter<T> sorter, Searcher<T> searcher, FilterOption<T>[] filterOptions = null)
+		public Helper(Sorter<TViewItem> sorter, Searcher<TViewItem> searcher, FilterOption<TViewItem>[] filterOptions = null)
 		{
 			if (sorter == null) throw new ArgumentNullException(nameof(sorter));
 			if (searcher == null) throw new ArgumentNullException(nameof(searcher));
@@ -24,7 +24,7 @@ namespace Cchbc
 			this.FilterOptions = filterOptions;
 		}
 
-		public void LoadData(T[] viewItems)
+		public void LoadData(TViewItem[] viewItems)
 		{
 			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
 
@@ -32,8 +32,9 @@ namespace Cchbc
 			this.Sorter.Sort(this.ViewItems, this.Sorter.CurrentOption);
 		}
 
-		public IEnumerable<T> Sort(ICollection<T> currentViewItems, SortOption<T> sortOption)
+		public IEnumerable<TViewItem> Sort(ICollection<TViewItem> currentViewItems, SortOption<TViewItem> sortOption)
 		{
+			if (currentViewItems == null) throw new ArgumentNullException(nameof(currentViewItems));
 			if (sortOption == null) throw new ArgumentNullException(nameof(sortOption));
 
 			var flag = sortOption.Ascending ?? true;
@@ -42,28 +43,10 @@ namespace Cchbc
 			this.Sorter.Sort(this.ViewItems, sortOption);
 
 			// Sort current view items
-			var copy = new T[currentViewItems.Count];
+			var copy = new TViewItem[currentViewItems.Count];
 			currentViewItems.CopyTo(copy, 0);
 			this.Sorter.Sort(copy, sortOption);
-
-			// Set the new flag
-			if (sortOption.Ascending.HasValue)
-			{
-				sortOption.Ascending = !flag;
-			}
-			else
-			{
-				sortOption.Ascending = true;
-			}
-
-			// Clear all sort options
-			foreach (var option in this.Sorter.Options)
-			{
-				if (option != sortOption)
-				{
-					option.Ascending = null;
-				}
-			}
+			this.Sorter.SetupFlag(sortOption, flag);
 
 			// Return current view items sorted
 			foreach (var viewItem in copy)
@@ -72,18 +55,18 @@ namespace Cchbc
 			}
 		}
 
-		public IEnumerable<T> Search(string textSearch, SearchOption<T> searchOption)
+		public IEnumerable<TViewItem> Search(string textSearch, SearchOption<TViewItem> searchOption)
 		{
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
 
-			return this.Searcher.Search(GetInputViewItems(this.ViewItems), textSearch, searchOption);
+			return this.Searcher.Search(GetFilteredViewItems(this.ViewItems), textSearch, searchOption);
 		}
 
-		private ICollection<T> GetInputViewItems(ICollection<T> viewItems)
+		private ICollection<TViewItem> GetFilteredViewItems(ICollection<TViewItem> viewItems)
 		{
 			if (this.FilterOptions != null && this.FilterOptions.Length > 0)
 			{
-				viewItems = new List<T>();
+				viewItems = new List<TViewItem>();
 
 				foreach (var item in this.ViewItems)
 				{

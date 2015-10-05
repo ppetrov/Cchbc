@@ -110,19 +110,18 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Articles\ArticlesModule.cs" />
+    <Compile Include="Articles\ArticlesHelper.cs" />
     <Compile Include="Articles\Data\ArticleAdapter.cs" />
     <Compile Include="Articles\Data\BrandAdapter.cs" />
     <Compile Include="Articles\Data\FlavorAdapter.cs" />
-    <Compile Include="Articles\Helpers\ArticleHelper.cs" />
-    <Compile Include="Articles\Helpers\BrandHelper.cs" />
-    <Compile Include="Articles\Helpers\FlavorHelper.cs" />
+    <Compile Include="Articles\Helpers\ArticleDataHelper.cs" />
+    <Compile Include="Articles\Helpers\BrandDataHelper.cs" />
+    <Compile Include="Articles\Helpers\FlavorDataHelper.cs" />
     <Compile Include="Articles\Objects\Article.cs" />
     <Compile Include="Articles\Objects\Brand.cs" />
     <Compile Include="Articles\Objects\Flavor.cs" />
     <Compile Include="Articles\ViewModel\ArticlesViewModel.cs" />
-    <Compile Include="Articles\ViewModel\ArticleViewModel.cs" />
-    <Compile Include="Comments\CommentsModule.cs" />
+    <Compile Include="Articles\ViewModel\ArticleViewItem.cs" />
     <Compile Include="ArticlesScreen.xaml.cs">
       <DependentUpon>ArticlesScreen.xaml</DependentUpon>
     </Compile>

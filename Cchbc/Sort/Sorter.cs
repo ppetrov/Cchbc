@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Cchbc.Objects;
 
 namespace Cchbc.Sort
 {
-	public sealed class Sorter<T>
+	public sealed class Sorter<T> where T : ViewObject
 	{
 		public SortOption<T>[] Options { get; private set; }
 		public SortOption<T> CurrentOption { get; private set; }
@@ -44,6 +45,30 @@ namespace Cchbc.Sort
 			if (option == null) throw new ArgumentNullException(nameof(option));
 
 			items.Sort(GetComparison(option));
+		}
+
+		public void SetupFlag(SortOption<T> sortOption, bool flag)
+		{
+			if (sortOption == null) throw new ArgumentNullException(nameof(sortOption));
+
+			// Set the new flag
+			if (sortOption.Ascending.HasValue)
+			{
+				sortOption.Ascending = !flag;
+			}
+			else
+			{
+				sortOption.Ascending = true;
+			}
+
+			// Clear all sort options
+			foreach (var option in this.Options)
+			{
+				if (option != sortOption)
+				{
+					option.Ascending = null;
+				}
+			}
 		}
 
 		private Comparison<T> GetComparison(SortOption<T> option)

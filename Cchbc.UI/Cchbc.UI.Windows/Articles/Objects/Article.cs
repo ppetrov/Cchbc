@@ -3,9 +3,9 @@ using Cchbc.Objects;
 
 namespace Cchbc.ArticlesModule
 {
-	public sealed class Article : IReadOnlyObject
+	public sealed class Article : IDbObject
 	{
-		public long Id { get; }
+		public long Id { get; set; }
 		public string Name { get; }
 		public Brand Brand { get; }
 		public Flavor Flavor { get; }

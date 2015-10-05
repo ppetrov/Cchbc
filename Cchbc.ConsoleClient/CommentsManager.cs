@@ -2,35 +2,76 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
+using Cchbc.Validation;
 
 namespace Cchbc.UI.Comments
 {
-	public sealed class CommentsModule : Manager<CommentViewModel>
+	public sealed class Comment : IDbObject
 	{
-		public CommentsModule(IModifiableAdapter<CommentViewModel> adapter,
-			Sorter<CommentViewModel> sorter,
-			Searcher<CommentViewModel> searcher,
-			FilterOption<CommentViewModel>[] filterOptions = null)
-			: base(adapter, sorter, searcher, filterOptions)
+		public long Id { get; set; }
+		public string Type { get; set; }
+		public string Contents { get; set; }
+		public DateTime CreatedAt { get; set; }
+	}
+
+	public sealed class CommentViewItem : ViewItem<Comment>
+	{
+		public long Id { get; set; }
+		public string Type { get; set; } = string.Empty;
+		public string Contents { get; set; } = string.Empty;
+		public DateTime CreatedAt { get; set; } = DateTime.Now;
+		public int Count { get; set; } = -1;
+
+		public CommentViewItem(Comment item) : base(item)
 		{
 		}
 	}
 
-	//public class CommentsModifiableAdapter<CommentViewModel>
+	public sealed class CommentsManager : Manager<Comment, CommentViewItem>
+	{
+		public CommentsManager(IModifiableAdapter<Comment> adapter,
+			Sorter<CommentViewItem> sorter,
+			Searcher<CommentViewItem> searcher,
+			FilterOption<CommentViewItem>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
+		{
+		}
+
+		public override ValidationResult[] ValidateProperties(CommentViewItem viewItem)
+		{
+			return Enumerable.Empty<ValidationResult>().ToArray();
+		}
+
+		public override PermissionResult CanAdd(CommentViewItem viewItem)
+		{
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+
+			return PermissionResult.Confirm(@"Ayre you sure ?");
+		}
+	}
+
+
+
+
+
+
+
+
+
 
 	public sealed class CommentsViewModel : ViewObject
 	{
 		private ILogger Logger { get; }
-		private Manager<CommentViewModel> Module { get; }
+		private Manager<Comment, CommentViewItem> Manager { get; }
 
-		public ObservableCollection<CommentViewModel> Articles { get; } = new ObservableCollection<CommentViewModel>();
-		public SortOption<CommentViewModel>[] SortOptions => this.Module.Sorter.Options;
-		public SearchOption<CommentViewModel>[] SearchOptions => this.Module.Searcher.Options;
+		public ObservableCollection<CommentViewItem> Articles { get; } = new ObservableCollection<CommentViewItem>();
+		//public SortOption<CommentViewItem>[] SortOptions => this.Module.Sorter.Options;
+		//public SearchOption<CommentViewItem>[] SearchOptions => this.Module.Searcher.Options;
 
 		private string _textSearch = string.Empty;
 		public string TextSearch
@@ -46,8 +87,8 @@ namespace Cchbc.UI.Comments
 			}
 		}
 
-		private SearchOption<CommentViewModel> _searchOption;
-		public SearchOption<CommentViewModel> SearchOption
+		private SearchOption<CommentViewItem> _searchOption;
+		public SearchOption<CommentViewItem> SearchOption
 		{
 			get { return _searchOption; }
 			set
@@ -62,8 +103,8 @@ namespace Cchbc.UI.Comments
 			}
 		}
 
-		private SortOption<CommentViewModel> _sortOption;
-		public SortOption<CommentViewModel> SortOption
+		private SortOption<CommentViewItem> _sortOption;
+		public SortOption<CommentViewItem> SortOption
 		{
 			get { return _sortOption; }
 			set
@@ -83,14 +124,14 @@ namespace Cchbc.UI.Comments
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
 			this.Logger = logger;
-			this.Module = new CommentsModule(null,
-				new Sorter<CommentViewModel>(new[]
+			this.Manager = new CommentsManager(null,
+				new Sorter<CommentViewItem>(new[]
 				{
-					new SortOption<CommentViewModel>(@"Type", (x, y) => string.Compare(x.Type, y.Type, StringComparison.Ordinal)),
-					new SortOption<CommentViewModel>(@"CreateAt", (x, y) => x.CreatedAt.CompareTo(y.CreatedAt)),
-				}), new Searcher<CommentViewModel>(new[]
+					new SortOption<CommentViewItem>(@"Type", (x, y) => string.Compare(x.Type, y.Type, StringComparison.Ordinal)),
+					new SortOption<CommentViewItem>(@"CreateAt", (x, y) => x.CreatedAt.CompareTo(y.CreatedAt)),
+				}), new Searcher<CommentViewItem>(new[]
 				{
-					new SearchOption<CommentViewModel>(@"All", v => true, true),
+					new SearchOption<CommentViewItem>(@"All", v => true, true),
 					//new SearchOption<CommentViewModel>(@"Coca Cola", v => v.Brand[0] == 'C'),
 					//new SearchOption<CommentViewModel>(@"Fanta", v => v.Brand[0] == 'F'),
 					//new SearchOption<CommentViewModel>(@"Sprite", v => v.Brand[0] == 'S'),
@@ -101,6 +142,11 @@ namespace Cchbc.UI.Comments
 			//		new FilterOption<CommentViewModel>(@"Exclude suppressed", v => v.Name.IndexOf('S') >= 0),
 			//		new FilterOption<CommentViewModel>(@"Exclude not in territory", v => v.Name.IndexOf('F') >= 0),
 			//	}
+
+			this.Manager.ItemInserted += (sender, args) =>
+			{
+				args.Item.Count++;
+			};
 		}
 
 		public async Task LoadDataAsync()
@@ -119,12 +165,12 @@ namespace Cchbc.UI.Comments
 			//await articleHelper.LoadAsync(new ArticleAdapter(this.Logger, brandHelper.Items, flavorHelper.Items));
 
 			var index = 0;
-			var items = new List<CommentViewModel>();
+			var items = new List<CommentViewItem>();
 			//foreach (var item in articleHelper.Items.Values)
 			//{
 			//	items[index++] = new CommentViewModel(item);
 			//}
-			this.Module.LoadData(items);
+			this.Manager.LoadData(items);
 
 			this.ApplySearch();
 			this.Logger.Info($@"Articles loaded in {s.ElapsedMilliseconds} ms");
@@ -136,7 +182,7 @@ namespace Cchbc.UI.Comments
 			//this.Logger.Info(@"Loading articles...");
 
 			// TODO : !!! Log operation & time
-			this.Module.FilterOptions[0].Flip();
+			this.Manager.FilterOptions[0].Flip();
 			this.ApplySearch();
 
 			// TODO : Logger
@@ -147,54 +193,28 @@ namespace Cchbc.UI.Comments
 		public void ExcludeNotInTerritory()
 		{
 			// TODO : !!! Log operation & time
-			this.Module.FilterOptions[1].Flip();
+			this.Manager.FilterOptions[1].Flip();
 			this.ApplySearch();
 		}
 
 		private void ApplySearch()
 		{
-			var viewItems = this.Module.Search(this.TextSearch, this.SearchOption);
+			//var viewItems = this.Manager.Search(this.TextSearch, this.SearchOption);
 
-			this.Articles.Clear();
-			foreach (var viewItem in viewItems)
-			{
-				this.Articles.Add(viewItem);
-			}
+			//this.Articles.Clear();
+			//foreach (var viewItem in viewItems)
+			//{
+			//	this.Articles.Add(viewItem);
+			//}
 		}
 
 		private void ApplySort()
 		{
 			var index = 0;
-			foreach (var viewItem in this.Module.Sort(this.Articles, this.SortOption))
-			{
-				this.Articles[index++] = viewItem;
-			}
+			//foreach (var viewItem in this.Manager.Sort(this.Articles, this.SortOption))
+			//{
+			//	this.Articles[index++] = viewItem;
+			//}
 		}
-	}
-
-	public sealed class CommentViewModel : IModifiableObject
-	{
-		public long Id { get; set; }
-		private Comment Comment { get; }
-		public string Type { get; set; } = string.Empty;
-		public string Contents { get; set; } = string.Empty;
-		public DateTime CreatedAt { get; set; } = DateTime.Now;
-
-		public CommentViewModel(Comment comment)
-		{
-			if (comment == null) throw new ArgumentNullException(nameof(comment));
-
-			this.Id = comment.Id;
-			this.Comment = comment;
-		}
-	}
-
-	public sealed class Comment : IModifiableObject
-	{
-		public long Id { get; set; }
-		public string Type { get; set; }
-		public string Contents { get; set; }
-		public DateTime CreatedAt { get; set; }
-
 	}
 }

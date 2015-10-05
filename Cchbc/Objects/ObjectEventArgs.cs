@@ -2,7 +2,7 @@
 
 namespace Cchbc.Objects
 {
-	public sealed class ObjectEventArgs<T> : EventArgs where T : IModifiableObject
+	public sealed class ObjectEventArgs<T> : EventArgs 
 	{
 		public T Item { get; }
 

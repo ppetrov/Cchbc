@@ -1,6 +1,6 @@
 ﻿namespace Cchbc.Objects
 {
-	public interface IModifiableObject
+	public interface IDbObject
 	{
 		long Id { get; set; }
 	}

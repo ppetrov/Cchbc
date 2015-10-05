@@ -3,11 +3,11 @@ using Cchbc.Objects;
 
 namespace Cchbc.ArticlesModule
 {
-	public sealed class Flavor : IReadOnlyObject
+	public sealed class Flavor : IDbObject
 	{
 		public static readonly Flavor Empty = new Flavor(-1, string.Empty);
 
-		public long Id { get; }
+		public long Id { get; set; }
 		public string Name { get; }
 
 		public Flavor(long id, string name)

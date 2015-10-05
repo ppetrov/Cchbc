@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Dialog;
@@ -12,34 +11,34 @@ using Cchbc.Validation;
 
 namespace Cchbc
 {
-	public class Manager<T> where T : IModifiableObject
+	public abstract class Manager<T, TViewItem> where T : IDbObject where TViewItem : ViewItem<T>
 	{
-		private List<T> ViewItems { get; set; }
+		private List<TViewItem> ViewItems { get; } = new List<TViewItem>();
 
-		public event EventHandler<ObjectEventArgs<T>> ItemInserted;
-		protected virtual void OnItemInserted(ObjectEventArgs<T> e)
+		public event EventHandler<ObjectEventArgs<TViewItem>> ItemInserted;
+		protected virtual void OnItemInserted(ObjectEventArgs<TViewItem> e)
 		{
-			this.ItemInserted?.Invoke(this, e);
+			ItemInserted?.Invoke(this, e);
 		}
 
-		public event EventHandler<ObjectEventArgs<T>> ItemUpdated;
-		protected virtual void OnItemUpdated(ObjectEventArgs<T> e)
+		public event EventHandler<ObjectEventArgs<TViewItem>> ItemUpdated;
+		protected virtual void OnItemUpdated(ObjectEventArgs<TViewItem> e)
 		{
-			this.ItemUpdated?.Invoke(this, e);
+			ItemUpdated?.Invoke(this, e);
 		}
 
-		public event EventHandler<ObjectEventArgs<T>> ItemDeleted;
-		protected virtual void OnItemDeleted(ObjectEventArgs<T> e)
+		public event EventHandler<ObjectEventArgs<TViewItem>> ItemDeleted;
+		protected virtual void OnItemDeleted(ObjectEventArgs<TViewItem> e)
 		{
-			this.ItemDeleted?.Invoke(this, e);
+			ItemDeleted?.Invoke(this, e);
 		}
 
 		public IModifiableAdapter<T> Adapter { get; }
-		public Sorter<T> Sorter { get; }
-		public Searcher<T> Searcher { get; }
-		public FilterOption<T>[] FilterOptions { get; set; }
+		public Sorter<TViewItem> Sorter { get; }
+		public Searcher<TViewItem> Searcher { get; }
+		public FilterOption<TViewItem>[] FilterOptions { get; set; }
 
-		public Manager(IModifiableAdapter<T> adapter, Sorter<T> sorter, Searcher<T> searcher, FilterOption<T>[] filterOptions = null)
+		protected Manager(IModifiableAdapter<T> adapter, Sorter<TViewItem> sorter, Searcher<TViewItem> searcher, FilterOption<TViewItem>[] filterOptions = null)
 		{
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 			if (sorter == null) throw new ArgumentNullException(nameof(sorter));
@@ -51,15 +50,23 @@ namespace Cchbc
 			this.FilterOptions = filterOptions;
 		}
 
-		public void LoadData(List<T> viewItems)
+		public void LoadData(IEnumerable<TViewItem> viewItems)
 		{
 			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
 
-			this.ViewItems = viewItems;
+			this.ViewItems.Clear();
+			foreach (var viewItem in viewItems)
+			{
+				this.ViewItems.Add(viewItem);
+			}
 			this.Sorter.Sort(this.ViewItems, this.Sorter.CurrentOption);
 		}
 
-		public async Task AddAsync(T viewItem, ModalDialog dialog)
+		public abstract ValidationResult[] ValidateProperties(TViewItem viewItem);
+
+		public abstract PermissionResult CanAdd(TViewItem viewItem);
+
+		public async Task AddAsync(TViewItem viewItem, ModalDialog dialog)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
@@ -80,7 +87,7 @@ namespace Cchbc
 						await dialog.ConfirmAsync(permissionResult.Message);
 						break;
 					case PermissionStatus.Deny:
-						//await this.Dialog.DisplayAsync(permissionResult.Message);
+						await dialog.DisplayAsync(permissionResult.Message);
 						break;
 					default:
 						throw new ArgumentOutOfRangeException();
@@ -88,58 +95,34 @@ namespace Cchbc
 			}
 		}
 
-		private async Task AddValidatedAsync(T viewItem)
+		private async Task AddValidatedAsync(TViewItem viewItem)
 		{
-			// Call the manager to add the new message
-			if (await this.AddAsync(viewItem, true))
-			{
-				// Add the item to the list to the right place if sorter != null
-				this.ViewItems.Add(viewItem);
-			}
-			throw new Exception(@"PPPetrov");
-		}
+			// Add the item to the db
+			await this.Adapter.InsertAsync(viewItem.Item);
 
-		private async Task<bool> AddAsync(T viewItem, bool confirmed)
-		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-
-			var validationResults = this.ValidateProperties(viewItem);
-			if (validationResults.Length == 0)
+			// Find the right index to insert the new element
+			var index = this.ViewItems.Count;
+			if (this.Sorter.CurrentOption != null)
 			{
-				var permissionResult = this.CanAdd(viewItem);
-				if (permissionResult.Status == PermissionStatus.Allow ||
-					(permissionResult.Status == PermissionStatus.Confirm && confirmed))
+				var cmp = this.Sorter.CurrentOption.Comparison;
+				foreach (var current in this.ViewItems)
 				{
-					// Add the item to the db
-					await this.Adapter.InsertAsync(viewItem);
-
-					// Add the item to the list
-					this.ViewItems.Add(viewItem);
-
-					// TODO : !!!! Fire event to attach for additional logic
-
-					return true;
+					var result = cmp(current, viewItem);
+					if (result >= 0)
+					{
+						break;
+					}
+					index++;
 				}
 			}
 
-			return false;
+			// Insert the item into the list at the correct place
+			this.ViewItems.Insert(index, viewItem);
+
+			this.OnItemInserted(new ObjectEventArgs<TViewItem>(viewItem));
 		}
 
-		// TODO : !!! public ???
-		// TODO : !!! abstract ???
-		private PermissionResult CanAdd(T viewItem)
-		{
-			return PermissionResult.Allow;
-        }
-
-		// TODO : !!! public ???
-		// TODO : !!! abstract ???
-		private ValidationResult[] ValidateProperties(T viewItem)
-		{
-			return Enumerable.Empty<ValidationResult>().ToArray();
-		}
-
-		public IEnumerable<T> Sort(ICollection<T> currentViewItems, SortOption<T> sortOption)
+		public IEnumerable<TViewItem> Sort(ICollection<TViewItem> currenTiewItems, SortOption<TViewItem> sortOption)
 		{
 			if (sortOption == null) throw new ArgumentNullException(nameof(sortOption));
 
@@ -149,8 +132,8 @@ namespace Cchbc
 			this.Sorter.Sort(this.ViewItems, sortOption);
 
 			// Sort current view items
-			var copy = new T[currentViewItems.Count];
-			currentViewItems.CopyTo(copy, 0);
+			var copy = new TViewItem[currenTiewItems.Count];
+			currenTiewItems.CopyTo(copy, 0);
 			this.Sorter.Sort(copy, sortOption);
 
 			// Set the new flag
@@ -179,18 +162,18 @@ namespace Cchbc
 			}
 		}
 
-		public IEnumerable<T> Search(string textSearch, SearchOption<T> searchOption)
+		public IEnumerable<TViewItem> Search(string textSearch, SearchOption<TViewItem> searchOption)
 		{
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
 
-			return this.Searcher.Search(GetInputViewItems(this.ViewItems), textSearch, searchOption);
+			return this.Searcher.Search(GetFilteredViewItems(this.ViewItems), textSearch, searchOption);
 		}
 
-		private ICollection<T> GetInputViewItems(ICollection<T> viewItems)
+		private ICollection<TViewItem> GetFilteredViewItems(ICollection<TViewItem> viewItems)
 		{
 			if (this.FilterOptions != null && this.FilterOptions.Length > 0)
 			{
-				viewItems = new List<T>();
+				viewItems = new List<TViewItem>();
 
 				foreach (var item in this.ViewItems)
 				{
