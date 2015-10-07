@@ -5,8 +5,8 @@ namespace Cchbc.Data
 {
 	public interface IModifiableAdapter<T> where T : IDbObject
 	{
-		Task InsertAsync(T item);
-		Task UpdateAsync(T item);
-		Task DeleteAsync(T item);
+		Task<bool> InsertAsync(T item);
+		Task<bool> UpdateAsync(T item);
+		Task<bool> DeleteAsync(T item);
 	}
 }

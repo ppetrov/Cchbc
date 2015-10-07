@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Windows.UI.Popups;
 using Cchbc.Data;
+using Cchbc.Dialog;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
@@ -35,23 +38,48 @@ namespace Cchbc.UI.Comments
 
 	public sealed class CommentsManager : Manager<Comment, CommentViewItem>
 	{
-		public CommentsManager(IModifiableAdapter<Comment> adapter,
+		public CommentAdapter Adapter { get; set; }
+
+		public CommentsManager(CommentAdapter adapter,
 			Sorter<CommentViewItem> sorter,
 			Searcher<CommentViewItem> searcher,
 			FilterOption<CommentViewItem>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
 		{
+			this.Adapter = adapter;
 		}
 
 		public override ValidationResult[] ValidateProperties(CommentViewItem viewItem)
 		{
-			return Enumerable.Empty<ValidationResult>().ToArray();
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+
+			// All business logic about properties
+			return new[]
+			{
+				Validator.ValidateNotNull(viewItem.Contents, @"Contents cannot be null"),
+				Validator.ValidateNotEmpty(viewItem.Contents, @"Contents cannot be empty"),
+				Validator.ValidateMaxLength(viewItem.Contents, 1024, @"Contents cannot be larger then 1024"),
+			};
 		}
 
-		public override PermissionResult CanAdd(CommentViewItem viewItem)
+		public override async Task<PermissionResult> CanAddAsync(CommentViewItem viewItem)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			return PermissionResult.Confirm(@"Ayre you sure ?");
+			// All the business logic is here
+			var hasUnreplicated = await this.Adapter.HasUnreplicatedAsync();
+			if (hasUnreplicated)
+			{
+				return PermissionResult.Deny(@"Has unreplicated records. Please sync first");
+			}
+			if (this.ViewItems.Any(v => v.CreatedAt.Date == viewItem.CreatedAt.Date))
+			{
+				return PermissionResult.Deny(@"Already have a comment for this date");
+			}
+			if (this.ViewItems.Count > 10)
+			{
+				return PermissionResult.Confirm(@"Too many comments already. Are you sure you want one more?");
+			}
+			return PermissionResult.Allow;
 		}
 	}
 
@@ -124,7 +152,7 @@ namespace Cchbc.UI.Comments
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
 			this.Logger = logger;
-			this.Manager = new CommentsManager(null,
+			this.Manager = new CommentsManager(new CommentAdapter(),
 				new Sorter<CommentViewItem>(new[]
 				{
 					new SortOption<CommentViewItem>(@"Type", (x, y) => string.Compare(x.Type, y.Type, StringComparison.Ordinal)),
@@ -173,7 +201,7 @@ namespace Cchbc.UI.Comments
 			this.Manager.LoadData(items);
 
 			this.ApplySearch();
-			this.Logger.Info($@"Articles loaded in {s.ElapsedMilliseconds} ms");
+			this.Logger.Info($@"Comments loaded in {s.ElapsedMilliseconds} ms");
 		}
 
 		public void ExcludeSuppressed()
@@ -215,6 +243,83 @@ namespace Cchbc.UI.Comments
 			//{
 			//	this.Articles[index++] = viewItem;
 			//}
+		}
+
+		public async Task AddAsync()
+		{
+			// TODO : Time operation ?!??? ==> No
+			// TODO : Log usage
+			try
+			{
+				await this.Manager.AddAsync(new CommentViewItem(new Comment()), new WinRtModalDialog());
+			}
+			catch (Exception ex)
+			{
+				this.Logger.Error(ex.ToString());
+			}
+		}
+
+		public async Task DeleteAsync()
+		{
+			await this.Manager.DeleteAsync(new CommentViewItem(new Comment()), new WinRtModalDialog());
+		}
+	}
+
+	public sealed class UsageManager
+	{
+		// TODO : !!! Context To be string ????
+		// TODO : !!! Operation to be string ???
+		public void Add(string context, string operation)
+		{
+			// Context:Agenda
+			// Operation:Add
+			// Count:23
+		}
+	}
+
+
+	public sealed class CommentAdapter : IModifiableAdapter<Comment>
+	{
+		public Task<bool> InsertAsync(Comment item)
+		{
+			try
+			{
+				Debug.WriteLine(@"Inserting comment ...");
+				return Task.FromResult(true);
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine(@"Unable to insert comment" + ex);
+			}
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> UpdateAsync(Comment item)
+		{
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> DeleteAsync(Comment item)
+		{
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> HasUnreplicatedAsync()
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	public sealed class WinRtModalDialog : ModalDialog
+	{
+		private MessageDialog _dialog;
+
+		public override async Task ShowAsync(string message, DialogType? type = null)
+		{
+			_dialog = new MessageDialog(message);
+			_dialog.Commands.Add(new UICommand("Yes", _ => { this.AcceptAction(); }));
+			_dialog.Commands.Add(new UICommand("No", _ => { this.DeclineAction(); }));
+			await _dialog.ShowAsync();
 		}
 	}
 }

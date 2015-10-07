@@ -8,7 +8,6 @@ using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Search;
 using Cchbc.Sort;
-using Cchbc.UI.Comments;
 
 namespace Cchbc.ConsoleClient
 {
@@ -46,39 +45,7 @@ namespace Cchbc.ConsoleClient
 	//    }
 	//}
 
-	public sealed class CommentAdapter : IModifiableAdapter<Comment>
-	{
-		public Task InsertAsync(Comment item)
-		{
-			//throw new NotImplementedException();
-			Console.WriteLine(@"Insert");
-			return Task.FromResult(true);
-		}
-
-		public Task UpdateAsync(Comment item)
-		{
-			//throw new NotImplementedException();
-			Console.WriteLine(@"Update");
-			return Task.FromResult(true);
-		}
-
-		public Task DeleteAsync(Comment item)
-		{
-			//throw new NotImplementedException();
-			Console.WriteLine(@"Delete");
-			return Task.FromResult(true);
-		}
-	}
-
-	public sealed class DebugModalDialog : ModalDialog
-	{
-		public override Task ShowAsync(string message, DialogType? type = null)
-		{
-			Console.WriteLine(message);
-			//throw new NotImplementedException();
-			return Task.FromResult(true);
-		}
-	}
+	
 
 	class Program
 	{
@@ -86,26 +53,26 @@ namespace Cchbc.ConsoleClient
 		{
 			try
 			{
-				var adapter = new CommentAdapter();
-				var m = new CommentsManager(adapter,
-					new Sorter<CommentViewItem>(new[]
-				{
-					new SortOption<CommentViewItem>(@"By Type", (x,y)=>string.Compare(x.Type, y.Type, StringComparison.OrdinalIgnoreCase)),
-				}), new Searcher<CommentViewItem>(new[]
-				{
-					new SearchOption<CommentViewItem>(@"All", v=> true),
-				}));
-				m.LoadData(new List<CommentViewItem>());
+				//var adapter = new CommentAdapter();
+				//var m = new CommentsManager(adapter,
+				//	new Sorter<CommentViewItem>(new[]
+				//{
+				//	new SortOption<CommentViewItem>(@"By Type", (x,y)=>string.Compare(x.Type, y.Type, StringComparison.OrdinalIgnoreCase)),
+				//}), new Searcher<CommentViewItem>(new[]
+				//{
+				//	new SearchOption<CommentViewItem>(@"All", v=> true),
+				//}));
+				//m.LoadData(new List<CommentViewItem>());
 
-				m.ItemInserted += (sender, eventArgs) =>
-				{
-					Console.WriteLine(@"Item successfully inserted!");
-					Console.WriteLine(@"Add additional logic");
-				};
+				//m.ItemInserted += (sender, eventArgs) =>
+				//{
+				//	Console.WriteLine(@"Item successfully inserted!");
+				//	Console.WriteLine(@"Add additional logic");
+				//};
 
-				var dialog = new DebugModalDialog();
-                m.AddAsync(new CommentViewItem(new Comment()), dialog).Wait();
-				Console.WriteLine();
+				//var dialog = new DebugModalDialog();
+    //            m.AddAsync(new CommentViewItem(new Comment()), dialog).Wait();
+				//Console.WriteLine();
 				return;
 
 				//var logger = new ConsoleBufferedLogger();

@@ -125,6 +125,7 @@
     <Compile Include="ArticlesScreen.xaml.cs">
       <DependentUpon>ArticlesScreen.xaml</DependentUpon>
     </Compile>
+    <Compile Include="CommentsManager.cs" />
     <Compile Include="CommentsScreen.xaml.cs">
       <DependentUpon>CommentsScreen.xaml</DependentUpon>
     </Compile>

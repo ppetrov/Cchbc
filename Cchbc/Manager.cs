@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Dialog;
@@ -13,7 +12,7 @@ namespace Cchbc
 {
 	public abstract class Manager<T, TViewItem> where T : IDbObject where TViewItem : ViewItem<T>
 	{
-		private List<TViewItem> ViewItems { get; } = new List<TViewItem>();
+		protected List<TViewItem> ViewItems { get; } = new List<TViewItem>();
 
 		public event EventHandler<ObjectEventArgs<TViewItem>> ItemInserted;
 		protected virtual void OnItemInserted(ObjectEventArgs<TViewItem> e)
@@ -33,7 +32,7 @@ namespace Cchbc
 			ItemDeleted?.Invoke(this, e);
 		}
 
-		public IModifiableAdapter<T> Adapter { get; }
+		private IModifiableAdapter<T> Adapter { get; }
 		public Sorter<TViewItem> Sorter { get; }
 		public Searcher<TViewItem> Searcher { get; }
 		public FilterOption<TViewItem>[] FilterOptions { get; set; }
@@ -64,7 +63,7 @@ namespace Cchbc
 
 		public abstract ValidationResult[] ValidateProperties(TViewItem viewItem);
 
-		public abstract PermissionResult CanAdd(TViewItem viewItem);
+		public abstract Task<PermissionResult> CanAddAsync(TViewItem viewItem);
 
 		public async Task AddAsync(TViewItem viewItem, ModalDialog dialog)
 		{
@@ -75,7 +74,7 @@ namespace Cchbc
 			if (validationResults.Length == 0)
 			{
 				// Apply business logic
-				var permissionResult = this.CanAdd(viewItem);
+				var permissionResult = await this.CanAddAsync(viewItem);
 				switch (permissionResult.Status)
 				{
 					case PermissionStatus.Allow:
@@ -95,31 +94,41 @@ namespace Cchbc
 			}
 		}
 
+		public async Task DeleteAsync(TViewItem viewItem, ModalDialog dialog)
+		{
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+
+
+		}
+
 		private async Task AddValidatedAsync(TViewItem viewItem)
 		{
 			// Add the item to the db
-			await this.Adapter.InsertAsync(viewItem.Item);
-
-			// Find the right index to insert the new element
-			var index = this.ViewItems.Count;
-			if (this.Sorter.CurrentOption != null)
+			var success = await this.Adapter.InsertAsync(viewItem.Item);
+			if (success)
 			{
-				var cmp = this.Sorter.CurrentOption.Comparison;
-				foreach (var current in this.ViewItems)
+				// Find the right index to insert the new element
+				var index = this.ViewItems.Count;
+				if (this.Sorter.CurrentOption != null)
 				{
-					var result = cmp(current, viewItem);
-					if (result >= 0)
+					var cmp = this.Sorter.CurrentOption.Comparison;
+					foreach (var current in this.ViewItems)
 					{
-						break;
+						var result = cmp(current, viewItem);
+						if (result >= 0)
+						{
+							break;
+						}
+						index++;
 					}
-					index++;
 				}
+
+				// Insert the item into the list at the correct place
+				this.ViewItems.Insert(index, viewItem);
+
+				this.OnItemInserted(new ObjectEventArgs<TViewItem>(viewItem));
 			}
-
-			// Insert the item into the list at the correct place
-			this.ViewItems.Insert(index, viewItem);
-
-			this.OnItemInserted(new ObjectEventArgs<TViewItem>(viewItem));
 		}
 
 		public IEnumerable<TViewItem> Sort(ICollection<TViewItem> currenTiewItems, SortOption<TViewItem> sortOption)
