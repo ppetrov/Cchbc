@@ -38,13 +38,17 @@ namespace Cchbc.UI.Comments
 
 	public sealed class CommentsManager : Manager<Comment, CommentViewItem>
 	{
-		public CommentAdapter Adapter { get; set; }
+		public ILogger Logger { get; }
+		public IProgress<string> OperationProgress { get; }
+		public CommentAdapter Adapter { get; }
 
-		public CommentsManager(CommentAdapter adapter,
+		public CommentsManager(ILogger logger, IProgress<string> operationProgress, CommentAdapter adapter,
 			Sorter<CommentViewItem> sorter,
 			Searcher<CommentViewItem> searcher,
 			FilterOption<CommentViewItem>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
 		{
+			this.Logger = logger;
+			this.OperationProgress = operationProgress;
 			this.Adapter = adapter;
 		}
 
@@ -52,34 +56,56 @@ namespace Cchbc.UI.Comments
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			// All business logic about properties
-			return new[]
+			var s = Stopwatch.StartNew();
+
+			// TODO : Customize !!!
+			this.OperationProgress.Report(@"Validating fields");
+			var validationResults = Validator.GetResults(new[]
 			{
+				// TODO : !!! Customize !!!
 				Validator.ValidateNotNull(viewItem.Contents, @"Contents cannot be null"),
-				Validator.ValidateNotEmpty(viewItem.Contents, @"Contents cannot be empty"),
-				Validator.ValidateMaxLength(viewItem.Contents, 1024, @"Contents cannot be larger then 1024"),
-			};
+			});
+			this.Logger.Info($@"Validating fields took {s.ElapsedMilliseconds} ms");
+
+			return validationResults;
 		}
 
 		public override async Task<PermissionResult> CanAddAsync(CommentViewItem viewItem)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			// All the business logic is here
-			var hasUnreplicated = await this.Adapter.HasUnreplicatedAsync();
-			if (hasUnreplicated)
+			var s = Stopwatch.StartNew();
+
+			try
 			{
-				return PermissionResult.Deny(@"Has unreplicated records. Please sync first");
+				// TODO : !!! Customize !!!
+				this.OperationProgress.Report(@"Checking for unreplicated data");
+				var hasUnreplicated = await this.Adapter.HasUnreplicatedAsync();
+				if (hasUnreplicated)
+				{
+					// TODO : !!! Customize !!!
+					return PermissionResult.Deny(@"Has unreplicated records. Please sync first");
+				}
+				// TODO : !!! Customize !!!
+				this.OperationProgress.Report(@"Checking for items on the same date");
+				if (this.ViewItems.Any(v => v.CreatedAt.Date == viewItem.CreatedAt.Date))
+				{
+					// TODO : !!! Customize !!!
+					return PermissionResult.Deny(@"Already have a comment for this date");
+				}
+				// TODO : !!! Customize !!!
+				this.OperationProgress.Report(@"Checking items limits");
+				if (this.ViewItems.Count > 10)
+				{
+					// TODO : !!! Customize !!!
+					return PermissionResult.Confirm(@"Too many comments already. Are you sure you want one more?");
+				}
+				return PermissionResult.Allow;
 			}
-			if (this.ViewItems.Any(v => v.CreatedAt.Date == viewItem.CreatedAt.Date))
+			finally
 			{
-				return PermissionResult.Deny(@"Already have a comment for this date");
+				this.Logger.Info($@"CanAdd took { s.ElapsedMilliseconds} ms");
 			}
-			if (this.ViewItems.Count > 10)
-			{
-				return PermissionResult.Confirm(@"Too many comments already. Are you sure you want one more?");
-			}
-			return PermissionResult.Allow;
 		}
 	}
 
@@ -95,9 +121,10 @@ namespace Cchbc.UI.Comments
 	public sealed class CommentsViewModel : ViewObject
 	{
 		private ILogger Logger { get; }
-		private Manager<Comment, CommentViewItem> Manager { get; }
+		private CommentsManager Manager { get; }
 
 		public ObservableCollection<CommentViewItem> Articles { get; } = new ObservableCollection<CommentViewItem>();
+		public ObservableCollection<string> Operations { get; } = new ObservableCollection<string>();
 		//public SortOption<CommentViewItem>[] SortOptions => this.Module.Sorter.Options;
 		//public SearchOption<CommentViewItem>[] SearchOptions => this.Module.Searcher.Options;
 
@@ -132,6 +159,8 @@ namespace Cchbc.UI.Comments
 		}
 
 		private SortOption<CommentViewItem> _sortOption;
+		private string _operationProgress;
+
 		public SortOption<CommentViewItem> SortOption
 		{
 			get { return _sortOption; }
@@ -152,7 +181,9 @@ namespace Cchbc.UI.Comments
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
 			this.Logger = logger;
-			this.Manager = new CommentsManager(new CommentAdapter(),
+			this.Manager = new CommentsManager(logger,
+				new Progress<string>(DisplayOperationProgress),
+				new CommentAdapter(),
 				new Sorter<CommentViewItem>(new[]
 				{
 					new SortOption<CommentViewItem>(@"Type", (x, y) => string.Compare(x.Type, y.Type, StringComparison.Ordinal)),
@@ -175,6 +206,25 @@ namespace Cchbc.UI.Comments
 			{
 				args.Item.Count++;
 			};
+		}
+
+		public string OperationProgress
+		{
+			get { return _operationProgress; }
+			set { this.SetField(ref _operationProgress, value); }
+		}
+
+		private void DisplayOperationProgress(string message)
+		{
+			if (message == string.Empty)
+			{
+				this.Operations.Clear();
+			}
+			else
+			{
+				this.OperationProgress = message;
+				this.Operations.Add(message);
+			}
 		}
 
 		public async Task LoadDataAsync()
@@ -247,10 +297,14 @@ namespace Cchbc.UI.Comments
 
 		public async Task AddAsync()
 		{
-			// TODO : Time operation ?!??? ==> No
+			// TODO : Time operation ?!??? ==> No because we have many chunks
+			// 1. Check if we can addd - fast, medium or slow -> need to time = DONE
+			// 2. add(insert into db) - 100% need to time -> need to time = DONE
+			// 3. fire events & update collections - fast be can be something stupid to cause medium slow -> need to time DONE if need it
 			// TODO : Log usage
 			try
 			{
+				this.Manager.OperationProgress.Report(string.Empty);
 				await this.Manager.AddAsync(new CommentViewItem(new Comment()), new WinRtModalDialog());
 			}
 			catch (Exception ex)
@@ -306,7 +360,16 @@ namespace Cchbc.UI.Comments
 
 		public Task<bool> HasUnreplicatedAsync()
 		{
-			throw new NotImplementedException();
+			return Task.Run(() =>
+			{
+				using (var mre = new ManualResetEventSlim(false))
+				{
+					mre.Wait(TimeSpan.FromSeconds(3));
+				}
+				return true;
+			});
+			//await Task.Delay(5000);
+			//return true;
 		}
 	}
 

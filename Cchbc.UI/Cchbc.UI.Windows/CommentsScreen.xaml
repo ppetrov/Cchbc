@@ -10,16 +10,20 @@
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"></RowDefinition>
-            <RowDefinition Height="4*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
             <RowDefinition Height="Auto"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"></ColumnDefinition>
-            <ColumnDefinition Width="5*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
             <ColumnDefinition Width="Auto"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        
+
         <Button x:Name="BtnAdd" Tapped="UIElement_OnTapped">Add</Button>
+        <!--<TextBlock Grid.Column="0" Grid.Row="1" Text="{Binding OperationProgress, Mode=TwoWay}" Margin="10" Foreground="IndianRed"></TextBlock>-->
+        <ListBox Grid.Row="1" Margin="10" ItemsSource="{Binding Operations, Mode=TwoWay}">
+
+        </ListBox>
 
         <StackPanel Grid.Column="2" Margin="40">
             <TextBox  Text="{Binding TextSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>

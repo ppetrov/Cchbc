@@ -12,6 +12,7 @@ namespace Cchbc.UI
 		public CommentsScreen()
 		{
 			this.InitializeComponent();
+			this.DataContext = _viewModel;
 		}
 
 		private async void CommentsScreen_OnLoaded(object sender, RoutedEventArgs e)

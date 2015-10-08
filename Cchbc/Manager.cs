@@ -99,7 +99,6 @@ namespace Cchbc
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 
-
 		}
 
 		private async Task AddValidatedAsync(TViewItem viewItem)
