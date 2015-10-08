@@ -9,27 +9,56 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
-            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="3*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"></ColumnDefinition>
             <ColumnDefinition Width="*"></ColumnDefinition>
-            <ColumnDefinition Width="Auto"></ColumnDefinition>
+            <ColumnDefinition Width="3*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
-        <Button x:Name="BtnAdd" Tapped="UIElement_OnTapped">Add</Button>
-        <!--<TextBlock Grid.Column="0" Grid.Row="1" Text="{Binding OperationProgress, Mode=TwoWay}" Margin="10" Foreground="IndianRed"></TextBlock>-->
-        <ListBox Grid.Row="1" Margin="10" ItemsSource="{Binding Operations, Mode=TwoWay}">
+        <ListView Grid.Column="1" Grid.Row="1" Margin="10" ItemsSource="{Binding Logins}" Background="IndianRed">
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapGrid></WrapGrid>
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Width="200" Height="100" Margin="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"></ColumnDefinition>
+                            <ColumnDefinition Width="2*"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                        </Grid.RowDefinitions>
 
-        </ListBox>
+                        <TextBlock Grid.Row="0" Grid.Column="0">Name</TextBlock>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Name}"></TextBlock>
 
-        <StackPanel Grid.Column="2" Margin="40">
-            <TextBox  Text="{Binding TextSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                        <TextBlock Grid.Row="1" Grid.Column="0">Password</TextBlock>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Password}"></TextBlock>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0">Is System</TextBlock>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding IsSystem}"></TextBlock>
+
+                        <!--<Button Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="2" HorizontalAlignment="Right" VerticalAlignment="Top" Tapped="DeleteLoginTapped">Delete</Button>-->
+                        <Button Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="2" HorizontalAlignment="Right" VerticalAlignment="Top" Tapped="PromoteLoginTapped">Promote</Button>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <StackPanel Grid.Row="2" Grid.Column="1">
+            <Button Tapped="AddLoginTapped">Add New Login</Button>
         </StackPanel>
 
-        <ListView ItemsSource="{Binding SearchOptions}" Grid.Row="0" Grid.Column="1" Background="Orange" Margin="40" 
+        <!--<ListView ItemsSource="{Binding SearchOptions}" Grid.Row="0" Grid.Column="1" Background="Orange" Margin="40" 
                   
                   SelectionMode="Single"
                   SelectedItem="{Binding SearchOption, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -70,17 +99,21 @@
         </ListView>
 
         <StackPanel Grid.Column="1" Grid.Row="2" Background="IndianRed" Margin="20" Orientation="Horizontal">
-            <!--<ToggleButton Margin="10" Tapped="UIElement_OnTapped">Exclude suppressed</ToggleButton>
+            -->
+        <!--<ToggleButton Margin="10" Tapped="UIElement_OnTapped">Exclude suppressed</ToggleButton>
             <ToggleButton Margin="10" Tapped="UIElement_OnTapped2">Exclude not in territory</ToggleButton>-->
+        <!--
         </StackPanel>
 
 
         <ListBox Grid.Row="1" Grid.Column="2" Margin="20" ItemsSource="{Binding SortOptions}" DisplayMemberPath="Name" SelectedItem="{Binding SortOption, Mode=TwoWay}">
-            <!--<ListBox.ItemTemplate>
+            -->
+        <!--<ListBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{}"></TextBlock>
                 </DataTemplate>
             </ListBox.ItemTemplate>-->
-        </ListBox>
+        <!--
+        </ListBox>-->
     </Grid>
 </Page>

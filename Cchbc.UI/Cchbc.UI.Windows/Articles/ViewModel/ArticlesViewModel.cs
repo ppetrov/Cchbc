@@ -14,11 +14,11 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 	public sealed class ArticlesViewModel : ViewObject
 	{
 		private ILogger Logger { get; }
-		private Helper<Article, ArticleViewItem> Helper { get; }
+		private Module<Article, ArticleViewItem> Module { get; }
 
 		public ObservableCollection<ArticleViewItem> Articles { get; } = new ObservableCollection<ArticleViewItem>();
-		public SortOption<ArticleViewItem>[] SortOptions => this.Helper.Sorter.Options;
-		public SearchOption<ArticleViewItem>[] SearchOptions => this.Helper.Searcher.Options;
+		public SortOption<ArticleViewItem>[] SortOptions => this.Module.Sorter.Options;
+		public SearchOption<ArticleViewItem>[] SearchOptions => this.Module.Searcher.Options;
 
 		private string _textSearch = string.Empty;
 		public string TextSearch
@@ -71,7 +71,7 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
 			this.Logger = logger;
-			this.Helper = new ArticlesHelper(
+			this.Module = new Articles.ArticlesModule(
 				new Sorter<ArticleViewItem>(new[]
 				{
 					new SortOption<ArticleViewItem>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
@@ -111,7 +111,7 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 			{
 				items[index++] = new ArticleViewItem(item);
 			}
-			this.Helper.LoadData(items);
+			this.Module.LoadData(items);
 
 			this.ApplySearch();
 			this.Logger.Info($@"Articles loaded in {s.ElapsedMilliseconds} ms");
@@ -123,7 +123,7 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 			//this.Logger.Info(@"Loading articles...");
 
 			// TODO : !!! Log operation & time
-			this.Helper.FilterOptions[0].Flip();
+			this.Module.FilterOptions[0].Flip();
 			this.ApplySearch();
 
 			// TODO : Logger
@@ -134,7 +134,7 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 		public void ExcludeNotInTerritory()
 		{
 			// TODO : !!! Log operation & time
-			this.Helper.FilterOptions[1].Flip();
+			this.Module.FilterOptions[1].Flip();
 			this.ApplySearch();
 		}
 

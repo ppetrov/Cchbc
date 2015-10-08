@@ -5,9 +5,9 @@ using Cchbc.Sort;
 
 namespace Cchbc.UI.Articles
 {
-	public sealed class ArticlesHelper : Helper<Article, ArticleViewItem>
+	public sealed class ArticlesModule : Module<Article, ArticleViewItem>
 	{
-		public ArticlesHelper(
+		public ArticlesModule(
 			Sorter<ArticleViewItem> sorter, 
 			Searcher<ArticleViewItem> searcher, 
 			FilterOption<ArticleViewItem>[] filterOptions = null) 

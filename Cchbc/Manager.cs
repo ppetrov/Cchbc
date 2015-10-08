@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Dialog;
@@ -7,6 +8,7 @@ using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
 using Cchbc.Validation;
+using Microsoft.VisualBasic;
 
 namespace Cchbc
 {
@@ -65,11 +67,16 @@ namespace Cchbc
 
 		public abstract Task<PermissionResult> CanAddAsync(TViewItem viewItem);
 
+		public abstract Task<PermissionResult> CanUpdateAsync(TViewItem viewItem);
+
+		public abstract Task<PermissionResult> CanDeleteAsync(TViewItem viewItem);
+
 		public async Task AddAsync(TViewItem viewItem, ModalDialog dialog)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 
+			// TODO : display progress 
 			var validationResults = this.ValidateProperties(viewItem);
 			if (validationResults.Length == 0)
 			{
@@ -79,10 +86,53 @@ namespace Cchbc
 				{
 					case PermissionStatus.Allow:
 						await this.AddValidatedAsync(viewItem);
+
+						// TODO : !!! D
+						//var a = null;
+
+						// TODO : Hide progress
+
 						break;
 					case PermissionStatus.Confirm:
 						// Confirm any user warnings
-						dialog.AcceptAction = () => this.AddValidatedAsync(viewItem);
+						dialog.AcceptAction = async () =>
+						{
+							await this.AddValidatedAsync(viewItem);
+							//var a = null;
+							// TODO : Hide progress
+						};
+						await dialog.ConfirmAsync(permissionResult.Message);
+						break;
+					case PermissionStatus.Deny:
+						await dialog.DisplayAsync(permissionResult.Message);
+
+						//var a = null;
+						// TODO : Hide progress
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+			}
+		}
+
+		public async Task UpdateAsync(TViewItem viewItem, ModalDialog dialog)
+		{
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+
+			var validationResults = this.ValidateProperties(viewItem);
+			if (validationResults.Length == 0)
+			{
+				// Apply business logic
+				var permissionResult = await this.CanUpdateAsync(viewItem);
+				switch (permissionResult.Status)
+				{
+					case PermissionStatus.Allow:
+						await this.UpdateValidatedAsync(viewItem);
+						break;
+					case PermissionStatus.Confirm:
+						// Confirm any user warnings
+						dialog.AcceptAction = async () => await this.UpdateValidatedAsync(viewItem);
 						await dialog.ConfirmAsync(permissionResult.Message);
 						break;
 					case PermissionStatus.Deny:
@@ -99,6 +149,23 @@ namespace Cchbc
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 
+			var permissionResult = await this.CanDeleteAsync(viewItem);
+			switch (permissionResult.Status)
+			{
+				case PermissionStatus.Allow:
+					await this.DeleteValidatedAsync(viewItem);
+					break;
+				case PermissionStatus.Confirm:
+					// Confirm any user warnings
+					dialog.AcceptAction = async () => await this.DeleteValidatedAsync(viewItem);
+					await dialog.ConfirmAsync(permissionResult.Message);
+					break;
+				case PermissionStatus.Deny:
+					await dialog.DisplayAsync(permissionResult.Message);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
 		}
 
 		private async Task AddValidatedAsync(TViewItem viewItem)
@@ -127,6 +194,29 @@ namespace Cchbc
 				this.ViewItems.Insert(index, viewItem);
 
 				this.OnItemInserted(new ObjectEventArgs<TViewItem>(viewItem));
+			}
+		}
+
+		private async Task UpdateValidatedAsync(TViewItem viewItem)
+		{
+			// Update the item from the db
+			var success = await this.Adapter.UpdateAsync(viewItem.Item);
+			if (success)
+			{
+				this.OnItemUpdated(new ObjectEventArgs<TViewItem>(viewItem));
+			}
+		}
+
+		private async Task DeleteValidatedAsync(TViewItem viewItem)
+		{
+			// Delete the item from the db
+			var success = await this.Adapter.DeleteAsync(viewItem.Item);
+			if (success)
+			{
+				// Delete the item into the list at the correct place
+				this.ViewItems.Remove(viewItem);
+
+				this.OnItemDeleted(new ObjectEventArgs<TViewItem>(viewItem));
 			}
 		}
 
@@ -170,11 +260,11 @@ namespace Cchbc
 			}
 		}
 
-		public IEnumerable<TViewItem> Search(string textSearch, SearchOption<TViewItem> searchOption)
+		public IEnumerable<TViewItem> Search(string textSearch, SearchOption<TViewItem> searchOption, List<TViewItem> viewItems = null)
 		{
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
 
-			return this.Searcher.Search(GetFilteredViewItems(this.ViewItems), textSearch, searchOption);
+			return this.Searcher.Search(GetFilteredViewItems(viewItems ?? this.ViewItems), textSearch, searchOption);
 		}
 
 		private ICollection<TViewItem> GetFilteredViewItems(ICollection<TViewItem> viewItems)

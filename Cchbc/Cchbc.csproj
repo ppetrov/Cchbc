@@ -39,7 +39,7 @@
   <ItemGroup>
     <Compile Include="Data\IModifiableAdapter.cs" />
     <Compile Include="ILogger.cs" />
-    <Compile Include="Helper.cs" />
+    <Compile Include="Module.cs" />
     <Compile Include="Objects\ViewItem.cs" />
     <Compile Include="Search\FilterOption.cs" />
     <Compile Include="Search\Searcher.cs" />

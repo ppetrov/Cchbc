@@ -17,7 +17,7 @@ namespace Cchbc.Validation
 			return string.IsNullOrWhiteSpace(value) ? new ValidationResult(message) : ValidationResult.Success;
 		}
 
-		public static ValidationResult[] GetResults(ValidationResult[] results)
+		public static ValidationResult[] GetViolated(ValidationResult[] results)
 		{
 			if (results == null) throw new ArgumentNullException(nameof(results));
 			if (results.Length == 0) throw new ArgumentOutOfRangeException(nameof(results));

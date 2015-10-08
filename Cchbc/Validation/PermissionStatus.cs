@@ -2,8 +2,8 @@
 {
 	public enum PermissionStatus
 	{
-		Deny,
 		Allow,
-		Confirm
+		Confirm,
+		Deny
 	}
 }

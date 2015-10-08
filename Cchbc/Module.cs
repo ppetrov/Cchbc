@@ -6,7 +6,7 @@ using Cchbc.Sort;
 
 namespace Cchbc
 {
-	public class Helper<T, TViewItem> where T : IDbObject where TViewItem : ViewItem<T>
+	public class Module<T, TViewItem> where T : IDbObject where TViewItem : ViewItem<T>
 	{
 		private TViewItem[] ViewItems { get; set; }
 
@@ -14,7 +14,7 @@ namespace Cchbc
 		public Searcher<TViewItem> Searcher { get; }
 		public FilterOption<TViewItem>[] FilterOptions { get; }
 
-		public Helper(Sorter<TViewItem> sorter, Searcher<TViewItem> searcher, FilterOption<TViewItem>[] filterOptions = null)
+		public Module(Sorter<TViewItem> sorter, Searcher<TViewItem> searcher, FilterOption<TViewItem>[] filterOptions = null)
 		{
 			if (sorter == null) throw new ArgumentNullException(nameof(sorter));
 			if (searcher == null) throw new ArgumentNullException(nameof(searcher));
