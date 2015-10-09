@@ -224,7 +224,6 @@ namespace Cchbc.UI.Comments
 		//{
 		//	return PermissionResult.Allow;
 		//}
-
 	}
 
 	public sealed class LoginAdapter : IModifiableAdapter<Login>
@@ -234,6 +233,8 @@ namespace Cchbc.UI.Comments
 		public LoginAdapter()
 		{
 			_logins.Add(new Login(1, @"Petar", @"123", DateTime.Today.AddDays(-7), true));
+			_logins.Add(new Login(1, @"Denis", @"123", DateTime.Today.AddDays(-7), true));
+			_logins.Add(new Login(1, @"Teodor", @"123", DateTime.Today.AddDays(-7), true));
 		}
 
 		public Task<List<Login>> GetAllAsync()
@@ -241,12 +242,14 @@ namespace Cchbc.UI.Comments
 			return Task.FromResult(new List<Login>(_logins));
 		}
 
-		public Task<bool> InsertAsync(Login item)
+		public async Task<bool> InsertAsync(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
+			//await Task.Delay(7000);
 			_logins.Add(item);
-			return Task.FromResult(true);
+			//return Task.FromResult(true);
+			return true;
 		}
 
 		public Task<bool> UpdateAsync(Login item)
@@ -281,8 +284,10 @@ namespace Cchbc.UI.Comments
 		public ILogger Logger { get; }
 		public LoginsManager Manager { get; }
 		public ObservableCollection<LoginViewItem> Logins { get; } = new ObservableCollection<LoginViewItem>();
+		public SortOption<LoginViewItem>[] SortOptions => this.Manager.Sorter.Options;
+		public SearchOption<LoginViewItem>[] SearchOptions => this.Manager.Searcher.Options;
 
-		private bool _isBusy = false;
+		private bool _isBusy;
 		public bool IsBusy
 		{
 			get { return _isBusy; }
@@ -321,20 +326,19 @@ namespace Cchbc.UI.Comments
 			this.Manager.ItemDeleted += ManagerOnItemDeleted;
 		}
 
+		private void ManagerOnItemInserted(object sender, ObjectEventArgs<LoginViewItem> args)
+		{
+			this.Manager.Insert(string.Empty, null, this.Logins, args.Item);
+		}
+
 		private void ManagerOnItemUpdated(object sender, ObjectEventArgs<LoginViewItem> args)
 		{
-			// TODO : !!! Re-apply current filter
-			//throw new NotImplementedException();
+			this.Manager.Update(string.Empty, null, this.Logins, args.Item);
 		}
 
 		private void ManagerOnItemDeleted(object sender, ObjectEventArgs<LoginViewItem> args)
 		{
-			this.Logins.Remove(args.Item);
-		}
-
-		private void ManagerOnItemInserted(object sender, ObjectEventArgs<LoginViewItem> args)
-		{
-			this.Logins.Add(args.Item);
+			this.Manager.Delete(this.Logins, args.Item);
 		}
 
 		public async Task LoadDataAsync()
@@ -355,6 +359,8 @@ namespace Cchbc.UI.Comments
 
 			try
 			{
+				// TODO : !!! Log usage !!!
+
 				await this.Manager.AddAsync(viewItem, dialog);
 			}
 			catch (Exception ex)

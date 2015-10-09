@@ -24,7 +24,11 @@ namespace Cchbc.UI
 
 		private async void AddLoginTapped(object sender, TappedRoutedEventArgs e)
 		{
-			await _viewModel.AddAsync(new LoginViewItem(new Login(2, @"Doctor@", @"123456789", DateTime.Now, false)), new WinRtModalDialog());
+			var btn = sender as Button;
+			if (btn != null)
+			{
+				await _viewModel.AddAsync(new LoginViewItem(new Login(2, @"ZDoctor@", @"123456789", DateTime.Now, false)), new WinRtModalDialog());
+			}
 		}
 
 		private async void DeleteLoginTapped(object sender, TappedRoutedEventArgs e)
@@ -64,6 +68,6 @@ namespace Cchbc.UI
 			//await dialog.ShowAsync(@"Are you sure you want to mark as read ?");
 		}
 
-		
+
 	}
 }
