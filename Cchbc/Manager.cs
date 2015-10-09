@@ -138,6 +138,40 @@ namespace Cchbc
 			}
 		}
 
+		public void Insert(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
+		{
+			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
+			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+
+			var results = this.Search(textSearch, searchOption, new List<TViewItem>(1) { viewItem });
+			if (results.Any())
+			{
+				// Insert at the end by default
+				var index = viewItems.Count;
+
+				var option = this.Sorter.CurrentOption;
+				if (option != null)
+				{
+					index = 0;
+
+					// Insert at the right place according to the current sort option
+					var comparison = option.Comparison;
+					foreach (var login in viewItems)
+					{
+						var cmp = comparison(login, viewItem);
+						if (cmp > 0)
+						{
+							break;
+						}
+						index++;
+					}
+				}
+
+				viewItems.Insert(index, viewItem);
+			}
+		}
+
 		public async Task UpdateAsync(TViewItem viewItem, ModalDialog dialog)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
@@ -194,6 +228,17 @@ namespace Cchbc
 
 		}
 
+		public void Update(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
+		{
+			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
+			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+
+			// This is still better then re-applying the filter & sorting the data
+			this.Delete(viewItems, viewItem);
+			this.Insert(viewItems, viewItem, textSearch, searchOption);
+		}
+
 		public async Task DeleteAsync(TViewItem viewItem, ModalDialog dialog)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
@@ -242,6 +287,64 @@ namespace Cchbc
 					this.OnEndOperation(args);
 				}
 			}
+		}
+
+		public void Delete(ObservableCollection<TViewItem> viewItems, TViewItem viewItem)
+		{
+			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+
+			viewItems.Remove(viewItem);
+
+			// Only recalculate filter counts. Delete doesn't affect sort
+			this.Searcher.SetupCounts(viewItems);
+		}
+
+		public IEnumerable<TViewItem> Sort(ICollection<TViewItem> currenTiewItems, SortOption<TViewItem> sortOption)
+		{
+			if (sortOption == null) throw new ArgumentNullException(nameof(sortOption));
+
+			var flag = sortOption.Ascending ?? true;
+
+			// Sort view items
+			this.Sorter.Sort(this.ViewItems, sortOption);
+
+			// Sort current view items
+			var copy = new TViewItem[currenTiewItems.Count];
+			currenTiewItems.CopyTo(copy, 0);
+			this.Sorter.Sort(copy, sortOption);
+
+			// Set the new flag
+			if (sortOption.Ascending.HasValue)
+			{
+				sortOption.Ascending = !flag;
+			}
+			else
+			{
+				sortOption.Ascending = true;
+			}
+
+			// Clear all sort options
+			foreach (var option in this.Sorter.Options)
+			{
+				if (option != sortOption)
+				{
+					option.Ascending = null;
+				}
+			}
+
+			// Return current view items sorted
+			foreach (var viewItem in copy)
+			{
+				yield return viewItem;
+			}
+		}
+
+		public IEnumerable<TViewItem> Search(string textSearch, SearchOption<TViewItem> searchOption, List<TViewItem> viewItems = null)
+		{
+			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
+
+			return this.Searcher.Search(GetFilteredViewItems(viewItems ?? this.ViewItems), textSearch, searchOption);
 		}
 
 		private async Task AddValidatedAsync(TViewItem viewItem)
@@ -298,53 +401,6 @@ namespace Cchbc
 			}
 		}
 
-		public IEnumerable<TViewItem> Sort(ICollection<TViewItem> currenTiewItems, SortOption<TViewItem> sortOption)
-		{
-			if (sortOption == null) throw new ArgumentNullException(nameof(sortOption));
-
-			var flag = sortOption.Ascending ?? true;
-
-			// Sort view items
-			this.Sorter.Sort(this.ViewItems, sortOption);
-
-			// Sort current view items
-			var copy = new TViewItem[currenTiewItems.Count];
-			currenTiewItems.CopyTo(copy, 0);
-			this.Sorter.Sort(copy, sortOption);
-
-			// Set the new flag
-			if (sortOption.Ascending.HasValue)
-			{
-				sortOption.Ascending = !flag;
-			}
-			else
-			{
-				sortOption.Ascending = true;
-			}
-
-			// Clear all sort options
-			foreach (var option in this.Sorter.Options)
-			{
-				if (option != sortOption)
-				{
-					option.Ascending = null;
-				}
-			}
-
-			// Return current view items sorted
-			foreach (var viewItem in copy)
-			{
-				yield return viewItem;
-			}
-		}
-
-		public IEnumerable<TViewItem> Search(string textSearch, SearchOption<TViewItem> searchOption, List<TViewItem> viewItems = null)
-		{
-			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
-
-			return this.Searcher.Search(GetFilteredViewItems(viewItems ?? this.ViewItems), textSearch, searchOption);
-		}
-
 		private ICollection<TViewItem> GetFilteredViewItems(ICollection<TViewItem> viewItems)
 		{
 			if (this.FilterOptions != null && this.FilterOptions.Length > 0)
@@ -375,62 +431,6 @@ namespace Cchbc
 			}
 
 			return viewItems;
-		}
-
-		public void Insert(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
-		{
-			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
-			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-
-			var results = this.Search(textSearch, searchOption, new List<TViewItem>(1) { viewItem });
-			if (results.Any())
-			{
-				// Insert at the end by default
-				var index = viewItems.Count;
-
-				var option = this.Sorter.CurrentOption;
-				if (option != null)
-				{
-					index = 0;
-
-					// Insert at the right place according to the current sort option
-					var comparison = option.Comparison;
-					foreach (var login in viewItems)
-					{
-						var cmp = comparison(login, viewItem);
-						if (cmp > 0)
-						{
-							break;
-						}
-						index++;
-					}
-				}
-
-				viewItems.Insert(index, viewItem);
-			}
-		}
-
-		public void Update(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
-		{
-			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
-			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-
-			// This is still better then re-applying the filter & sorting the data
-			this.Delete(viewItems, viewItem);
-			this.Insert(viewItems, viewItem, textSearch, searchOption);
-		}
-
-		public void Delete(ObservableCollection<TViewItem> viewItems, TViewItem viewItem)
-		{
-			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-
-			viewItems.Remove(viewItem);
-
-			// Only recalculate filter counts. Delete doesn't affect sort
-			this.Searcher.SetupCounts(viewItems);
 		}
 	}
 }
