@@ -9,7 +9,7 @@ namespace Cchbc.UI
 {
 	public sealed partial class CommentsScreen
 	{
-		private readonly LoginsViewModel _viewModel = new LoginsViewModel(new DirectDebugLogger());
+		private readonly LoginsViewModel _viewModel = new LoginsViewModel(new DirectDebugLogger(nameof(LoginsViewModel)));
 
 		public CommentsScreen()
 		{
@@ -61,13 +61,11 @@ namespace Cchbc.UI
 			}
 		}
 
-		private async void UIElement_OnTapped3(object sender, TappedRoutedEventArgs e)
+		private void UIElement_OnTapped3(object sender, TappedRoutedEventArgs e)
 		{
 			//var dialog = new WinRtModalDialog();
 			//dialog.AcceptAction = async () => { await _viewModel.MarkAsync(dialog); };
 			//await dialog.ShowAsync(@"Are you sure you want to mark as read ?");
 		}
-
-
 	}
 }

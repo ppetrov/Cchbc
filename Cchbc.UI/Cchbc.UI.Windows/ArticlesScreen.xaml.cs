@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -16,7 +17,7 @@ namespace Cchbc.UI
 	/// </summary>
 	public sealed partial class ArticlesScreen : Page
 	{
-		private readonly ArticlesViewModel _viewModel = new ArticlesViewModel(new DirectDebugLogger());
+		private readonly ArticlesViewModel _viewModel = new ArticlesViewModel(new DirectDebugLogger(nameof(ArticlesViewModel)));
 
 		public ArticlesScreen()
 		{
@@ -44,7 +45,14 @@ namespace Cchbc.UI
 
 	public abstract class BufferedLogger : ILogger
 	{
-		public string Context { get; } = @"Articles";
+		public string Context { get; }
+
+		protected BufferedLogger(string context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			this.Context = context;
+		}
 
 		public bool IsDebugEnabled { get; protected set; }
 		public bool IsInfoEnabled { get; protected set; }
@@ -86,9 +94,7 @@ namespace Cchbc.UI
 
 	public sealed class DirectDebugLogger : BufferedLogger
 	{
-
-
-		public DirectDebugLogger()
+		public DirectDebugLogger(string context) : base(context)
 		{
 			this.IsDebugEnabled = true;
 			this.IsInfoEnabled = true;

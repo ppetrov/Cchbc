@@ -21,7 +21,6 @@
 
         <StackPanel Orientation="Vertical" Grid.Column="1">
             <ProgressRing IsActive="{Binding IsBusy}" Foreground="Red"  Width="48" Height="48"></ProgressRing>
-            <TextBlock Text="{Binding Operation}"></TextBlock>
         </StackPanel>
 
 

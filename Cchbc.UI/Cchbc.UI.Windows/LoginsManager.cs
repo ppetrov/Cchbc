@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Dialog;
-using Cchbc.Helpers;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
@@ -58,10 +56,16 @@ namespace Cchbc.UI.Comments
 
 	public sealed class LoginsManager : Manager<Login, LoginViewItem>
 	{
+		public ILogger Logger { get; }
 		public LoginAdapter Adapter { get; }
 
-		public LoginsManager(LoginAdapter adapter, Sorter<LoginViewItem> sorter, Searcher<LoginViewItem> searcher, FilterOption<LoginViewItem>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
+		public LoginsManager(ILogger logger, LoginAdapter adapter, Sorter<LoginViewItem> sorter, Searcher<LoginViewItem> searcher, FilterOption<LoginViewItem>[] filterOptions = null)
+			: base(adapter, sorter, searcher, filterOptions)
 		{
+			if (logger == null) throw new ArgumentNullException(nameof(logger));
+			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
+
+			this.Logger = logger;
 			this.Adapter = adapter;
 		}
 
@@ -69,7 +73,9 @@ namespace Cchbc.UI.Comments
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			return Validator.GetViolated(new[]
+			var s = Stopwatch.StartNew();
+
+			var results = Validator.GetViolated(new[]
 			{
 				Validator.ValidateNotNull(viewItem.Name, @"Name cannot be null"),
 				Validator.ValidateNotEmpty(viewItem.Name, @"Name cannot be empty"),
@@ -80,47 +86,70 @@ namespace Cchbc.UI.Comments
 				Validator.ValidateMinLength(viewItem.Password, 8, @"Password is too short. Must be at least 8 symbols"),
 				Validator.ValidateMaxLength(viewItem.Password, 20, @"Password is too long. Must be less then or equal to 20")
 			});
+			this.Logger.Info($@"{nameof(ValidateProperties)}:{s.ElapsedMilliseconds}ms");
+
+			return results;
 		}
 
 		public override async Task<PermissionResult> CanAddAsync(LoginViewItem viewItem)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			return PermissionResult.Confirm(@"Are you sure ?");
-
-			var name = viewItem.Name;
-
-			foreach (var v in this.ViewItems)
+			var s = Stopwatch.StartNew();
+			try
 			{
-				if (v.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+				//var name = viewItem.Name;
+				//foreach (var v in this.ViewItems)
+				//{
+				//	if (v.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+				//	{
+				//		return PermissionResult.Deny(@"Login with the same name already exists");
+				//	}
+				//}
+				if (await this.Adapter.IsReservedAsync(viewItem.Name))
 				{
-					return PermissionResult.Deny(@"Login with the same name already exists");
+					return PermissionResult.Deny(@"This name is reserved");
 				}
-			}
 
-			if (await this.Adapter.IsReservedAsync(viewItem.Name))
+				return PermissionResult.Allow;
+			}
+			finally
 			{
-				return PermissionResult.Deny(@"This name is reserved");
+				this.Logger.Info($@"{nameof(CanAddAsync)}:{s.ElapsedMilliseconds}ms");
 			}
-
-			return PermissionResult.Allow;
 		}
 
 		public override Task<PermissionResult> CanUpdateAsync(LoginViewItem viewItem)
 		{
-			return Task.FromResult(PermissionResult.Allow);
+			var s = Stopwatch.StartNew();
+			try
+			{
+				return Task.FromResult(PermissionResult.Allow);
+			}
+			finally
+			{
+				this.Logger.Info($@"{nameof(CanUpdateAsync)}:{s.ElapsedMilliseconds}ms");
+			}
 		}
 
 		public override Task<PermissionResult> CanDeleteAsync(LoginViewItem viewItem)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			if (viewItem.Item.CreatedAt.Date == DateTime.Today)
+			var s = Stopwatch.StartNew();
+			try
 			{
-				return Task.FromResult(PermissionResult.Deny(@"Cannot delete today logins"));
-			}
+				if (viewItem.Item.CreatedAt.Date == DateTime.Today)
+				{
+					return Task.FromResult(PermissionResult.Deny(@"Cannot delete today logins"));
+				}
 
-			return Task.FromResult(PermissionResult.Allow);
+				return Task.FromResult(PermissionResult.Allow);
+			}
+			finally
+			{
+				this.Logger.Info($@"{nameof(CanDeleteAsync)}:{s.ElapsedMilliseconds}ms");
+			}
 		}
 
 		public Task<PermissionResult> CanPromoteAsync(LoginViewItem viewItem)
@@ -135,7 +164,6 @@ namespace Cchbc.UI.Comments
 			return Task.FromResult(PermissionResult.Confirm(@"Are you sure to promoto user create today ?"));
 		}
 
-		//public ILogger Logger { get; }
 		//public IProgress<string> OperationProgress { get; }
 		//public CommentAdapter Adapter { get; }
 
@@ -230,10 +258,12 @@ namespace Cchbc.UI.Comments
 
 	public sealed class LoginAdapter : IModifiableAdapter<Login>
 	{
+		private readonly ILogger _logger;
 		private readonly List<Login> _logins = new List<Login>();
 
-		public LoginAdapter()
+		public LoginAdapter(ILogger logger)
 		{
+			_logger = logger;
 			_logins.Add(new Login(1, @"Petar", @"123", DateTime.Today.AddDays(-7), true));
 			_logins.Add(new Login(1, @"Denis", @"123", DateTime.Today.AddDays(-7), true));
 			_logins.Add(new Login(1, @"Teodor", @"123", DateTime.Today.AddDays(-7), true));
@@ -244,24 +274,35 @@ namespace Cchbc.UI.Comments
 			return Task.FromResult(new List<Login>(_logins));
 		}
 
-		public async Task<bool> InsertAsync(Login item)
+		public Task<bool> InsertAsync(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
-			//throw new Exception(@"PPetrov");
-			//await Task.Delay(3000);
-			_logins.Add(item);
-			//return Task.FromResult(true);
-			return true;
+			var s = Stopwatch.StartNew();
+			try
+			{
+				_logins.Add(item);
+				return Task.FromResult(true);
+			}
+			finally
+			{
+				_logger.Info($@"{nameof(InsertAsync)}:{s.ElapsedMilliseconds}ms");
+			}
 		}
 
 		public Task<bool> UpdateAsync(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
-			// Do nothing
-
-			return Task.FromResult(true);
+			var s = Stopwatch.StartNew();
+			try
+			{
+				return Task.FromResult(true);
+			}
+			finally
+			{
+				_logger.Info($@"{nameof(UpdateAsync)}:{s.ElapsedMilliseconds}ms");
+			}
 		}
 
 		public Task<bool> DeleteAsync(Login item)
@@ -290,6 +331,52 @@ namespace Cchbc.UI.Comments
 		public SortOption<LoginViewItem>[] SortOptions => this.Manager.Sorter.Options;
 		public SearchOption<LoginViewItem>[] SearchOptions => this.Manager.Searcher.Options;
 
+		private string _textSearch = string.Empty;
+		public string TextSearch
+		{
+			get { return _textSearch; }
+			set
+			{
+				this.SetField(ref _textSearch, value);
+				// TODO : Logger
+				// TODO : Statistics to track functionality usage
+				//this.Stats[ExcludeSuppressed]++;
+				this.ApplySearch();
+			}
+		}
+
+		private SearchOption<LoginViewItem> _searchOption;
+		public SearchOption<LoginViewItem> SearchOption
+		{
+			get { return _searchOption; }
+			set
+			{
+				this.SetField(ref _searchOption, value);
+				// TODO : Logger
+				// TODO : Statistics to track functionality usage
+				//this.Logger.Info($@"Apply filter options:{string.Join(@",", selectedFilterOptions.Select(f => @"'" + f.DisplayName + @"'"))}");
+				//this.Manager.Logger.Info($@"Searching for text:'{this.TextSearch}', option: '{this.SearchOption?.DisplayName}'");
+				//this.Stats[ExcludeSuppressed]++;
+				this.ApplySearch();
+			}
+		}
+
+		private SortOption<LoginViewItem> _sortOption;
+		public SortOption<LoginViewItem> SortOption
+		{
+			get { return _sortOption; }
+			set
+			{
+				this.SetField(ref _sortOption, value);
+				// TODO : Logger
+				// TODO : Statistics to track functionality usage
+				//this.Logger.Info($@"Apply filter options:{string.Join(@",", selectedFilterOptions.Select(f => @"'" + f.DisplayName + @"'"))}");
+				//this.Manager.Logger.Info($@"Searching for text:'{this.TextSearch}', option: '{this.SearchOption?.DisplayName}'");
+				//this.Stats[ExcludeSuppressed]++;
+				this.ApplySort();
+			}
+		}
+
 		private bool _isBusy;
 		public bool IsBusy
 		{
@@ -297,19 +384,14 @@ namespace Cchbc.UI.Comments
 			private set { this.SetField(ref _isBusy, value); }
 		}
 
-		private string _operation = string.Empty;
-		public string Operation
-		{
-			get { return _operation; }
-			private set { this.SetField(ref _operation, value); }
-		}
+		public string ErrorMessage { get; private set; } = string.Empty;
 
 		public LoginsViewModel(ILogger logger)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
 			this.Logger = logger;
-			this.Manager = new LoginsManager(new LoginAdapter(), new Sorter<LoginViewItem>(new[]
+			this.Manager = new LoginsManager(logger, new LoginAdapter(logger), new Sorter<LoginViewItem>(new[]
 			{
 				new SortOption<LoginViewItem>(@"By Name", (x,y)=> string.Compare(x.Item.Name, y.Item.Name, StringComparison.Ordinal)),
 				new SortOption<LoginViewItem>(@"By Date", (x, y) =>
@@ -323,29 +405,9 @@ namespace Cchbc.UI.Comments
 				})
 			}), new Searcher<LoginViewItem>((v, s) => v.Item.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
 
-			this.Manager.OperationStart += (sender, args) =>
-			{
-				switch (args.Operation)
-				{
-					case ManagerOperation.Add:
-						Operation = @"Adding login";
-						break;
-					case ManagerOperation.Update:
-						Operation = @"Updating login";
-						break;
-					case ManagerOperation.Delete:
-						Operation = @"Deleting login";
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
-				this.IsBusy = true;
-			};
+			this.Manager.OperationStart += (sender, args) => { this.IsBusy = true; };
 			this.Manager.OperationEnd += (sender, args) => { this.IsBusy = false; };
-			this.Manager.OperationError += async (sender, args) =>
-			{
-				this.Operation = args.Exception.Message;
-			};
+			this.Manager.OperationError += (sender, args) => { this.ErrorMessage = args.Exception.Message; };
 			this.Manager.ItemInserted += ManagerOnItemInserted;
 			this.Manager.ItemUpdated += ManagerOnItemUpdated;
 			this.Manager.ItemDeleted += ManagerOnItemDeleted;
@@ -377,12 +439,32 @@ namespace Cchbc.UI.Comments
 			}
 		}
 
+		private void ApplySearch()
+		{
+			var viewItems = this.Manager.Search(this.TextSearch, this.SearchOption);
+
+			this.Logins.Clear();
+			foreach (var viewItem in viewItems)
+			{
+				this.Logins.Add(viewItem);
+			}
+		}
+
+		private void ApplySort()
+		{
+			var index = 0;
+			foreach (var viewItem in this.Manager.Sort(this.Logins, this.SortOption))
+			{
+				this.Logins[index++] = viewItem;
+			}
+		}
+
 		public async Task AddAsync(LoginViewItem viewItem, ModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			var error = string.Empty;
+			this.Logger.Info($@"{nameof(AddAsync)}");
 			try
 			{
 				// TODO : !!! Log usage !!!
@@ -390,13 +472,8 @@ namespace Cchbc.UI.Comments
 			}
 			catch (Exception ex)
 			{
-				error = ex.ToString();
-				this.Logger.Error(error);
-			}
-
-			if (error != string.Empty)
-			{
-				await dialog.DisplayAsync(@"Unable to add new login" + error);
+				this.Logger.Error(ex.ToString());
+				this.ErrorMessage = ex.Message;
 			}
 		}
 
@@ -412,6 +489,7 @@ namespace Cchbc.UI.Comments
 			catch (Exception ex)
 			{
 				this.Logger.Error(ex.ToString());
+				this.ErrorMessage = ex.Message;
 			}
 		}
 
@@ -420,6 +498,7 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
+			this.Logger.Info($@"{nameof(PromoteAsync)}");
 			try
 			{
 				var result = await this.Manager.CanPromoteAsync(viewItem);
@@ -442,6 +521,7 @@ namespace Cchbc.UI.Comments
 			catch (Exception ex)
 			{
 				this.Logger.Error(ex.ToString());
+				this.ErrorMessage = ex.Message;
 			}
 		}
 
@@ -450,6 +530,26 @@ namespace Cchbc.UI.Comments
 			viewItem.IsSystem = true;
 
 			await this.Manager.UpdateAsync(viewItem, dialog);
+		}
+	}
+
+	public sealed class UsageManager
+	{
+		private string Context { get; }
+
+		public UsageManager(string context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			this.Context = context;
+		}
+		// TODO : !!! Context To be string ???? Yes
+		// TODO : !!! Operation to be string ???
+		public void Add(string operation)
+		{
+			// Context:Agenda
+			// Operation:Add
+			// Count:23
 		}
 	}
 
