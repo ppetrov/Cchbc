@@ -86,8 +86,7 @@ namespace Cchbc.UI.Comments
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			return PermissionResult.Deny(@"This name is reserved");
-			return PermissionResult.Confirm("Are you sure ?");
+			return PermissionResult.Confirm(@"Are you sure ?");
 
 			var name = viewItem.Name;
 
@@ -249,7 +248,8 @@ namespace Cchbc.UI.Comments
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
-			await Task.Delay(3000);
+			//throw new Exception(@"PPetrov");
+			//await Task.Delay(3000);
 			_logins.Add(item);
 			//return Task.FromResult(true);
 			return true;
@@ -323,7 +323,7 @@ namespace Cchbc.UI.Comments
 				})
 			}), new Searcher<LoginViewItem>((v, s) => v.Item.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
 
-			this.Manager.StartOperation += (sender, args) =>
+			this.Manager.OperationStart += (sender, args) =>
 			{
 				switch (args.Operation)
 				{
@@ -341,7 +341,11 @@ namespace Cchbc.UI.Comments
 				}
 				this.IsBusy = true;
 			};
-			this.Manager.EndOperation += (sender, args) => { this.IsBusy = false; };
+			this.Manager.OperationEnd += (sender, args) => { this.IsBusy = false; };
+			this.Manager.OperationError += async (sender, args) =>
+			{
+				this.Operation = args.Exception.Message;
+			};
 			this.Manager.ItemInserted += ManagerOnItemInserted;
 			this.Manager.ItemUpdated += ManagerOnItemUpdated;
 			this.Manager.ItemDeleted += ManagerOnItemDeleted;

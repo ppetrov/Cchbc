@@ -16,16 +16,22 @@ namespace Cchbc
 	{
 		protected List<TViewItem> ViewItems { get; } = new List<TViewItem>();
 
-		public event EventHandler<ManagerOperationEventArgs> StartOperation;
+		public event EventHandler<ManagerOperationEventArgs> OperationStart;
 		protected virtual void OnStartOperation(ManagerOperationEventArgs e)
 		{
-			StartOperation?.Invoke(this, e);
+			OperationStart?.Invoke(this, e);
 		}
 
-		public event EventHandler<ManagerOperationEventArgs> EndOperation;
+		public event EventHandler<ManagerOperationEventArgs> OperationEnd;
 		protected virtual void OnEndOperation(ManagerOperationEventArgs e)
 		{
-			EndOperation?.Invoke(this, e);
+			OperationEnd?.Invoke(this, e);
+		}
+
+		public event EventHandler<ManagerOperationEventArgs> OperationError;
+		protected virtual void OnOperationError(ManagerOperationEventArgs e)
+		{
+			OperationError?.Invoke(this, e);
 		}
 
 		public event EventHandler<ObjectEventArgs<TViewItem>> ItemInserted;
@@ -113,6 +119,10 @@ namespace Cchbc
 								try
 								{
 									await this.AddValidatedAsync(viewItem);
+								}
+								catch (Exception ex)
+								{
+									this.OnOperationError(args.WithException(ex));
 								}
 								finally
 								{
@@ -205,6 +215,10 @@ namespace Cchbc
 								{
 									await this.UpdateValidatedAsync(viewItem);
 								}
+								catch (Exception ex)
+								{
+									this.OnOperationError(args.WithException(ex));
+								}
 								finally
 								{
 									this.OnEndOperation(args);
@@ -269,6 +283,10 @@ namespace Cchbc
 							try
 							{
 								await this.DeleteValidatedAsync(viewItem);
+							}
+							catch (Exception ex)
+							{
+								this.OnOperationError(args.WithException(ex));
 							}
 							finally
 							{
@@ -361,11 +379,12 @@ namespace Cchbc
 			{
 				// Find the right index to insert the new element
 				var index = this.ViewItems.Count;
-				if (this.Sorter.CurrentOption != null)
+				var option = this.Sorter.CurrentOption;
+				if (option != null)
 				{
 					index = 0;
 
-					var cmp = this.Sorter.CurrentOption.Comparison;
+					var cmp = option.Comparison;
 					foreach (var current in this.ViewItems)
 					{
 						var result = cmp(current, viewItem);
@@ -438,5 +457,7 @@ namespace Cchbc
 
 			return viewItems;
 		}
+
+
 	}
 }
