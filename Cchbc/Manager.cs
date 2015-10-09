@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Dialog;
@@ -8,13 +7,24 @@ using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
 using Cchbc.Validation;
-using Microsoft.VisualBasic;
 
 namespace Cchbc
 {
 	public abstract class Manager<T, TViewItem> where T : IDbObject where TViewItem : ViewItem<T>
 	{
 		protected List<TViewItem> ViewItems { get; } = new List<TViewItem>();
+
+		public event EventHandler StartOperation;
+		protected virtual void OnStartOperation()
+		{
+			StartOperation?.Invoke(this, EventArgs.Empty);
+		}
+
+		public event EventHandler EndOperation;
+		protected virtual void OnEndOperation()
+		{
+			EndOperation?.Invoke(this, EventArgs.Empty);
+		}
 
 		public event EventHandler<ObjectEventArgs<TViewItem>> ItemInserted;
 		protected virtual void OnItemInserted(ObjectEventArgs<TViewItem> e)
@@ -76,41 +86,51 @@ namespace Cchbc
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 
-			// TODO : display progress 
-			var validationResults = this.ValidateProperties(viewItem);
-			if (validationResults.Length == 0)
+			this.OnStartOperation();
+
+			var fireEndOperation = true;
+			try
 			{
-				// Apply business logic
-				var permissionResult = await this.CanAddAsync(viewItem);
-				switch (permissionResult.Status)
+				var validationResults = this.ValidateProperties(viewItem);
+				if (validationResults.Length == 0)
 				{
-					case PermissionStatus.Allow:
-						await this.AddValidatedAsync(viewItem);
-
-						// TODO : !!! D
-						//var a = null;
-
-						// TODO : Hide progress
-
-						break;
-					case PermissionStatus.Confirm:
-						// Confirm any user warnings
-						dialog.AcceptAction = async () =>
-						{
+					// Apply business logic
+					var permissionResult = await this.CanAddAsync(viewItem);
+					switch (permissionResult.Status)
+					{
+						case PermissionStatus.Allow:
 							await this.AddValidatedAsync(viewItem);
-							//var a = null;
-							// TODO : Hide progress
-						};
-						await dialog.ConfirmAsync(permissionResult.Message);
-						break;
-					case PermissionStatus.Deny:
-						await dialog.DisplayAsync(permissionResult.Message);
+							break;
+						case PermissionStatus.Confirm:
+							fireEndOperation = false;
 
-						//var a = null;
-						// TODO : Hide progress
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
+							// Confirm any user warnings
+							dialog.AcceptAction = async () =>
+							{
+								try
+								{
+									await this.AddValidatedAsync(viewItem);
+								}
+								finally
+								{
+									this.OnEndOperation();
+								}
+							};
+							await dialog.ConfirmAsync(permissionResult.Message);
+							break;
+						case PermissionStatus.Deny:
+							await dialog.DisplayAsync(permissionResult.Message);
+							break;
+						default:
+							throw new ArgumentOutOfRangeException();
+					}
+				}
+			}
+			finally
+			{
+				if (fireEndOperation)
+				{
+					this.OnEndOperation();
 				}
 			}
 		}
@@ -120,19 +140,87 @@ namespace Cchbc
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 
-			var validationResults = this.ValidateProperties(viewItem);
-			if (validationResults.Length == 0)
+			this.OnStartOperation();
+
+			var fireEndOperation = true;
+			try
 			{
-				// Apply business logic
-				var permissionResult = await this.CanUpdateAsync(viewItem);
+				var validationResults = this.ValidateProperties(viewItem);
+				if (validationResults.Length == 0)
+				{
+					// Apply business logic
+					var permissionResult = await this.CanUpdateAsync(viewItem);
+					switch (permissionResult.Status)
+					{
+						case PermissionStatus.Allow:
+							await this.UpdateValidatedAsync(viewItem);
+							break;
+						case PermissionStatus.Confirm:
+							fireEndOperation = false;
+
+							// Confirm any user warnings
+							dialog.AcceptAction = async () =>
+							{
+								try
+								{
+									await this.UpdateValidatedAsync(viewItem);
+								}
+								finally
+								{
+									this.OnEndOperation();
+								}
+							};
+							await dialog.ConfirmAsync(permissionResult.Message);
+							break;
+						case PermissionStatus.Deny:
+							await dialog.DisplayAsync(permissionResult.Message);
+							break;
+						default:
+							throw new ArgumentOutOfRangeException();
+					}
+				}
+			}
+			finally
+			{
+				if (fireEndOperation)
+				{
+					this.OnEndOperation();
+				}
+			}
+
+		}
+
+		public async Task DeleteAsync(TViewItem viewItem, ModalDialog dialog)
+		{
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+
+			this.OnStartOperation();
+
+			var fireEndOperation = true;
+			try
+			{
+				var permissionResult = await this.CanDeleteAsync(viewItem);
 				switch (permissionResult.Status)
 				{
 					case PermissionStatus.Allow:
-						await this.UpdateValidatedAsync(viewItem);
+						await this.DeleteValidatedAsync(viewItem);
 						break;
 					case PermissionStatus.Confirm:
+						fireEndOperation = false;
+
 						// Confirm any user warnings
-						dialog.AcceptAction = async () => await this.UpdateValidatedAsync(viewItem);
+						dialog.AcceptAction = async () =>
+						{
+							try
+							{
+								await this.DeleteValidatedAsync(viewItem);
+							}
+							finally
+							{
+								this.OnEndOperation();
+							}
+						};
 						await dialog.ConfirmAsync(permissionResult.Message);
 						break;
 					case PermissionStatus.Deny:
@@ -142,30 +230,14 @@ namespace Cchbc
 						throw new ArgumentOutOfRangeException();
 				}
 			}
-		}
-
-		public async Task DeleteAsync(TViewItem viewItem, ModalDialog dialog)
-		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-
-			var permissionResult = await this.CanDeleteAsync(viewItem);
-			switch (permissionResult.Status)
+			finally
 			{
-				case PermissionStatus.Allow:
-					await this.DeleteValidatedAsync(viewItem);
-					break;
-				case PermissionStatus.Confirm:
-					// Confirm any user warnings
-					dialog.AcceptAction = async () => await this.DeleteValidatedAsync(viewItem);
-					await dialog.ConfirmAsync(permissionResult.Message);
-					break;
-				case PermissionStatus.Deny:
-					await dialog.DisplayAsync(permissionResult.Message);
-					break;
-				default:
-					throw new ArgumentOutOfRangeException();
+				if (fireEndOperation)
+				{
+					this.OnEndOperation();
+				}
 			}
+
 		}
 
 		private async Task AddValidatedAsync(TViewItem viewItem)
@@ -298,5 +370,7 @@ namespace Cchbc
 
 			return viewItems;
 		}
+
+
 	}
 }

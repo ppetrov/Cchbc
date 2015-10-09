@@ -282,6 +282,13 @@ namespace Cchbc.UI.Comments
 		public LoginsManager Manager { get; }
 		public ObservableCollection<LoginViewItem> Logins { get; } = new ObservableCollection<LoginViewItem>();
 
+		private bool _isBusy = false;
+		public bool IsBusy
+		{
+			get { return _isBusy; }
+			private set { this.SetField(ref _isBusy, value); }
+		}
+
 		public LoginsViewModel(ILogger logger)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
@@ -301,6 +308,14 @@ namespace Cchbc.UI.Comments
 				})
 			}), new Searcher<LoginViewItem>((v, s) => v.Item.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
 
+			this.Manager.StartOperation += (sender, args) =>
+			{
+				this.IsBusy = true;
+			};
+			this.Manager.EndOperation += (sender, args) =>
+			{
+				this.IsBusy = false;
+			};
 			this.Manager.ItemInserted += ManagerOnItemInserted;
 			this.Manager.ItemUpdated += ManagerOnItemUpdated;
 			this.Manager.ItemDeleted += ManagerOnItemDeleted;
