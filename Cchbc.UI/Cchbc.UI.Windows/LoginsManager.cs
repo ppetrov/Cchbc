@@ -86,6 +86,9 @@ namespace Cchbc.UI.Comments
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
+			return PermissionResult.Deny(@"This name is reserved");
+			return PermissionResult.Confirm("Are you sure ?");
+
 			var name = viewItem.Name;
 
 			foreach (var v in this.ViewItems)
@@ -375,15 +378,21 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
+			var error = string.Empty;
 			try
 			{
 				// TODO : !!! Log usage !!!
-
 				await this.Manager.AddAsync(viewItem, dialog);
 			}
 			catch (Exception ex)
 			{
-				this.Logger.Error(ex.ToString());
+				error = ex.ToString();
+				this.Logger.Error(error);
+			}
+
+			if (error != string.Empty)
+			{
+				await dialog.DisplayAsync(@"Unable to add new login" + error);
 			}
 		}
 

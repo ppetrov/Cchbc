@@ -119,6 +119,8 @@ namespace Cchbc
 									this.OnEndOperation(args);
 								}
 							};
+							dialog.CancelAction = () => this.OnEndOperation(args);
+							dialog.DeclineAction = () => this.OnEndOperation(args);
 							await dialog.ConfirmAsync(permissionResult.Message);
 							break;
 						case PermissionStatus.Deny:
@@ -208,6 +210,8 @@ namespace Cchbc
 									this.OnEndOperation(args);
 								}
 							};
+							dialog.CancelAction = () => this.OnEndOperation(args);
+							dialog.DeclineAction = () => this.OnEndOperation(args);
 							await dialog.ConfirmAsync(permissionResult.Message);
 							break;
 						case PermissionStatus.Deny:
@@ -271,6 +275,8 @@ namespace Cchbc
 								this.OnEndOperation(args);
 							}
 						};
+						dialog.CancelAction = () => this.OnEndOperation(args);
+						dialog.DeclineAction = () => this.OnEndOperation(args);
 						await dialog.ConfirmAsync(permissionResult.Message);
 						break;
 					case PermissionStatus.Deny:
