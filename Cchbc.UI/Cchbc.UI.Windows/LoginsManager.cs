@@ -246,7 +246,7 @@ namespace Cchbc.UI.Comments
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
-			//await Task.Delay(7000);
+			await Task.Delay(3000);
 			_logins.Add(item);
 			//return Task.FromResult(true);
 			return true;
@@ -294,6 +294,13 @@ namespace Cchbc.UI.Comments
 			private set { this.SetField(ref _isBusy, value); }
 		}
 
+		private string _operation = string.Empty;
+		public string Operation
+		{
+			get { return _operation; }
+			private set { this.SetField(ref _operation, value); }
+		}
+
 		public LoginsViewModel(ILogger logger)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
@@ -315,12 +322,23 @@ namespace Cchbc.UI.Comments
 
 			this.Manager.StartOperation += (sender, args) =>
 			{
+				switch (args.Operation)
+				{
+					case ManagerOperation.Add:
+						Operation = @"Adding login";
+						break;
+					case ManagerOperation.Update:
+						Operation = @"Updating login";
+						break;
+					case ManagerOperation.Delete:
+						Operation = @"Deleting login";
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
 				this.IsBusy = true;
 			};
-			this.Manager.EndOperation += (sender, args) =>
-			{
-				this.IsBusy = false;
-			};
+			this.Manager.EndOperation += (sender, args) => { this.IsBusy = false; };
 			this.Manager.ItemInserted += ManagerOnItemInserted;
 			this.Manager.ItemUpdated += ManagerOnItemUpdated;
 			this.Manager.ItemDeleted += ManagerOnItemDeleted;
@@ -328,12 +346,12 @@ namespace Cchbc.UI.Comments
 
 		private void ManagerOnItemInserted(object sender, ObjectEventArgs<LoginViewItem> args)
 		{
-			this.Manager.Insert(string.Empty, null, this.Logins, args.Item);
+			this.Manager.Insert(this.Logins, args.Item, string.Empty, null);
 		}
 
 		private void ManagerOnItemUpdated(object sender, ObjectEventArgs<LoginViewItem> args)
 		{
-			this.Manager.Update(string.Empty, null, this.Logins, args.Item);
+			this.Manager.Update(this.Logins, args.Item, string.Empty, null);
 		}
 
 		private void ManagerOnItemDeleted(object sender, ObjectEventArgs<LoginViewItem> args)

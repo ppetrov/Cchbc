@@ -16,16 +16,16 @@ namespace Cchbc
 	{
 		protected List<TViewItem> ViewItems { get; } = new List<TViewItem>();
 
-		public event EventHandler StartOperation;
-		protected virtual void OnStartOperation()
+		public event EventHandler<ManagerOperationEventArgs> StartOperation;
+		protected virtual void OnStartOperation(ManagerOperationEventArgs e)
 		{
-			StartOperation?.Invoke(this, EventArgs.Empty);
+			StartOperation?.Invoke(this, e);
 		}
 
-		public event EventHandler EndOperation;
-		protected virtual void OnEndOperation()
+		public event EventHandler<ManagerOperationEventArgs> EndOperation;
+		protected virtual void OnEndOperation(ManagerOperationEventArgs e)
 		{
-			EndOperation?.Invoke(this, EventArgs.Empty);
+			EndOperation?.Invoke(this, e);
 		}
 
 		public event EventHandler<ObjectEventArgs<TViewItem>> ItemInserted;
@@ -88,7 +88,8 @@ namespace Cchbc
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 
-			this.OnStartOperation();
+			var args = new ManagerOperationEventArgs(ManagerOperation.Add);
+			this.OnStartOperation(args);
 
 			var fireEndOperation = true;
 			try
@@ -115,7 +116,7 @@ namespace Cchbc
 								}
 								finally
 								{
-									this.OnEndOperation();
+									this.OnEndOperation(args);
 								}
 							};
 							await dialog.ConfirmAsync(permissionResult.Message);
@@ -132,7 +133,7 @@ namespace Cchbc
 			{
 				if (fireEndOperation)
 				{
-					this.OnEndOperation();
+					this.OnEndOperation(args);
 				}
 			}
 		}
@@ -142,7 +143,8 @@ namespace Cchbc
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 
-			this.OnStartOperation();
+			var args = new ManagerOperationEventArgs(ManagerOperation.Update);
+			this.OnStartOperation(args);
 
 			var fireEndOperation = true;
 			try
@@ -169,7 +171,7 @@ namespace Cchbc
 								}
 								finally
 								{
-									this.OnEndOperation();
+									this.OnEndOperation(args);
 								}
 							};
 							await dialog.ConfirmAsync(permissionResult.Message);
@@ -186,7 +188,7 @@ namespace Cchbc
 			{
 				if (fireEndOperation)
 				{
-					this.OnEndOperation();
+					this.OnEndOperation(args);
 				}
 			}
 
@@ -197,7 +199,8 @@ namespace Cchbc
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 
-			this.OnStartOperation();
+			var args = new ManagerOperationEventArgs(ManagerOperation.Delete);
+			this.OnStartOperation(args);
 
 			var fireEndOperation = true;
 			try
@@ -220,7 +223,7 @@ namespace Cchbc
 							}
 							finally
 							{
-								this.OnEndOperation();
+								this.OnEndOperation(args);
 							}
 						};
 						await dialog.ConfirmAsync(permissionResult.Message);
@@ -236,10 +239,9 @@ namespace Cchbc
 			{
 				if (fireEndOperation)
 				{
-					this.OnEndOperation();
+					this.OnEndOperation(args);
 				}
 			}
-
 		}
 
 		private async Task AddValidatedAsync(TViewItem viewItem)
@@ -375,7 +377,7 @@ namespace Cchbc
 			return viewItems;
 		}
 
-		public void Insert(string textSearch, SearchOption<TViewItem> searchOption, ObservableCollection<TViewItem> viewItems, TViewItem viewItem)
+		public void Insert(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
 		{
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
 			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
@@ -409,7 +411,7 @@ namespace Cchbc
 			}
 		}
 
-		public void Update(string textSearch, SearchOption<TViewItem> searchOption, ObservableCollection<TViewItem> viewItems, TViewItem viewItem)
+		public void Update(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
 		{
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
 			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
@@ -417,7 +419,7 @@ namespace Cchbc
 
 			// This is still better then re-applying the filter & sorting the data
 			this.Delete(viewItems, viewItem);
-			this.Insert(textSearch, searchOption, viewItems, viewItem);
+			this.Insert(viewItems, viewItem, textSearch, searchOption);
 		}
 
 		public void Delete(ObservableCollection<TViewItem> viewItems, TViewItem viewItem)
