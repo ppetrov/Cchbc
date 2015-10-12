@@ -386,11 +386,14 @@ namespace Cchbc.UI.Comments
 
 		public string ErrorMessage { get; private set; } = string.Empty;
 
+		public FeatureManager FeatureManager { get; }
+
 		public LoginsViewModel(ILogger logger)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
 			this.Logger = logger;
+			this.FeatureManager = new FeatureManager(logger);
 			this.Manager = new LoginsManager(logger, new LoginAdapter(logger), new Sorter<LoginViewItem>(new[]
 			{
 				new SortOption<LoginViewItem>(@"By Name", (x,y)=> string.Compare(x.Item.Name, y.Item.Name, StringComparison.Ordinal)),
@@ -408,6 +411,7 @@ namespace Cchbc.UI.Comments
 			this.Manager.OperationStart += (sender, args) => { this.IsBusy = true; };
 			this.Manager.OperationEnd += (sender, args) => { this.IsBusy = false; };
 			this.Manager.OperationError += (sender, args) => { this.ErrorMessage = args.Exception.Message; };
+
 			this.Manager.ItemInserted += ManagerOnItemInserted;
 			this.Manager.ItemUpdated += ManagerOnItemUpdated;
 			this.Manager.ItemDeleted += ManagerOnItemDeleted;
@@ -415,12 +419,12 @@ namespace Cchbc.UI.Comments
 
 		private void ManagerOnItemInserted(object sender, ObjectEventArgs<LoginViewItem> args)
 		{
-			this.Manager.Insert(this.Logins, args.Item, string.Empty, null);
+			this.Manager.Insert(this.Logins, args.Item, this.TextSearch, this.SearchOption);
 		}
 
 		private void ManagerOnItemUpdated(object sender, ObjectEventArgs<LoginViewItem> args)
 		{
-			this.Manager.Update(this.Logins, args.Item, string.Empty, null);
+			this.Manager.Update(this.Logins, args.Item, this.TextSearch, this.SearchOption);
 		}
 
 		private void ManagerOnItemDeleted(object sender, ObjectEventArgs<LoginViewItem> args)
@@ -464,10 +468,9 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			this.Logger.Info($@"{nameof(AddAsync)}");
 			try
 			{
-				// TODO : !!! Log usage !!!
+				this.FeatureManager.Use(nameof(AddAsync));
 				await this.Manager.AddAsync(viewItem, dialog);
 			}
 			catch (Exception ex)
@@ -484,6 +487,7 @@ namespace Cchbc.UI.Comments
 
 			try
 			{
+				this.FeatureManager.Use(nameof(DeleteAsync));
 				await this.Manager.DeleteAsync(viewItem, dialog);
 			}
 			catch (Exception ex)
@@ -493,14 +497,15 @@ namespace Cchbc.UI.Comments
 			}
 		}
 
-		public async Task PromoteAsync(LoginViewItem viewItem, ModalDialog dialog)
+		public async Task PromoteUser(LoginViewItem viewItem, ModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			this.Logger.Info($@"{nameof(PromoteAsync)}");
 			try
 			{
+				this.FeatureManager.Use(nameof(PromoteUser));
+
 				var result = await this.Manager.CanPromoteAsync(viewItem);
 				switch (result.Status)
 				{
@@ -533,25 +538,15 @@ namespace Cchbc.UI.Comments
 		}
 	}
 
-	public sealed class UsageManager
-	{
-		private string Context { get; }
-
-		public UsageManager(string context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			this.Context = context;
-		}
-		// TODO : !!! Context To be string ???? Yes
-		// TODO : !!! Operation to be string ???
-		public void Add(string operation)
-		{
-			// Context:Agenda
-			// Operation:Add
-			// Count:23
-		}
-	}
+	// Count & Time
+	// Count = easy
+	// Time ??? TODO : !!!!
+	//Agenda->Search
+	//Agenda->Sort 23ms
+	//Agenda->Sort 47ms
+	//Agenda->FilterByOption
+	//Agenda->ChangeDate
+	//Agenda->Sync
 
 
 	//public sealed class CommentsViewModel : ViewObject

@@ -181,6 +181,8 @@ namespace Cchbc
 				}
 
 				viewItems.Insert(index, viewItem);
+
+				this.Searcher.SetupCounts(viewItems);
 			}
 		}
 
@@ -253,7 +255,8 @@ namespace Cchbc
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
 			// This is still better then re-applying the filter & sorting the data
-			this.Delete(viewItems, viewItem);
+			viewItems.Remove(viewItem);
+            
 			this.Insert(viewItems, viewItem, textSearch, searchOption);
 		}
 

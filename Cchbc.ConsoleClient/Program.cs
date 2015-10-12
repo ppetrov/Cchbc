@@ -45,7 +45,7 @@ namespace Cchbc.ConsoleClient
 	//    }
 	//}
 
-	
+
 
 	class Program
 	{
@@ -71,7 +71,7 @@ namespace Cchbc.ConsoleClient
 				//};
 
 				//var dialog = new DebugModalDialog();
-    //            m.AddAsync(new CommentViewItem(new Comment()), dialog).Wait();
+				//            m.AddAsync(new CommentViewItem(new Comment()), dialog).Wait();
 				//Console.WriteLine();
 				return;
 
@@ -132,6 +132,15 @@ namespace Cchbc.ConsoleClient
 	{
 		protected readonly ConcurrentQueue<string> Buffer = new ConcurrentQueue<string>();
 
+		public string Context { get; }
+
+		protected BufferedLogger(string context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			this.Context = context;
+		}
+
 		public bool IsDebugEnabled { get; protected set; }
 		public bool IsInfoEnabled { get; protected set; }
 		public bool IsWarnEnabled { get; protected set; }
@@ -172,7 +181,7 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ConsoleBufferedLogger : BufferedLogger
 	{
-		public ConsoleBufferedLogger()
+		public ConsoleBufferedLogger() : base("TODO")
 		{
 			this.IsInfoEnabled = true;
 			this.IsWarnEnabled = true;

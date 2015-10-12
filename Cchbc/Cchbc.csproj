@@ -38,6 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\IModifiableAdapter.cs" />
+    <Compile Include="FeatureManager.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="ManagerOperation.cs" />
     <Compile Include="ManagerOperationEventArgs.cs" />

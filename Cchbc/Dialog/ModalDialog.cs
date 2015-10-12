@@ -13,9 +13,9 @@ namespace Cchbc.Dialog
 
 		protected ModalDialog()
 		{
-			this.AcceptAction = EmptyAction;
-			this.DeclineAction = EmptyAction;
-			this.CancelAction = EmptyAction;
+			this.AcceptAction =
+				this.DeclineAction =
+					this.CancelAction = EmptyAction;
 		}
 
 		public Task DisplayAsync(string message)

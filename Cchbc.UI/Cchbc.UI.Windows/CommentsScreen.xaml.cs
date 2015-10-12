@@ -55,7 +55,7 @@ namespace Cchbc.UI
 				if (viewItem != null)
 				{
 					var dialog = new WinRtModalDialog();
-					dialog.AcceptAction = async () => { await _viewModel.PromoteAsync(viewItem, dialog); };
+					dialog.AcceptAction = async () => { await _viewModel.PromoteUser(viewItem, dialog); };
 					await dialog.ConfirmAsync(@"Are you sure you want to promote this user?");
 				}
 			}
