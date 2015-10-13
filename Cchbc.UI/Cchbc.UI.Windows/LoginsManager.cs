@@ -401,71 +401,14 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			var feature = new Feature(nameof(PromoteUserAsync));
-			this.Manager.NotifyStart(feature);
-
-			dialog.AcceptAction = dialog.CancelAction = dialog.DeclineAction = () =>
-			{
-				this.Manager.NotifyEnd(Feature.None);
-			};
-
-			var result = await this.Manager.CanPromoteAsync(viewItem);
-			switch (result.Status)
-			{
-				case PermissionStatus.Allow:
-					await PromoteValidatedAsync(viewItem, dialog, feature);
-					break;
-				case PermissionStatus.Confirm:
-					dialog.AcceptAction = async () =>
-					{
-						try
-						{
-							await this.PromoteValidatedAsync(viewItem, dialog, feature);
-						}
-						catch (Exception ex)
-						{
-							try
-							{
-								this.Manager.NotifyError(feature, ex);
-							}
-							finally
-							{
-								this.Manager.NotifyEnd(feature);
-							}
-						}
-					};
-					await dialog.ConfirmAsync(result.Message, feature);
-					break;
-				case PermissionStatus.Deny:
-					await dialog.DisplayAsync(result.Message, feature);
-					break;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			await this.Manager.ExecuteAsync(viewItem, dialog, new Feature(nameof(PromoteUserAsync)), this.Manager.CanPromoteAsync, this.PromoteValidatedAsync);
 		}
 
-		private async Task PromoteValidatedAsync(LoginViewItem viewItem, ModalDialog dialog, Feature feature)
+		private async Task PromoteValidatedAsync(LoginViewItem viewItem, FeatureEventArgs args)
 		{
-			try
-			{
-				viewItem.IsSystem = true;
+			viewItem.IsSystem = true;
 
-				await this.Manager.UpdateAsync(viewItem, dialog, feature);
-
-				throw new Exception(@"PPetrov");
-			}
-			catch (Exception ex)
-			{
-				this.Logger.Error(ex.ToString());
-				try
-				{
-
-				}
-				finally
-				{
-					
-				}
-			}
+			await this.Manager.UpdateValidatedAsync(viewItem, args);
 		}
 	}
 }

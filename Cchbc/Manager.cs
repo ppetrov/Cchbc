@@ -17,39 +17,39 @@ namespace Cchbc
 		protected List<TViewItem> ViewItems { get; } = new List<TViewItem>();
 
 		public event EventHandler<FeatureEventArgs> OperationStart;
-		protected virtual void OnOperationStart(FeatureEventArgs e)
+		private void OnOperationStart(FeatureEventArgs e)
 		{
 			e.Feature.StartMeasure();
 			OperationStart?.Invoke(this, e);
 		}
 
 		public event EventHandler<FeatureEventArgs> OperationEnd;
-		protected virtual void OnOperationEnd(FeatureEventArgs e)
+		private void OnOperationEnd(FeatureEventArgs e)
 		{
 			e.Feature.StopMeasure();
 			OperationEnd?.Invoke(this, e);
 		}
 
 		public event EventHandler<FeatureEventArgs> OperationError;
-		protected virtual void OnOperationError(FeatureEventArgs e)
+		private void OnOperationError(FeatureEventArgs e)
 		{
 			OperationError?.Invoke(this, e);
 		}
 
 		public event EventHandler<ObjectEventArgs<TViewItem>> ItemInserted;
-		protected virtual void OnItemInserted(ObjectEventArgs<TViewItem> e)
+		private void OnItemInserted(ObjectEventArgs<TViewItem> e)
 		{
 			ItemInserted?.Invoke(this, e);
 		}
 
 		public event EventHandler<ObjectEventArgs<TViewItem>> ItemUpdated;
-		protected virtual void OnItemUpdated(ObjectEventArgs<TViewItem> e)
+		private void OnItemUpdated(ObjectEventArgs<TViewItem> e)
 		{
 			ItemUpdated?.Invoke(this, e);
 		}
 
 		public event EventHandler<ObjectEventArgs<TViewItem>> ItemDeleted;
-		protected virtual void OnItemDeleted(ObjectEventArgs<TViewItem> e)
+		private void OnItemDeleted(ObjectEventArgs<TViewItem> e)
 		{
 			ItemDeleted?.Invoke(this, e);
 		}
@@ -83,28 +83,6 @@ namespace Cchbc
 			this.Sorter.Sort(this.ViewItems, this.Sorter.CurrentOption);
 		}
 
-		public void NotifyStart(Feature feature)
-		{
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			this.OnOperationStart(new FeatureEventArgs(feature));
-		}
-
-		public void NotifyEnd(Feature feature)
-		{
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			this.OnOperationEnd(new FeatureEventArgs(feature));
-		}
-
-		public void NotifyError(Feature feature, Exception exception)
-		{
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-			if (exception == null) throw new ArgumentNullException(nameof(exception));
-
-			this.OnOperationError(new FeatureEventArgs(feature).WithException(exception));
-		}
-
 		public abstract ValidationResult[] ValidateProperties(TViewItem viewItem);
 
 		public abstract Task<PermissionResult> CanAddAsync(TViewItem viewItem);
@@ -119,28 +97,7 @@ namespace Cchbc
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			var args = new FeatureEventArgs(feature);
-			var permissionResult = await GetPermissionResult(viewItem, args, this.CanAddAsync);
-			if (permissionResult != null)
-			{
-				switch (permissionResult.Status)
-				{
-					case PermissionStatus.Allow:
-						await this.AddValidatedAsync(viewItem, args);
-						break;
-					case PermissionStatus.Confirm:
-						this.SetupDialog(dialog);
-						dialog.AcceptAction = async () => await this.AddValidatedAsync(viewItem, args);
-						await dialog.ConfirmAsync(permissionResult.Message, feature);
-						break;
-					case PermissionStatus.Deny:
-						this.SetupDialog(dialog);
-						await dialog.DisplayAsync(permissionResult.Message, feature);
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
-			}
+			await ExecuteAsync(viewItem, dialog, feature, this.CanAddAsync, this.AddValidatedAsync);
 		}
 
 		public async Task UpdateAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
@@ -149,28 +106,7 @@ namespace Cchbc
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			var args = new FeatureEventArgs(feature);
-			var permissionResult = await GetPermissionResult(viewItem, args, this.CanUpdateAsync);
-			if (permissionResult != null)
-			{
-				switch (permissionResult.Status)
-				{
-					case PermissionStatus.Allow:
-						await this.UpdateValidatedAsync(viewItem, args);
-						break;
-					case PermissionStatus.Confirm:
-						this.SetupDialog(dialog);
-						dialog.AcceptAction = async () => await this.UpdateValidatedAsync(viewItem, args);
-						await dialog.ConfirmAsync(permissionResult.Message, feature);
-						break;
-					case PermissionStatus.Deny:
-						this.SetupDialog(dialog);
-						await dialog.DisplayAsync(permissionResult.Message, feature);
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
-			}
+			await ExecuteAsync(viewItem, dialog, feature, this.CanUpdateAsync, this.UpdateValidatedAsync);
 		}
 
 		public async Task DeleteAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
@@ -179,18 +115,29 @@ namespace Cchbc
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
+			await ExecuteAsync(viewItem, dialog, feature, this.CanDeleteAsync, this.DeleteValidatedAsync);
+		}
+
+		public async Task ExecuteAsync(TViewItem viewItem, ModalDialog dialog, Feature feature, Func<TViewItem, Task<PermissionResult>> verifier, Func<TViewItem, FeatureEventArgs, Task> performer)
+		{
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (verifier == null) throw new ArgumentNullException(nameof(verifier));
+			if (performer == null) throw new ArgumentNullException(nameof(performer));
+
 			var args = new FeatureEventArgs(feature);
-			var permissionResult = await GetPermissionResult(viewItem, args, this.CanDeleteAsync);
+			var permissionResult = await GetPermissionResult(viewItem, args, verifier);
 			if (permissionResult != null)
 			{
 				switch (permissionResult.Status)
 				{
 					case PermissionStatus.Allow:
-						await this.DeleteValidatedAsync(viewItem, args);
+						await performer(viewItem, args);
 						break;
 					case PermissionStatus.Confirm:
 						this.SetupDialog(dialog);
-						dialog.AcceptAction = async () => await this.DeleteValidatedAsync(viewItem, args);
+						dialog.AcceptAction = async () => await performer(viewItem, args);
 						await dialog.ConfirmAsync(permissionResult.Message, feature);
 						break;
 					case PermissionStatus.Deny:
@@ -201,44 +148,6 @@ namespace Cchbc
 						throw new ArgumentOutOfRangeException();
 				}
 			}
-		}
-
-		private void SetupDialog(ModalDialog dialog)
-		{
-			// On every action of the dialog fire End event for None feature - works like finally
-			dialog.AcceptAction =
-				dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(new FeatureEventArgs(Feature.None));
-		}
-
-		private async Task<PermissionResult> GetPermissionResult(TViewItem viewItem, FeatureEventArgs args, Func<TViewItem, Task<PermissionResult>> checker)
-		{
-			PermissionResult permissionResult = null;
-
-			// Fire Start event
-			this.OnOperationStart(args);
-			try
-			{
-				// Validate properties
-				var validationResults = this.ValidateProperties(viewItem);
-				if (validationResults.Length == 0)
-				{
-					// Apply business logic
-					permissionResult = await checker(viewItem);
-				}
-			}
-			catch (Exception ex)
-			{
-				try
-				{
-					this.OnOperationError(args.WithException(ex));
-				}
-				finally
-				{
-					this.OnOperationEnd(args);
-				}
-			}
-
-			return permissionResult;
 		}
 
 		public void Insert(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
@@ -347,7 +256,7 @@ namespace Cchbc
 			return this.Searcher.Search(GetFilteredViewItems(viewItems ?? this.ViewItems), textSearch, searchOption);
 		}
 
-		private async Task AddValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
+		public async Task AddValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
 		{
 			try
 			{
@@ -380,34 +289,53 @@ namespace Cchbc
 			}
 			catch (Exception ex)
 			{
-				try
-				{
-					this.OnOperationError(args.WithException(ex));
-				}
-				finally
-				{
-					this.OnOperationEnd(args);
-				}
+				this.OnOperationError(args.WithException(ex));
+			}
+			finally
+			{
+				this.OnOperationEnd(args);
 			}
 		}
 
-		private async Task UpdateValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
+		public async Task UpdateValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
 		{
-			// Update the item from the db
-			await this.Adapter.UpdateAsync(viewItem.Item);
+			try
+			{
+				// Update the item from the db
+				await this.Adapter.UpdateAsync(viewItem.Item);
 
-			this.OnItemUpdated(new ObjectEventArgs<TViewItem>(viewItem));
+				this.OnItemUpdated(new ObjectEventArgs<TViewItem>(viewItem));
+			}
+			catch (Exception ex)
+			{
+				this.OnOperationError(args.WithException(ex));
+			}
+			finally
+			{
+				this.OnOperationEnd(args);
+			}
 		}
 
-		private async Task DeleteValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
+		public async Task DeleteValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
 		{
-			// Delete the item from the db
-			await this.Adapter.DeleteAsync(viewItem.Item);
+			try
+			{
+				// Delete the item from the db
+				await this.Adapter.DeleteAsync(viewItem.Item);
 
-			// Delete the item into the list at the correct place
-			this.ViewItems.Remove(viewItem);
+				// Delete the item into the list at the correct place
+				this.ViewItems.Remove(viewItem);
 
-			this.OnItemDeleted(new ObjectEventArgs<TViewItem>(viewItem));
+				this.OnItemDeleted(new ObjectEventArgs<TViewItem>(viewItem));
+			}
+			catch (Exception ex)
+			{
+				this.OnOperationError(args.WithException(ex));
+			}
+			finally
+			{
+				this.OnOperationEnd(args);
+			}
 		}
 
 		private ICollection<TViewItem> GetFilteredViewItems(ICollection<TViewItem> viewItems)
@@ -440,6 +368,44 @@ namespace Cchbc
 			}
 
 			return viewItems;
+		}
+
+		private async Task<PermissionResult> GetPermissionResult(TViewItem viewItem, FeatureEventArgs args, Func<TViewItem, Task<PermissionResult>> checker)
+		{
+			PermissionResult permissionResult = null;
+
+			// Fire Start event
+			this.OnOperationStart(args);
+			try
+			{
+				// Validate properties
+				var validationResults = this.ValidateProperties(viewItem);
+				if (validationResults.Length == 0)
+				{
+					// Apply business logic
+					permissionResult = await checker(viewItem);
+				}
+			}
+			catch (Exception ex)
+			{
+				try
+				{
+					this.OnOperationError(args.WithException(ex));
+				}
+				finally
+				{
+					this.OnOperationEnd(args);
+				}
+			}
+
+			return permissionResult;
+		}
+
+		private void SetupDialog(ModalDialog dialog)
+		{
+			// On every action of the dialog fire End event for None feature - works like finally
+			dialog.AcceptAction =
+				dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(new FeatureEventArgs(Feature.None));
 		}
 	}
 }
