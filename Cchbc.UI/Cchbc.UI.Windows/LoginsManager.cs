@@ -184,7 +184,7 @@ namespace Cchbc.UI.Comments
 			return Task.FromResult(new List<Login>(_logins));
 		}
 
-		public Task<bool> InsertAsync(Login item)
+		public Task InsertAsync(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -200,7 +200,7 @@ namespace Cchbc.UI.Comments
 			}
 		}
 
-		public Task<bool> UpdateAsync(Login item)
+		public Task UpdateAsync(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -215,7 +215,7 @@ namespace Cchbc.UI.Comments
 			}
 		}
 
-		public Task<bool> DeleteAsync(Login item)
+		public Task DeleteAsync(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -457,6 +457,14 @@ namespace Cchbc.UI.Comments
 			catch (Exception ex)
 			{
 				this.Logger.Error(ex.ToString());
+				try
+				{
+
+				}
+				finally
+				{
+					
+				}
 			}
 		}
 	}

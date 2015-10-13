@@ -119,64 +119,126 @@ namespace Cchbc
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			var fireEndOperation = true;
 			var args = new FeatureEventArgs(feature);
+			var permissionResult = await GetPermissionResult(viewItem, args, this.CanAddAsync);
+			if (permissionResult != null)
+			{
+				switch (permissionResult.Status)
+				{
+					case PermissionStatus.Allow:
+						await this.AddValidatedAsync(viewItem, args);
+						break;
+					case PermissionStatus.Confirm:
+						this.SetupDialog(dialog);
+						dialog.AcceptAction = async () => await this.AddValidatedAsync(viewItem, args);
+						await dialog.ConfirmAsync(permissionResult.Message, feature);
+						break;
+					case PermissionStatus.Deny:
+						this.SetupDialog(dialog);
+						await dialog.DisplayAsync(permissionResult.Message, feature);
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+			}
+		}
 
+		public async Task UpdateAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
+		{
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			var args = new FeatureEventArgs(feature);
+			var permissionResult = await GetPermissionResult(viewItem, args, this.CanUpdateAsync);
+			if (permissionResult != null)
+			{
+				switch (permissionResult.Status)
+				{
+					case PermissionStatus.Allow:
+						await this.UpdateValidatedAsync(viewItem, args);
+						break;
+					case PermissionStatus.Confirm:
+						this.SetupDialog(dialog);
+						dialog.AcceptAction = async () => await this.UpdateValidatedAsync(viewItem, args);
+						await dialog.ConfirmAsync(permissionResult.Message, feature);
+						break;
+					case PermissionStatus.Deny:
+						this.SetupDialog(dialog);
+						await dialog.DisplayAsync(permissionResult.Message, feature);
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+			}
+		}
+
+		public async Task DeleteAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
+		{
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			var args = new FeatureEventArgs(feature);
+			var permissionResult = await GetPermissionResult(viewItem, args, this.CanDeleteAsync);
+			if (permissionResult != null)
+			{
+				switch (permissionResult.Status)
+				{
+					case PermissionStatus.Allow:
+						await this.DeleteValidatedAsync(viewItem, args);
+						break;
+					case PermissionStatus.Confirm:
+						this.SetupDialog(dialog);
+						dialog.AcceptAction = async () => await this.DeleteValidatedAsync(viewItem, args);
+						await dialog.ConfirmAsync(permissionResult.Message, feature);
+						break;
+					case PermissionStatus.Deny:
+						this.SetupDialog(dialog);
+						await dialog.DisplayAsync(permissionResult.Message, feature);
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+			}
+		}
+
+		private void SetupDialog(ModalDialog dialog)
+		{
+			// On every action of the dialog fire End event for None feature - works like finally
+			dialog.AcceptAction =
+				dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(new FeatureEventArgs(Feature.None));
+		}
+
+		private async Task<PermissionResult> GetPermissionResult(TViewItem viewItem, FeatureEventArgs args, Func<TViewItem, Task<PermissionResult>> checker)
+		{
+			PermissionResult permissionResult = null;
+
+			// Fire Start event
+			this.OnOperationStart(args);
 			try
 			{
-				this.OnOperationStart(args);
-
+				// Validate properties
 				var validationResults = this.ValidateProperties(viewItem);
 				if (validationResults.Length == 0)
 				{
 					// Apply business logic
-					var permissionResult = await this.CanAddAsync(viewItem);
-					switch (permissionResult.Status)
-					{
-						case PermissionStatus.Allow:
-							await this.AddValidatedAsync(viewItem);
-							break;
-						case PermissionStatus.Confirm:
-							fireEndOperation = false;
-
-							// Confirm any user warnings
-							dialog.AcceptAction = async () =>
-							{
-								try
-								{
-									await this.AddValidatedAsync(viewItem);
-								}
-								catch (Exception ex)
-								{
-									this.OnOperationError(args.WithException(ex));
-								}
-								finally
-								{
-									this.OnOperationEnd(args);
-								}
-							};
-							dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(new FeatureEventArgs(Feature.None));
-							await dialog.ConfirmAsync(permissionResult.Message, feature);
-							break;
-						case PermissionStatus.Deny:
-							await dialog.DisplayAsync(permissionResult.Message, feature);
-							break;
-						default:
-							throw new ArgumentOutOfRangeException();
-					}
+					permissionResult = await checker(viewItem);
 				}
 			}
 			catch (Exception ex)
 			{
-				this.OnOperationError(args.WithException(ex));
-			}
-			finally
-			{
-				if (fireEndOperation)
+				try
+				{
+					this.OnOperationError(args.WithException(ex));
+				}
+				finally
 				{
 					this.OnOperationEnd(args);
 				}
 			}
+
+			return permissionResult;
 		}
 
 		public void Insert(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
@@ -215,73 +277,6 @@ namespace Cchbc
 			}
 		}
 
-		public async Task UpdateAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
-		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			var fireEndOperation = true;
-			var args = new FeatureEventArgs(feature);
-
-			try
-			{
-				this.OnOperationStart(args);
-
-				var validationResults = this.ValidateProperties(viewItem);
-				if (validationResults.Length == 0)
-				{
-					// Apply business logic
-					var permissionResult = await this.CanUpdateAsync(viewItem);
-					switch (permissionResult.Status)
-					{
-						case PermissionStatus.Allow:
-							await this.UpdateValidatedAsync(viewItem);
-							break;
-						case PermissionStatus.Confirm:
-							fireEndOperation = false;
-
-							// Confirm any user warnings
-							dialog.AcceptAction = async () =>
-							{
-								try
-								{
-									await this.UpdateValidatedAsync(viewItem);
-								}
-								catch (Exception ex)
-								{
-									this.OnOperationError(args.WithException(ex));
-								}
-								finally
-								{
-									this.OnOperationEnd(args);
-								}
-							};
-							dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(new FeatureEventArgs(Feature.None));
-							await dialog.ConfirmAsync(permissionResult.Message, feature);
-							break;
-						case PermissionStatus.Deny:
-							await dialog.DisplayAsync(permissionResult.Message, feature);
-							break;
-						default:
-							throw new ArgumentOutOfRangeException();
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				this.OnOperationError(args.WithException(ex));
-			}
-			finally
-			{
-				if (fireEndOperation)
-				{
-					this.OnOperationEnd(args);
-				}
-			}
-
-		}
-
 		public void Update(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
 		{
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
@@ -292,67 +287,6 @@ namespace Cchbc
 			viewItems.Remove(viewItem);
 
 			this.Insert(viewItems, viewItem, textSearch, searchOption);
-		}
-
-		public async Task DeleteAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
-		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			var fireEndOperation = true;
-			var args = new FeatureEventArgs(feature);
-
-			try
-			{
-				this.OnOperationStart(args);
-
-				var permissionResult = await this.CanDeleteAsync(viewItem);
-				switch (permissionResult.Status)
-				{
-					case PermissionStatus.Allow:
-						await this.DeleteValidatedAsync(viewItem);
-						break;
-					case PermissionStatus.Confirm:
-						fireEndOperation = false;
-
-						// Confirm any user warnings
-						dialog.AcceptAction = async () =>
-						{
-							try
-							{
-								await this.DeleteValidatedAsync(viewItem);
-							}
-							catch (Exception ex)
-							{
-								this.OnOperationError(args.WithException(ex));
-							}
-							finally
-							{
-								this.OnOperationEnd(args);
-							}
-						};
-						dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(new FeatureEventArgs(Feature.None));
-						await dialog.ConfirmAsync(permissionResult.Message, feature);
-						break;
-					case PermissionStatus.Deny:
-						await dialog.DisplayAsync(permissionResult.Message, feature);
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
-			}
-			catch (Exception ex)
-			{
-				this.OnOperationError(args.WithException(ex));
-			}
-			finally
-			{
-				if (fireEndOperation)
-				{
-					this.OnOperationEnd(args);
-				}
-			}
 		}
 
 		public void Delete(ObservableCollection<TViewItem> viewItems, TViewItem viewItem)
@@ -413,12 +347,13 @@ namespace Cchbc
 			return this.Searcher.Search(GetFilteredViewItems(viewItems ?? this.ViewItems), textSearch, searchOption);
 		}
 
-		private async Task AddValidatedAsync(TViewItem viewItem)
+		private async Task AddValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
 		{
-			// Add the item to the db
-			var success = await this.Adapter.InsertAsync(viewItem.Item);
-			if (success)
+			try
 			{
+				// Add the item to the db
+				await this.Adapter.InsertAsync(viewItem.Item);
+
 				// Find the right index to insert the new element
 				var index = this.ViewItems.Count;
 				var option = this.Sorter.CurrentOption;
@@ -443,29 +378,36 @@ namespace Cchbc
 
 				this.OnItemInserted(new ObjectEventArgs<TViewItem>(viewItem));
 			}
+			catch (Exception ex)
+			{
+				try
+				{
+					this.OnOperationError(args.WithException(ex));
+				}
+				finally
+				{
+					this.OnOperationEnd(args);
+				}
+			}
 		}
 
-		private async Task UpdateValidatedAsync(TViewItem viewItem)
+		private async Task UpdateValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
 		{
 			// Update the item from the db
-			var success = await this.Adapter.UpdateAsync(viewItem.Item);
-			if (success)
-			{
-				this.OnItemUpdated(new ObjectEventArgs<TViewItem>(viewItem));
-			}
+			await this.Adapter.UpdateAsync(viewItem.Item);
+
+			this.OnItemUpdated(new ObjectEventArgs<TViewItem>(viewItem));
 		}
 
-		private async Task DeleteValidatedAsync(TViewItem viewItem)
+		private async Task DeleteValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
 		{
 			// Delete the item from the db
-			var success = await this.Adapter.DeleteAsync(viewItem.Item);
-			if (success)
-			{
-				// Delete the item into the list at the correct place
-				this.ViewItems.Remove(viewItem);
+			await this.Adapter.DeleteAsync(viewItem.Item);
 
-				this.OnItemDeleted(new ObjectEventArgs<TViewItem>(viewItem));
-			}
+			// Delete the item into the list at the correct place
+			this.ViewItems.Remove(viewItem);
+
+			this.OnItemDeleted(new ObjectEventArgs<TViewItem>(viewItem));
 		}
 
 		private ICollection<TViewItem> GetFilteredViewItems(ICollection<TViewItem> viewItems)
