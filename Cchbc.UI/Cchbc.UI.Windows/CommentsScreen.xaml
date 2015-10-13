@@ -53,7 +53,7 @@
                         <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding IsSystem}"></TextBlock>
 
                         <!--<Button Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="2" HorizontalAlignment="Right" VerticalAlignment="Top" Tapped="DeleteLoginTapped">Delete</Button>-->
-                        <Button Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="2" HorizontalAlignment="Right" VerticalAlignment="Top" Tapped="PromoteLoginTapped">Promote</Button>
+                        <Button Grid.Row="0" IsEnabled="{Binding IsRegular}" Grid.Column="0" Grid.RowSpan="3" Grid.ColumnSpan="2" HorizontalAlignment="Right" VerticalAlignment="Top" Tapped="PromoteLoginTapped">Promote</Button>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>

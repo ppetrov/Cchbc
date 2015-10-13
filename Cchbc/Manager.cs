@@ -16,20 +16,22 @@ namespace Cchbc
 	{
 		protected List<TViewItem> ViewItems { get; } = new List<TViewItem>();
 
-		public event EventHandler<ManagerOperationEventArgs> OperationStart;
-		protected virtual void OnStartOperation(ManagerOperationEventArgs e)
+		public event EventHandler<FeatureEventArgs> OperationStart;
+		protected virtual void OnOperationStart(FeatureEventArgs e)
 		{
+			e.Feature.StartMeasure();
 			OperationStart?.Invoke(this, e);
 		}
 
-		public event EventHandler<ManagerOperationEventArgs> OperationEnd;
-		protected virtual void OnEndOperation(ManagerOperationEventArgs e)
+		public event EventHandler<FeatureEventArgs> OperationEnd;
+		protected virtual void OnOperationEnd(FeatureEventArgs e)
 		{
+			e.Feature.StopMeasure();
 			OperationEnd?.Invoke(this, e);
 		}
 
-		public event EventHandler<ManagerOperationEventArgs> OperationError;
-		protected virtual void OnOperationError(ManagerOperationEventArgs e)
+		public event EventHandler<FeatureEventArgs> OperationError;
+		protected virtual void OnOperationError(FeatureEventArgs e)
 		{
 			OperationError?.Invoke(this, e);
 		}
@@ -81,6 +83,28 @@ namespace Cchbc
 			this.Sorter.Sort(this.ViewItems, this.Sorter.CurrentOption);
 		}
 
+		public void NotifyStart(Feature feature)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			this.OnOperationStart(new FeatureEventArgs(feature));
+		}
+
+		public void NotifyEnd(Feature feature)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			this.OnOperationEnd(new FeatureEventArgs(feature));
+		}
+
+		public void NotifyError(Feature feature, Exception exception)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (exception == null) throw new ArgumentNullException(nameof(exception));
+
+			this.OnOperationError(new FeatureEventArgs(feature).WithException(exception));
+		}
+
 		public abstract ValidationResult[] ValidateProperties(TViewItem viewItem);
 
 		public abstract Task<PermissionResult> CanAddAsync(TViewItem viewItem);
@@ -89,17 +113,19 @@ namespace Cchbc
 
 		public abstract Task<PermissionResult> CanDeleteAsync(TViewItem viewItem);
 
-		public async Task AddAsync(TViewItem viewItem, ModalDialog dialog)
+		public async Task AddAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-
-			var args = new ManagerOperationEventArgs(ManagerOperation.Add);
-			this.OnStartOperation(args);
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			var fireEndOperation = true;
+			var args = new FeatureEventArgs(feature);
+
 			try
 			{
+				this.OnOperationStart(args);
+
 				var validationResults = this.ValidateProperties(viewItem);
 				if (validationResults.Length == 0)
 				{
@@ -126,26 +152,29 @@ namespace Cchbc
 								}
 								finally
 								{
-									this.OnEndOperation(args);
+									this.OnOperationEnd(args);
 								}
 							};
-							dialog.CancelAction = () => this.OnEndOperation(args);
-							dialog.DeclineAction = () => this.OnEndOperation(args);
-							await dialog.ConfirmAsync(permissionResult.Message);
+							dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(new FeatureEventArgs(Feature.None));
+							await dialog.ConfirmAsync(permissionResult.Message, feature);
 							break;
 						case PermissionStatus.Deny:
-							await dialog.DisplayAsync(permissionResult.Message);
+							await dialog.DisplayAsync(permissionResult.Message, feature);
 							break;
 						default:
 							throw new ArgumentOutOfRangeException();
 					}
 				}
 			}
+			catch (Exception ex)
+			{
+				this.OnOperationError(args.WithException(ex));
+			}
 			finally
 			{
 				if (fireEndOperation)
 				{
-					this.OnEndOperation(args);
+					this.OnOperationEnd(args);
 				}
 			}
 		}
@@ -186,17 +215,19 @@ namespace Cchbc
 			}
 		}
 
-		public async Task UpdateAsync(TViewItem viewItem, ModalDialog dialog)
+		public async Task UpdateAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-
-			var args = new ManagerOperationEventArgs(ManagerOperation.Update);
-			this.OnStartOperation(args);
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			var fireEndOperation = true;
+			var args = new FeatureEventArgs(feature);
+
 			try
 			{
+				this.OnOperationStart(args);
+
 				var validationResults = this.ValidateProperties(viewItem);
 				if (validationResults.Length == 0)
 				{
@@ -223,26 +254,29 @@ namespace Cchbc
 								}
 								finally
 								{
-									this.OnEndOperation(args);
+									this.OnOperationEnd(args);
 								}
 							};
-							dialog.CancelAction = () => this.OnEndOperation(args);
-							dialog.DeclineAction = () => this.OnEndOperation(args);
-							await dialog.ConfirmAsync(permissionResult.Message);
+							dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(new FeatureEventArgs(Feature.None));
+							await dialog.ConfirmAsync(permissionResult.Message, feature);
 							break;
 						case PermissionStatus.Deny:
-							await dialog.DisplayAsync(permissionResult.Message);
+							await dialog.DisplayAsync(permissionResult.Message, feature);
 							break;
 						default:
 							throw new ArgumentOutOfRangeException();
 					}
 				}
 			}
+			catch (Exception ex)
+			{
+				this.OnOperationError(args.WithException(ex));
+			}
 			finally
 			{
 				if (fireEndOperation)
 				{
-					this.OnEndOperation(args);
+					this.OnOperationEnd(args);
 				}
 			}
 
@@ -256,21 +290,23 @@ namespace Cchbc
 
 			// This is still better then re-applying the filter & sorting the data
 			viewItems.Remove(viewItem);
-            
+
 			this.Insert(viewItems, viewItem, textSearch, searchOption);
 		}
 
-		public async Task DeleteAsync(TViewItem viewItem, ModalDialog dialog)
+		public async Task DeleteAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-
-			var args = new ManagerOperationEventArgs(ManagerOperation.Delete);
-			this.OnStartOperation(args);
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			var fireEndOperation = true;
+			var args = new FeatureEventArgs(feature);
+
 			try
 			{
+				this.OnOperationStart(args);
+
 				var permissionResult = await this.CanDeleteAsync(viewItem);
 				switch (permissionResult.Status)
 				{
@@ -293,25 +329,28 @@ namespace Cchbc
 							}
 							finally
 							{
-								this.OnEndOperation(args);
+								this.OnOperationEnd(args);
 							}
 						};
-						dialog.CancelAction = () => this.OnEndOperation(args);
-						dialog.DeclineAction = () => this.OnEndOperation(args);
-						await dialog.ConfirmAsync(permissionResult.Message);
+						dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(new FeatureEventArgs(Feature.None));
+						await dialog.ConfirmAsync(permissionResult.Message, feature);
 						break;
 					case PermissionStatus.Deny:
-						await dialog.DisplayAsync(permissionResult.Message);
+						await dialog.DisplayAsync(permissionResult.Message, feature);
 						break;
 					default:
 						throw new ArgumentOutOfRangeException();
 				}
 			}
+			catch (Exception ex)
+			{
+				this.OnOperationError(args.WithException(ex));
+			}
 			finally
 			{
 				if (fireEndOperation)
 				{
-					this.OnEndOperation(args);
+					this.OnOperationEnd(args);
 				}
 			}
 		}
@@ -460,7 +499,5 @@ namespace Cchbc
 
 			return viewItems;
 		}
-
-
 	}
 }

@@ -1,45 +1,59 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Net.Http.Headers;
 
 namespace Cchbc
 {
 	public sealed class FeatureManager
 	{
-		private Dictionary<string, Dictionary<string, long>> Contexts { get; } = new Dictionary<string, Dictionary<string, long>>();
-
-		public ILogger Logger { get; }
-
-		public FeatureManager(ILogger logger)
+		private sealed class FeatureEntry
 		{
-			if (logger == null) throw new ArgumentNullException(nameof(logger));
+			public string Context { get; }
+			public string Name { get; }
+			public TimeSpan TimeSpent { get; }
 
-			this.Logger = logger;
+			public FeatureEntry(string context, string name, TimeSpan timeSpent)
+			{
+				if (context == null) throw new ArgumentNullException(nameof(context));
+				if (name == null) throw new ArgumentNullException(nameof(name));
+
+				this.Context = context;
+				this.Name = name;
+				this.TimeSpent = timeSpent;
+			}
 		}
 
-		public void Use(string featureName)
+		private List<FeatureEntry> Entries { get; } = new List<FeatureEntry>();
+
+		public void Add(string context, Feature feature)
 		{
-			if (featureName == null) throw new ArgumentNullException(nameof(featureName));
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			Dictionary<string, long> features;
+			feature.StopMeasure();
 
-			// Search for features by context
-			var context = this.Logger.Context;
-			if (!this.Contexts.TryGetValue(context, out features))
+			// Ignore blank features
+			if (feature == Feature.None)
 			{
-				features = new Dictionary<string, long>();
-				this.Contexts.Add(context, features);
+				return;
 			}
 
-			long count;
-			if (features.TryGetValue(featureName, out count))
+			this.Entries.Add(new FeatureEntry(context, feature.Name, feature.TimeSpent));
+
+			this.Dump();
+		}
+
+		private void Dump()
+		{
+			foreach (var byContextGroup in this.Entries.GroupBy(v => v.Context))
 			{
-				// Increment feature usage
-				features[featureName] = count + 1;
-			}
-			else
-			{
-				// Init feature usage
-				features.Add(featureName, 1);
+				foreach (var e in byContextGroup)
+				{
+					Debug.WriteLine(byContextGroup.Key + "->" + e.Name + ", " + e.TimeSpent.TotalMilliseconds + "ms");
+				}
+				Debug.WriteLine(string.Empty);
 			}
 		}
 	}

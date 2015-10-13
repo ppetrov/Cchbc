@@ -9,7 +9,7 @@ namespace Cchbc.UI
 {
 	public sealed partial class CommentsScreen
 	{
-		private readonly LoginsViewModel _viewModel = new LoginsViewModel(new DirectDebugLogger(nameof(LoginsViewModel)));
+		private readonly LoginsViewModel _viewModel = new LoginsViewModel(new DirectDebugLogger(@"Agenda"));
 
 		public CommentsScreen()
 		{
@@ -41,7 +41,7 @@ namespace Cchbc.UI
 				{
 					var dialog = new WinRtModalDialog();
 					dialog.AcceptAction = async () => { await _viewModel.DeleteAsync(viewItem, dialog); };
-					await dialog.ConfirmAsync(@"Are you sure you want to delete this user?");
+					await dialog.ConfirmAsync(@"Are you sure you want to delete this user?", Feature.None);
 				}
 			}
 		}
@@ -55,8 +55,11 @@ namespace Cchbc.UI
 				if (viewItem != null)
 				{
 					var dialog = new WinRtModalDialog();
-					dialog.AcceptAction = async () => { await _viewModel.PromoteUser(viewItem, dialog); };
-					await dialog.ConfirmAsync(@"Are you sure you want to promote this user?");
+					dialog.AcceptAction = async () =>
+					{
+						await _viewModel.PromoteUserAsync(viewItem, dialog);
+					};
+					await dialog.ConfirmAsync(@"Are you sure you want to promote this user?", Feature.None);
 				}
 			}
 		}

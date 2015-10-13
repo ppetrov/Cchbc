@@ -17,6 +17,7 @@ namespace Cchbc.UI.Comments
 			{
 				case DialogType.Message:
 				case null:
+					_dialog.Commands.Add(new UICommand("Close", _ => { this.CancelAction(); }));
 					break;
 				case DialogType.AcceptDecline:
 					_dialog.Commands.Add(new UICommand("Yes", _ => { this.AcceptAction(); }));

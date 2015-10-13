@@ -46,8 +46,11 @@ namespace Cchbc.UI.Comments
 			{
 				this.Item.IsSystem = value;
 				this.OnPropertyChanged();
+				this.OnPropertyChanged(nameof(IsRegular));
 			}
 		}
+
+		public bool IsRegular => !this.IsSystem;
 
 		public LoginViewItem(Login login) : base(login)
 		{
@@ -98,19 +101,10 @@ namespace Cchbc.UI.Comments
 			var s = Stopwatch.StartNew();
 			try
 			{
-				//var name = viewItem.Name;
-				//foreach (var v in this.ViewItems)
-				//{
-				//	if (v.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
-				//	{
-				//		return PermissionResult.Deny(@"Login with the same name already exists");
-				//	}
-				//}
 				if (await this.Adapter.IsReservedAsync(viewItem.Name))
 				{
 					return PermissionResult.Deny(@"This name is reserved");
 				}
-
 				return PermissionResult.Allow;
 			}
 			finally
@@ -141,9 +135,8 @@ namespace Cchbc.UI.Comments
 			{
 				if (viewItem.Item.CreatedAt.Date == DateTime.Today)
 				{
-					return Task.FromResult(PermissionResult.Deny(@"Cannot delete today logins"));
+					return Task.FromResult(PermissionResult.Confirm(@"Cannot delete today logins"));
 				}
-
 				return Task.FromResult(PermissionResult.Allow);
 			}
 			finally
@@ -156,104 +149,21 @@ namespace Cchbc.UI.Comments
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			if (viewItem.IsSystem)
+			var s = Stopwatch.StartNew();
+			try
 			{
-				return Task.FromResult(PermissionResult.Deny(@"The user is already System user"));
+				return Task.FromResult(PermissionResult.Allow);
+				if (viewItem.IsSystem)
+				{
+					return Task.FromResult(PermissionResult.Deny(@"The user is already System user"));
+				}
+				return Task.FromResult(PermissionResult.Confirm(@"Are you sure to promoto user create today ?"));
 			}
-
-			return Task.FromResult(PermissionResult.Confirm(@"Are you sure to promoto user create today ?"));
+			finally
+			{
+				this.Logger.Info($@"{nameof(CanPromoteAsync)}:{s.ElapsedMilliseconds}ms");
+			}
 		}
-
-		//public IProgress<string> OperationProgress { get; }
-		//public CommentAdapter Adapter { get; }
-
-		//public CommentsManager(ILogger logger, IProgress<string> operationProgress, CommentAdapter adapter,
-		//	Sorter<CommentViewItem> sorter,
-		//	Searcher<CommentViewItem> searcher,
-		//	FilterOption<CommentViewItem>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
-		//{
-		//	this.Logger = logger;
-		//	this.OperationProgress = operationProgress;
-		//	this.Adapter = adapter;
-		//}
-
-		//public override ValidationResult[] ValidateProperties(CommentViewItem viewItem)
-		//{
-		//	if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-
-		//	var s = Stopwatch.StartNew();
-
-		//	// All validation logic 
-		//	this.OperationProgress.Report(@"Validating fields");
-		//	var validationResults = Validator.GetViolated(new[]
-		//	{
-		//		Validator.ValidateNotNull(viewItem.Contents, @"Contents cannot be null"),
-		//	});
-		//	this.Logger.Info($@"Validating fields took {s.ElapsedMilliseconds} ms");
-
-		//	return validationResults;
-		//}
-
-		//public override Task<PermissionResult> CanAddAsync(CommentViewItem viewItem)
-		//{
-		//	if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-
-		//	// All validation logic
-		//	var s = Stopwatch.StartNew();
-
-		//	try
-		//	{
-		//		this.OperationProgress.Report(@"Checking for items on the same date");
-		//		if (this.ViewItems.Any(v => v.CreatedAt.Date == viewItem.CreatedAt.Date))
-		//		{
-		//			return Task.FromResult(PermissionResult.Deny(@"Already have a comment for this date"));
-		//		}
-		//		this.OperationProgress.Report(@"Checking items limits");
-		//		if (this.ViewItems.Count > 10)
-		//		{
-		//			return Task.FromResult(PermissionResult.Confirm(@"Too many comments already. Are you sure you want one more?"));
-		//		}
-		//		return Task.FromResult(PermissionResult.Allow);
-		//	}
-		//	finally
-		//	{
-		//		this.Logger.Info($@"CanAdd took { s.ElapsedMilliseconds} ms");
-		//	}
-		//}
-
-		//public override Task<PermissionResult> CanUpdateAsync(CommentViewItem viewItem)
-		//{
-		//	if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-
-		//	return Task.FromResult(PermissionResult.Allow);
-		//}
-
-		//public override Task<PermissionResult> CanDeleteAsync(CommentViewItem viewItem)
-		//{
-		//	if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-
-		//	// All validation logic
-		//	var s = Stopwatch.StartNew();
-
-		//	try
-		//	{
-		//		this.OperationProgress.Report(@"Delete unreplicated ???");
-		//		if (viewItem.Type == null)
-		//		{
-		//			return Task.FromResult(PermissionResult.Deny(@"Cannot delete comment of this type"));
-		//		}
-		//		return Task.FromResult(PermissionResult.Allow);
-		//	}
-		//	finally
-		//	{
-		//		this.Logger.Info($@"CanAdd took { s.ElapsedMilliseconds} ms");
-		//	}
-		//}
-
-		//public PermissionResult CanMark(CommentViewItem viewItem)
-		//{
-		//	return PermissionResult.Allow;
-		//}
 	}
 
 	public sealed class LoginAdapter : IModifiableAdapter<Login>
@@ -393,7 +303,7 @@ namespace Cchbc.UI.Comments
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
 			this.Logger = logger;
-			this.FeatureManager = new FeatureManager(logger);
+			this.FeatureManager = new FeatureManager();
 			this.Manager = new LoginsManager(logger, new LoginAdapter(logger), new Sorter<LoginViewItem>(new[]
 			{
 				new SortOption<LoginViewItem>(@"By Name", (x,y)=> string.Compare(x.Item.Name, y.Item.Name, StringComparison.Ordinal)),
@@ -408,8 +318,15 @@ namespace Cchbc.UI.Comments
 				})
 			}), new Searcher<LoginViewItem>((v, s) => v.Item.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
 
-			this.Manager.OperationStart += (sender, args) => { this.IsBusy = true; };
-			this.Manager.OperationEnd += (sender, args) => { this.IsBusy = false; };
+			this.Manager.OperationStart += (sender, args) =>
+			{
+				this.IsBusy = true;
+			};
+			this.Manager.OperationEnd += (sender, args) =>
+			{
+				this.IsBusy = false;
+				this.FeatureManager.Add(this.Logger.Context, args.Feature);
+			};
 			this.Manager.OperationError += (sender, args) => { this.ErrorMessage = args.Exception.Message; };
 
 			this.Manager.ItemInserted += ManagerOnItemInserted;
@@ -468,16 +385,7 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			try
-			{
-				this.FeatureManager.Use(nameof(AddAsync));
-				await this.Manager.AddAsync(viewItem, dialog);
-			}
-			catch (Exception ex)
-			{
-				this.Logger.Error(ex.ToString());
-				this.ErrorMessage = ex.Message;
-			}
+			await this.Manager.AddAsync(viewItem, dialog, new Feature(nameof(AddAsync)));
 		}
 
 		public async Task DeleteAsync(LoginViewItem viewItem, ModalDialog dialog)
@@ -485,315 +393,71 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			try
-			{
-				this.FeatureManager.Use(nameof(DeleteAsync));
-				await this.Manager.DeleteAsync(viewItem, dialog);
-			}
-			catch (Exception ex)
-			{
-				this.Logger.Error(ex.ToString());
-				this.ErrorMessage = ex.Message;
-			}
+			await this.Manager.DeleteAsync(viewItem, dialog, new Feature(nameof(DeleteAsync)));
 		}
 
-		public async Task PromoteUser(LoginViewItem viewItem, ModalDialog dialog)
+		public async Task PromoteUserAsync(LoginViewItem viewItem, ModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
+			var feature = new Feature(nameof(PromoteUserAsync));
+			this.Manager.NotifyStart(feature);
+
+			dialog.AcceptAction = dialog.CancelAction = dialog.DeclineAction = () =>
+			{
+				this.Manager.NotifyEnd(Feature.None);
+			};
+
+			var result = await this.Manager.CanPromoteAsync(viewItem);
+			switch (result.Status)
+			{
+				case PermissionStatus.Allow:
+					await PromoteValidatedAsync(viewItem, dialog, feature);
+					break;
+				case PermissionStatus.Confirm:
+					dialog.AcceptAction = async () =>
+					{
+						try
+						{
+							await this.PromoteValidatedAsync(viewItem, dialog, feature);
+						}
+						catch (Exception ex)
+						{
+							try
+							{
+								this.Manager.NotifyError(feature, ex);
+							}
+							finally
+							{
+								this.Manager.NotifyEnd(feature);
+							}
+						}
+					};
+					await dialog.ConfirmAsync(result.Message, feature);
+					break;
+				case PermissionStatus.Deny:
+					await dialog.DisplayAsync(result.Message, feature);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+		}
+
+		private async Task PromoteValidatedAsync(LoginViewItem viewItem, ModalDialog dialog, Feature feature)
+		{
 			try
 			{
-				this.FeatureManager.Use(nameof(PromoteUser));
+				viewItem.IsSystem = true;
 
-				var result = await this.Manager.CanPromoteAsync(viewItem);
-				switch (result.Status)
-				{
-					case PermissionStatus.Allow:
-						await PromoteValidatedAsync(viewItem, dialog);
-						break;
-					case PermissionStatus.Confirm:
-						dialog.AcceptAction = async () => await this.PromoteValidatedAsync(viewItem, dialog);
-						await dialog.ConfirmAsync(result.Message);
-						break;
-					case PermissionStatus.Deny:
-						await dialog.DisplayAsync(result.Message);
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
+				await this.Manager.UpdateAsync(viewItem, dialog, feature);
+
+				throw new Exception(@"PPetrov");
 			}
 			catch (Exception ex)
 			{
 				this.Logger.Error(ex.ToString());
-				this.ErrorMessage = ex.Message;
 			}
 		}
-
-		private async Task PromoteValidatedAsync(LoginViewItem viewItem, ModalDialog dialog)
-		{
-			viewItem.IsSystem = true;
-
-			await this.Manager.UpdateAsync(viewItem, dialog);
-		}
 	}
-
-	// Count & Time
-	// Count = easy
-	// Time ??? TODO : !!!!
-	//Agenda->Search
-	//Agenda->Sort 23ms
-	//Agenda->Sort 47ms
-	//Agenda->FilterByOption
-	//Agenda->ChangeDate
-	//Agenda->Sync
-
-
-	//public sealed class CommentsViewModel : ViewObject
-	//{
-	//	private ILogger Logger { get; }
-	//	private LoginsManager Manager { get; }
-
-	//	public ObservableCollection<CommentViewItem> Comments { get; } = new ObservableCollection<CommentViewItem>();
-	//	public SortOption<CommentViewItem>[] SortOptions => this.Manager.Sorter.Options;
-	//	public SearchOption<CommentViewItem>[] SearchOptions => this.Manager.Searcher.Options;
-
-	//	private string _operationProgress = string.Empty;
-
-	//	private string _textSearch = string.Empty;
-	//	public string TextSearch
-	//	{
-	//		get { return _textSearch; }
-	//		set
-	//		{
-	//			this.SetField(ref _textSearch, value);
-	//			// TODO : Logger
-	//			// TODO : Statistics to track functionality usage
-	//			//this.Stats[ExcludeSuppressed]++;
-	//			this.ApplySearch();
-	//		}
-	//	}
-
-	//	private SearchOption<CommentViewItem> _searchOption;
-	//	public SearchOption<CommentViewItem> SearchOption
-	//	{
-	//		get { return _searchOption; }
-	//		set
-	//		{
-	//			this.SetField(ref _searchOption, value);
-	//			// TODO : Logger
-	//			// TODO : Statistics to track functionality usage
-	//			//this.Logger.Info($@"Apply filter options:{string.Join(@",", selectedFilterOptions.Select(f => @"'" + f.DisplayName + @"'"))}");
-	//			//this.Manager.Logger.Info($@"Searching for text:'{this.TextSearch}', option: '{this.SearchOption?.DisplayName}'");
-	//			//this.Stats[ExcludeSuppressed]++;
-	//			this.ApplySearch();
-	//		}
-	//	}
-
-	//	private SortOption<CommentViewItem> _sortOption;
-	//	public SortOption<CommentViewItem> SortOption
-	//	{
-	//		get { return _sortOption; }
-	//		set
-	//		{
-	//			this.SetField(ref _sortOption, value);
-	//			// TODO : Logger
-	//			// TODO : Statistics to track functionality usage
-	//			//this.Logger.Info($@"Apply filter options:{string.Join(@",", selectedFilterOptions.Select(f => @"'" + f.DisplayName + @"'"))}");
-	//			//this.Manager.Logger.Info($@"Searching for text:'{this.TextSearch}', option: '{this.SearchOption?.DisplayName}'");
-	//			//this.Stats[ExcludeSuppressed]++;
-	//			this.ApplySort();
-	//		}
-	//	}
-
-	//	public CommentsViewModel(ILogger logger)
-	//	{
-	//		if (logger == null) throw new ArgumentNullException(nameof(logger));
-
-	//		this.Logger = logger;
-	//		this.Manager = new LoginsManager(logger,
-	//			new Progress<string>(this.DisplayOperationProgress),
-	//			new CommentAdapter(),
-	//			new Sorter<CommentViewItem>(new[]
-	//			{
-	//				new SortOption<CommentViewItem>(@"Type", (x, y) => string.Compare(x.Type, y.Type, StringComparison.Ordinal)),
-	//				new SortOption<CommentViewItem>(@"CreateAt", (x, y) => x.CreatedAt.CompareTo(y.CreatedAt)),
-	//			}), new Searcher<CommentViewItem>(new[]
-	//			{
-	//				new SearchOption<CommentViewItem>(@"All", v => true, true),
-	//				//new SearchOption<CommentViewModel>(@"Coca Cola", v => v.Brand[0] == 'C'),
-	//				//new SearchOption<CommentViewModel>(@"Fanta", v => v.Brand[0] == 'F'),
-	//				//new SearchOption<CommentViewModel>(@"Sprite", v => v.Brand[0] == 'S'),
-	//			}));
-
-	//		//(item, search) => item.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0), new[]
-	//		//	{
-	//		//		new FilterOption<CommentViewModel>(@"Exclude suppressed", v => v.Name.IndexOf('S') >= 0),
-	//		//		new FilterOption<CommentViewModel>(@"Exclude not in territory", v => v.Name.IndexOf('F') >= 0),
-	//		//	}
-
-	//		this.Manager.ItemInserted += this.ManagerOnItemInserted;
-	//		this.Manager.ItemDeleted += this.ManagerOnItemDeleted;
-	//	}
-
-	//	private void ManagerOnItemInserted(object sender, ObjectEventArgs<CommentViewItem> e)
-	//	{
-	//		var viewItem = e.Item;
-	//		var search = this.Manager.Search(this.TextSearch, this.SearchOption, new List<CommentViewItem>(1) { viewItem });
-	//		if (search.Any())
-	//		{
-	//			// TODO : Find the right place
-	//			var index = this.Comments.Count;
-	//			this.Comments.Insert(index, viewItem);
-	//		}
-	//	}
-
-	//	private void ManagerOnItemDeleted(object sender, ObjectEventArgs<CommentViewItem> args)
-	//	{
-	//		this.Comments.Remove(args.Item);
-
-	//		// TODO : !!
-	//		this.Manager.OperationProgress.Report(string.Empty);
-	//	}
-
-	//	public string OperationProgress
-	//	{
-	//		get { return _operationProgress; }
-	//		set { this.SetField(ref _operationProgress, value); }
-	//	}
-
-	//	private void DisplayOperationProgress(string message)
-	//	{
-	//		this.OperationProgress = message;
-	//	}
-
-	//	public async Task LoadDataAsync()
-	//	{
-	//		var s = Stopwatch.StartNew();
-
-	//		// TODO : Log operation usage
-	//		this.Manager.OperationProgress.Report(@"Loading");
-
-	//		var helper = new CommentTypeHelper();
-	//		await helper.LoadAsync(new CommentTypeAdapter());
-
-	//		var comments = await this.Manager.Adapter.GetByDateAsync(DateTime.Today, helper.Items);
-
-	//		this.Manager.LoadData(comments.Select(v => new CommentViewItem(v)));
-
-	//		this.ApplySearch();
-	//		this.Logger.Info($@"LoadData took {s.ElapsedMilliseconds} ms");
-
-	//		this.Manager.OperationProgress.Report(string.Empty);
-	//	}
-
-	//	public void ExcludeSuppressed()
-	//	{
-	//		//var s = Stopwatch.StartNew();
-	//		//this.Logger.Info(@"Loading articles...");
-
-	//		// TODO : !!! Log operation & time
-	//		this.Manager.FilterOptions[0].Flip();
-	//		this.ApplySearch();
-
-	//		// TODO : Logger
-	//		// TODO : Statistics to track functionality usage
-	//		//this.Stats[ExcludeSuppressed]++;
-	//	}
-
-	//	public void ExcludeNotInTerritory()
-	//	{
-	//		// TODO : !!! Log operation & time
-	//		this.Manager.FilterOptions[1].Flip();
-	//		this.ApplySearch();
-	//	}
-
-	//	private void ApplySearch()
-	//	{
-	//		//var viewItems = this.Manager.Search(this.TextSearch, this.SearchOption);
-
-	//		//this.Articles.Clear();
-	//		//foreach (var viewItem in viewItems)
-	//		//{
-	//		//	this.Articles.Add(viewItem);
-	//		//}
-	//	}
-
-	//	private void ApplySort()
-	//	{
-	//		var index = 0;
-	//		//foreach (var viewItem in this.Manager.Sort(this.Articles, this.SortOption))
-	//		//{
-	//		//	this.Articles[index++] = viewItem;
-	//		//}
-	//	}
-
-	//	public async Task AddAsync(ModalDialog dialog)
-	//	{
-	//		if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-
-	//		// TODO : Log usage !!!
-	//		try
-	//		{
-	//			await this.Manager.AddAsync(new CommentViewItem(new Comment()), dialog);
-	//		}
-	//		catch (Exception ex)
-	//		{
-	//			this.Logger.Error(ex.ToString());
-	//		}
-	//	}
-
-	//	public async Task DeleteAsync(ModalDialog dialog)
-	//	{
-	//		if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-
-	//		// TODO : Log usage !!!
-	//		try
-	//		{
-	//			await this.Manager.DeleteAsync(new CommentViewItem(new Comment()), dialog);
-	//		}
-	//		catch (Exception ex)
-	//		{
-	//			this.Logger.Error(ex.ToString());
-	//		}
-	//	}
-
-	//	public async Task MarkAsync(ModalDialog dialog)
-	//	{
-	//		if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-
-	//		// TODO : Log usage !!!
-	//		try
-	//		{
-	//			var viewItem = new CommentViewItem(new Comment());
-	//			var result = this.Manager.CanMark(viewItem);
-	//			switch (result.Status)
-	//			{
-	//				case PermissionStatus.Allow:
-	//					await MarkValidatedAsync(viewItem, dialog);
-	//					break;
-	//				case PermissionStatus.Confirm:
-	//					dialog.AcceptAction = async () => this.MarkValidatedAsync(viewItem, dialog);
-	//					await dialog.ShowAsync(result.Message);
-	//					break;
-	//				case PermissionStatus.Deny:
-	//					await dialog.ShowAsync(result.Message);
-	//					break;
-	//				default:
-	//					throw new ArgumentOutOfRangeException();
-	//			}
-	//		}
-	//		catch (Exception ex)
-	//		{
-	//			this.Logger.Error(ex.ToString());
-	//		}
-	//	}
-
-	//	private async Task MarkValidatedAsync(CommentViewItem viewItem, ModalDialog dialog)
-	//	{
-	//		viewItem.IsMarked = true;
-
-	//		await this.Manager.UpdateAsync(viewItem, dialog);
-	//	}
-	//}
 }

@@ -38,10 +38,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\IModifiableAdapter.cs" />
+    <Compile Include="Feature.cs" />
     <Compile Include="FeatureManager.cs" />
     <Compile Include="ILogger.cs" />
-    <Compile Include="ManagerOperation.cs" />
-    <Compile Include="ManagerOperationEventArgs.cs" />
+    <Compile Include="FeatureEventArgs.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="Objects\ViewItem.cs" />
     <Compile Include="Search\FilterOption.cs" />

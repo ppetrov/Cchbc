@@ -18,18 +18,48 @@ namespace Cchbc.Dialog
 					this.CancelAction = EmptyAction;
 		}
 
-		public Task DisplayAsync(string message)
+		public Task DisplayAsync(string message, Feature feature)
 		{
 			if (message == null) throw new ArgumentNullException(nameof(message));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
+			this.UpdateActions(feature);
 			return this.ShowAsync(message, DialogType.Message);
 		}
 
-		public Task ConfirmAsync(string message, DialogType? type = null)
+		public Task ConfirmAsync(string message, Feature feature, DialogType ? type = null)
 		{
 			if (message == null) throw new ArgumentNullException(nameof(message));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
+			this.UpdateActions(feature);
 			return this.ShowAsync(message, type ?? DialogType.AcceptDecline);
+		}
+
+		private void UpdateActions(Feature feature)
+		{
+			if (feature != null)
+			{
+				feature.Pause();
+				var a = this.AcceptAction;
+				this.AcceptAction = () =>
+				{
+					feature.Resume();
+					a();
+				};
+				var d = this.DeclineAction;
+				this.DeclineAction = () =>
+				{
+					feature.Resume();
+					d();
+				};
+				var c = this.CancelAction;
+				this.CancelAction = () =>
+				{
+					feature.Resume();
+					c();
+				};
+			}
 		}
 
 		public abstract Task ShowAsync(string message, DialogType? type = null);
