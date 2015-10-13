@@ -286,14 +286,20 @@ namespace Cchbc
 				this.ViewItems.Insert(index, viewItem);
 
 				this.OnItemInserted(new ObjectEventArgs<TViewItem>(viewItem));
+
+				this.OnOperationEnd(args);
 			}
 			catch (Exception ex)
 			{
-				this.OnOperationError(args.WithException(ex));
-			}
-			finally
-			{
-				this.OnOperationEnd(args);
+				var noneArgs = new FeatureEventArgs(Feature.None);
+				try
+				{
+					this.OnOperationError(noneArgs.WithException(ex));
+				}
+				finally
+				{
+					this.OnOperationEnd(noneArgs);
+				}
 			}
 		}
 
@@ -388,13 +394,14 @@ namespace Cchbc
 			}
 			catch (Exception ex)
 			{
+				var noneArg = new FeatureEventArgs(Feature.None);
 				try
 				{
-					this.OnOperationError(args.WithException(ex));
+					this.OnOperationError(noneArg.WithException(ex));
 				}
 				finally
 				{
-					this.OnOperationEnd(args);
+					this.OnOperationEnd(noneArg);
 				}
 			}
 

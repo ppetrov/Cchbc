@@ -101,10 +101,12 @@ namespace Cchbc.UI.Comments
 			var s = Stopwatch.StartNew();
 			try
 			{
-				if (await this.Adapter.IsReservedAsync(viewItem.Name))
-				{
-					return PermissionResult.Deny(@"This name is reserved");
-				}
+				//if (await this.Adapter.IsReservedAsync(viewItem.Name))
+				//{
+				//	return PermissionResult.Deny(@"This name is reserved");
+				//}
+				//return PermissionResult.Deny(@"The name is reserved");
+				//return PermissionResult.Confirm(@"Are you sure ???");
 				return PermissionResult.Allow;
 			}
 			finally
@@ -188,6 +190,7 @@ namespace Cchbc.UI.Comments
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
+			throw new Exception(@"PPP : Db exception");
 			var s = Stopwatch.StartNew();
 			try
 			{
@@ -327,7 +330,11 @@ namespace Cchbc.UI.Comments
 				this.IsBusy = false;
 				this.FeatureManager.Add(this.Logger.Context, args.Feature);
 			};
-			this.Manager.OperationError += (sender, args) => { this.ErrorMessage = args.Exception.Message; };
+			this.Manager.OperationError += (sender, args) =>
+			{
+				this.Logger.Error(args.Exception.ToString());
+				this.ErrorMessage = args.Exception.Message;
+			};
 
 			this.Manager.ItemInserted += ManagerOnItemInserted;
 			this.Manager.ItemUpdated += ManagerOnItemUpdated;
