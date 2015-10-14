@@ -291,14 +291,13 @@ namespace Cchbc
 			}
 			catch (Exception ex)
 			{
-				var noneArgs = new FeatureEventArgs(Feature.None);
 				try
 				{
-					this.OnOperationError(noneArgs.WithException(ex));
+					this.OnOperationError(FeatureEventArgs.NoneEventArgs.WithException(ex));
 				}
 				finally
 				{
-					this.OnOperationEnd(noneArgs);
+					this.OnOperationEnd(FeatureEventArgs.NoneEventArgs);
 				}
 			}
 		}
@@ -394,14 +393,13 @@ namespace Cchbc
 			}
 			catch (Exception ex)
 			{
-				var noneArg = new FeatureEventArgs(Feature.None);
 				try
 				{
-					this.OnOperationError(noneArg.WithException(ex));
+					this.OnOperationError(FeatureEventArgs.NoneEventArgs.WithException(ex));
 				}
 				finally
 				{
-					this.OnOperationEnd(noneArg);
+					this.OnOperationEnd(FeatureEventArgs.NoneEventArgs);
 				}
 			}
 
@@ -412,7 +410,7 @@ namespace Cchbc
 		{
 			// On every action of the dialog fire End event for None feature - works like finally
 			dialog.AcceptAction =
-				dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(new FeatureEventArgs(Feature.None));
+				dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(FeatureEventArgs.NoneEventArgs);
 		}
 	}
 }

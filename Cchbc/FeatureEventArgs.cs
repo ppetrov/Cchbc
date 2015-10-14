@@ -4,6 +4,8 @@ namespace Cchbc
 {
 	public sealed class FeatureEventArgs : EventArgs
 	{
+		public static readonly FeatureEventArgs NoneEventArgs = new FeatureEventArgs(Feature.None);
+
 		public Feature Feature { get; }
 		public Exception Exception { get; }
 
