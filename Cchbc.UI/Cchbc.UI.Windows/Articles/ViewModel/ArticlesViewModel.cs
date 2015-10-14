@@ -96,13 +96,13 @@ namespace Cchbc.UI.ArticlesModule.ViewModel
 			var s = Stopwatch.StartNew();
 			this.Logger.Info(@"Loading articles...");
 
-			var brandHelper = new BrandDataHelper();
+			var brandHelper = new BrandHelper();
 			await brandHelper.LoadAsync(new BrandAdapter(this.Logger));
 
-			var flavorHelper = new FlavorDataHelper();
+			var flavorHelper = new FlavorHelper();
 			await flavorHelper.LoadAsync(new FlavorAdapter(this.Logger));
 
-			var articleHelper = new ArticleDataHelper();
+			var articleHelper = new ArticleHelper();
 			await articleHelper.LoadAsync(new ArticleAdapter(this.Logger, brandHelper.Items, flavorHelper.Items));
 
 			var index = 0;

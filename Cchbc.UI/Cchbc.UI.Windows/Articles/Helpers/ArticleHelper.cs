@@ -2,7 +2,7 @@
 
 namespace Cchbc.ArticlesModule
 {
-	public sealed class ArticleDataHelper : DataHelper<Article>
+	public sealed class ArticleHelper : Helper<Article>
 	{
 	}
 }

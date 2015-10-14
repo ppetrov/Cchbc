@@ -37,6 +37,7 @@
     <!-- A reference to the entire .NET Framework is automatically included -->
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AgendaModule.cs" />
     <Compile Include="Data\IModifiableAdapter.cs" />
     <Compile Include="Feature.cs" />
     <Compile Include="FeatureManager.cs" />
@@ -51,7 +52,7 @@
     <Compile Include="Data\IReadOnlyAdapter.cs" />
     <Compile Include="Dialog\ModalDialog.cs" />
     <Compile Include="Dialog\DialogType.cs" />
-    <Compile Include="Helpers\DataHelper.cs" />
+    <Compile Include="Helpers\Helper.cs" />
     <Compile Include="Helpers\IDataHelper.cs" />
     <Compile Include="Objects\IDbObject.cs" />
     <Compile Include="Objects\ObjectEventArgs.cs" />

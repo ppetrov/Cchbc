@@ -114,9 +114,9 @@
     <Compile Include="Articles\Data\ArticleAdapter.cs" />
     <Compile Include="Articles\Data\BrandAdapter.cs" />
     <Compile Include="Articles\Data\FlavorAdapter.cs" />
-    <Compile Include="Articles\Helpers\ArticleDataHelper.cs" />
-    <Compile Include="Articles\Helpers\BrandDataHelper.cs" />
-    <Compile Include="Articles\Helpers\FlavorDataHelper.cs" />
+    <Compile Include="Articles\Helpers\ArticleHelper.cs" />
+    <Compile Include="Articles\Helpers\BrandHelper.cs" />
+    <Compile Include="Articles\Helpers\FlavorHelper.cs" />
     <Compile Include="Articles\Objects\Article.cs" />
     <Compile Include="Articles\Objects\Brand.cs" />
     <Compile Include="Articles\Objects\Flavor.cs" />
@@ -125,10 +125,14 @@
     <Compile Include="ArticlesScreen.xaml.cs">
       <DependentUpon>ArticlesScreen.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Login.cs" />
+    <Compile Include="LoginAdapter.cs" />
     <Compile Include="LoginsManager.cs" />
     <Compile Include="CommentsScreen.xaml.cs">
       <DependentUpon>CommentsScreen.xaml</DependentUpon>
     </Compile>
+    <Compile Include="LoginsViewModel.cs" />
+    <Compile Include="LoginViewItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WinRtModalDialog.cs" />
   </ItemGroup>

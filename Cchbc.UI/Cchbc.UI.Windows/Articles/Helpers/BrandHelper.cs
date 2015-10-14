@@ -2,7 +2,8 @@
 
 namespace Cchbc.ArticlesModule
 {
-	public sealed class FlavorDataHelper : DataHelper<Flavor>
+	public sealed class BrandHelper : Helper<Brand>
 	{
+
 	}
 }

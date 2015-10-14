@@ -14,7 +14,7 @@ namespace Cchbc
 {
 	public abstract class Manager<T, TViewItem> where T : IDbObject where TViewItem : ViewItem<T>
 	{
-		protected List<TViewItem> ViewItems { get; } = new List<TViewItem>();
+		public List<TViewItem> ViewItems { get; } = new List<TViewItem>();
 
 		public event EventHandler<FeatureEventArgs> OperationStart;
 		private void OnOperationStart(FeatureEventArgs e)
