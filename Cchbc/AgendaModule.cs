@@ -14,55 +14,189 @@ namespace Cchbc
 {
 	public sealed class Core
 	{
-		public DataCache DataCache { get; } = new DataCache(new HelperCache(), new ManagerCache());
+		public ILogger Logger { get; }
+		public DataCache DataCache { get; } = new DataCache(new HelperCache());
+		public QueryHelper QueryHelper { get; private set; }
 
-		public async Task InitApplication()
+		public Core(ILogger logger)
 		{
-			// TODO : Init logger !!!
-			var logger = default(ILogger);
+			if (logger == null) throw new ArgumentNullException(nameof(logger));
 
-			// TODO : Init Db !!!
-
-			await this.DataCache.LoadAsync(logger);
+			this.Logger = logger;
 		}
+
+		public async Task Initialize(QueryHelper queryHelper)
+		{
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+
+			this.QueryHelper = queryHelper;
+
+			await this.DataCache.LoadAsync(this.Logger, queryHelper.ReadDataQueryHelper);
+		}
+	}
+
+	public sealed class ModifyDataAdapter
+	{
+		public ModifyDataQueryHelper ModifyDataQueryHelper { get; }
+
+		public ModifyDataAdapter(ModifyDataQueryHelper modifyDataQueryHelper)
+		{
+			if (modifyDataQueryHelper == null) throw new ArgumentNullException(nameof(modifyDataQueryHelper));
+
+			this.ModifyDataQueryHelper = modifyDataQueryHelper;
+		}
+	}
+
+	public sealed class ReadDataAdapter
+	{
+		public ReadDataQueryHelper ReadDataQueryHelper { get; }
+
+		public ReadDataAdapter(ReadDataQueryHelper readDataQueryHelper)
+		{
+			if (readDataQueryHelper == null) throw new ArgumentNullException(nameof(readDataQueryHelper));
+
+			this.ReadDataQueryHelper = readDataQueryHelper;
+		}
+	}
+
+	public sealed class DataAdapter
+	{
+		public QueryHelper QueryHelper { get; }
+
+		public DataAdapter(QueryHelper queryHelper)
+		{
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+
+			this.QueryHelper = queryHelper;
+		}
+	}
+
+	public sealed class ReadQuery<T>
+	{
+		public string Statement { get; }
+		public Func<IDataReader, T> Creator { get; }
+		public QueryParameter[] Parameters { get; }
+
+		public ReadQuery(string statement, Func<IDataReader, T> creator)
+		{
+			if (statement == null) throw new ArgumentNullException(nameof(statement));
+			if (creator == null) throw new ArgumentNullException(nameof(creator));
+
+			this.Statement = statement;
+			this.Creator = creator;
+			this.Parameters = Enumerable.Empty<QueryParameter>().ToArray();
+		}
+
+		public ReadQuery(string statement, Func<IDataReader, T> creator, QueryParameter[] parameters)
+		{
+			if (statement == null) throw new ArgumentNullException(nameof(statement));
+			if (creator == null) throw new ArgumentNullException(nameof(creator));
+			if (parameters == null) throw new ArgumentNullException(nameof(parameters));
+
+			this.Statement = statement;
+			this.Creator = creator;
+			this.Parameters = parameters;
+		}
+	}
+
+	public sealed class QueryParameter
+	{
+		public string Name { get; }
+		public object Value { get; }
+
+		public QueryParameter(string name, object value)
+		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			this.Name = name;
+			this.Value = value;
+		}
+	}
+
+	public sealed class QueryHelper
+	{
+		public ReadDataQueryHelper ReadDataQueryHelper { get; }
+		public ModifyDataQueryHelper ModifyDataQueryHelper { get; }
+
+		public QueryHelper(ReadDataQueryHelper readDataQueryHelper, ModifyDataQueryHelper modifyDataQueryHelper)
+		{
+			if (readDataQueryHelper == null) throw new ArgumentNullException(nameof(readDataQueryHelper));
+			if (modifyDataQueryHelper == null) throw new ArgumentNullException(nameof(modifyDataQueryHelper));
+
+			this.ReadDataQueryHelper = readDataQueryHelper;
+			this.ModifyDataQueryHelper = modifyDataQueryHelper;
+		}
+
+		public void Execute(string statement, QueryParameter[] parameters)
+		{
+			if (statement == null) throw new ArgumentNullException(nameof(statement));
+			if (parameters == null) throw new ArgumentNullException(nameof(parameters));
+
+			ModifyDataQueryHelper.Execute(statement, parameters);
+		}
+
+		public Task<List<T>> Execute<T>(ReadQuery<T> query) where T : IDbObject
+		{
+			if (query == null) throw new ArgumentNullException(nameof(query));
+
+			return ReadDataQueryHelper.ExecuteAsync(query);
+		}
+
+		public void Fill<T>(ReadQuery<T> query, Dictionary<long, T> values) where T : IDbObject
+		{
+			if (query == null) throw new ArgumentNullException(nameof(query));
+			if (values == null) throw new ArgumentNullException(nameof(values));
+
+			ReadDataQueryHelper.FillAsync(query, values);
+		}
+	}
+
+	public abstract class ModifyDataQueryHelper
+	{
+		public abstract void Execute(string statement, QueryParameter[] parameters);
+	}
+
+	public abstract class ReadDataQueryHelper
+	{
+		public abstract Task<List<T>> ExecuteAsync<T>(ReadQuery<T> query) where T : IDbObject;
+		public abstract Task FillAsync<T>(ReadQuery<T> query, Dictionary<long, T> values) where T : IDbObject;
+	}
+
+	public interface IDataReader
+	{
+		bool Read();
+		bool IsDbNull(int i);
+		int GetInt32(int i);
+		long GetInt64(int i);
+		decimal GetDecimal(int i);
+		string GetString(int i);
+		DateTime GetDateTime(int i);
 	}
 
 	public sealed class DataCache
 	{
 		public HelperCache HelperCache { get; }
-		public ManagerCache ManagerCache { get; }
 
-		public DataCache(HelperCache helperCache, ManagerCache managerCache)
+		public DataCache(HelperCache helperCache)
 		{
 			if (helperCache == null) throw new ArgumentNullException(nameof(helperCache));
-			if (managerCache == null) throw new ArgumentNullException(nameof(managerCache));
 
 			this.HelperCache = helperCache;
-			this.ManagerCache = managerCache;
 		}
 
-		public async Task LoadAsync(ILogger logger)
+		public async Task LoadAsync(ILogger logger, ReadDataQueryHelper queryHelper)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 
 			var s = Stopwatch.StartNew();
 			try
 			{
-				await this.HelperCache.LoadAsync(logger);
+				await this.HelperCache.LoadAsync(logger, queryHelper);
 			}
 			finally
 			{
 				logger.Info($@"{nameof(HelperCache)}:{s.ElapsedMilliseconds}ms");
-			}
-
-			s.Restart();
-			try
-			{
-				await this.ManagerCache.LoadAsync(this.HelperCache, logger);
-			}
-			finally
-			{
-				logger.Info($@"{nameof(ManagerCache)}:{s.ElapsedMilliseconds}ms");
 			}
 		}
 	}
@@ -75,6 +209,7 @@ namespace Cchbc
 		private readonly ActivityTypeHelper _activityActivityTypeHelper = new ActivityTypeHelper();
 		private readonly ActiviStatusHelper _activityStatusHelper = new ActiviStatusHelper();
 		private readonly EquipmentTypeHelper _equipmentEquipmentTypeHelper = new EquipmentTypeHelper();
+		private readonly OutletCommentHelper _outletCommentHelper = new OutletCommentHelper();
 
 		public UserHelper UserHelper => _userHelper;
 		public OutletHelper OutletHelper => _outletHelper;
@@ -82,12 +217,14 @@ namespace Cchbc
 		public ActivityTypeHelper ActivityTypeHelper => _activityActivityTypeHelper;
 		public ActiviStatusHelper ActivityStatusHelper => _activityStatusHelper;
 		public EquipmentTypeHelper EquipmentTypeHelper => _equipmentEquipmentTypeHelper;
+		public OutletCommentHelper OutletCommentHelper => _outletCommentHelper;
 
-		public async Task LoadAsync(ILogger logger)
+		public async Task LoadAsync(ILogger logger, ReadDataQueryHelper queryHelper)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 
-			await _userHelper.LoadAsync(new UserAdapter());
+			await _userHelper.LoadAsync(new UserAdapter(queryHelper));
 
 			var outletOutletAssignmentHelper = new OutletAssignmentHelper();
 			await outletOutletAssignmentHelper.LoadAsync(new OutletAssignmentAdapter());
@@ -105,25 +242,10 @@ namespace Cchbc
 			await _activityStatusHelper.LoadAsync(new ActiviStatusAdapter());
 
 			// Load equipment types
-			await _equipmentEquipmentTypeHelper.LoadAsync(new EquipmentTypeAdapter());
-		}
-	}
+			await _equipmentEquipmentTypeHelper.LoadAsync(new EquipmentTypeAdapter(queryHelper));
 
-	public sealed class ManagerCache
-	{
-		private readonly OutletCommentManager _outletOutletCommentManager = new OutletCommentManager(null, null, null);
-
-		public OutletCommentManager OutletCommentManager => _outletOutletCommentManager;
-
-		public async Task LoadAsync(HelperCache cache, ILogger logger)
-		{
-			if (cache == null) throw new ArgumentNullException(nameof(cache));
-			if (logger == null) throw new ArgumentNullException(nameof(logger));
-
-			var helper = new OutletCommentHelper();
-			await helper.LoadAsync(new OutletCommentAdapter(cache.OutletHelper.Items, cache.OutletCommentTypeHelper.Items, cache.UserHelper.Items));
-
-			_outletOutletCommentManager.LoadData(helper.Items.Values.Select(v => new OutletCommentViewItem(v)));
+			// Load outlet comments
+			await _outletCommentHelper.LoadAsync(new OutletCommentAdapter(_outletHelper.Items, _outletOutletCommentTypeHelper.Items, _userHelper.Items));
 		}
 	}
 
@@ -135,9 +257,20 @@ namespace Cchbc
 
 	public sealed class EquipmentTypeAdapter : IReadOnlyAdapter<EquipmentType>
 	{
-		public Task PopulateAsync(Dictionary<long, EquipmentType> items)
+		private readonly ReadDataQueryHelper _queryHelper;
+
+		public EquipmentTypeAdapter(ReadDataQueryHelper queryHelper)
 		{
-			throw new NotImplementedException();
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+
+			_queryHelper = queryHelper;
+		}
+
+		public async Task FillAsync(Dictionary<long, EquipmentType> items)
+		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
+
+			await _queryHelper.FillAsync(new ReadQuery<EquipmentType>("", r => null), items);
 		}
 	}
 
@@ -157,18 +290,25 @@ namespace Cchbc
 
 	public sealed class EquipmentAdapter : IReadOnlyAdapter<Equipment>
 	{
+		private readonly ReadDataQueryHelper _queryHelper;
 		private readonly Dictionary<long, Outlet> _outlets;
 
-		public EquipmentAdapter(Dictionary<long, Outlet> outlets)
+		public EquipmentAdapter(ReadDataQueryHelper queryHelper, Dictionary<long, Outlet> outlets)
 		{
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 			if (outlets == null) throw new ArgumentNullException(nameof(outlets));
 
+			_queryHelper = queryHelper;
 			_outlets = outlets;
 		}
 
-		public Task PopulateAsync(Dictionary<long, Equipment> items)
+		public async Task FillAsync(Dictionary<long, Equipment> items)
 		{
-			throw new NotImplementedException();
+			await _queryHelper.FillAsync(new ReadQuery<Equipment>("", r =>
+			{
+				var e = new Equipment { Outlet = _outlets[0] };
+				return e;
+			}), items);
 		}
 	}
 
@@ -228,13 +368,12 @@ namespace Cchbc
 	{
 		private readonly List<AgendaItem> _items = new List<AgendaItem>();
 
-		public async Task LoadAsync(DataCache dataCache, DateTime date)
+		public async Task LoadAsync(DateTime date, DataCache dataCache, ReadDataQueryHelper queryHelper)
 		{
 			if (dataCache == null) throw new ArgumentNullException(nameof(dataCache));
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 
 			var helpers = dataCache.HelperCache;
-			var managers = dataCache.ManagerCache;
-
 			var outlets = helpers.OutletHelper.Items;
 
 			// Remove visits for outlets without assingnments
@@ -250,11 +389,11 @@ namespace Cchbc
 			}
 
 			// Load outlet comments
-			var outletComments = managers.OutletCommentManager.ViewItems.Select(v => v.Item).ToList();
+			var outletComments = helpers.OutletCommentHelper.Items.Values.ToList();
 
 			// Load equipments
 			var equipmentHelper = new EquipmentHelper();
-			await equipmentHelper.LoadAsync(new EquipmentAdapter(outlets));
+			await equipmentHelper.LoadAsync(new EquipmentAdapter(queryHelper, outlets));
 
 			_items.Clear();
 			foreach (var byOutlet in visits.GroupBy(v => v.Outlet))
@@ -296,9 +435,25 @@ namespace Cchbc
 
 	public sealed class UserAdapter : IReadOnlyAdapter<User>
 	{
-		public Task PopulateAsync(Dictionary<long, User> items)
+		private readonly ReadDataQueryHelper _queryHelper;
+
+		public UserAdapter(ReadDataQueryHelper queryHelper)
 		{
-			throw new NotImplementedException();
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+
+			_queryHelper = queryHelper;
+		}
+
+		public async Task FillAsync(Dictionary<long, User> items)
+		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
+
+			await _queryHelper.FillAsync(new ReadQuery<User>(@"SELECT ID, NAME FROM USERS", r =>
+			{
+				var id = r.GetInt64(0);
+				var name = r.GetString(1);
+				return new User();
+			}), items);
 		}
 	}
 
@@ -314,6 +469,7 @@ namespace Cchbc
 		public OutletCommentType Type { get; set; }
 		public string Contents { get; set; }
 		public User CreatedBy { get; set; }
+		public DateTime CreatedAt { get; set; }
 	}
 
 	public sealed class OutletCommentAdapter : IReadOnlyAdapter<OutletComment>, IModifiableAdapter<OutletComment>
@@ -328,15 +484,14 @@ namespace Cchbc
 			if (outletCommentTypes == null) throw new ArgumentNullException(nameof(outletCommentTypes));
 			if (users == null) throw new ArgumentNullException(nameof(users));
 
-			Outlets = outlets;
-			OutletCommentTypes = outletCommentTypes;
-			Users = users;
-			throw new NotImplementedException();
+			this.Outlets = outlets;
+			this.OutletCommentTypes = outletCommentTypes;
+			this.Users = users;
 		}
 
-		public Task PopulateAsync(Dictionary<long, OutletComment> items)
+		public async Task FillAsync(Dictionary<long, OutletComment> items)
 		{
-			throw new NotImplementedException();
+			await Task.Delay(500);
 		}
 
 		public Task InsertAsync(OutletComment item)
@@ -374,7 +529,7 @@ namespace Cchbc
 
 	public sealed class OutletCommentTypeAdapter : IReadOnlyAdapter<OutletCommentType>
 	{
-		public Task PopulateAsync(Dictionary<long, OutletCommentType> items)
+		public Task FillAsync(Dictionary<long, OutletCommentType> items)
 		{
 			throw new NotImplementedException();
 		}
@@ -429,7 +584,7 @@ namespace Cchbc
 				.ToDictionary(v => v.Key, v => v.ToList());
 		}
 
-		public Task PopulateAsync(Dictionary<long, Outlet> items)
+		public Task FillAsync(Dictionary<long, Outlet> items)
 		{
 			// TODO : !!!
 			throw new NotImplementedException();
@@ -456,7 +611,7 @@ namespace Cchbc
 
 	public sealed class OutletAssignmentAdapter : IReadOnlyAdapter<OutletAssignment>
 	{
-		public Task PopulateAsync(Dictionary<long, OutletAssignment> items)
+		public Task FillAsync(Dictionary<long, OutletAssignment> items)
 		{
 			// TODO : !!!
 			throw new NotImplementedException();
@@ -493,7 +648,7 @@ namespace Cchbc
 			this.ActiviStatuses = activiStatuses;
 		}
 
-		public Task PopulateAsync(Dictionary<long, Visit> items)
+		public Task FillAsync(Dictionary<long, Visit> items)
 		{
 			throw new NotImplementedException();
 		}
@@ -525,7 +680,7 @@ namespace Cchbc
 
 	public sealed class ActiviStatusAdapter : IReadOnlyAdapter<ActiviStatus>
 	{
-		public Task PopulateAsync(Dictionary<long, ActiviStatus> items)
+		public Task FillAsync(Dictionary<long, ActiviStatus> items)
 		{
 			throw new NotImplementedException();
 		}
@@ -538,7 +693,7 @@ namespace Cchbc
 
 	public sealed class ActivityTypeAdapter : IReadOnlyAdapter<ActivityType>
 	{
-		public Task PopulateAsync(Dictionary<long, ActivityType> items)
+		public Task FillAsync(Dictionary<long, ActivityType> items)
 		{
 			throw new NotImplementedException();
 		}

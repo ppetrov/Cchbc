@@ -6,6 +6,6 @@ namespace Cchbc.Data
 {
 	public interface IReadOnlyAdapter<T> where T : IDbObject
 	{
-		Task PopulateAsync(Dictionary<long, T> items);
+		Task FillAsync(Dictionary<long, T> items);
 	}
 }

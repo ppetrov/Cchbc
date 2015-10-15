@@ -17,7 +17,7 @@ namespace Cchbc.ArticlesModule
 			_logger = logger;
 		}
 
-		public Task PopulateAsync(Dictionary<long, Brand> items)
+		public Task FillAsync(Dictionary<long, Brand> items)
 		{
 			var s = Stopwatch.StartNew();
 			_logger.Info(@"Getting brands from db...");

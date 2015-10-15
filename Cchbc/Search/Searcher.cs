@@ -6,7 +6,7 @@ namespace Cchbc.Search
 {
 	public sealed class Searcher<T> where T : ViewObject
 	{
-		private Func<T, string, bool> IsMatch { get; } = (item, search) => true;
+		private Func<T, string, bool> TextMatch { get; } = (item, search) => true;
 		public SearchOption<T>[] Options { get; } = new SearchOption<T>[0];
 		public SearchOption<T> CurrentOption { get; set; }
 		public string TextSearch { get; set; } = string.Empty;
@@ -18,20 +18,20 @@ namespace Cchbc.Search
 			this.Options = options;
 		}
 
-		public Searcher(Func<T, string, bool> isMatch)
+		public Searcher(Func<T, string, bool> textMatch)
 		{
-			if (isMatch == null) throw new ArgumentNullException(nameof(isMatch));
+			if (textMatch == null) throw new ArgumentNullException(nameof(textMatch));
 
-			this.IsMatch = isMatch;
+			this.TextMatch = textMatch;
 		}
 
-		public Searcher(SearchOption<T>[] options, Func<T, string, bool> isMatch)
+		public Searcher(SearchOption<T>[] options, Func<T, string, bool> textMatch)
 		{
 			if (options == null) throw new ArgumentNullException(nameof(options));
-			if (isMatch == null) throw new ArgumentNullException(nameof(isMatch));
+			if (textMatch == null) throw new ArgumentNullException(nameof(textMatch));
 
 			this.Options = options;
-			this.IsMatch = isMatch;
+			this.TextMatch = textMatch;
 		}
 
 		public IEnumerable<T> Search(ICollection<T> viewItems, string textSearch, SearchOption<T> option)
@@ -67,7 +67,7 @@ namespace Cchbc.Search
 
 				foreach (var item in viewItems)
 				{
-					if (this.IsMatch(item, textSearch))
+					if (this.TextMatch(item, textSearch))
 					{
 						filteredByTextViewItems.Add(item);
 					}

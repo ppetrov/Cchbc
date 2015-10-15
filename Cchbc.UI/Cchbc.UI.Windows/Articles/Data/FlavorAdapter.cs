@@ -17,7 +17,7 @@ namespace Cchbc.ArticlesModule
 			_logger = logger;
 		}
 
-		public Task PopulateAsync(Dictionary<long, Flavor> items)
+		public Task FillAsync(Dictionary<long, Flavor> items)
 		{
 			_logger.Info(@"Getting flavors from db...");
 

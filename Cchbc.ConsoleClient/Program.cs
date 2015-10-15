@@ -1,51 +1,184 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
+using System.Data.SqlClient;
+using System.Data.SQLite;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Cchbc.Data;
-using Cchbc.Dialog;
-using Cchbc.Search;
-using Cchbc.Sort;
+using Cchbc.Objects;
 
 namespace Cchbc.ConsoleClient
 {
-	//public sealed class ArticleViewItemSortOption : SortOption<ArticleViewItem>
-	//{
-	//    public static readonly Func<ArticleViewItem, ArticleViewItem, int> ByDefault = (x, y) =>
-	//    {
-	//        var cmp = string.Compare(x.Name, y.Name, StringComparison.Ordinal);
-	//        return cmp;
-	//    };
+	public sealed class Brand : IDbObject
+	{
+		public Brand(long id, string name)
+		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
 
-	//    public static readonly Func<ArticleViewItem, ArticleViewItem, int> ByBrand = (x, y) =>
-	//    {
-	//        var cmp = string.Compare(x.Brand, y.Brand, StringComparison.Ordinal);
-	//        if (cmp == 0)
-	//        {
-	//            cmp = ByDefault(x, y);
-	//        }
-	//        return cmp;
-	//    };
+			this.Id = id;
+			this.Name = name;
+		}
 
-	//    public static readonly Func<ArticleViewItem, ArticleViewItem, int> ByFlavor = (x, y) =>
-	//    {
-	//        var cmp = string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal);
-	//        if (cmp == 0)
-	//        {
-	//            cmp = ByDefault(x, y);
-	//        }
-	//        return cmp;
-	//    };
+		public long Id { get; set; }
+		public string Name { get; set; }
+	}
 
-	//    public ArticleViewItemSortOption(string displayName, Func<ArticleViewItem, ArticleViewItem, int> comparison)
-	//        : base(displayName, comparison)
-	//    {
-	//    }
-	//}
+	public sealed class DelegateDataReader : IDataReader
+	{
+		private readonly DbDataReader _r;
 
+		public DelegateDataReader(DbDataReader r)
+		{
+			if (r == null) throw new ArgumentNullException(nameof(r));
 
+			_r = r;
+		}
+
+		public bool IsDbNull(int i)
+		{
+			return _r.IsDBNull(i);
+		}
+
+		public int GetInt32(int i)
+		{
+			return _r.GetInt32(i);
+		}
+
+		public long GetInt64(int i)
+		{
+			return _r.GetInt64(i);
+		}
+
+		public decimal GetDecimal(int i)
+		{
+			return _r.GetDecimal(i);
+		}
+
+		public string GetString(int i)
+		{
+			return _r.GetString(i);
+		}
+
+		public DateTime GetDateTime(int i)
+		{
+			return _r.GetDateTime(i);
+		}
+
+		public bool Read()
+		{
+			return _r.Read();
+		}
+	}
+
+	public sealed class SqlReadDataQueryHelper : ReadDataQueryHelper
+	{
+		private readonly SQLiteConnection _connection;
+
+		public SqlReadDataQueryHelper(string connectionString)
+		{
+			if (connectionString == null) throw new ArgumentNullException(nameof(connectionString));
+
+			_connection = new SQLiteConnection(connectionString);
+		}
+
+		public void Initialize()
+		{
+			_connection.Open();
+		}
+
+		public override async Task<List<T>> ExecuteAsync<T>(ReadQuery<T> query)
+		{
+			if (query == null) throw new ArgumentNullException(nameof(query));
+
+			var values = new List<T>();
+
+			using (var cmd = _connection.CreateCommand())
+			{
+				cmd.CommandText = query.Statement;
+				cmd.CommandType = CommandType.Text;
+				foreach (var p in query.Parameters)
+				{
+					cmd.Parameters.Add(new SqlParameter(p.Name, p.Value));
+				}
+
+				using (var r = await cmd.ExecuteReaderAsync())
+				{
+					var dr = new DelegateDataReader(r);
+					while (dr.Read())
+					{
+						values.Add(query.Creator(dr));
+					}
+				}
+			}
+
+			return values;
+		}
+
+		public override async Task FillAsync<T>(ReadQuery<T> query, Dictionary<long, T> values)
+		{
+			if (query == null) throw new ArgumentNullException(nameof(query));
+			if (values == null) throw new ArgumentNullException(nameof(values));
+
+			values.Clear();
+
+			using (var cmd = _connection.CreateCommand())
+			{
+				cmd.CommandText = query.Statement;
+				cmd.CommandType = CommandType.Text;
+				foreach (var p in query.Parameters)
+				{
+					cmd.Parameters.Add(new SqlParameter(p.Name, p.Value));
+				}
+
+				using (var r = await cmd.ExecuteReaderAsync())
+				{
+					var dr = new DelegateDataReader(r);
+					while (dr.Read())
+					{
+						var value = query.Creator(dr);
+						values.Add(value.Id, value);
+					}
+				}
+			}
+		}
+	}
+
+	public sealed class SqlModifyDataQueryHelper : ModifyDataQueryHelper
+	{
+		private readonly SQLiteConnection _connection;
+
+		public SqlModifyDataQueryHelper(string connectionString)
+		{
+			if (connectionString == null) throw new ArgumentNullException(nameof(connectionString));
+
+			_connection = new SQLiteConnection(connectionString);
+		}
+
+		public void Initialize()
+		{
+			_connection.Open();
+		}
+
+		public override void Execute(string statement, QueryParameter[] parameters)
+		{
+			if (statement == null) throw new ArgumentNullException(nameof(statement));
+			if (parameters == null) throw new ArgumentNullException(nameof(parameters));
+
+			using (var cmd = _connection.CreateCommand())
+			{
+				cmd.CommandText = statement;
+				cmd.CommandType = CommandType.Text;
+				foreach (var p in parameters)
+				{
+					cmd.Parameters.Add(new SqlParameter(p.Name, p.Value));
+				}
+				cmd.ExecuteNonQuery();
+			}
+		}
+	}
 
 	class Program
 	{
@@ -53,73 +186,38 @@ namespace Cchbc.ConsoleClient
 		{
 			try
 			{
-				//var adapter = new CommentAdapter();
-				//var m = new CommentsManager(adapter,
-				//	new Sorter<CommentViewItem>(new[]
-				//{
-				//	new SortOption<CommentViewItem>(@"By Type", (x,y)=>string.Compare(x.Type, y.Type, StringComparison.OrdinalIgnoreCase)),
-				//}), new Searcher<CommentViewItem>(new[]
-				//{
-				//	new SearchOption<CommentViewItem>(@"All", v=> true),
-				//}));
-				//m.LoadData(new List<CommentViewItem>());
+				//var connectionString = @"Server=cwpfsa04;Database=Cchbc;User Id=dev;Password='dev user password'";
+				var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
+				var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(connectionString);
+				var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(connectionString);
+				sqlReadDataQueryHelper.Initialize();
+				sqlModifyDataQueryHelper.Initialize();
+				var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
 
-				//m.ItemInserted += (sender, eventArgs) =>
+				//var brands = new List<Brand>();
+				//for (var i = 0; i < 100; i++)
 				//{
-				//	Console.WriteLine(@"Item successfully inserted!");
-				//	Console.WriteLine(@"Add additional logic");
-				//};
-
-				//var dialog = new DebugModalDialog();
-				//            m.AddAsync(new CommentViewItem(new Comment()), dialog).Wait();
-				//Console.WriteLine();
-				return;
-
-				//var logger = new ConsoleBufferedLogger();
-
-				//using (var ce = new CountdownEvent(2))
-				//{
-				//	ThreadPool.QueueUserWorkItem(_ =>
+				//	var query = new ReadQuery<Brand>(@"SELECT ID, NAME FROM BRANDS", r =>
 				//	{
-				//		var e = (_ as CountdownEvent);
-				//		try
+				//		var id = 0L;
+				//		if (!r.IsDbNull(0))
 				//		{
-				//			for (var i = 0; i < 10000; i++)
-				//			{
-				//				logger.Trace(i.ToString());
-				//			}
+				//			id = r.GetInt64(0);
 				//		}
-				//		finally
+				//		var name = string.Empty;
+				//		if (!r.IsDbNull(1))
 				//		{
-				//			if (e != null)
-				//			{
-				//				e.Signal();
-				//			}
+				//			name = r.GetString(1);
 				//		}
-				//	}, ce);
-				//	ThreadPool.QueueUserWorkItem(_ =>
-				//	{
-				//		var e = _ as CountdownEvent;
-				//		try
-				//		{
-				//			for (var i = 10000; i < 20000; i++)
-				//			{
-				//				logger.Trace(i.ToString());
-				//			}
-				//		}
-				//		finally
-				//		{
-				//			if (e != null)
-				//			{
-				//				e.Signal();
-				//			}
-				//		}
-				//	}, ce);
+				//		return new Brand(id, name);
+				//	});
 
-				//	Thread.Sleep(5000);
-
-				//	ce.Wait();
+				//	brands = queryHelper.Execute(query);
 				//}
+
+				var core = new Core(new ConsoleBufferedLogger());
+
+				core.Initialize(queryHelper).Wait();
 			}
 			catch (Exception ex)
 			{
@@ -181,7 +279,7 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ConsoleBufferedLogger : BufferedLogger
 	{
-		public ConsoleBufferedLogger() : base("TODO")
+		public ConsoleBufferedLogger() : base("Cchbc Context")
 		{
 			this.IsInfoEnabled = true;
 			this.IsWarnEnabled = true;
@@ -192,7 +290,7 @@ namespace Cchbc.ConsoleClient
 				while (true)
 				{
 					Flush();
-					Thread.Sleep(20);
+					Thread.Sleep(100);
 				}
 			});
 		}

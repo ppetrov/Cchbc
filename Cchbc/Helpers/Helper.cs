@@ -14,7 +14,7 @@ namespace Cchbc.Helpers
 		{
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
-			return adapter.PopulateAsync(this.Items);
+			return adapter.FillAsync(this.Items);
 		}
 	}
 }

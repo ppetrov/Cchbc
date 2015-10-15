@@ -23,7 +23,7 @@ namespace Cchbc.ArticlesModule
 			this.Flavors = flavors;
 		}
 
-		public Task PopulateAsync(Dictionary<long, Article> items)
+		public Task FillAsync(Dictionary<long, Article> items)
 		{
 			_logger.Info(@"Getting articles from db...");
 
