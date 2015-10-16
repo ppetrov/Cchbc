@@ -5,9 +5,11 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cchbc.Data;
 using Cchbc.Objects;
 
 namespace Cchbc.ConsoleClient
@@ -26,7 +28,7 @@ namespace Cchbc.ConsoleClient
 		public string Name { get; set; }
 	}
 
-	public sealed class DelegateDataReader : IDataReader
+	public sealed class DelegateDataReader : IFieldDataReader
 	{
 		private readonly DbDataReader _r;
 
@@ -77,19 +79,14 @@ namespace Cchbc.ConsoleClient
 	{
 		private readonly SQLiteConnection _connection;
 
-		public SqlReadDataQueryHelper(string connectionString)
+		public SqlReadDataQueryHelper(SQLiteConnection connection)
 		{
-			if (connectionString == null) throw new ArgumentNullException(nameof(connectionString));
+			if (connection == null) throw new ArgumentNullException(nameof(connection));
 
-			_connection = new SQLiteConnection(connectionString);
+			_connection = connection;
 		}
 
-		public void Initialize()
-		{
-			_connection.Open();
-		}
-
-		public override async Task<List<T>> ExecuteAsync<T>(ReadQuery<T> query)
+		public override async Task<List<T>> ExecuteAsync<T>(Query<T> query)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 
@@ -117,7 +114,7 @@ namespace Cchbc.ConsoleClient
 			return values;
 		}
 
-		public override async Task FillAsync<T>(ReadQuery<T> query, Dictionary<long, T> values)
+		public override async Task FillAsync<T>(Query<T> query, Dictionary<long, T> values)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 			if (values == null) throw new ArgumentNullException(nameof(values));
@@ -150,23 +147,16 @@ namespace Cchbc.ConsoleClient
 	{
 		private readonly SQLiteConnection _connection;
 
-		public SqlModifyDataQueryHelper(string connectionString)
+		public SqlModifyDataQueryHelper(ReadDataQueryHelper readDataQueryHelper, SQLiteConnection connection)
+			: base(readDataQueryHelper)
 		{
-			if (connectionString == null) throw new ArgumentNullException(nameof(connectionString));
+			if (connection == null) throw new ArgumentNullException(nameof(connection));
 
-			_connection = new SQLiteConnection(connectionString);
+			_connection = connection;
 		}
 
-		public void Initialize()
+		public override async Task ExecuteAsync(string statement, QueryParameter[] parameters)
 		{
-			_connection.Open();
-		}
-
-		public override void Execute(string statement, QueryParameter[] parameters)
-		{
-			if (statement == null) throw new ArgumentNullException(nameof(statement));
-			if (parameters == null) throw new ArgumentNullException(nameof(parameters));
-
 			using (var cmd = _connection.CreateCommand())
 			{
 				cmd.CommandText = statement;
@@ -175,7 +165,7 @@ namespace Cchbc.ConsoleClient
 				{
 					cmd.Parameters.Add(new SqlParameter(p.Name, p.Value));
 				}
-				cmd.ExecuteNonQuery();
+				await cmd.ExecuteNonQueryAsync();
 			}
 		}
 	}
@@ -188,36 +178,47 @@ namespace Cchbc.ConsoleClient
 			{
 				//var connectionString = @"Server=cwpfsa04;Database=Cchbc;User Id=dev;Password='dev user password'";
 				var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
-				var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(connectionString);
-				var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(connectionString);
-				sqlReadDataQueryHelper.Initialize();
-				sqlModifyDataQueryHelper.Initialize();
+
+				var cn = new SQLiteConnection(connectionString);
+				cn.Open();
+				var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
+				var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
 				var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
 
-				//var brands = new List<Brand>();
-				//for (var i = 0; i < 100; i++)
-				//{
-				//	var query = new ReadQuery<Brand>(@"SELECT ID, NAME FROM BRANDS", r =>
-				//	{
-				//		var id = 0L;
-				//		if (!r.IsDbNull(0))
-				//		{
-				//			id = r.GetInt64(0);
-				//		}
-				//		var name = string.Empty;
-				//		if (!r.IsDbNull(1))
-				//		{
-				//			name = r.GetString(1);
-				//		}
-				//		return new Brand(id, name);
-				//	});
+				var s = Stopwatch.StartNew();
+				var brands = new List<Brand>();
+				for (var i = 0; i < 100; i++)
+				{
+					var query = new Query<Brand>(@"SELECT ID, NAME FROM BRANDS", r =>
+					{
+						var id = 0L;
+						if (!r.IsDbNull(0))
+						{
+							id = r.GetInt64(0);
+						}
+						var name = string.Empty;
+						if (!r.IsDbNull(1))
+						{
+							name = r.GetString(1);
+						}
+						return new Brand(id, name);
+					});
 
-				//	brands = queryHelper.Execute(query);
-				//}
+					brands = queryHelper.ExecuteAsync(query).Result;
+				}
+				s.Stop();
+				Console.WriteLine(s.ElapsedMilliseconds);
+
+				foreach (var b in brands)
+				{
+					Console.WriteLine(b.Id);
+					Console.WriteLine(b.Name);
+					Console.WriteLine();
+				}
 
 				var core = new Core(new ConsoleBufferedLogger());
 
-				core.Initialize(queryHelper).Wait();
+				core.InitializeAsync(queryHelper).Wait();
 			}
 			catch (Exception ex)
 			{
@@ -290,7 +291,7 @@ namespace Cchbc.ConsoleClient
 				while (true)
 				{
 					Flush();
-					Thread.Sleep(100);
+					Thread.Sleep(5);
 				}
 			});
 		}

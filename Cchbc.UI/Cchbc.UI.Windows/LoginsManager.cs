@@ -44,7 +44,7 @@ namespace Cchbc.UI.Comments
 			return results;
 		}
 
-		public override async Task<PermissionResult> CanAddAsync(LoginViewItem viewItem)
+		public override Task<PermissionResult> CanAddAsync(LoginViewItem viewItem)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
@@ -57,7 +57,7 @@ namespace Cchbc.UI.Comments
 				//}
 				//return PermissionResult.Deny(@"The name is reserved");
 				//return PermissionResult.Confirm(@"Are you sure ???");
-				return PermissionResult.Allow;
+				return Task.FromResult(PermissionResult.Allow);
 			}
 			finally
 			{

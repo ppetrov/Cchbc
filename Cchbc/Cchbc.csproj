@@ -38,7 +38,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AgendaModule.cs" />
+    <Compile Include="Data\DataAdapter.cs" />
+    <Compile Include="Data\ModifyDataQueryHelper.cs" />
+    <Compile Include="Data\IFieldDataReader.cs" />
     <Compile Include="Data\IModifiableAdapter.cs" />
+    <Compile Include="Data\ModifyDataAdapter.cs" />
+    <Compile Include="Data\Query.cs" />
+    <Compile Include="Data\QueryHelper.cs" />
+    <Compile Include="Data\QueryParameter.cs" />
+    <Compile Include="Data\ReadDataAdapter.cs" />
+    <Compile Include="Data\ReadDataQueryHelper.cs" />
     <Compile Include="Feature.cs" />
     <Compile Include="FeatureManager.cs" />
     <Compile Include="ILogger.cs" />
@@ -60,6 +69,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sort\Sorter.cs" />
     <Compile Include="Sort\SortOption.cs" />
+    <Compile Include="SurveyModule.cs" />
     <Compile Include="Validation\Validator.cs" />
     <Compile Include="Validation\PermissionResult.cs" />
     <Compile Include="Validation\PermissionStatus.cs" />
