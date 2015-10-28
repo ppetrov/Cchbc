@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Cchbc.ArticlesModule;
 using Cchbc.ArticlesModule.ViewModel;
@@ -8,6 +9,7 @@ using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
 using Cchbc.UI.Articles;
+using Cchbc.Validation;
 
 namespace Cchbc.UI.ArticlesModule.ViewModel
 {

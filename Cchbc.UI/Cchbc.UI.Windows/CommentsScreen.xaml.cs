@@ -9,7 +9,7 @@ namespace Cchbc.UI
 {
 	public sealed partial class CommentsScreen
 	{
-		private readonly LoginsViewModel _viewModel = new LoginsViewModel(new DirectDebugLogger(@"Agenda"), new FeatureManager());
+		private readonly LoginsViewModel _viewModel = new LoginsViewModel(default(Core));
 
 		public CommentsScreen()
 		{

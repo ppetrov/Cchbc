@@ -6,6 +6,7 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,20 +15,6 @@ using Cchbc.Objects;
 
 namespace Cchbc.ConsoleClient
 {
-	public sealed class Brand : IDbObject
-	{
-		public Brand(long id, string name)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			this.Id = id;
-			this.Name = name;
-		}
-
-		public long Id { get; set; }
-		public string Name { get; set; }
-	}
-
 	public sealed class DelegateDataReader : IFieldDataReader
 	{
 		private readonly DbDataReader _r;
@@ -179,46 +166,41 @@ namespace Cchbc.ConsoleClient
 				//var connectionString = @"Server=cwpfsa04;Database=Cchbc;User Id=dev;Password='dev user password'";
 				var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
 
-				var cn = new SQLiteConnection(connectionString);
-				cn.Open();
-				var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
-				var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
-				var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
-
-				var s = Stopwatch.StartNew();
-				var brands = new List<Brand>();
-				for (var i = 0; i < 100; i++)
+				using (var featureManager = new FeatureManager(entries =>
 				{
-					var query = new Query<Brand>(@"SELECT ID, NAME FROM BRANDS", r =>
+					var buffer = new ConcurrentQueue<FeatureEntry>();
+
+					foreach (var entry in entries.GetConsumingEnumerable())
 					{
-						var id = 0L;
-						if (!r.IsDbNull(0))
-						{
-							id = r.GetInt64(0);
-						}
-						var name = string.Empty;
-						if (!r.IsDbNull(1))
-						{
-							name = r.GetString(1);
-						}
-						return new Brand(id, name);
-					});
+						buffer.Enqueue(entry);
 
-					brands = queryHelper.ExecuteAsync(query).Result;
-				}
-				s.Stop();
-				Console.WriteLine(s.ElapsedMilliseconds);
+						if (buffer.Count > 256)
+						{
+							// TODO : !!!
+							Console.WriteLine(@"Dump 256");
+						}
+					}
 
-				foreach (var b in brands)
+					if (buffer.Any())
+					{
+						Console.WriteLine(@"Dump " + buffer.Count);
+					}
+				}))
 				{
-					Console.WriteLine(b.Id);
-					Console.WriteLine(b.Name);
-					Console.WriteLine();
+					using (var cn = new SQLiteConnection(connectionString))
+					{
+						cn.Open();
+						var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
+						var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
+
+						var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
+						var core = new Core(new ConsoleLogger(), featureManager, queryHelper);
+
+						featureManager.Add(new Feature(@"Core Context", @"Load data"));
+						core.LoadDataAsync().Wait();
+						Console.WriteLine(@"Done");
+					}
 				}
-
-				var core = new Core(new ConsoleBufferedLogger());
-
-				core.InitializeAsync(queryHelper).Wait();
 			}
 			catch (Exception ex)
 			{
@@ -227,92 +209,83 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public abstract class BufferedLogger : ILogger
+	//public abstract class BufferedLogger : ILogger
+	//{
+	//	protected readonly ConcurrentQueue<string> Buffer = new ConcurrentQueue<string>();
+
+	//	public string Context { get; }
+
+	//	protected BufferedLogger(string context)
+	//	{
+	//		if (context == null) throw new ArgumentNullException(nameof(context));
+
+	//		this.Context = context;
+	//	}
+
+	//	public bool IsDebugEnabled { get; protected set; }
+	//	public bool IsInfoEnabled { get; protected set; }
+	//	public bool IsWarnEnabled { get; protected set; }
+	//	public bool IsErrorEnabled { get; protected set; }
+
+	//	public void Debug(string message)
+	//	{
+	//		if (this.IsDebugEnabled)
+	//		{
+	//			Buffer.Enqueue(message);
+	//		}
+	//	}
+
+	//	public void Info(string message)
+	//	{
+	//		if (this.IsInfoEnabled)
+	//		{
+	//			Buffer.Enqueue(message);
+	//		}
+	//	}
+
+	//	public void Warn(string message)
+	//	{
+	//		if (this.IsWarnEnabled)
+	//		{
+	//			Buffer.Enqueue(message);
+	//		}
+	//	}
+
+	//	public void Error(string message)
+	//	{
+	//		if (this.IsErrorEnabled)
+	//		{
+	//			Buffer.Enqueue(message);
+	//		}
+	//	}
+	//}
+
+	public sealed class ConsoleLogger : ILogger
 	{
-		protected readonly ConcurrentQueue<string> Buffer = new ConcurrentQueue<string>();
-
-		public string Context { get; }
-
-		protected BufferedLogger(string context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			this.Context = context;
-		}
-
-		public bool IsDebugEnabled { get; protected set; }
-		public bool IsInfoEnabled { get; protected set; }
-		public bool IsWarnEnabled { get; protected set; }
-		public bool IsErrorEnabled { get; protected set; }
-
+		public bool IsDebugEnabled { get; }
+		public bool IsInfoEnabled { get; }
+		public bool IsWarnEnabled { get; }
+		public bool IsErrorEnabled { get; }
 		public void Debug(string message)
 		{
-			if (this.IsDebugEnabled)
-			{
-				Buffer.Enqueue(message);
-			}
+			throw new NotImplementedException();
 		}
 
 		public void Info(string message)
 		{
-			if (this.IsInfoEnabled)
-			{
-				Buffer.Enqueue(message);
-			}
+			Console.WriteLine(@"Info:" + message);
 		}
 
 		public void Warn(string message)
 		{
-			if (this.IsWarnEnabled)
-			{
-				Buffer.Enqueue(message);
-			}
+			Console.WriteLine(@"Warn:" + message);
 		}
 
 		public void Error(string message)
 		{
-			if (this.IsErrorEnabled)
-			{
-				Buffer.Enqueue(message);
-			}
+			Console.WriteLine(@"Error:" + message);
 		}
 	}
-
-	public sealed class ConsoleBufferedLogger : BufferedLogger
-	{
-		public ConsoleBufferedLogger() : base("Cchbc Context")
-		{
-			this.IsInfoEnabled = true;
-			this.IsWarnEnabled = true;
-			this.IsErrorEnabled = true;
-
-			ThreadPool.QueueUserWorkItem(_ =>
-			{
-				while (true)
-				{
-					Flush();
-					Thread.Sleep(5);
-				}
-			});
-		}
-
-		public void Flush()
-		{
-			var local = new StringBuilder();
-
-			string message;
-			while (Buffer.TryDequeue(out message))
-			{
-				local.AppendLine(message);
-			}
-			if (local.Length > 0)
-			{
-				Console.Write(local);
-			}
-		}
-	}
-
-
 
 	public sealed class LogLevel
 	{

@@ -11,8 +11,7 @@ namespace Cchbc.UI.Comments
 {
 	public sealed class LoginsViewModel : ViewObject
 	{
-		private ILogger Logger { get; }
-		private FeatureManager FeatureManager { get; }
+		private Core Core { get; }
 		private LoginsManager Manager { get; }
 
 		public ObservableCollection<LoginViewItem> Logins { get; } = new ObservableCollection<LoginViewItem>();
@@ -59,16 +58,12 @@ namespace Cchbc.UI.Comments
 			private set { this.SetField(ref _isBusy, value); }
 		}
 
-		public string ErrorMessage { get; private set; } = string.Empty;
-
-		public LoginsViewModel(ILogger logger, FeatureManager featureManager)
+		public LoginsViewModel(Core core)
 		{
-			if (logger == null) throw new ArgumentNullException(nameof(logger));
-			if (featureManager == null) throw new ArgumentNullException(nameof(featureManager));
+			if (core == null) throw new ArgumentNullException(nameof(core));
 
-			this.Logger = logger;
-			this.FeatureManager = featureManager;
-			this.Manager = new LoginsManager(logger, new LoginAdapter(logger), new Sorter<LoginViewItem>(new[]
+			this.Core = core;
+			this.Manager = new LoginsManager(core.Logger, new LoginAdapter(core.Logger), new Sorter<LoginViewItem>(new[]
 			{
 				new SortOption<LoginViewItem>(@"By Name", (x,y)=> string.Compare(x.Item.Name, y.Item.Name, StringComparison.Ordinal)),
 				new SortOption<LoginViewItem>(@"By Date", (x, y) =>
@@ -89,12 +84,11 @@ namespace Cchbc.UI.Comments
 			this.Manager.OperationEnd += (sender, args) =>
 			{
 				this.IsBusy = false;
-				this.FeatureManager.Add(this.Logger.Context, args.Feature);
+				this.Core.FeatureManager.Add(args.Feature);
 			};
 			this.Manager.OperationError += (sender, args) =>
 			{
-				this.Logger.Error(args.Exception.ToString());
-				this.ErrorMessage = args.Exception.Message;
+				this.Core.Logger.Error(args.Exception.ToString());
 			};
 
 			this.Manager.ItemInserted += ManagerOnItemInserted;
@@ -153,7 +147,7 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			await this.Manager.AddAsync(viewItem, dialog, new Feature(nameof(AddAsync)));
+			await this.Manager.AddAsync(viewItem, dialog, new Feature(@"Login", nameof(AddAsync)));
 		}
 
 		public async Task DeleteAsync(LoginViewItem viewItem, ModalDialog dialog)
@@ -161,7 +155,7 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			await this.Manager.DeleteAsync(viewItem, dialog, new Feature(nameof(DeleteAsync)));
+			await this.Manager.DeleteAsync(viewItem, dialog, new Feature(@"Login", nameof(DeleteAsync)));
 		}
 
 		public async Task PromoteUserAsync(LoginViewItem viewItem, ModalDialog dialog)
@@ -169,7 +163,7 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			await this.Manager.ExecuteAsync(viewItem, dialog, new Feature(nameof(PromoteUserAsync)), this.Manager.CanPromoteAsync, this.PromoteValidatedAsync);
+			await this.Manager.ExecuteAsync(viewItem, dialog, new Feature(@"Login", nameof(PromoteUserAsync)), this.Manager.CanPromoteAsync, this.PromoteValidatedAsync);
 		}
 
 		private async Task PromoteValidatedAsync(LoginViewItem viewItem, FeatureEventArgs args)

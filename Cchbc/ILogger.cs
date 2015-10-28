@@ -2,8 +2,6 @@ namespace Cchbc
 {
 	public interface ILogger
 	{
-		string Context { get; }
-
 		bool IsDebugEnabled { get; }
 		bool IsInfoEnabled { get; }
 		bool IsWarnEnabled { get; }

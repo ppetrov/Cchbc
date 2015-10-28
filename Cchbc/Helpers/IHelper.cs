@@ -5,7 +5,7 @@ using Cchbc.Objects;
 
 namespace Cchbc.Helpers
 {
-	public interface IDataHelper<T> where T : IDbObject
+	public interface IHelper<T> where T : IDbObject
 	{
 		Dictionary<long, T> Items { get; }
 

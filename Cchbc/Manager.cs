@@ -160,31 +160,36 @@ namespace Cchbc
 			var results = this.Search(textSearch, searchOption, new List<TViewItem>(1) { viewItem });
 			if (results.Any())
 			{
-				// Insert at the end by default
-				var index = viewItems.Count;
-
-				var option = this.Sorter.CurrentOption;
-				if (option != null)
-				{
-					index = 0;
-
-					// Insert at the right place according to the current sort option
-					var comparison = option.Comparison;
-					foreach (var login in viewItems)
-					{
-						var cmp = comparison(login, viewItem);
-						if (cmp > 0)
-						{
-							break;
-						}
-						index++;
-					}
-				}
-
-				viewItems.Insert(index, viewItem);
+				viewItems.Insert(this.FindNewIndex(viewItems, viewItem), viewItem);
 
 				this.Searcher.SetupCounts(viewItems);
 			}
+		}
+
+		private int FindNewIndex(ObservableCollection<TViewItem> viewItems, TViewItem viewItem)
+		{
+			// At the end by default
+			var index = viewItems.Count;
+
+			var option = this.Sorter.CurrentOption;
+			if (option != null)
+			{
+				index = 0;
+
+				// Insert at the right place according to the current sort option
+				var comparison = option.Comparison;
+				foreach (var item in viewItems)
+				{
+					var cmp = comparison(item, viewItem);
+					if (cmp > 0)
+					{
+						break;
+					}
+					index++;
+				}
+			}
+
+			return index;
 		}
 
 		public void Update(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
@@ -193,10 +198,28 @@ namespace Cchbc
 			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			// This is still better then re-applying the filter & sorting the data
-			viewItems.Remove(viewItem);
+			var newIndex = -1;
 
-			this.Insert(viewItems, viewItem, textSearch, searchOption);
+			var results = this.Search(textSearch, searchOption, new List<TViewItem>(1) { viewItem });
+			if (results.Any())
+			{
+				// Find the new index
+				newIndex = this.FindNewIndex(viewItems, viewItem);
+			}
+
+			if (newIndex >= 0)
+			{
+				// Find the old index before insert
+				var oldIndex = viewItems.IndexOf(viewItem);
+				if (oldIndex != newIndex)
+				{
+					var tmp = viewItems[oldIndex];
+					viewItems[oldIndex] = viewItem;
+					viewItems[newIndex] = tmp;
+				}
+			}
+
+			this.Searcher.SetupCounts(viewItems);
 		}
 
 		public void Delete(ObservableCollection<TViewItem> viewItems, TViewItem viewItem)

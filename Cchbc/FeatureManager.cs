@@ -1,59 +1,45 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace Cchbc
 {
-	public sealed class FeatureManager
+	public sealed class FeatureManager : IDisposable
 	{
-		private sealed class FeatureEntry
+		private readonly Task _syncTask;
+
+		public FeatureManager(Action<BlockingCollection<FeatureEntry>> dumper)
 		{
-			public string Context { get; }
-			public string Name { get; }
-			public TimeSpan TimeSpent { get; }
-
-			public FeatureEntry(string context, string name, TimeSpan timeSpent)
-			{
-				if (context == null) throw new ArgumentNullException(nameof(context));
-				if (name == null) throw new ArgumentNullException(nameof(name));
-
-				this.Context = context;
-				this.Name = name;
-				this.TimeSpent = timeSpent;
-			}
+			_syncTask = Task.Run(() => { dumper(this.Entries); });
 		}
 
-		private List<FeatureEntry> Entries { get; } = new List<FeatureEntry>();
+		private BlockingCollection<FeatureEntry> Entries { get; } = new BlockingCollection<FeatureEntry>();
 
-		public void Add(string context, Feature feature)
+		public void Add(Feature feature)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.StopMeasure();
 
-			// Ignore blank features
+			// Ignore None(empty) features
 			if (feature == Feature.None)
 			{
 				return;
 			}
-
-			this.Entries.Add(new FeatureEntry(context, feature.Name, feature.TimeSpent));
-
-			this.Dump();
+			try
+			{
+				this.Entries.TryAdd(new FeatureEntry(feature.Context, feature.Name, feature.TimeSpent));
+			}
+			catch { }
 		}
 
-		private void Dump()
+		public void Dispose()
 		{
-			foreach (var byContextGroup in this.Entries.GroupBy(v => v.Context))
-			{
-				foreach (var e in byContextGroup)
-				{
-					Debug.WriteLine(byContextGroup.Key + "->" + e.Name + ", " + e.TimeSpent.TotalMilliseconds + "ms");
-				}
-				Debug.WriteLine(string.Empty);
-			}
+			// Signal the end of adding any entries
+			this.Entries.CompleteAdding();
+
+			// Wait for the sync task to complete(flush all the entries)
+			_syncTask.Wait();
 		}
 	}
 }

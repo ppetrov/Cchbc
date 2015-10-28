@@ -5,7 +5,7 @@ namespace Cchbc.Search
 {
 	public sealed class FilterOption<T> : ViewObject where T : ViewObject
 	{
-		public string DisplayName { get; }
+		public string Name { get; }
 		public Func<T, bool> IsMatch { get; }
 
 		private bool _isSelected;
@@ -15,12 +15,12 @@ namespace Cchbc.Search
 			set { this.SetField(ref _isSelected, value); }
 		}
 
-		public FilterOption(string displayName, Func<T, bool> isMatch, bool isSelected = false)
+		public FilterOption(string name, Func<T, bool> isMatch, bool isSelected = false)
 		{
-			if (displayName == null) throw new ArgumentNullException(nameof(displayName));
+			if (name == null) throw new ArgumentNullException(nameof(name));
 			if (isMatch == null) throw new ArgumentNullException(nameof(isMatch));
 
-			this.DisplayName = displayName;
+			this.Name = name;
 			this.IsMatch = isMatch;
 			this.IsSelected = isSelected;
 		}
