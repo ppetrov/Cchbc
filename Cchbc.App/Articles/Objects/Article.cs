@@ -1,7 +1,7 @@
 ﻿using System;
 using Cchbc.Objects;
 
-namespace Cchbc.ArticlesModule
+namespace Cchbc.App.Articles.Objects
 {
 	public sealed class Article : IDbObject
 	{

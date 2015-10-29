@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Data.SQLite;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
+using Cchbc.App.Articles.ViewModel;
 using Cchbc.Data;
-using Cchbc.Objects;
 
 namespace Cchbc.ConsoleClient
 {
@@ -168,22 +163,16 @@ namespace Cchbc.ConsoleClient
 
 				using (var featureManager = new FeatureManager(entries =>
 				{
-					var buffer = new ConcurrentQueue<FeatureEntry>();
-
-					foreach (var entry in entries.GetConsumingEnumerable())
+					foreach (var entry in entries)
 					{
-						buffer.Enqueue(entry);
-
-						if (buffer.Count > 256)
+						var context = entry.Context;
+						Console.WriteLine(context);
+						Console.WriteLine(entry.Name + " " + entry.TimeSpent);
+						foreach (var step in entry.Steps)
 						{
-							// TODO : !!!
-							Console.WriteLine(@"Dump 256");
+							Console.WriteLine("\t" + step.Name + ":" + step.TimeSpent);
 						}
-					}
-
-					if (buffer.Any())
-					{
-						Console.WriteLine(@"Dump " + buffer.Count);
+						Console.WriteLine(@"---");
 					}
 				}))
 				{
@@ -192,12 +181,12 @@ namespace Cchbc.ConsoleClient
 						cn.Open();
 						var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
 						var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
-
 						var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
-						var core = new Core(new ConsoleLogger(), featureManager, queryHelper);
 
-						featureManager.Add(new Feature(@"Core Context", @"Load data"));
-						core.LoadDataAsync().Wait();
+						var core = new Core(new ConsoleLogger(), featureManager, queryHelper);
+						var viewModel = new ArticlesViewModel(core);
+						viewModel.LoadDataAsync().Wait();
+
 						Console.WriteLine(@"Done");
 					}
 				}
@@ -268,7 +257,7 @@ namespace Cchbc.ConsoleClient
 		public bool IsErrorEnabled { get; }
 		public void Debug(string message)
 		{
-			throw new NotImplementedException();
+			Console.WriteLine(@"Debug:" + message);
 		}
 
 		public void Info(string message)

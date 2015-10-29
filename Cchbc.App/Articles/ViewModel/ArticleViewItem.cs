@@ -1,6 +1,7 @@
-﻿using Cchbc.Objects;
+﻿using Cchbc.App.Articles.Objects;
+using Cchbc.Objects;
 
-namespace Cchbc.ArticlesModule.ViewModel
+namespace Cchbc.App.Articles.ViewModel
 {
 	public sealed class ArticleViewItem : ViewItem<Article>
 	{
@@ -8,7 +9,6 @@ namespace Cchbc.ArticlesModule.ViewModel
 		public string Name { get; }
 		public string Brand { get; }
 		public string Flavor { get; }
-		public decimal Quantity { get; }
 
 		public ArticleViewItem(Article article) : base(article)
 		{

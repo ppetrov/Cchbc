@@ -1,9 +1,9 @@
-﻿using Cchbc.ArticlesModule;
-using Cchbc.ArticlesModule.ViewModel;
+﻿using Cchbc.App.Articles.Objects;
+using Cchbc.App.Articles.ViewModel;
 using Cchbc.Search;
 using Cchbc.Sort;
 
-namespace Cchbc.UI.Articles
+namespace Cchbc.App.Articles
 {
 	public sealed class ArticlesModule : Module<Article, ArticleViewItem>
 	{

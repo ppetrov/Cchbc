@@ -3,10 +3,8 @@ using System.Text;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using Cchbc.ArticlesModule;
-using Cchbc.ArticlesModule.ViewModel;
+using Cchbc.App.Articles.ViewModel;
 using Cchbc.Search;
-using Cchbc.UI.ArticlesModule.ViewModel;
 
 namespace Cchbc.UI
 {
@@ -15,7 +13,7 @@ namespace Cchbc.UI
 	/// </summary>
 	public sealed partial class ArticlesScreen : Page
 	{
-		private readonly ArticlesViewModel _viewModel = new ArticlesViewModel(new DirectDebugLogger(nameof(ArticlesViewModel)));
+		private readonly ArticlesViewModel _viewModel = new ArticlesViewModel(default(Core));
 
 		public ArticlesScreen()
 		{
@@ -26,9 +24,6 @@ namespace Cchbc.UI
 
 		private async void ArticlesScreenOnLoaded(object sender, RoutedEventArgs e)
 		{
-
-
-
 			await _viewModel.LoadDataAsync();
 		}
 

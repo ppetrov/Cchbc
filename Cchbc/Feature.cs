@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Cchbc
@@ -11,6 +12,7 @@ namespace Cchbc
 		public string Name { get; }
 		public TimeSpan TimeSpent => this.Stopwatch.Elapsed;
 		private Stopwatch Stopwatch { get; }
+		public List<FeatureStep> Steps { get; } = new List<FeatureStep>();
 
 		public Feature(string context, string name)
 		{
@@ -40,6 +42,28 @@ namespace Cchbc
 		public void Resume()
 		{
 			this.Stopwatch.Start();
+		}
+
+		public void AddStep(string name)
+		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			var step = new FeatureStep(name);
+			step.TimeSpent = this.Stopwatch.Elapsed;
+
+			// Stop any previous step
+			if (this.Steps.Count > 0)
+			{
+				this.EndStep();
+			}
+
+			this.Steps.Add(step);
+		}
+
+		public void EndStep()
+		{
+			var previous = this.Steps[this.Steps.Count - 1];
+			previous.TimeSpent = this.Stopwatch.Elapsed - previous.TimeSpent;
 		}
 	}
 }

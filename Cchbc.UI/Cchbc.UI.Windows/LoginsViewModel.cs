@@ -84,7 +84,7 @@ namespace Cchbc.UI.Comments
 			this.Manager.OperationEnd += (sender, args) =>
 			{
 				this.IsBusy = false;
-				this.Core.FeatureManager.Add(args.Feature);
+				this.Core.FeatureManager.Stop(args.Feature);
 			};
 			this.Manager.OperationError += (sender, args) =>
 			{

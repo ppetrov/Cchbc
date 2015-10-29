@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Cchbc.ConsoleClient</RootNamespace>
     <AssemblyName>Cchbc.ConsoleClient</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -34,7 +35,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.SQLite, Version=1.0.98.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
@@ -49,8 +49,12 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Cchbc.App\Cchbc.App.csproj">
+      <Project>{919da720-c69f-4b94-ae62-7004f8ccb0b3}</Project>
+      <Name>Cchbc.App</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Cchbc\Cchbc.csproj">
-      <Project>{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}</Project>
+      <Project>{cf3bbbbd-5f7a-47b5-a5a5-71eb0ec6ad84}</Project>
       <Name>Cchbc</Name>
     </ProjectReference>
   </ItemGroup>

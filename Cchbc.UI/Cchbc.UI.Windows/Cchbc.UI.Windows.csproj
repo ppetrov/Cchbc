@@ -104,24 +104,16 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
+    <ProjectReference Include="..\..\Cchbc.App\Cchbc.App.csproj">
+      <Project>{919DA720-C69F-4B94-AE62-7004F8CCB0B3}</Project>
+      <Name>Cchbc.App</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Cchbc\Cchbc.csproj">
       <Project>{cf3bbbbd-5f7a-47b5-a5a5-71eb0ec6ad84}</Project>
       <Name>Cchbc</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Articles\ArticlesModule.cs" />
-    <Compile Include="Articles\Data\ArticleAdapter.cs" />
-    <Compile Include="Articles\Data\BrandAdapter.cs" />
-    <Compile Include="Articles\Data\FlavorAdapter.cs" />
-    <Compile Include="Articles\Helpers\ArticleHelper.cs" />
-    <Compile Include="Articles\Helpers\BrandHelper.cs" />
-    <Compile Include="Articles\Helpers\FlavorHelper.cs" />
-    <Compile Include="Articles\Objects\Article.cs" />
-    <Compile Include="Articles\Objects\Brand.cs" />
-    <Compile Include="Articles\Objects\Flavor.cs" />
-    <Compile Include="Articles\ViewModel\ArticlesViewModel.cs" />
-    <Compile Include="Articles\ViewModel\ArticleViewItem.cs" />
     <Compile Include="ArticlesScreen.xaml.cs">
       <DependentUpon>ArticlesScreen.xaml</DependentUpon>
     </Compile>

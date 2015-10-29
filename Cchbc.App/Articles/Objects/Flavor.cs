@@ -1,16 +1,16 @@
 ﻿using System;
 using Cchbc.Objects;
 
-namespace Cchbc.ArticlesModule
+namespace Cchbc.App.Articles.Objects
 {
-	public sealed class Brand : IDbObject
+	public sealed class Flavor : IDbObject
 	{
-		public static readonly Brand Empty = new Brand(-1, string.Empty);
+		public static readonly Flavor Empty = new Flavor(-1, string.Empty);
 
 		public long Id { get; set; }
 		public string Name { get; }
 
-		public Brand(long id, string name)
+		public Flavor(long id, string name)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
