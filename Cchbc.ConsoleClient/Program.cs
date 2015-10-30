@@ -7,6 +7,7 @@ using System.Data.SQLite;
 using System.Threading.Tasks;
 using Cchbc.App.Articles.ViewModel;
 using Cchbc.Data;
+using Cchbc.Objects;
 
 namespace Cchbc.ConsoleClient
 {
@@ -167,10 +168,10 @@ namespace Cchbc.ConsoleClient
 					{
 						var context = entry.Context;
 						Console.WriteLine(context);
-						Console.WriteLine(entry.Name + " " + entry.TimeSpent);
+						Console.WriteLine(entry.Name + " " + entry.TimeSpent.TotalMilliseconds);
 						foreach (var step in entry.Steps)
 						{
-							Console.WriteLine("\t" + step.Name + ":" + step.TimeSpent);
+							Console.WriteLine("\t" + step.Name + ":" + step.TimeSpent.TotalMilliseconds);
 						}
 						Console.WriteLine(@"---");
 					}
@@ -179,12 +180,14 @@ namespace Cchbc.ConsoleClient
 					using (var cn = new SQLiteConnection(connectionString))
 					{
 						cn.Open();
+
 						var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
 						var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
 						var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
 
 						var core = new Core(new ConsoleLogger(), featureManager, queryHelper);
 						var viewModel = new ArticlesViewModel(core);
+						viewModel.LoadDataAsync().Wait();
 						viewModel.LoadDataAsync().Wait();
 
 						Console.WriteLine(@"Done");
@@ -295,4 +298,18 @@ namespace Cchbc.ConsoleClient
 			this.Name = name;
 		}
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
 }

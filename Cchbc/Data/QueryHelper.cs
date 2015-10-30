@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Cchbc.Objects;
 
@@ -19,12 +20,19 @@ namespace Cchbc.Data
 			this.ModifyDataQueryHelper = modifyDataQueryHelper;
 		}
 
-		public void ExecuteAsync(string statement, QueryParameter[] parameters)
+		public Task ExecuteAsync(string statement)
+		{
+			if (statement == null) throw new ArgumentNullException(nameof(statement));
+
+			return this.ModifyDataQueryHelper.ExecuteAsync(statement, Enumerable.Empty<QueryParameter>().ToArray());
+		}
+
+		public Task ExecuteAsync(string statement, QueryParameter[] parameters)
 		{
 			if (statement == null) throw new ArgumentNullException(nameof(statement));
 			if (parameters == null) throw new ArgumentNullException(nameof(parameters));
 
-			this.ModifyDataQueryHelper.ExecuteAsync(statement, parameters);
+			return this.ModifyDataQueryHelper.ExecuteAsync(statement, parameters);
 		}
 
 		public Task<List<T>> ExecuteAsync<T>(Query<T> query) where T : IDbObject
@@ -34,12 +42,12 @@ namespace Cchbc.Data
 			return this.ReadDataQueryHelper.ExecuteAsync(query);
 		}
 
-		public void Fill<T>(Query<T> query, Dictionary<long, T> values) where T : IDbObject
+		public Task FillAsync<T>(Query<T> query, Dictionary<long, T> values) where T : IDbObject
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 			if (values == null) throw new ArgumentNullException(nameof(values));
 
-			this.ReadDataQueryHelper.FillAsync(query, values);
+			return this.ReadDataQueryHelper.FillAsync(query, values);
 		}
 	}
 }

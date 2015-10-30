@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Cchbc.App.Articles.Objects;
 using Cchbc.Data;
@@ -24,15 +23,30 @@ namespace Cchbc.App.Articles.Data
 			_flavors = flavors;
 		}
 
-		public Task FillAsync(Dictionary<long, Article> items)
+		public async Task FillAsync(Dictionary<long, Article> items)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
-			//items.Add(1, new Article(1, @"Coca Cola 2.0L PET", Brands[1], Flavors[1]));
-			//items.Add(2, new Article(2, @"Fanta 2.0L PET", Brands[2], Flavors[2]));
-			//items.Add(3, new Article(3, @"Sprite 2.0L PET", Brands[3], Flavor.Empty));
-
-			return Task.FromResult(true);
+			await _queryHelper.FillAsync(new Query<Article>(@"SELECT ID, NAME, BRAND_ID, FLAVOR_ID FROM ARTICLES", r =>
+			{
+				var id = r.GetInt64(0);
+				var name = string.Empty;
+				if (!r.IsDbNull(1))
+				{
+					name = r.GetString(1);
+				}
+				var brand = Brand.Empty;
+				if (!r.IsDbNull(2))
+				{
+					brand = _brands[r.GetInt64(2)];
+				}
+				var flavor = Flavor.Empty;
+				if (!r.IsDbNull(3))
+				{
+					flavor = _flavors[r.GetInt64(3)];
+				}
+				return new Article(id, name, brand, flavor);
+			}), items);
 		}
 	}
 }

@@ -40,7 +40,6 @@
     <Compile Include="Data\ModifyDataQueryHelper.cs" />
     <Compile Include="Data\IFieldDataReader.cs" />
     <Compile Include="Data\IModifiableAdapter.cs" />
-    <Compile Include="Data\ModifyDataAdapter.cs" />
     <Compile Include="Data\Query.cs" />
     <Compile Include="Data\QueryHelper.cs" />
     <Compile Include="Data\QueryParameter.cs" />

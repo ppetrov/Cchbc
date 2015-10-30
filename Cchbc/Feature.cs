@@ -11,8 +11,9 @@ namespace Cchbc
 		public string Context { get; }
 		public string Name { get; }
 		public TimeSpan TimeSpent => this.Stopwatch.Elapsed;
-		private Stopwatch Stopwatch { get; }
 		public List<FeatureStep> Steps { get; } = new List<FeatureStep>();
+
+		private Stopwatch Stopwatch { get; }
 
 		public Feature(string context, string name)
 		{
