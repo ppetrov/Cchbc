@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Cchbc.App.Articles.ViewModel;
 using Cchbc.Data;
 using Cchbc.Objects;
+using DbDataAdapter = Cchbc.Data.DbDataAdapter;
 
 namespace Cchbc.ConsoleClient
 {
@@ -159,40 +160,74 @@ namespace Cchbc.ConsoleClient
 		{
 			try
 			{
+
 				//var connectionString = @"Server=cwpfsa04;Database=Cchbc;User Id=dev;Password='dev user password'";
 				var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
 
-				using (var featureManager = new FeatureManager(entries =>
+				using (var cn = new SQLiteConnection(connectionString))
 				{
-					foreach (var entry in entries)
+					cn.Open();
+
+					var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
+					var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
+					var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
+
+					var adapter = new DbDataAdapter(queryHelper);					
+					var module = new DbFeatureModule(new DbFeatureModuleAdapter(adapter));
+
+					var featureSteps = new List<FeatureStep>
 					{
-						var context = entry.Context;
-						Console.WriteLine(context);
-						Console.WriteLine(entry.Name + " " + entry.TimeSpent.TotalMilliseconds);
-						foreach (var step in entry.Steps)
-						{
-							Console.WriteLine("\t" + step.Name + ":" + step.TimeSpent.TotalMilliseconds);
-						}
-						Console.WriteLine(@"---");
+						new FeatureStep(@"Load Brands") { TimeSpent = TimeSpan.FromMilliseconds(124)},
+						new FeatureStep(@"Load Flavors") { TimeSpent = TimeSpan.FromMilliseconds(51)},
+						new FeatureStep(@"Load Articles") { TimeSpent = TimeSpan.FromMilliseconds(97)},
+						new FeatureStep(@"Display Articles") { TimeSpent = TimeSpan.FromMilliseconds(11)},
+					};
+					var entry = new FeatureEntry(@"View all articles", @"Load Data", TimeSpan.FromMilliseconds(723), featureSteps);
+					try
+					{
+						
+                        module.LoadAsync().Wait();
+						module.SaveAsync(entry).Wait();
 					}
-				}))
-				{
-					using (var cn = new SQLiteConnection(connectionString))
+					catch (Exception ex)
 					{
-						cn.Open();
-
-						var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
-						var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
-						var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
-
-						var core = new Core(new ConsoleLogger(), featureManager, queryHelper);
-						var viewModel = new ArticlesViewModel(core);
-						viewModel.LoadDataAsync().Wait();
-						viewModel.LoadDataAsync().Wait();
-
-						Console.WriteLine(@"Done");
+						Console.WriteLine(ex);
 					}
 				}
+
+
+
+				//using (var featureManager = new FeatureManager(entries =>
+				//{
+				//	foreach (var entry in entries)
+				//	{
+				//		var context = entry.Context;
+				//		Console.WriteLine(context);
+				//		Console.WriteLine(entry.Name + " " + entry.TimeSpent.TotalMilliseconds);
+				//		foreach (var step in entry.Steps)
+				//		{
+				//			Console.WriteLine("\t" + step.Name + ":" + step.TimeSpent.TotalMilliseconds);
+				//		}
+				//		Console.WriteLine(@"---");
+				//	}
+				//}))
+				//{
+				//	using (var cn = new SQLiteConnection(connectionString))
+				//	{
+				//		cn.Open();
+
+				//		var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
+				//		var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
+				//		var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
+
+				//		var core = new Core(new ConsoleLogger(), featureManager, queryHelper);
+				//		var viewModel = new ArticlesViewModel(core);
+				//		viewModel.LoadDataAsync().Wait();
+				//		viewModel.LoadDataAsync().Wait();
+
+				//		Console.WriteLine(@"Done");
+				//	}
+				//}
 			}
 			catch (Exception ex)
 			{
@@ -311,5 +346,5 @@ namespace Cchbc.ConsoleClient
 
 
 
-	
+
 }

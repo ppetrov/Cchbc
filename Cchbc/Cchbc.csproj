@@ -36,7 +36,7 @@
   <ItemGroup>
     <Compile Include="DataCache.cs" />
     <Compile Include="Core.cs" />
-    <Compile Include="Data\DataAdapter.cs" />
+    <Compile Include="Data\DbDataAdapter.cs" />
     <Compile Include="Data\ModifyDataQueryHelper.cs" />
     <Compile Include="Data\IFieldDataReader.cs" />
     <Compile Include="Data\IModifiableAdapter.cs" />

@@ -2,11 +2,11 @@
 
 namespace Cchbc.Data
 {
-	public sealed class DataAdapter
+	public sealed class DbDataAdapter
 	{
 		public QueryHelper QueryHelper { get; }
 
-		public DataAdapter(QueryHelper queryHelper)
+		public DbDataAdapter(QueryHelper queryHelper)
 		{
 			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 
