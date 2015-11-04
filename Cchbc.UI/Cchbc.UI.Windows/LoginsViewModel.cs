@@ -147,7 +147,7 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			await this.Manager.AddAsync(viewItem, dialog, new Feature(@"Login", nameof(AddAsync)));
+			await this.Manager.AddAsync(viewItem, dialog, new Feature(@"Login", nameof(AddAsync), string.Empty));
 		}
 
 		public async Task DeleteAsync(LoginViewItem viewItem, ModalDialog dialog)
@@ -155,7 +155,7 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			await this.Manager.DeleteAsync(viewItem, dialog, new Feature(@"Login", nameof(DeleteAsync)));
+			await this.Manager.DeleteAsync(viewItem, dialog, new Feature(@"Login", nameof(DeleteAsync), string.Empty));
 		}
 
 		public async Task PromoteUserAsync(LoginViewItem viewItem, ModalDialog dialog)
@@ -163,7 +163,7 @@ namespace Cchbc.UI.Comments
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			await this.Manager.ExecuteAsync(viewItem, dialog, new Feature(@"Login", nameof(PromoteUserAsync)), this.Manager.CanPromoteAsync, this.PromoteValidatedAsync);
+			await this.Manager.ExecuteAsync(viewItem, dialog, new Feature(@"Login", nameof(PromoteUserAsync), string.Empty), this.Manager.CanPromoteAsync, this.PromoteValidatedAsync);
 		}
 
 		private async Task PromoteValidatedAsync(LoginViewItem viewItem, FeatureEventArgs args)

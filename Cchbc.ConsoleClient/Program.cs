@@ -2,13 +2,10 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Data.SQLite;
 using System.Threading.Tasks;
-using Cchbc.App.Articles.ViewModel;
 using Cchbc.Data;
-using Cchbc.Objects;
-using DbDataAdapter = Cchbc.Data.DbDataAdapter;
+
 
 namespace Cchbc.ConsoleClient
 {
@@ -82,7 +79,7 @@ namespace Cchbc.ConsoleClient
 				cmd.CommandType = CommandType.Text;
 				foreach (var p in query.Parameters)
 				{
-					cmd.Parameters.Add(new SqlParameter(p.Name, p.Value));
+					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
 				}
 
 				using (var r = await cmd.ExecuteReaderAsync())
@@ -111,7 +108,7 @@ namespace Cchbc.ConsoleClient
 				cmd.CommandType = CommandType.Text;
 				foreach (var p in query.Parameters)
 				{
-					cmd.Parameters.Add(new SqlParameter(p.Name, p.Value));
+					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
 				}
 
 				using (var r = await cmd.ExecuteReaderAsync())
@@ -147,7 +144,7 @@ namespace Cchbc.ConsoleClient
 				cmd.CommandType = CommandType.Text;
 				foreach (var p in parameters)
 				{
-					cmd.Parameters.Add(new SqlParameter(p.Name, p.Value));
+					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
 				}
 				await cmd.ExecuteNonQueryAsync();
 			}
@@ -160,7 +157,6 @@ namespace Cchbc.ConsoleClient
 		{
 			try
 			{
-
 				//var connectionString = @"Server=cwpfsa04;Database=Cchbc;User Id=dev;Password='dev user password'";
 				var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
 
@@ -172,21 +168,23 @@ namespace Cchbc.ConsoleClient
 					var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
 					var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
 
-					var adapter = new DbDataAdapter(queryHelper);					
-					var module = new DbFeatureModule(new DbFeatureModuleAdapter(adapter));
+					var module = new DbFeatureModule(new DbFeatureModuleAdapter(queryHelper));
 
+					var r = new Random();
 					var featureSteps = new List<FeatureStep>
 					{
-						new FeatureStep(@"Load Brands") { TimeSpent = TimeSpan.FromMilliseconds(124)},
-						new FeatureStep(@"Load Flavors") { TimeSpent = TimeSpan.FromMilliseconds(51)},
-						new FeatureStep(@"Load Articles") { TimeSpent = TimeSpan.FromMilliseconds(97)},
-						new FeatureStep(@"Display Articles") { TimeSpent = TimeSpan.FromMilliseconds(11)},
+						new FeatureStep(@"Load Brands") { TimeSpent = TimeSpan.FromMilliseconds(r.Next(100,500))},
+						new FeatureStep(@"Load Flavors") { TimeSpent = TimeSpan.FromMilliseconds(r.Next(100,500))},
+						new FeatureStep(@"Load Articles") { TimeSpent = TimeSpan.FromMilliseconds(r.Next(100,500))},
+						new FeatureStep(@"Display Articles") { TimeSpent = TimeSpan.FromMilliseconds(r.Next(100,200))},
 					};
-					var entry = new FeatureEntry(@"View all articles", @"Load Data", TimeSpan.FromMilliseconds(723), featureSteps);
+					//TimeSpan.FromMilliseconds(r.Next(500, 1500))
+					var entry = new Feature(@"View all articles", @"Filter By", @"Coca Cola");
+					entry.Steps.AddRange(featureSteps);
 					try
 					{
-						
-                        module.LoadAsync().Wait();
+						module.CreateSchemaAsync().Wait();
+						module.LoadAsync().Wait();
 						module.SaveAsync(entry).Wait();
 					}
 					catch (Exception ex)

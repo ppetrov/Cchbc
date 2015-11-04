@@ -23,24 +23,23 @@ namespace Cchbc.ConsoleClient
 	public sealed class DbFeature : IDbObject
 	{
 		public long Id { get; set; }
-		public string Name { get; set; }
-		public DbFeatureContext Context { get; set; }
+		public string Name { get; }
+		public long ContextId { get; }
 
-		public DbFeature(long id, string name, DbFeatureContext context)
+		public DbFeature(long id, string name, long contextId)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
-			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			this.Id = id;
 			this.Name = name;
-			this.Context = context;
+			this.ContextId = contextId;
 		}
 	}
 
 	public sealed class DbFeatureStep : IDbObject
 	{
 		public long Id { get; set; }
-		public string Name { get; set; }
+		public string Name { get; }
 
 		public DbFeatureStep(long id, string name)
 		{
@@ -54,15 +53,18 @@ namespace Cchbc.ConsoleClient
 	public sealed class DbFeatureEntry : IDbObject
 	{
 		public long Id { get; set; }
-		public DbFeature Feature { get; set; }
-		public TimeSpan TimeSpent { get; set; }
+		public DbFeature Feature { get; }
+		public string Details { get; }
+		public TimeSpan TimeSpent { get; }
 
-		public DbFeatureEntry(long id, DbFeature feature, TimeSpan timeSpent)
+		public DbFeatureEntry(long id, DbFeature feature, string details, TimeSpan timeSpent)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (details == null) throw new ArgumentNullException(nameof(details));
 
 			this.Id = id;
 			this.Feature = feature;
+			this.Details = details;
 			this.TimeSpent = timeSpent;
 		}
 	}
@@ -70,29 +72,32 @@ namespace Cchbc.ConsoleClient
 	public sealed class DbFeatureStepEntry : IDbObject
 	{
 		public long Id { get; set; }
-		public DbFeatureEntry Entry { get; set; }
-		public DbFeatureStep Step { get; set; }
-		public double TimeSpent { get; set; }
+		public DbFeatureEntry Entry { get; }
+		public DbFeatureStep Step { get; }
+		public string Details { get; }
+		public double TimeSpent { get; }
 
-		public DbFeatureStepEntry(long id, DbFeatureEntry entry, DbFeatureStep step, double timeSpent)
+		public DbFeatureStepEntry(long id, DbFeatureEntry entry, DbFeatureStep step, string details, double timeSpent)
 		{
 			if (entry == null) throw new ArgumentNullException(nameof(entry));
 			if (step == null) throw new ArgumentNullException(nameof(step));
+			if (details == null) throw new ArgumentNullException(nameof(details));
 
 			this.Id = id;
 			this.Entry = entry;
 			this.Step = step;
+			this.Details = details;
 			this.TimeSpent = timeSpent;
 		}
 	}
 
 	public sealed class DbFeatureModule
 	{
-		public DbFeatureModuleAdapter Adapter { get; set; }
+		private DbFeatureModuleAdapter Adapter { get; }
 
-		public Dictionary<string, DbFeatureContext> Contexts { get; } = new Dictionary<string, DbFeatureContext>(StringComparer.OrdinalIgnoreCase);
-		public Dictionary<string, DbFeatureStep> Steps { get; } = new Dictionary<string, DbFeatureStep>(StringComparer.OrdinalIgnoreCase);
-		private List<DbFeature> Features { get; } = new List<DbFeature>();
+		private Dictionary<string, DbFeatureContext> Contexts { get; } = new Dictionary<string, DbFeatureContext>(StringComparer.OrdinalIgnoreCase);
+		private Dictionary<string, DbFeatureStep> Steps { get; } = new Dictionary<string, DbFeatureStep>(StringComparer.OrdinalIgnoreCase);
+		private Dictionary<long, Dictionary<string, DbFeature>> Features { get; } = new Dictionary<long, Dictionary<string, DbFeature>>();
 
 		public DbFeatureModule(DbFeatureModuleAdapter adapter)
 		{
@@ -101,84 +106,128 @@ namespace Cchbc.ConsoleClient
 			this.Adapter = adapter;
 		}
 
-		public async Task LoadAsync()
+		public Task CreateSchemaAsync()
+		{
+			return this.Adapter.CreateSchemaAsync();
+		}
+
+		public Task LoadAsync()
 		{
 			var contextTesk = this.LoadContextsAsync();
 			var stepsTask = this.LoadStepsAsync();
+			var featuresTask = this.LoadFeaturesAsync();
 
-			await contextTesk;
-			await stepsTask;
-			await this.LoadFeaturesAsync(this.Contexts);
+			return Task.WhenAll(contextTesk, stepsTask, featuresTask);
 		}
 
-		public async Task SaveAsync(FeatureEntry entry)
+		// TODO : !! FeatureEntry
+		//public string Context { get; }
+		//public string Name { get; }
+		//public string Details { get; }
+		//public TimeSpan TimeSpent => this.Stopwatch.Elapsed;
+
+		// TODO : !!! FeatureStepEntry
+		// TODO : MANY !!! or none
+		//public string Name { get; }
+		//public string Details { get; set; }
+		//public TimeSpan TimeSpent { get; set; }
+
+		public async Task SaveAsync(Feature feature)
 		{
-			if (entry == null) throw new ArgumentNullException(nameof(entry));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			var context = await this.SaveContextAsync(entry.Context);
-			var featureEntry = await this.SaveFeatureAsync(context, entry);
-			await this.SaveStepsAsync(featureEntry, entry.Steps);
+			var context = await this.SaveContextAsync(feature.Context);
+			var featureEntry = await this.SaveFeatureAsync(context, feature);
+			await this.SaveStepsAsync(featureEntry, feature.Steps);
 		}
+
+
+
+
 
 		private async Task LoadContextsAsync()
 		{
+			// Clear contexts from old values
 			this.Contexts.Clear();
+
+			// Fetch & add new values
 			foreach (var context in await this.Adapter.GetContextsAsync())
 			{
 				this.Contexts.Add(context.Name, context);
 			}
 		}
 
-		public async Task LoadStepsAsync()
+		private async Task LoadStepsAsync()
 		{
+			// Clear steps from old values
 			this.Steps.Clear();
+
+			// Fetch & add new values
 			foreach (var step in await this.Adapter.GetStepsAsync())
 			{
 				this.Steps.Add(step.Name, step);
 			}
 		}
 
-		public async Task LoadFeaturesAsync(Dictionary<string, DbFeatureContext> contexts)
+		private async Task LoadFeaturesAsync()
 		{
-			if (contexts == null) throw new ArgumentNullException(nameof(contexts));
-
+			// Clear steps from old values
 			this.Features.Clear();
-			this.Features.AddRange(await this.Adapter.GetAsync(contexts));
+
+			// Fetch & add new values
+			foreach (var feature in await this.Adapter.GetFeaturesAsync())
+			{
+				var contextId = feature.ContextId;
+
+				// Find features by context
+				Dictionary<string, DbFeature> byContext;
+				if (!this.Features.TryGetValue(contextId, out byContext))
+				{
+					byContext = new Dictionary<string, DbFeature>(StringComparer.OrdinalIgnoreCase);
+					this.Features.Add(contextId, byContext);
+				}
+
+				byContext.Add(feature.Name, feature);
+			}
 		}
 
-		public async Task<DbFeatureEntry> SaveFeatureAsync(DbFeatureContext context, FeatureEntry entry)
+		public async Task<DbFeatureEntry> SaveFeatureAsync(DbFeatureContext context, Feature feature)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (entry == null) throw new ArgumentNullException(nameof(entry));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			var name = entry.Name;
+			var name = feature.Name;
 
 			// Check if the context exists
-			var feature = this.FindByContext(context, name);
-			if (feature == null)
+			var dbFeature = this.FindByContext(context, name);
+			if (dbFeature == null)
 			{
 				// Insert into database
-				feature = await this.Adapter.InsertAsync(name, context);
+				dbFeature = await this.Adapter.InsertAsync(name, context);
 
 				// Insert the new feature into the collection
-				this.Features.Add(feature);
+				var byContext = new Dictionary<string, DbFeature>(StringComparer.OrdinalIgnoreCase);
+
+				byContext.Add(dbFeature.Name, dbFeature);
+
+				this.Features.Add(context.Id, byContext);
 			}
 
 			// Insert into database
-			return await this.Adapter.InsertEntryAsync(feature, entry.TimeSpent);
+			return await this.Adapter.InsertEntryAsync(dbFeature, feature.TimeSpent);
 		}
 
 		private DbFeature FindByContext(DbFeatureContext context, string name)
 		{
-			foreach (var feature in this.Features)
+			DbFeature feature = null;
+
+			Dictionary<string, DbFeature> features;
+			if (this.Features.TryGetValue(context.Id, out features))
 			{
-				if (feature.Context == context && feature.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
-				{
-					return feature;
-				}
+				features.TryGetValue(name, out feature);
 			}
 
-			return null;
+			return feature;
 		}
 
 		private async Task SaveStepsAsync(DbFeatureEntry entry, List<FeatureStep> steps)
@@ -205,7 +254,7 @@ namespace Cchbc.ConsoleClient
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			DbFeatureContext context;
-			if (!Contexts.TryGetValue(name, out context))
+			if (!this.Contexts.TryGetValue(name, out context))
 			{
 				// Insert into database
 				context = await this.Adapter.InsertContextAsync(name);
@@ -220,73 +269,83 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class DbFeatureModuleAdapter
 	{
-		private sealed class DbFeatureEntryRow : IDbObject
-		{
-			public long Id { get; set; }
-			public long Feature { get; }
-			public decimal TimeSpent { get; }
+		private readonly Query<DbFeatureContext> _contextsQuery = new Query<DbFeatureContext>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbFeatureContextCreator);
+		private readonly Query<DbFeatureStep> _stepsQuery = new Query<DbFeatureStep>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator);
+		private readonly Query<DbFeature> _featuresQuery = new Query<DbFeature>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureCreator);
 
-			public DbFeatureEntryRow(long id, long feature, decimal timeSpent)
-			{
-				Id = id;
-				Feature = feature;
-				TimeSpent = timeSpent;
-			}
+		private QueryHelper QueryHelper { get; }
+
+		public DbFeatureModuleAdapter(QueryHelper queryHelper)
+		{
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+
+			this.QueryHelper = queryHelper;
 		}
 
-		private sealed class DbFeatureRow : IDbObject
+		public Task CreateSchemaAsync()
 		{
-			public long Id { get; set; }
-			public string Name { get; }
-			public long ContextId { get; }
+			// TODO : Add details to Feature entry & step entry !!!
+			var contextsTask = this.QueryHelper.ExecuteAsync(@"
+CREATE TABLE[FEATURE_CONTEXTS] (
+    [Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+    [Name] nvarchar(254) NOT NULL
+)");
 
-			public DbFeatureRow(long id, string name, long contextId)
-			{
-				this.Id = id;
-				this.Name = name;
-				this.ContextId = contextId;
-			}
-		}
+			var stepsTask = this.QueryHelper.ExecuteAsync(@"
+CREATE TABLE[FEATURE_STEPS] (
+    [Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+    [Name] nvarchar(254) NOT NULL
+)");
 
-		private DbDataAdapter Adapter { get; }
+			var featuresTask = this.QueryHelper.ExecuteAsync(@"
+CREATE TABLE [FEATURES] (
+	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	[Name] nvarchar(254) NOT NULL, 
+	[Context_Id] integer NOT NULL, 
+	FOREIGN KEY ([Context_Id])
+		REFERENCES [FEATURE_CONTEXTS] ([Id])
+		ON UPDATE CASCADE ON DELETE CASCADE
+)");
 
-		public DbFeatureModuleAdapter(DbDataAdapter adapter)
-		{
-			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
+			var entriesTask = this.QueryHelper.ExecuteAsync(@"
+CREATE TABLE [FEATURE_ENTRIES] (
+	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	[TimeSpent] decimal(38, 0) NOT NULL, 
+	[Feature_Id] integer NOT NULL, 
+	FOREIGN KEY ([Feature_Id])
+		REFERENCES [FEATURES] ([Id])
+		ON UPDATE CASCADE ON DELETE CASCADE
+)");
 
-			this.Adapter = adapter;
+			var entryStepsTask = this.QueryHelper.ExecuteAsync(@"
+CREATE TABLE [FEATURE_ENTRY_STEPS] (
+	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	[TimeSpent] decimal(38, 0) NOT NULL, 
+    [Feature_Entry_Id] integer NOT NULL, 
+	[Feature_Step_Id] integer NOT NULL, 
+	FOREIGN KEY ([Feature_Entry_Id])
+		REFERENCES [FEATURE_ENTRIES] ([Id])
+		ON UPDATE CASCADE ON DELETE CASCADE
+	FOREIGN KEY ([Feature_Step_Id])
+		REFERENCES [FEATURE_STEPS] ([Id])
+		ON UPDATE CASCADE ON DELETE CASCADE		
+)");
+			return Task.WhenAll(contextsTask, stepsTask, featuresTask, entriesTask, entryStepsTask);
 		}
 
 		public Task<List<DbFeatureContext>> GetContextsAsync()
 		{
-			return this.Adapter.QueryHelper.ExecuteAsync(new Query<DbFeatureContext>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", this.DbFeatureContextCreator));
+			return this.QueryHelper.ExecuteAsync(_contextsQuery);
 		}
 
 		public Task<List<DbFeatureStep>> GetStepsAsync()
 		{
-			return this.Adapter.QueryHelper.ExecuteAsync(new Query<DbFeatureStep>(@"SELECT ID, NAME FROM FEATURE_STEPS", this.DbFeatureStepCreator));
+			return this.QueryHelper.ExecuteAsync(_stepsQuery);
 		}
 
-		public async Task<List<DbFeature>> GetAsync(Dictionary<string, DbFeatureContext> contexts)
+		public Task<List<DbFeature>> GetFeaturesAsync()
 		{
-			if (contexts == null) throw new ArgumentNullException(nameof(contexts));
-
-			var lookup = new Dictionary<long, DbFeatureContext>();
-			foreach (var context in contexts.Values)
-			{
-				lookup.Add(context.Id, context);
-			}
-
-			var rows = await this.Adapter.QueryHelper.ExecuteAsync(new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", this.DbFeatureRowCreator));
-
-			var features = new List<DbFeature>(rows.Count);
-
-			foreach (var row in rows)
-			{
-				features.Add(ConvertToDbFeature(row, lookup[row.ContextId]));
-			}
-
-			return features;
+			return this.QueryHelper.ExecuteAsync(_featuresQuery);
 		}
 
 		public async Task<DbFeatureContext> InsertContextAsync(string name)
@@ -299,11 +358,11 @@ namespace Cchbc.ConsoleClient
 			};
 
 			// Insert the record
-			await this.Adapter.QueryHelper.ExecuteAsync(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)", sqlParams);
+			await this.QueryHelper.ExecuteAsync(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)", sqlParams);
 
-			// Get the record back
-			var contexts = await this.Adapter.QueryHelper.ExecuteAsync(new Query<DbFeatureContext>(@"SELECT LAST_INSERT_ROWID(), @NAME", this.DbFeatureContextCreator, sqlParams));
-			return contexts[0];
+			// Get new Id back
+			var ids = await this.QueryHelper.ExecuteAsync(new Query<long>(@"SELECT LAST_INSERT_ROWID()", IdCreator, sqlParams));
+			return new DbFeatureContext(ids[0], name);
 		}
 
 		public async Task<DbFeatureStep> InsertStepAsync(string name)
@@ -316,29 +375,31 @@ namespace Cchbc.ConsoleClient
 			};
 
 			// Insert the record
-			await this.Adapter.QueryHelper.ExecuteAsync(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)", sqlParams);
+			await this.QueryHelper.ExecuteAsync(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)", sqlParams);
 
-			// Get the record back
-			var steps = await this.Adapter.QueryHelper.ExecuteAsync(new Query<DbFeatureStep>(@"SELECT LAST_INSERT_ROWID(), @NAME", this.DbFeatureStepCreator));
-			return steps[0];
+			// Get new Id back
+			var ids = await this.QueryHelper.ExecuteAsync(new Query<long>(@"SELECT LAST_INSERT_ROWID()", IdCreator));
+			return new DbFeatureStep(ids[0], name);
 		}
 
 		public async Task<DbFeatureEntry> InsertEntryAsync(DbFeature feature, TimeSpan timeSpent)
 		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
 			var sqlParams = new[]
 			{
 				new QueryParameter(@"@FEATURE", feature.Id),
 				new QueryParameter(@"@TIMESPENT", Convert.ToDecimal(timeSpent.TotalMilliseconds)),
 			};
 
-			await this.Adapter.QueryHelper.ExecuteAsync(@"INSERT INTO FEATURE_ENTRIES(FEATURE_ID, TIMESPENT) VALUES (@FEATURE, @TIMESPENT)", sqlParams);
+			await this.QueryHelper.ExecuteAsync(@"INSERT INTO FEATURE_ENTRIES(FEATURE_ID, TIMESPENT) VALUES (@FEATURE, @TIMESPENT)", sqlParams);
 
 			// Get the record back
-			var rows = await this.Adapter.QueryHelper.ExecuteAsync(new Query<DbFeatureEntryRow>(@"SELECT LAST_INSERT_ROWID(), @FEATURE, @TIMESPENT", this.DbFeatureEntryRowCreator, sqlParams));
-			return new DbFeatureEntry(rows[0].Id, feature, timeSpent);
+			var ids = await this.QueryHelper.ExecuteAsync(new Query<long>(@"SELECT LAST_INSERT_ROWID()", IdCreator));
+			return new DbFeatureEntry(ids[0], feature, null, timeSpent);
 		}
 
-		public async Task InsertStepAsync(DbFeatureEntry entry, DbFeatureStep step, TimeSpan timeSpent)
+		public Task InsertStepAsync(DbFeatureEntry entry, DbFeatureStep step, TimeSpan timeSpent)
 		{
 			if (entry == null) throw new ArgumentNullException(nameof(entry));
 			if (step == null) throw new ArgumentNullException(nameof(step));
@@ -350,7 +411,7 @@ namespace Cchbc.ConsoleClient
 				new QueryParameter(@"@TIMESPENT", Convert.ToDecimal(timeSpent.TotalMilliseconds)),
 			};
 
-			await this.Adapter.QueryHelper.ExecuteAsync(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT) VALUES (@ENTRY, @STEP, @TIMESPENT)", sqlParams);
+			return this.QueryHelper.ExecuteAsync(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT) VALUES (@ENTRY, @STEP, @TIMESPENT)", sqlParams);
 		}
 
 		public async Task<DbFeature> InsertAsync(string name, DbFeatureContext context)
@@ -364,34 +425,29 @@ namespace Cchbc.ConsoleClient
 				new QueryParameter(@"@CONTEXT", context.Id),
 			};
 
-			await this.Adapter.QueryHelper.ExecuteAsync(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", sqlParams);
+			await this.QueryHelper.ExecuteAsync(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", sqlParams);
 
 			// Get the record back
-			var rows = await this.Adapter.QueryHelper.ExecuteAsync(new Query<DbFeatureRow>(@"SELECT LAST_INSERT_ROWID(), @NAME, @CONTEXT", this.DbFeatureRowCreator, sqlParams));
-			return ConvertToDbFeature(rows[0], context);
+			var ids = await this.QueryHelper.ExecuteAsync(new Query<long>(@"SELECT LAST_INSERT_ROWID()", IdCreator, sqlParams));
+			return new DbFeature(ids[0], name, context.Id);
 		}
 
-		private static DbFeature ConvertToDbFeature(DbFeatureRow row, DbFeatureContext context)
+		private static DbFeature DbFeatureCreator(IFieldDataReader r)
 		{
-			return new DbFeature(row.Id, row.Name, context);
+			return new DbFeature(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
 		}
 
-		private DbFeatureRow DbFeatureRowCreator(IFieldDataReader r)
+		private static long IdCreator(IFieldDataReader r)
 		{
-			return new DbFeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
+			return r.GetInt64(0);
 		}
 
-		private DbFeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
-		{
-			return new DbFeatureEntryRow(r.GetInt64(0), r.GetInt64(1), r.GetDecimal(2));
-		}
-
-		private DbFeatureStep DbFeatureStepCreator(IFieldDataReader r)
+		private static DbFeatureStep DbFeatureStepCreator(IFieldDataReader r)
 		{
 			return new DbFeatureStep(r.GetInt64(0), r.GetString(1));
 		}
 
-		private DbFeatureContext DbFeatureContextCreator(IFieldDataReader r)
+		private static DbFeatureContext DbFeatureContextCreator(IFieldDataReader r)
 		{
 			return new DbFeatureContext(r.GetInt64(0), r.GetString(1));
 		}

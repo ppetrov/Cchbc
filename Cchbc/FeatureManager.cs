@@ -11,14 +11,14 @@ namespace Cchbc
 		private readonly int _bufferSize;
 		private readonly Task _syncTask;
 
-		public FeatureManager(Action<FeatureEntry[]> dumper, int bufferSize = 256)
+		public FeatureManager(Action<Feature[]> dumper, int bufferSize = 256)
 		{
 			_bufferSize = bufferSize;
 			if (dumper == null) throw new ArgumentNullException(nameof(dumper));
 
 			_syncTask = Task.Run(() =>
 			{
-				var buffer = new List<FeatureEntry>();
+				var buffer = new List<Feature>();
 
 				foreach (var entry in this.Entries.GetConsumingEnumerable())
 				{
@@ -37,14 +37,14 @@ namespace Cchbc
 			});
 		}
 
-		private BlockingCollection<FeatureEntry> Entries { get; } = new BlockingCollection<FeatureEntry>();
+		private BlockingCollection<Feature> Entries { get; } = new BlockingCollection<Feature>();
 
-		public Feature StartNew(string context, string name)
+		public Feature StartNew(string context, string name, string details = null)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
-			var feature = new Feature(context, name);
+			var feature = new Feature(context, name, details ?? string.Empty);
 
 			feature.StartMeasure();
 
@@ -65,7 +65,7 @@ namespace Cchbc
 			}
 			try
 			{
-				this.Entries.TryAdd(new FeatureEntry(feature.Context, feature.Name, feature.TimeSpent, feature.Steps));
+				this.Entries.TryAdd(feature);
 			}
 			catch { }
 		}

@@ -30,7 +30,7 @@ namespace Cchbc.App.Articles.ViewModel
 			{
 				this.SetField(ref _textSearch, value);
 
-				var feature = this.FeatureManager.StartNew(this.Context, @"Search by text");
+				var feature = this.FeatureManager.StartNew(this.Context, @"Search by text", value);
 				this.ApplySearch();
 				this.FeatureManager.Stop(feature);
 			}
@@ -44,7 +44,7 @@ namespace Cchbc.App.Articles.ViewModel
 			{
 				this.SetField(ref _searchOption, value);
 
-				var feature = this.FeatureManager.StartNew(this.Context, @"Search by option");
+				var feature = this.FeatureManager.StartNew(this.Context, @"Search by option", value.Name);
 				this.ApplySearch();
 				this.FeatureManager.Stop(feature);
 			}
@@ -92,13 +92,15 @@ namespace Cchbc.App.Articles.ViewModel
 			var queryHelper = this.Core.QueryHelper.ReadDataQueryHelper;
 			var feature = this.FeatureManager.StartNew(this.Context, @"Load Data");
 
-			feature.AddStep(@"Load Brands");
+			var step = feature.AddStep(@"Load Brands");
 			var brandHelper = new BrandHelper();
 			await brandHelper.LoadAsync(new BrandAdapter(queryHelper));
+			step.Details = brandHelper.Items.Count.ToString();
 
-			feature.AddStep(@"Load Flavors");
+			step = feature.AddStep(@"Load Flavors");
 			var flavorHelper = new FlavorHelper();
 			await flavorHelper.LoadAsync(new FlavorAdapter(queryHelper));
+			step.Details = flavorHelper.Items.Count.ToString();
 
 			feature.AddStep(@"Load Articles");
 			var articleHelper = new ArticleHelper();

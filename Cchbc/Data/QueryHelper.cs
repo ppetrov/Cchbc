@@ -35,7 +35,7 @@ namespace Cchbc.Data
 			return this.ModifyDataQueryHelper.ExecuteAsync(statement, parameters);
 		}
 
-		public Task<List<T>> ExecuteAsync<T>(Query<T> query) where T : IDbObject
+		public Task<List<T>> ExecuteAsync<T>(Query<T> query)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 
