@@ -5,6 +5,8 @@ using System.Data.Common;
 using System.Data.SQLite;
 using System.Threading.Tasks;
 using Cchbc.Data;
+using Cchbc.Features;
+using Cchbc.Features.Db;
 
 
 namespace Cchbc.ConsoleClient
@@ -168,24 +170,23 @@ namespace Cchbc.ConsoleClient
 					var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
 					var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
 
-					var module = new DbFeatureModule(new DbFeatureModuleAdapter(queryHelper));
+					var module = new DbFeaturesManager(new DbFeaturesAdapter(queryHelper));
 
 					var r = new Random();
-					var featureSteps = new List<FeatureStep>
+					var featureSteps = new[]
 					{
-						new FeatureStep(@"Load Brands") { TimeSpent = TimeSpan.FromMilliseconds(r.Next(100,500))},
-						new FeatureStep(@"Load Flavors") { TimeSpent = TimeSpan.FromMilliseconds(r.Next(100,500))},
-						new FeatureStep(@"Load Articles") { TimeSpent = TimeSpan.FromMilliseconds(r.Next(100,500))},
-						new FeatureStep(@"Display Articles") { TimeSpent = TimeSpan.FromMilliseconds(r.Next(100,200))},
+						new FeatureEntryStep(@"Load Brands",TimeSpan.FromMilliseconds(r.Next(100,500))),
+						new FeatureEntryStep(@"Load Flavors",TimeSpan.FromMilliseconds(r.Next(100,500))),
+						new FeatureEntryStep(@"Load Articles",TimeSpan.FromMilliseconds(r.Next(100,500))),
+						new FeatureEntryStep(@"Display Articles",TimeSpan.FromMilliseconds(r.Next(100,200))),
 					};
-					//TimeSpan.FromMilliseconds(r.Next(500, 1500))
-					var entry = new Feature(@"View all articles", @"Filter By", @"Coca Cola");
-					entry.Steps.AddRange(featureSteps);
+
+					var feature = new FeatureEntry(@"View all articles", @"Filter By", @"Coca Cola", TimeSpan.FromMilliseconds(r.Next(500, 1500)), featureSteps);
 					try
 					{
-						module.CreateSchemaAsync().Wait();
+						//module.CreateSchemaAsync().Wait();
 						module.LoadAsync().Wait();
-						module.SaveAsync(entry).Wait();
+						module.SaveAsync(feature).Wait();
 					}
 					catch (Exception ex)
 					{

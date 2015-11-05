@@ -3,11 +3,13 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Cchbc.Dialog;
+using Cchbc.Features;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
+using Cchbc.UI.Comments;
 
-namespace Cchbc.UI.Comments
+namespace Cchbc.UI
 {
 	public sealed class LoginsViewModel : ViewObject
 	{

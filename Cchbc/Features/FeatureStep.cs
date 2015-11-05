@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc
+namespace Cchbc.Features
 {
 	public sealed class FeatureStep
 	{

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Cchbc
+namespace Cchbc.Features
 {
 	public sealed class Feature
 	{

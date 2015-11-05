@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Dialog;
+using Cchbc.Features;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;

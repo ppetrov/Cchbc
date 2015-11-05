@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Cchbc.App.Articles.Data;
 using Cchbc.App.Articles.Helpers;
 using Cchbc.App.Articles.Objects;
+using Cchbc.Features;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;

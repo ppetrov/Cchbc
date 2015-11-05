@@ -4,21 +4,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Cchbc
+namespace Cchbc.Features
 {
 	public sealed class FeatureManager : IDisposable
 	{
 		private readonly int _bufferSize;
 		private readonly Task _syncTask;
 
-		public FeatureManager(Action<Feature[]> dumper, int bufferSize = 256)
+		public FeatureManager(Action<FeatureEntry[]> dumper, int bufferSize = 256)
 		{
 			_bufferSize = bufferSize;
 			if (dumper == null) throw new ArgumentNullException(nameof(dumper));
 
 			_syncTask = Task.Run(() =>
 			{
-				var buffer = new List<Feature>();
+				var buffer = new List<FeatureEntry>();
 
 				foreach (var entry in this.Entries.GetConsumingEnumerable())
 				{
@@ -37,7 +37,7 @@ namespace Cchbc
 			});
 		}
 
-		private BlockingCollection<Feature> Entries { get; } = new BlockingCollection<Feature>();
+		private BlockingCollection<FeatureEntry> Entries { get; } = new BlockingCollection<FeatureEntry>();
 
 		public Feature StartNew(string context, string name, string details = null)
 		{
@@ -55,19 +55,29 @@ namespace Cchbc
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.EndStep();
-			feature.StopMeasure();
-
 			// Ignore None(empty) features
 			if (feature == Feature.None)
 			{
 				return;
 			}
-			try
+
+			feature.EndStep();
+			feature.StopMeasure();
+
+			var steps = Enumerable.Empty<FeatureEntryStep>().ToArray();
+
+			var tmp = feature.Steps;
+			if (tmp.Count > 0)
 			{
-				this.Entries.TryAdd(feature);
+				steps = new FeatureEntryStep[tmp.Count];
+
+				for (var i = 0; i < steps.Length; i++)
+				{
+					steps[i] = new FeatureEntryStep(tmp[i].Name, tmp[i].TimeSpent, tmp[i].Details);
+				}
 			}
-			catch { }
+
+			this.Entries.TryAdd(new FeatureEntry(feature.Context, feature.Name, feature.Details, feature.TimeSpent, steps));
 		}
 
 		public void Dispose()

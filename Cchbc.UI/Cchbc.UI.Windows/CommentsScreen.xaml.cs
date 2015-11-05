@@ -3,6 +3,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Cchbc.Dialog;
+using Cchbc.Features;
 using Cchbc.UI.Comments;
 
 namespace Cchbc.UI
