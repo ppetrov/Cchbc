@@ -13,8 +13,8 @@ namespace Cchbc.Data
 
 		public QueryHelper(ReadDataQueryHelper readDataQueryHelper, ModifyDataQueryHelper modifyDataQueryHelper)
 		{
-			if (readDataQueryHelper == null) throw new ArgumentNullException(nameof(readDataQueryHelper));
-			if (modifyDataQueryHelper == null) throw new ArgumentNullException(nameof(modifyDataQueryHelper));
+			//if (readDataQueryHelper == null) throw new ArgumentNullException(nameof(readDataQueryHelper));
+			//if (modifyDataQueryHelper == null) throw new ArgumentNullException(nameof(modifyDataQueryHelper));
 
 			this.ReadDataQueryHelper = readDataQueryHelper;
 			this.ModifyDataQueryHelper = modifyDataQueryHelper;

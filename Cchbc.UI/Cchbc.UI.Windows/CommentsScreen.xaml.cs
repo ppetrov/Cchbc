@@ -1,16 +1,45 @@
 ﻿using System;
+using System.Diagnostics;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.UI.Comments;
 
 namespace Cchbc.UI
 {
+	public static class CurrentApp
+	{
+		private static Core Core { get; set; }
+
+		public static Core GetCore()
+		{
+			if (Core == null)
+			{
+				Core = new Core(new DirectDebugLogger(@"N/A"), new FeatureManager(entries =>
+				{
+					foreach (var entry in entries)
+					{
+						Debug.WriteLine(entry.Context + ":" + entry.Name.Replace(@"Async", ""));
+						foreach (var s in entry.Steps)
+						{
+							Debug.WriteLine("\t" + s.Name.Replace("Async", "") + " " + s.TimeSpent.TotalMilliseconds + " ms");
+						}
+						Debug.WriteLine(string.Empty);
+					}
+				}, 1), new QueryHelper(null, null));
+			}
+
+			return Core;
+		}
+
+	}
+
 	public sealed partial class CommentsScreen
 	{
-		private readonly LoginsViewModel _viewModel = new LoginsViewModel(default(Core));
+		private readonly LoginViewModel _viewModel = new LoginViewModel(CurrentApp.GetCore());
 
 		public CommentsScreen()
 		{
@@ -28,7 +57,15 @@ namespace Cchbc.UI
 			var btn = sender as Button;
 			if (btn != null)
 			{
-				await _viewModel.AddAsync(new LoginViewItem(new Login(2, @"ZDoctor@", @"123456789", DateTime.Now, false)), new WinRtModalDialog());
+				try
+				{
+					await _viewModel.AddAsync(new LoginViewItem(new Login(2, @"ZDoctor@", @"123456789", DateTime.Now, false)), new WinRtModalDialog());
+				}
+				catch (Exception ex)
+				{
+					// TODO : !!! Log the exception
+					//_viewModel.
+				}
 			}
 		}
 

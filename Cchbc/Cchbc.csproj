@@ -44,6 +44,7 @@
     <Compile Include="Data\QueryParameter.cs" />
     <Compile Include="Data\ReadDataAdapter.cs" />
     <Compile Include="Data\ReadDataQueryHelper.cs" />
+    <Compile Include="Exceptions\ExceptionManager.cs" />
     <Compile Include="Features\Db\DbFeature.cs" />
     <Compile Include="Features\Db\DbFeatureContext.cs" />
     <Compile Include="Features\Db\DbFeatureEntry.cs" />
@@ -79,6 +80,7 @@
     <Compile Include="Validation\PermissionStatus.cs" />
     <Compile Include="Validation\ValidationResult.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

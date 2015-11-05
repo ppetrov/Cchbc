@@ -55,12 +55,7 @@ namespace Cchbc.Features
 			var step = new FeatureStep(name);
 			step.TimeSpent = this.Stopwatch.Elapsed;
 
-			// Stop any previous step
-			if (this.Steps.Count > 0)
-			{
-				this.EndStep();
-			}
-
+			this.EndStep();
 			this.Steps.Add(step);
 
 			return step;
@@ -68,8 +63,11 @@ namespace Cchbc.Features
 
 		public void EndStep()
 		{
-			var previous = this.Steps[this.Steps.Count - 1];
-			previous.TimeSpent = this.Stopwatch.Elapsed - previous.TimeSpent;
+			if (this.Steps.Count > 0)
+			{
+				var previous = this.Steps[this.Steps.Count - 1];
+				previous.TimeSpent = this.Stopwatch.Elapsed - previous.TimeSpent;
+			}
 		}
 	}
 }

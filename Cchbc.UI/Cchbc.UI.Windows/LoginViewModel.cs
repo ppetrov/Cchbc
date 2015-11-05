@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Cchbc.Dialog;
@@ -7,14 +8,14 @@ using Cchbc.Features;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
-using Cchbc.UI.Comments;
 
 namespace Cchbc.UI
 {
-	public sealed class LoginsViewModel : ViewObject
+	public sealed class LoginViewModel : ViewObject
 	{
 		private Core Core { get; }
-		private LoginsManager Manager { get; }
+		private LoginManager Manager { get; }
+		private string Context { get; } = nameof(LoginViewModel);
 
 		public ObservableCollection<LoginViewItem> Logins { get; } = new ObservableCollection<LoginViewItem>();
 		public SortOption<LoginViewItem>[] SortOptions => this.Manager.Sorter.Options;
@@ -60,12 +61,12 @@ namespace Cchbc.UI
 			private set { this.SetField(ref _isBusy, value); }
 		}
 
-		public LoginsViewModel(Core core)
+		public LoginViewModel(Core core)
 		{
 			if (core == null) throw new ArgumentNullException(nameof(core));
 
 			this.Core = core;
-			this.Manager = new LoginsManager(core.Logger, new LoginAdapter(core.Logger), new Sorter<LoginViewItem>(new[]
+			this.Manager = new LoginManager(core.Logger, new LoginAdapter(core.Logger), new Sorter<LoginViewItem>(new[]
 			{
 				new SortOption<LoginViewItem>(@"By Name", (x,y)=> string.Compare(x.Item.Name, y.Item.Name, StringComparison.Ordinal)),
 				new SortOption<LoginViewItem>(@"By Date", (x, y) =>
@@ -82,20 +83,64 @@ namespace Cchbc.UI
 			this.Manager.OperationStart += (sender, args) =>
 			{
 				this.IsBusy = true;
+				Debug.WriteLine(@"START!");
 			};
 			this.Manager.OperationEnd += (sender, args) =>
 			{
 				this.IsBusy = false;
 				this.Core.FeatureManager.Stop(args.Feature);
+				Debug.WriteLine(@"END!");
 			};
 			this.Manager.OperationError += (sender, args) =>
 			{
 				this.Core.Logger.Error(args.Exception.ToString());
+				Debug.WriteLine(@"ERROR!" + args.Exception.ToString());
 			};
 
 			this.Manager.ItemInserted += ManagerOnItemInserted;
 			this.Manager.ItemUpdated += ManagerOnItemUpdated;
 			this.Manager.ItemDeleted += ManagerOnItemDeleted;
+		}
+
+		public async Task LoadDataAsync()
+		{
+			this.Logins.Clear();
+			this.Manager.SetupData((await this.Manager.Adapter.GetAllAsync()).Select(v => new LoginViewItem(v)).ToList());
+			foreach (var login in this.Manager.ViewItems)
+			{
+				this.Logins.Add(login);
+			}
+		}
+
+		public Task AddAsync(LoginViewItem viewItem, ModalDialog dialog)
+		{
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+
+			return this.Manager.InsertAsync(viewItem, dialog, new Feature(this.Context, nameof(AddAsync), string.Empty));
+		}
+
+		public Task DeleteAsync(LoginViewItem viewItem, ModalDialog dialog)
+		{
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+
+			return this.Manager.DeleteAsync(viewItem, dialog, new Feature(this.Context, nameof(DeleteAsync), string.Empty));
+		}
+
+		public Task PromoteUserAsync(LoginViewItem viewItem, ModalDialog dialog)
+		{
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+
+			return this.Manager.ExecuteAsync(viewItem, dialog, new Feature(this.Context, nameof(PromoteUserAsync), string.Empty), this.Manager.CanPromoteAsync, this.PromoteValidatedAsync);
+		}
+
+		private async Task PromoteValidatedAsync(LoginViewItem viewItem, FeatureEventArgs args)
+		{
+			viewItem.IsSystem = true;
+
+			await this.Manager.UpdateValidatedAsync(viewItem, args);
 		}
 
 		private void ManagerOnItemInserted(object sender, ObjectEventArgs<LoginViewItem> args)
@@ -111,17 +156,6 @@ namespace Cchbc.UI
 		private void ManagerOnItemDeleted(object sender, ObjectEventArgs<LoginViewItem> args)
 		{
 			this.Manager.Delete(this.Logins, args.Item);
-		}
-
-		public async Task LoadDataAsync()
-		{
-			this.Logins.Clear();
-			var logins = (await this.Manager.Adapter.GetAllAsync()).Select(v => new LoginViewItem(v)).ToList();
-			this.Manager.LoadData(logins);
-			foreach (var login in logins)
-			{
-				this.Logins.Add(login);
-			}
 		}
 
 		private void ApplySearch()
@@ -142,37 +176,6 @@ namespace Cchbc.UI
 			{
 				this.Logins[index++] = viewItem;
 			}
-		}
-
-		public async Task AddAsync(LoginViewItem viewItem, ModalDialog dialog)
-		{
-			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-
-			await this.Manager.AddAsync(viewItem, dialog, new Feature(@"Login", nameof(AddAsync), string.Empty));
-		}
-
-		public async Task DeleteAsync(LoginViewItem viewItem, ModalDialog dialog)
-		{
-			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-
-			await this.Manager.DeleteAsync(viewItem, dialog, new Feature(@"Login", nameof(DeleteAsync), string.Empty));
-		}
-
-		public async Task PromoteUserAsync(LoginViewItem viewItem, ModalDialog dialog)
-		{
-			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
-
-			await this.Manager.ExecuteAsync(viewItem, dialog, new Feature(@"Login", nameof(PromoteUserAsync), string.Empty), this.Manager.CanPromoteAsync, this.PromoteValidatedAsync);
-		}
-
-		private async Task PromoteValidatedAsync(LoginViewItem viewItem, FeatureEventArgs args)
-		{
-			viewItem.IsSystem = true;
-
-			await this.Manager.UpdateValidatedAsync(viewItem, args);
 		}
 	}
 }

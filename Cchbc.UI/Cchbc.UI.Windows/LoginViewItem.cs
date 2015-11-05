@@ -1,6 +1,6 @@
 ﻿using Cchbc.Objects;
 
-namespace Cchbc.UI.Comments
+namespace Cchbc.UI
 {
 	public sealed class LoginViewItem : ViewItem<Login>
 	{

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Cchbc.Data;
 
-namespace Cchbc.UI.Comments
+namespace Cchbc.UI
 {
 	public sealed class LoginAdapter : IModifiableAdapter<Login>
 	{
@@ -28,7 +28,6 @@ namespace Cchbc.UI.Comments
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
-			throw new Exception(@"PPP : Db exception");
 			var s = Stopwatch.StartNew();
 			try
 			{

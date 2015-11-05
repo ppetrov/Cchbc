@@ -11,7 +11,7 @@ namespace Cchbc.Features
 		private readonly int _bufferSize;
 		private readonly Task _syncTask;
 
-		public FeatureManager(Action<FeatureEntry[]> dumper, int bufferSize = 256)
+		public FeatureManager(Action<FeatureEntry[]> dumper, int bufferSize = 16)
 		{
 			_bufferSize = bufferSize;
 			if (dumper == null) throw new ArgumentNullException(nameof(dumper));
