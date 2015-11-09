@@ -1,17 +1,19 @@
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Features;
+using Cchbc.Features.Db;
+using Cchbc.Localization;
 
 namespace Cchbc
 {
 	public sealed class Core
 	{
 		public ILogger Logger { get; }
-		public FeatureManager FeatureManager { get; set; } = new FeatureManager(exceptions => { }, features => { });
 		public QueryHelper QueryHelper { get; }
 		public DataCache DataCache { get; } = new DataCache();
+		public FeatureManager FeatureManager { get; } = new FeatureManager();
+		public LocalizationManager LocalizationManager { get; } = new LocalizationManager();
 
 		public Core(ILogger logger, QueryHelper queryHelper)
 		{
@@ -22,16 +24,26 @@ namespace Cchbc
 			this.QueryHelper = queryHelper;
 		}
 
-		public async Task LoadDataAsync()
+		public async Task LoadAsync(IDbFeaturesManager dbFeaturesManager)
 		{
-			var s = Stopwatch.StartNew();
+			await dbFeaturesManager.LoadAsync();
+
+			this.FeatureManager.Initialize(this.Logger, dbFeaturesManager);
+			this.FeatureManager.StartDbWriters();
+
+			await this.LoadDataAsync();
+		}
+
+		private async Task LoadDataAsync()
+		{
+			var feature = Feature.StartNew(@"Core app load", nameof(LoadDataAsync));
 			try
 			{
 				await this.DataCache.LoadAsync(this.Logger, this.QueryHelper.ReadDataQueryHelper);
 			}
 			finally
 			{
-				this.Logger.Info($@"{nameof(LoadDataAsync)}:{s.ElapsedMilliseconds}ms");
+				this.FeatureManager.Stop(feature);
 			}
 		}
 	}

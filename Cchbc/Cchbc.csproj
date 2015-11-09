@@ -50,6 +50,7 @@
     <Compile Include="Features\Db\DbFeaturesAdapter.cs" />
     <Compile Include="Features\Db\DbFeaturesManager.cs" />
     <Compile Include="Features\Db\DbFeatureStep.cs" />
+    <Compile Include="Features\Db\IDbFeaturesManager.cs" />
     <Compile Include="Features\ExceptionEntry.cs" />
     <Compile Include="Features\Feature.cs" />
     <Compile Include="Features\FeatureEntry.cs" />
@@ -58,6 +59,7 @@
     <Compile Include="Features\FeatureStep.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="Features\FeatureEventArgs.cs" />
+    <Compile Include="Localization\LocalizationManager.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="Objects\ViewItem.cs" />
     <Compile Include="Search\FilterOption.cs" />

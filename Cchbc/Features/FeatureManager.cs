@@ -1,54 +1,69 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Cchbc.Features.Db;
 
 namespace Cchbc.Features
 {
-	public sealed class FeatureManager : IDisposable
+	public sealed class FeatureManager
 	{
-		private readonly int _bufferSize;
-		private readonly Task _featuresTask;
-		private readonly Task _exceptionsTask;
+		private ILogger _logger;
+		private Task _featuresTask;
+		private Task _exceptionsTask;
+		private BlockingCollection<FeatureEntry> _features;
+		private BlockingCollection<ExceptionEntry> _exceptions;
+		private IDbFeaturesManager _dbFeaturesManager;
 
-		private BlockingCollection<FeatureEntry> Features { get; } = new BlockingCollection<FeatureEntry>();
-		private BlockingCollection<ExceptionEntry> Exceptions { get; } = new BlockingCollection<ExceptionEntry>();
-
-		public FeatureManager(Action<ExceptionEntry[]> exceptionsDbWriter, Action<FeatureEntry[]> featuresDbWriter, int bufferSize = 8)
+		public void Initialize(ILogger logger, IDbFeaturesManager dbFeaturesManager)
 		{
-			if (exceptionsDbWriter == null) throw new ArgumentNullException(nameof(exceptionsDbWriter));
-			if (featuresDbWriter == null) throw new ArgumentNullException(nameof(featuresDbWriter));
+			if (logger == null) throw new ArgumentNullException(nameof(logger));
+			if (dbFeaturesManager == null) throw new ArgumentNullException(nameof(dbFeaturesManager));
 
-			_bufferSize = bufferSize;
+			_logger = logger;
+			_dbFeaturesManager = dbFeaturesManager;
+			_features = new BlockingCollection<FeatureEntry>();
+			_exceptions = new BlockingCollection<ExceptionEntry>();
+		}
 
-			_featuresTask = Task.Run(() =>
+		public void StartDbWriters()
+		{
+			_featuresTask = Task.Run(async () =>
 			{
-				var buffer = new List<FeatureEntry>();
-
-				foreach (var entry in this.Features.GetConsumingEnumerable())
+				foreach (var entry in _features.GetConsumingEnumerable())
 				{
-					buffer.Add(entry);
-
-					if (buffer.Count >= _bufferSize)
+					try
 					{
-						featuresDbWriter(buffer.ToArray());
-						buffer.Clear();
+						await _dbFeaturesManager.SaveAsync(entry);
 					}
-				}
-				if (buffer.Any())
-				{
-					featuresDbWriter(buffer.ToArray());
+					catch (Exception ex) { _logger.Error(ex.ToString()); }
 				}
 			});
-
-			_exceptionsTask = Task.Run(() =>
+			_exceptionsTask = Task.Run(async () =>
 			{
-				foreach (var entry in this.Exceptions.GetConsumingEnumerable())
+				foreach (var entry in _exceptions.GetConsumingEnumerable())
 				{
-					exceptionsDbWriter(new[] { entry });
+					try
+					{
+						await _dbFeaturesManager.SaveAsync(entry);
+					}
+					catch (Exception ex) { _logger.Error(ex.ToString()); }
 				}
 			});
+		}
+
+		public void StopDbWriters()
+		{
+			_featuresTask.Wait();
+			_exceptionsTask.Wait();
+
+			_features.CompleteAdding();
+			_exceptions.CompleteAdding();
+
+			_features = null;
+			_exceptions = null;
+			_featuresTask = null;
+			_exceptionsTask = null;
 		}
 
 		public void Start(Feature feature)
@@ -84,7 +99,7 @@ namespace Cchbc.Features
 				}
 			}
 
-			this.Features.TryAdd(new FeatureEntry(feature.Context, feature.Name, feature.Details, feature.TimeSpent, steps));
+			_features.TryAdd(new FeatureEntry(feature.Context, feature.Name, feature.Details, feature.TimeSpent, steps));
 		}
 
 		public void LogException(Feature feature, Exception exception)
@@ -92,17 +107,7 @@ namespace Cchbc.Features
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			this.Exceptions.TryAdd(new ExceptionEntry(feature.Context, feature.Name, exception));
-		}
-
-		public void Dispose()
-		{
-			// Signal the end of adding any entries
-			this.Features.CompleteAdding();
-			this.Exceptions.CompleteAdding();
-
-			// Wait for the sync tasks to complete(flush all the entries)
-			Task.WaitAll(_featuresTask, _exceptionsTask);
+			_exceptions.TryAdd(new ExceptionEntry(feature.Context, feature.Name, exception));
 		}
 	}
 }

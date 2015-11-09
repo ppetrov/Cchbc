@@ -5,6 +5,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Cchbc.Data;
 using Cchbc.Features;
+using Cchbc.Features.Db;
 using Cchbc.UI.Comments;
 
 namespace Cchbc.UI
@@ -17,32 +18,20 @@ namespace Cchbc.UI
 		{
 			if (Core == null)
 			{
+				//var cn = new SQLiteConnection(@"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;");
+				//cn.Open();
+
+				//var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
+				//var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
+				//var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
+
 				Core = new Core(new DirectDebugLogger(@"N/A"), new QueryHelper(null, null));
-				Core.FeatureManager = new FeatureManager(exceptions =>
-				{
-					foreach (var e in exceptions)
-					{
-						Debug.WriteLine(e.Context + ":" + e.Name.Replace(@"Async", ""));
-						Debug.WriteLine("\t" + e.Exception);
-						Debug.WriteLine(string.Empty);
-					}
-				}, features =>
-				{
-					foreach (var f in features)
-					{
-						Debug.WriteLine(f.Context + ":" + f.Name.Replace(@"Async", ""));
-						foreach (var s in f.Steps)
-						{
-							Debug.WriteLine("\t" + s.Name.Replace("Async", "") + " " + s.TimeSpent.TotalMilliseconds + " ms");
-						}
-						Debug.WriteLine(string.Empty);
-					}
-				}, 1);
+				Core.FeatureManager.Initialize(Core.Logger, new DbFeaturesManager(new DbFeaturesAdapter(new QueryHelper(null, null))));
+				Core.FeatureManager.StartDbWriters();
 			}
 
 			return Core;
 		}
-
 	}
 
 	public sealed partial class CommentsScreen
@@ -71,7 +60,7 @@ namespace Cchbc.UI
 				}
 				catch (Exception ex)
 				{
-					
+
 				}
 			}
 		}
