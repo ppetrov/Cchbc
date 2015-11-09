@@ -9,35 +9,54 @@ namespace Cchbc.Features
 	public sealed class FeatureManager : IDisposable
 	{
 		private readonly int _bufferSize;
-		private readonly Task _syncTask;
+		private readonly Task _featuresTask;
+		private readonly Task _exceptionsTask;
 
-		public FeatureManager(Action<FeatureEntry[]> dumper, int bufferSize = 16)
+		private BlockingCollection<FeatureEntry> Features { get; } = new BlockingCollection<FeatureEntry>();
+		private BlockingCollection<ExceptionEntry> Exceptions { get; } = new BlockingCollection<ExceptionEntry>();
+
+		public FeatureManager(Action<ExceptionEntry[]> exceptionsDbWriter, Action<FeatureEntry[]> featuresDbWriter, int bufferSize = 8)
 		{
-			_bufferSize = bufferSize;
-			if (dumper == null) throw new ArgumentNullException(nameof(dumper));
+			if (exceptionsDbWriter == null) throw new ArgumentNullException(nameof(exceptionsDbWriter));
+			if (featuresDbWriter == null) throw new ArgumentNullException(nameof(featuresDbWriter));
 
-			_syncTask = Task.Run(() =>
+			_bufferSize = bufferSize;
+
+			_featuresTask = Task.Run(() =>
 			{
 				var buffer = new List<FeatureEntry>();
 
-				foreach (var entry in this.Entries.GetConsumingEnumerable())
+				foreach (var entry in this.Features.GetConsumingEnumerable())
 				{
 					buffer.Add(entry);
 
 					if (buffer.Count >= _bufferSize)
 					{
-						dumper(buffer.ToArray());
+						featuresDbWriter(buffer.ToArray());
 						buffer.Clear();
 					}
 				}
 				if (buffer.Any())
 				{
-					dumper(buffer.ToArray());
+					featuresDbWriter(buffer.ToArray());
+				}
+			});
+
+			_exceptionsTask = Task.Run(() =>
+			{
+				foreach (var entry in this.Exceptions.GetConsumingEnumerable())
+				{
+					exceptionsDbWriter(new[] { entry });
 				}
 			});
 		}
 
-		private BlockingCollection<FeatureEntry> Entries { get; } = new BlockingCollection<FeatureEntry>();
+		public void Start(Feature feature)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			feature.StartMeasure();
+		}
 
 		public void Stop(Feature feature)
 		{
@@ -65,16 +84,25 @@ namespace Cchbc.Features
 				}
 			}
 
-			this.Entries.TryAdd(new FeatureEntry(feature.Context, feature.Name, feature.Details, feature.TimeSpent, steps));
+			this.Features.TryAdd(new FeatureEntry(feature.Context, feature.Name, feature.Details, feature.TimeSpent, steps));
+		}
+
+		public void LogException(Feature feature, Exception exception)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (exception == null) throw new ArgumentNullException(nameof(exception));
+
+			this.Exceptions.TryAdd(new ExceptionEntry(feature.Context, feature.Name, exception));
 		}
 
 		public void Dispose()
 		{
 			// Signal the end of adding any entries
-			this.Entries.CompleteAdding();
+			this.Features.CompleteAdding();
+			this.Exceptions.CompleteAdding();
 
-			// Wait for the sync task to complete(flush all the entries)
-			_syncTask.Wait();
+			// Wait for the sync tasks to complete(flush all the entries)
+			Task.WaitAll(_featuresTask, _exceptionsTask);
 		}
 	}
 }

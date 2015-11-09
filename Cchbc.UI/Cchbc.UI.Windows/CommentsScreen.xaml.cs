@@ -18,12 +18,20 @@ namespace Cchbc.UI
 			if (Core == null)
 			{
 				Core = new Core(new DirectDebugLogger(@"N/A"), new QueryHelper(null, null));
-				Core.FeatureManager = new FeatureManager(entries =>
+				Core.FeatureManager = new FeatureManager(exceptions =>
 				{
-					foreach (var entry in entries)
+					foreach (var e in exceptions)
 					{
-						Debug.WriteLine(entry.Context + ":" + entry.Name.Replace(@"Async", ""));
-						foreach (var s in entry.Steps)
+						Debug.WriteLine(e.Context + ":" + e.Name.Replace(@"Async", ""));
+						Debug.WriteLine("\t" + e.Exception);
+						Debug.WriteLine(string.Empty);
+					}
+				}, features =>
+				{
+					foreach (var f in features)
+					{
+						Debug.WriteLine(f.Context + ":" + f.Name.Replace(@"Async", ""));
+						foreach (var s in f.Steps)
 						{
 							Debug.WriteLine("\t" + s.Name.Replace("Async", "") + " " + s.TimeSpent.TotalMilliseconds + " ms");
 						}
@@ -63,8 +71,7 @@ namespace Cchbc.UI
 				}
 				catch (Exception ex)
 				{
-					// TODO : !!! Log the exception
-					//_viewModel.
+					
 				}
 			}
 		}

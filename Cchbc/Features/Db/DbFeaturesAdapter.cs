@@ -7,7 +7,7 @@ namespace Cchbc.Features.Db
 {
 	public sealed class DbFeaturesAdapter
 	{
-		private readonly Query<DbFeatureContext> _contextsQuery = new Query<DbFeatureContext>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbFeatureContextCreator);
+		private readonly Query<DbContext> _contextsQuery = new Query<DbContext>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbFeatureContextCreator);
 		private readonly Query<DbFeatureStep> _stepsQuery = new Query<DbFeatureStep>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator);
 		private readonly Query<DbFeature> _featuresQuery = new Query<DbFeature>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureCreator);
 
@@ -31,6 +31,13 @@ namespace Cchbc.Features.Db
 		{
 			new QueryParameter(@"@TIMESPENT", 0M),
 			new QueryParameter(@"@DETAILS", string.Empty),
+			new QueryParameter(@"@FEATURE", 0L),
+		};
+
+		private readonly QueryParameter[] _insertExcetionEntrySqlParams =
+		{
+			new QueryParameter(@"@MESSAGE", string.Empty),
+			new QueryParameter(@"@STACKTRACE", string.Empty),
 			new QueryParameter(@"@FEATURE", 0L),
 		};
 
@@ -88,6 +95,17 @@ CREATE TABLE [FEATURE_ENTRIES] (
 		ON UPDATE CASCADE ON DELETE CASCADE
 )");
 
+			var exceptionsTask = this.QueryHelper.ExecuteAsync(@"
+CREATE TABLE [EXCEPTION_ENTRIES] (
+	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	[Message] nvarchar(254) NOT NULL, 
+	[StackTrace] nvarchar(254) NOT NULL, 
+	[Feature_Id] integer NOT NULL, 
+	FOREIGN KEY ([Feature_Id])
+		REFERENCES [FEATURES] ([Id])
+		ON UPDATE CASCADE ON DELETE CASCADE
+)");
+
 			var entryStepsTask = this.QueryHelper.ExecuteAsync(@"
 CREATE TABLE [FEATURE_ENTRY_STEPS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
@@ -102,10 +120,10 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 		REFERENCES [FEATURE_STEPS] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE		
 )");
-			return Task.WhenAll(contextsTask, stepsTask, featuresTask, entriesTask, entryStepsTask);
+			return Task.WhenAll(contextsTask, stepsTask, featuresTask, entriesTask, exceptionsTask, entryStepsTask);
 		}
 
-		public Task<List<DbFeatureContext>> GetContextsAsync()
+		public Task<List<DbContext>> GetContextsAsync()
 		{
 			return this.QueryHelper.ExecuteAsync(_contextsQuery);
 		}
@@ -120,7 +138,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return this.QueryHelper.ExecuteAsync(_featuresQuery);
 		}
 
-		public async Task<DbFeatureContext> InsertContextAsync(string name)
+		public async Task<DbContext> InsertContextAsync(string name)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
@@ -131,10 +149,10 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			await this.QueryHelper.ExecuteAsync(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)", _insertContextSqlParams);
 
 			// Get new Id back
-			return new DbFeatureContext(await GetNewIdAsync(), name);
+			return new DbContext(await GetNewIdAsync(), name);
 		}
 
-		public async Task<DbFeature> InsertFeatureAsync(DbFeatureContext context, string name)
+		public async Task<DbFeature> InsertFeatureAsync(DbContext context, string name)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
@@ -153,6 +171,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 		public async Task<DbFeatureEntry> InsertFeatureEntryAsync(DbFeature feature, FeatureEntry featureEntry)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (featureEntry == null) throw new ArgumentNullException(nameof(featureEntry));
 
 			var timeSpent = featureEntry.TimeSpent;
 			var details = featureEntry.Details;
@@ -183,6 +202,20 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return new DbFeatureStep(await GetNewIdAsync(), name);
 		}
 
+		public Task InsertExceptionEntryAsync(DbFeature feature, ExceptionEntry exceptionEntry)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (exceptionEntry == null) throw new ArgumentNullException(nameof(exceptionEntry));
+
+			// Set parameters values
+			_insertExcetionEntrySqlParams[0].Value = exceptionEntry.Exception.Message;
+			_insertExcetionEntrySqlParams[1].Value = exceptionEntry.Exception.StackTrace;
+			_insertExcetionEntrySqlParams[2].Value = feature.Id;
+
+			// Insert the record
+			return this.QueryHelper.ExecuteAsync(@"INSERT INTO EXCEPTION_ENTRIES(MESSAGE, STACKTRACE, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @FEATURE)", _insertExcetionEntrySqlParams);
+		}
+
 		public Task InsertStepEntryAsync(DbFeatureEntry featureEntry, DbFeatureStep step, FeatureEntryStep entryStep)
 		{
 			if (featureEntry == null) throw new ArgumentNullException(nameof(featureEntry));
@@ -209,9 +242,9 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return new DbFeatureStep(r.GetInt64(0), r.GetString(1));
 		}
 
-		private static DbFeatureContext DbFeatureContextCreator(IFieldDataReader r)
+		private static DbContext DbFeatureContextCreator(IFieldDataReader r)
 		{
-			return new DbFeatureContext(r.GetInt64(0), r.GetString(1));
+			return new DbContext(r.GetInt64(0), r.GetString(1));
 		}
 
 		private async Task<long> GetNewIdAsync()

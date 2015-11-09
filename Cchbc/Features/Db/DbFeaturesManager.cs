@@ -7,7 +7,7 @@ namespace Cchbc.Features.Db
 	public sealed class DbFeaturesManager
 	{
 		private DbFeaturesAdapter Adapter { get; }
-		private Dictionary<string, DbFeatureContext> Contexts { get; } = new Dictionary<string, DbFeatureContext>(StringComparer.OrdinalIgnoreCase);
+		private Dictionary<string, DbContext> Contexts { get; } = new Dictionary<string, DbContext>(StringComparer.OrdinalIgnoreCase);
 		private Dictionary<string, DbFeatureStep> Steps { get; } = new Dictionary<string, DbFeatureStep>(StringComparer.OrdinalIgnoreCase);
 		private Dictionary<long, Dictionary<string, DbFeature>> Features { get; } = new Dictionary<long, Dictionary<string, DbFeature>>();
 
@@ -37,8 +37,18 @@ namespace Cchbc.Features.Db
 			if (featureEntry == null) throw new ArgumentNullException(nameof(featureEntry));
 
 			var context = await this.SaveContextAsync(featureEntry.Context);
-			var dbFeatureEntry = await this.SaveFeatureAsync(context, featureEntry);
+			var feature = await this.SaveFeatureAsync(context, featureEntry.Name);
+			var dbFeatureEntry = await this.Adapter.InsertFeatureEntryAsync(feature, featureEntry);
 			await this.SaveStepsAsync(dbFeatureEntry, featureEntry.Steps);
+		}
+
+		public async Task SaveAsync(ExceptionEntry exceptionEntry)
+		{
+			if (exceptionEntry == null) throw new ArgumentNullException(nameof(exceptionEntry));
+
+			var context = await this.SaveContextAsync(exceptionEntry.Context);
+			var feature = await this.SaveFeatureAsync(context, exceptionEntry.Name);
+			await this.Adapter.InsertExceptionEntryAsync(feature, exceptionEntry);
 		}
 
 		private async Task LoadContextsAsync()
@@ -87,9 +97,9 @@ namespace Cchbc.Features.Db
 			}
 		}
 
-		private async Task<DbFeatureContext> SaveContextAsync(string name)
+		private async Task<DbContext> SaveContextAsync(string name)
 		{
-			DbFeatureContext context;
+			DbContext context;
 
 			if (!this.Contexts.TryGetValue(name, out context))
 			{
@@ -103,9 +113,8 @@ namespace Cchbc.Features.Db
 			return context;
 		}
 
-		private async Task<DbFeatureEntry> SaveFeatureAsync(DbFeatureContext context, FeatureEntry featureEntry)
+		private async Task<DbFeature> SaveFeatureAsync(DbContext context, string name)
 		{
-			var name = featureEntry.Name;
 			var contextId = context.Id;
 
 			// Check if the context exists
@@ -123,11 +132,10 @@ namespace Cchbc.Features.Db
 				feature = await this.Adapter.InsertFeatureAsync(context, name);
 
 				// Insert the new feature into the collection
-				this.Features.Add(contextId, new Dictionary<string, DbFeature>(StringComparer.OrdinalIgnoreCase) { { feature.Name, feature } });
+				this.Features.Add(contextId,
+					new Dictionary<string, DbFeature>(StringComparer.OrdinalIgnoreCase) { { feature.Name, feature } });
 			}
-
-			// Insert into database
-			return await this.Adapter.InsertFeatureEntryAsync(feature, featureEntry);
+			return feature;
 		}
 
 		private async Task SaveStepsAsync(DbFeatureEntry featureEntry, FeatureEntryStep[] entrySteps)

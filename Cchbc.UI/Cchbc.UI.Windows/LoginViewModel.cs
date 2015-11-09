@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Cchbc.Dialog;
@@ -54,13 +53,6 @@ namespace Cchbc.UI
 			}
 		}
 
-		private bool _isBusy;
-		public bool IsBusy
-		{
-			get { return _isBusy; }
-			private set { this.SetField(ref _isBusy, value); }
-		}
-
 		public LoginViewModel(Core core)
 		{
 			if (core == null) throw new ArgumentNullException(nameof(core));
@@ -82,19 +74,15 @@ namespace Cchbc.UI
 
 			this.Manager.OperationStart += (sender, args) =>
 			{
-				this.IsBusy = true;
-				Debug.WriteLine(@"START!");
+				this.Core.FeatureManager.Start(args.Feature);
 			};
 			this.Manager.OperationEnd += (sender, args) =>
 			{
-				this.IsBusy = false;
 				this.Core.FeatureManager.Stop(args.Feature);
-				Debug.WriteLine(@"END!");
 			};
 			this.Manager.OperationError += (sender, args) =>
 			{
-				this.Core.Logger.Error(args.Exception.ToString());
-				Debug.WriteLine(@"ERROR!" + args.Exception.ToString());
+				this.Core.FeatureManager.LogException(args.Feature, args.Exception);
 			};
 
 			this.Manager.ItemInserted += ManagerOnItemInserted;

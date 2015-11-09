@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Cchbc.Data;
-using Cchbc.Exceptions;
 using Cchbc.Features;
 
 namespace Cchbc
@@ -10,8 +9,7 @@ namespace Cchbc
 	public sealed class Core
 	{
 		public ILogger Logger { get; }
-		public FeatureManager FeatureManager { get; set; } = new FeatureManager(entries => { });
-		public ExceptionManager ExceptionManager { get; set; } = new ExceptionManager(entries => { });
+		public FeatureManager FeatureManager { get; set; } = new FeatureManager(exceptions => { }, features => { });
 		public QueryHelper QueryHelper { get; }
 		public DataCache DataCache { get; } = new DataCache();
 

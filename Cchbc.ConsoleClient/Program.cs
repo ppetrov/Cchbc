@@ -185,12 +185,25 @@ namespace Cchbc.ConsoleClient
 						new FeatureEntryStep(@"Display Articles",TimeSpan.FromMilliseconds(r.Next(100,200))),
 					};
 
-					var feature = new FeatureEntry(@"View all articles", @"Filter By", @"Coca Cola", TimeSpan.FromMilliseconds(r.Next(500, 1500)), featureSteps);
+					Exception e = null;
 					try
 					{
-						module.CreateSchemaAsync().Wait();
+						var v = new Stack();
+						v.Pop();
+					}
+					catch (Exception _)
+					{
+						e = _;
+					}
+
+					var feature = new FeatureEntry(@"View all articles", @"Filter By", @"Coca Cola", TimeSpan.FromMilliseconds(r.Next(500, 1500)), featureSteps);
+					var exception = new ExceptionEntry(@"Manage logs", @"Send logs", e);
+					try
+					{
+						//module.CreateSchemaAsync().Wait();
 						module.LoadAsync().Wait();
 						module.SaveAsync(feature).Wait();
+						module.SaveAsync(exception).Wait();
 					}
 					catch (Exception ex)
 					{

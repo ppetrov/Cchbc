@@ -44,15 +44,13 @@
     <Compile Include="Data\QueryParameter.cs" />
     <Compile Include="Data\ReadDataAdapter.cs" />
     <Compile Include="Data\ReadDataQueryHelper.cs" />
-    <Compile Include="Exceptions\Db\DbException.cs" />
-    <Compile Include="Exceptions\ExceptionEntry.cs" />
-    <Compile Include="Exceptions\ExceptionManager.cs" />
     <Compile Include="Features\Db\DbFeature.cs" />
-    <Compile Include="Features\Db\DbFeatureContext.cs" />
+    <Compile Include="Features\Db\DbContext.cs" />
     <Compile Include="Features\Db\DbFeatureEntry.cs" />
     <Compile Include="Features\Db\DbFeaturesAdapter.cs" />
     <Compile Include="Features\Db\DbFeaturesManager.cs" />
     <Compile Include="Features\Db\DbFeatureStep.cs" />
+    <Compile Include="Features\ExceptionEntry.cs" />
     <Compile Include="Features\Feature.cs" />
     <Compile Include="Features\FeatureEntry.cs" />
     <Compile Include="Features\FeatureEntryStep.cs" />

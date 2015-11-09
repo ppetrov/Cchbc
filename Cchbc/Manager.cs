@@ -20,14 +20,12 @@ namespace Cchbc
 		public event EventHandler<FeatureEventArgs> OperationStart;
 		private void OnOperationStart(FeatureEventArgs e)
 		{
-			e.Feature.StartMeasure();
 			OperationStart?.Invoke(this, e);
 		}
 
 		public event EventHandler<FeatureEventArgs> OperationEnd;
 		private void OnOperationEnd(FeatureEventArgs e)
 		{
-			e.Feature.StopMeasure();
 			OperationEnd?.Invoke(this, e);
 		}
 
@@ -190,6 +188,9 @@ namespace Cchbc
 			{
 				// Find the new index
 				newIndex = this.FindNewIndex(viewItems, viewItem);
+
+				// New index can be at the end
+				newIndex = Math.Min(newIndex, viewItems.Count - 1);
 			}
 
 			if (newIndex >= 0)
@@ -198,9 +199,9 @@ namespace Cchbc
 				var oldIndex = viewItems.IndexOf(viewItem);
 				if (oldIndex != newIndex)
 				{
-					var tmp = viewItems[oldIndex];
-					viewItems[oldIndex] = viewItem;
-					viewItems[newIndex] = tmp;
+					var tmp = viewItems[newIndex];
+					viewItems[newIndex] = viewItem;
+					viewItems[oldIndex] = tmp;
 				}
 			}
 
