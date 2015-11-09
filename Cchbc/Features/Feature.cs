@@ -28,6 +28,18 @@ namespace Cchbc.Features
 			this.Stopwatch = new Stopwatch();
 		}
 
+		public static Feature StartNew(string context, string name, string details = null)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			var feature = new Feature(context, name, details ?? string.Empty);
+
+			feature.StartMeasure();
+
+			return feature;
+		}
+
 		public void StartMeasure()
 		{
 			this.Stopwatch.Start();

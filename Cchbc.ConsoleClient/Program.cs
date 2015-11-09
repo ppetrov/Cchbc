@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Features;
@@ -153,7 +157,7 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	class Program
+	public class Program
 	{
 		static void Main(string[] args)
 		{
@@ -184,7 +188,7 @@ namespace Cchbc.ConsoleClient
 					var feature = new FeatureEntry(@"View all articles", @"Filter By", @"Coca Cola", TimeSpan.FromMilliseconds(r.Next(500, 1500)), featureSteps);
 					try
 					{
-						//module.CreateSchemaAsync().Wait();
+						module.CreateSchemaAsync().Wait();
 						module.LoadAsync().Wait();
 						module.SaveAsync(feature).Wait();
 					}

@@ -39,18 +39,6 @@ namespace Cchbc.Features
 
 		private BlockingCollection<FeatureEntry> Entries { get; } = new BlockingCollection<FeatureEntry>();
 
-		public Feature StartNew(string context, string name, string details = null)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			var feature = new Feature(context, name, details ?? string.Empty);
-
-			feature.StartMeasure();
-
-			return feature;
-		}
-
 		public void Stop(Feature feature)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
@@ -66,14 +54,14 @@ namespace Cchbc.Features
 
 			var steps = Enumerable.Empty<FeatureEntryStep>().ToArray();
 
-			var tmp = feature.Steps;
-			if (tmp.Count > 0)
+			var featureSteps = feature.Steps;
+			if (featureSteps.Count > 0)
 			{
-				steps = new FeatureEntryStep[tmp.Count];
+				steps = new FeatureEntryStep[featureSteps.Count];
 
 				for (var i = 0; i < steps.Length; i++)
 				{
-					steps[i] = new FeatureEntryStep(tmp[i].Name, tmp[i].TimeSpent, tmp[i].Details);
+					steps[i] = new FeatureEntryStep(featureSteps[i].Name, featureSteps[i].TimeSpent, featureSteps[i].Details);
 				}
 			}
 

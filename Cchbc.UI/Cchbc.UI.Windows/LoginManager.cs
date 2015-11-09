@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Cchbc.Features;
 using Cchbc.Search;
@@ -58,12 +57,6 @@ namespace Cchbc.UI
 			feature.AddStep(nameof(CanInsertAsync));
 			try
 			{
-				//if (await this.Adapter.IsReservedAsync(viewItem.Name))
-				//{
-				//	return PermissionResult.Deny(@"This name is reserved");
-				//}
-				//return PermissionResult.Deny(@"The name is reserved");
-				//return PermissionResult.Confirm(@"Are you sure ???");
 				return Task.FromResult(PermissionResult.Allow);
 			}
 			finally
@@ -113,19 +106,14 @@ namespace Cchbc.UI
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			var s = Stopwatch.StartNew();
+			feature.AddStep(nameof(CanPromoteAsync));
 			try
 			{
 				return Task.FromResult(PermissionResult.Allow);
-				if (viewItem.IsSystem)
-				{
-					return Task.FromResult(PermissionResult.Deny(@"The user is already System user"));
-				}
-				return Task.FromResult(PermissionResult.Confirm(@"Are you sure to promoto user create today ?"));
 			}
 			finally
 			{
-				this.Logger.Info($@"{nameof(CanPromoteAsync)}:{s.ElapsedMilliseconds}ms");
+				feature.EndStep();
 			}
 		}
 	}

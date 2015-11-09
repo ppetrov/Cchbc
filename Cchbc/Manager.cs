@@ -298,6 +298,7 @@ namespace Cchbc
 					// Insert the item into the list at the correct place
 					this.ViewItems.Insert(index, viewItem);
 
+					// Fire the event
 					this.OnItemInserted(new ObjectEventArgs<TViewItem>(viewItem));
 				}
 				catch (Exception ex)
@@ -317,42 +318,62 @@ namespace Cchbc
 
 		public async Task UpdateValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
 		{
+			var feature = args.Feature;
+			feature.AddStep(nameof(UpdateValidatedAsync));
 			try
 			{
-				// Update the item from the db
-				await this.Adapter.UpdateAsync(viewItem.Item);
+				try
+				{
+					// Update the item from the db
+					await this.Adapter.UpdateAsync(viewItem.Item);
 
-				this.OnItemUpdated(new ObjectEventArgs<TViewItem>(viewItem));
-			}
-			catch (Exception ex)
-			{
-				this.OnOperationError(args.WithException(ex));
+					// Fire the event
+					this.OnItemUpdated(new ObjectEventArgs<TViewItem>(viewItem));
+				}
+				catch (Exception ex)
+				{
+					this.OnOperationError(args.WithException(ex));
+				}
+				finally
+				{
+					this.OnOperationEnd(args);
+				}
 			}
 			finally
 			{
-				this.OnOperationEnd(args);
+				feature.EndStep();
 			}
 		}
 
 		public async Task DeleteValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
 		{
+			var feature = args.Feature;
+			feature.AddStep(nameof(UpdateValidatedAsync));
 			try
 			{
-				// Delete the item from the db
-				await this.Adapter.DeleteAsync(viewItem.Item);
+				try
+				{
+					// Delete the item from the db
+					await this.Adapter.DeleteAsync(viewItem.Item);
 
-				// Delete the item into the list at the correct place
-				this.ViewItems.Remove(viewItem);
+					// Delete the item into the list at the correct place
+					this.ViewItems.Remove(viewItem);
 
-				this.OnItemDeleted(new ObjectEventArgs<TViewItem>(viewItem));
-			}
-			catch (Exception ex)
-			{
-				this.OnOperationError(args.WithException(ex));
+					// Fire the event
+					this.OnItemDeleted(new ObjectEventArgs<TViewItem>(viewItem));
+				}
+				catch (Exception ex)
+				{
+					this.OnOperationError(args.WithException(ex));
+				}
+				finally
+				{
+					this.OnOperationEnd(args);
+				}
 			}
 			finally
 			{
-				this.OnOperationEnd(args);
+				feature.EndStep();
 			}
 		}
 
