@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Cchbc.Validation
 {
 	public sealed class PermissionResult
 	{
-		public static readonly PermissionResult Allow = new PermissionResult(PermissionStatus.Allow, string.Empty);
+		public static readonly Task<PermissionResult> Allow = Task.FromResult(new PermissionResult(PermissionStatus.Allow, string.Empty));
 
 		public PermissionStatus Status { get; private set; }
 		public string Message { get; private set; }

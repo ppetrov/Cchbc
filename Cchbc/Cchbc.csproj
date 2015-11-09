@@ -44,6 +44,8 @@
     <Compile Include="Data\QueryParameter.cs" />
     <Compile Include="Data\ReadDataAdapter.cs" />
     <Compile Include="Data\ReadDataQueryHelper.cs" />
+    <Compile Include="Exceptions\Db\DbException.cs" />
+    <Compile Include="Exceptions\ExceptionEntry.cs" />
     <Compile Include="Exceptions\ExceptionManager.cs" />
     <Compile Include="Features\Db\DbFeature.cs" />
     <Compile Include="Features\Db\DbFeatureContext.cs" />

@@ -4,7 +4,6 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Cchbc.Data;
-using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.UI.Comments;
 
@@ -18,7 +17,8 @@ namespace Cchbc.UI
 		{
 			if (Core == null)
 			{
-				Core = new Core(new DirectDebugLogger(@"N/A"), new FeatureManager(entries =>
+				Core = new Core(new DirectDebugLogger(@"N/A"), new QueryHelper(null, null));
+				Core.FeatureManager = new FeatureManager(entries =>
 				{
 					foreach (var entry in entries)
 					{
@@ -29,7 +29,7 @@ namespace Cchbc.UI
 						}
 						Debug.WriteLine(string.Empty);
 					}
-				}, 1), new QueryHelper(null, null));
+				}, 1);
 			}
 
 			return Core;

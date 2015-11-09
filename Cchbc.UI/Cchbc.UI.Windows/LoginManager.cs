@@ -57,7 +57,7 @@ namespace Cchbc.UI
 			feature.AddStep(nameof(CanInsertAsync));
 			try
 			{
-				return Task.FromResult(PermissionResult.Allow);
+				return PermissionResult.Allow;
 			}
 			finally
 			{
@@ -73,7 +73,7 @@ namespace Cchbc.UI
 			feature.AddStep(nameof(CanUpdateAsync));
 			try
 			{
-				return Task.FromResult(PermissionResult.Allow);
+				return PermissionResult.Allow;
 			}
 			finally
 			{
@@ -93,7 +93,7 @@ namespace Cchbc.UI
 				{
 					return Task.FromResult(PermissionResult.Confirm(@"Cannot delete today logins"));
 				}
-				return Task.FromResult(PermissionResult.Allow);
+				return PermissionResult.Allow;
 			}
 			finally
 			{
@@ -109,7 +109,7 @@ namespace Cchbc.UI
 			feature.AddStep(nameof(CanPromoteAsync));
 			try
 			{
-				return Task.FromResult(PermissionResult.Allow);
+				return PermissionResult.Allow;
 			}
 			finally
 			{

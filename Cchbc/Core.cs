@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Cchbc.Data;
+using Cchbc.Exceptions;
 using Cchbc.Features;
 
 namespace Cchbc
@@ -9,18 +10,17 @@ namespace Cchbc
 	public sealed class Core
 	{
 		public ILogger Logger { get; }
-		public FeatureManager FeatureManager { get; }
+		public FeatureManager FeatureManager { get; set; } = new FeatureManager(entries => { });
+		public ExceptionManager ExceptionManager { get; set; } = new ExceptionManager(entries => { });
 		public QueryHelper QueryHelper { get; }
 		public DataCache DataCache { get; } = new DataCache();
 
-		public Core(ILogger logger, FeatureManager featureManager, QueryHelper queryHelper)
+		public Core(ILogger logger, QueryHelper queryHelper)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
-			if (featureManager == null) throw new ArgumentNullException(nameof(featureManager));
 			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 
 			this.Logger = logger;
-			this.FeatureManager = featureManager;
 			this.QueryHelper = queryHelper;
 		}
 
