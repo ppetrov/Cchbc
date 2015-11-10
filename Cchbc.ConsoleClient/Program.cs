@@ -1,16 +1,19 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
-using System.Linq;
-using System.Reflection;
+using System.Diagnostics;
+using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Cchbc.App;
+using Cchbc.App.Articles.ViewModel;
 using Cchbc.Data;
 using Cchbc.Features;
 using Cchbc.Features.Db;
+using Cchbc.Localization;
 
 
 namespace Cchbc.ConsoleClient
@@ -170,45 +173,45 @@ namespace Cchbc.ConsoleClient
 				{
 					cn.Open();
 
+					var core = Core.Current;
+
+					// Set logger
+					core.Logger = new ConsoleLogger();
+
+					// Create Read query helper
 					var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
+					// Create Modify query helper
 					var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
+					// Create General query helper
 					var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
+					core.QueryHelper = queryHelper;
 
-					var module = new DbFeaturesManager(new DbFeaturesAdapter(queryHelper));
+					var featureManager = new FeatureManager { InspectFeature = InspectFeature() };
+					core.FeatureManager = featureManager;
+					core.FeatureManager.Initialize(core.Logger, new DbFeaturesManager(new DbFeaturesAdapter(queryHelper)));
+					core.FeatureManager.LoadAsync().Wait();
+					core.FeatureManager.StartDbWriters();
 
-					var r = new Random();
-					var featureSteps = new[]
-					{
-						new FeatureEntryStep(@"Load Brands",TimeSpan.FromMilliseconds(r.Next(100,500))),
-						new FeatureEntryStep(@"Load Flavors",TimeSpan.FromMilliseconds(r.Next(100,500))),
-						new FeatureEntryStep(@"Load Articles",TimeSpan.FromMilliseconds(r.Next(100,500))),
-						new FeatureEntryStep(@"Display Articles",TimeSpan.FromMilliseconds(r.Next(100,200))),
-					};
+					var localizationManager = new LocalizationManager();
+					core.LocalizationManager = localizationManager;
 
-					Exception e = null;
+					localizationManager.LoadAsync();
+
+					var viewModel = new ArticlesViewModel(core);
 					try
 					{
-						var v = new Stack();
-						v.Pop();
+						for (int i = 0; i < 5; i++)
+						{
+							viewModel.LoadDataAsync().Wait();
+						}
+
 					}
-					catch (Exception _)
+					catch (Exception e)
 					{
-						e = _;
+						Console.WriteLine(e);
 					}
 
-					var feature = new FeatureEntry(@"View all articles", @"Filter By", @"Coca Cola", TimeSpan.FromMilliseconds(r.Next(500, 1500)), featureSteps);
-					var exception = new ExceptionEntry(@"Manage logs", @"Send logs", e);
-					try
-					{
-						//module.CreateSchemaAsync().Wait();
-						module.LoadAsync().Wait();
-						module.SaveAsync(feature).Wait();
-						module.SaveAsync(exception).Wait();
-					}
-					catch (Exception ex)
-					{
-						Console.WriteLine(ex);
-					}
+					featureManager.StopDbWriters();
 				}
 
 
@@ -249,6 +252,36 @@ namespace Cchbc.ConsoleClient
 			{
 				Console.WriteLine(ex);
 			}
+		}
+
+		private static Action<FeatureEntry> InspectFeature()
+		{
+			return f =>
+			{
+				var buffer = new StringBuilder();
+
+				buffer.Append(f.Context);
+				buffer.Append('\t');
+				buffer.Append(f.Details);
+				buffer.Append('\t');
+				buffer.AppendLine(f.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
+
+				foreach (var s in f.Steps)
+				{
+					buffer.Append('\t');
+					buffer.Append(s.Name);
+					buffer.Append('\t');
+					buffer.Append(s.Details);
+					buffer.Append('\t');
+					buffer.AppendLine(s.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
+				}
+
+				var output = buffer.ToString();
+				output = output.Replace(@"Async", "");
+				output = Regex.Replace(output, @"[A-Z]", m => @" " + m.Value).TrimStart();
+				Debug.WriteLine(output);
+				Console.WriteLine(output);
+			};
 		}
 	}
 

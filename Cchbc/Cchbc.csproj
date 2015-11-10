@@ -35,7 +35,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DataCache.cs" />
-    <Compile Include="Core.cs" />
     <Compile Include="Data\ModifyDataQueryHelper.cs" />
     <Compile Include="Data\IFieldDataReader.cs" />
     <Compile Include="Data\IModifiableAdapter.cs" />
@@ -50,7 +49,6 @@
     <Compile Include="Features\Db\DbFeaturesAdapter.cs" />
     <Compile Include="Features\Db\DbFeaturesManager.cs" />
     <Compile Include="Features\Db\DbFeatureStep.cs" />
-    <Compile Include="Features\Db\IDbFeaturesManager.cs" />
     <Compile Include="Features\ExceptionEntry.cs" />
     <Compile Include="Features\Feature.cs" />
     <Compile Include="Features\FeatureEntry.cs" />
@@ -59,6 +57,8 @@
     <Compile Include="Features\FeatureStep.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="Features\FeatureEventArgs.cs" />
+    <Compile Include="Localization\LocalizationKey.cs" />
+    <Compile Include="Localization\LocalizationKeys.cs" />
     <Compile Include="Localization\LocalizationManager.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="Objects\ViewItem.cs" />

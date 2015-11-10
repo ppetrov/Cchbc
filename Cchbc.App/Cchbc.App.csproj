@@ -43,16 +43,19 @@
   <ItemGroup>
     <Compile Include="Articles\ArticlesModule.cs" />
     <Compile Include="Articles\Data\ArticleAdapter.cs" />
+    <Compile Include="Articles\Data\QuantityAdapter.cs" />
     <Compile Include="Articles\Data\BrandAdapter.cs" />
     <Compile Include="Articles\Data\FlavorAdapter.cs" />
     <Compile Include="Articles\Helpers\ArticleHelper.cs" />
     <Compile Include="Articles\Helpers\BrandHelper.cs" />
     <Compile Include="Articles\Helpers\FlavorHelper.cs" />
+    <Compile Include="Articles\Helpers\QuantityHelper.cs" />
     <Compile Include="Articles\Objects\Article.cs" />
     <Compile Include="Articles\Objects\Brand.cs" />
     <Compile Include="Articles\Objects\Flavor.cs" />
     <Compile Include="Articles\ViewModel\ArticlesViewModel.cs" />
     <Compile Include="Articles\ViewModel\ArticleViewItem.cs" />
+    <Compile Include="Core.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

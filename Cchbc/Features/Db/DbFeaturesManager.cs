@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Cchbc.Features.Db
 {
-	public sealed class DbFeaturesManager : IDbFeaturesManager
+	public sealed class DbFeaturesManager
 	{
 		private DbFeaturesAdapter Adapter { get; }
 		private Dictionary<string, DbContext> Contexts { get; } = new Dictionary<string, DbContext>(StringComparer.OrdinalIgnoreCase);

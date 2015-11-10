@@ -9,31 +9,42 @@ namespace Cchbc.Features
 	public sealed class FeatureManager
 	{
 		private ILogger _logger;
+		private DbFeaturesManager _dbFeaturesManager;
+
 		private Task _featuresTask;
 		private Task _exceptionsTask;
 		private BlockingCollection<FeatureEntry> _features;
 		private BlockingCollection<ExceptionEntry> _exceptions;
-		private IDbFeaturesManager _dbFeaturesManager;
 
-		public void Initialize(ILogger logger, IDbFeaturesManager dbFeaturesManager)
+		public Action<FeatureEntry> InspectFeature { get; set; }
+		public Action<ExceptionEntry> InspectException { get; set; }
+
+		public void Initialize(ILogger logger, DbFeaturesManager dbFeaturesManager)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 			if (dbFeaturesManager == null) throw new ArgumentNullException(nameof(dbFeaturesManager));
 
 			_logger = logger;
 			_dbFeaturesManager = dbFeaturesManager;
-			_features = new BlockingCollection<FeatureEntry>();
-			_exceptions = new BlockingCollection<ExceptionEntry>();
+		}
+
+		public Task LoadAsync()
+		{
+			return _dbFeaturesManager.LoadAsync();
 		}
 
 		public void StartDbWriters()
 		{
+			_features = new BlockingCollection<FeatureEntry>();
+			_exceptions = new BlockingCollection<ExceptionEntry>();
+
 			_featuresTask = Task.Run(async () =>
 			{
 				foreach (var entry in _features.GetConsumingEnumerable())
 				{
 					try
 					{
+						this.InspectFeature?.Invoke(entry);
 						await _dbFeaturesManager.SaveAsync(entry);
 					}
 					catch (Exception ex) { _logger.Error(ex.ToString()); }
@@ -45,6 +56,7 @@ namespace Cchbc.Features
 				{
 					try
 					{
+						this.InspectException?.Invoke(entry);
 						await _dbFeaturesManager.SaveAsync(entry);
 					}
 					catch (Exception ex) { _logger.Error(ex.ToString()); }
@@ -54,11 +66,11 @@ namespace Cchbc.Features
 
 		public void StopDbWriters()
 		{
-			_featuresTask.Wait();
-			_exceptionsTask.Wait();
-
 			_features.CompleteAdding();
 			_exceptions.CompleteAdding();
+
+			_featuresTask.Wait();
+			_exceptionsTask.Wait();
 
 			_features = null;
 			_exceptions = null;

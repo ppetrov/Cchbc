@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using Cchbc.App.Articles.Helpers;
 using Cchbc.App.Articles.Objects;
 using Cchbc.Data;
 using Cchbc.Features;
+using Cchbc.Localization;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
@@ -72,28 +74,25 @@ namespace Cchbc.App.Articles.ViewModel
 		{
 			if (core == null) throw new ArgumentNullException(nameof(core));
 
-			// TODO : Customize strings
-
 			this.Core = core;
-			this.Module = new ArticlesModule(
-				new Sorter<ArticleViewItem>(new[]
-				{
-					new SortOption<ArticleViewItem>(@"Name", (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
-					new SortOption<ArticleViewItem>(@"Brand", (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
-					new SortOption<ArticleViewItem>(@"Flavor", (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
-				}),
-				new Searcher<ArticleViewItem>(new[]
-				{
-					new SearchOption<ArticleViewItem>(@"All", v => true, true),
-					new SearchOption<ArticleViewItem>(@"Coca Cola", v => v.Brand[0] == 'C'),
-					new SearchOption<ArticleViewItem>(@"Fanta", v => v.Brand[0] == 'F'),
-					new SearchOption<ArticleViewItem>(@"Sprite", v => v.Brand[0] == 'S'),
-				},
-				(item, search) => item.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0), new[]
-				{
-					new FilterOption<ArticleViewItem>(@"Exclude suppressed", v => v.Name.IndexOf('S') >= 0),
-					new FilterOption<ArticleViewItem>(@"Exclude not in territory", v => v.Name.IndexOf('F') >= 0),
-				});
+			var local = core.LocalizationManager;
+			var sorter = new Sorter<ArticleViewItem>(new[]
+			{
+				new SortOption<ArticleViewItem>(local[LocalizationKeys.Name], (x, y) => string.Compare(x.Name, y.Name, StringComparison.Ordinal)),
+				new SortOption<ArticleViewItem>(local[LocalizationKeys.Brand], (x, y) => string.Compare(x.Brand, y.Brand, StringComparison.Ordinal)),
+				new SortOption<ArticleViewItem>(local[LocalizationKeys.Flavor], (x, y) => string.Compare(x.Flavor, y.Flavor, StringComparison.Ordinal)),
+			});
+			var searcher = new Searcher<ArticleViewItem>(new[]
+			{
+				new SearchOption<ArticleViewItem>(local[LocalizationKeys.All], v => true, true),
+				new SearchOption<ArticleViewItem>(local[LocalizationKeys.OrderedToday], v => v.TodayQuantity > 0),
+			}, (item, search) => item.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
+			var filterOptions = new[]
+			{
+				new FilterOption<ArticleViewItem>(local[LocalizationKeys.OrderedToday], v => v.TodayQuantity > 0),
+			};
+
+			this.Module = new ArticlesModule(sorter, searcher, filterOptions);
 		}
 
 		public async Task LoadDataAsync()
@@ -104,8 +103,26 @@ namespace Cchbc.App.Articles.ViewModel
 			var brandHelper = await LoadBrandsAsync(feature, queryHelper);
 			var flavorHelper = await LoadFlavorsAsync(feature, queryHelper);
 			var articleHelper = await LoadArticlesAsync(feature, queryHelper, brandHelper, flavorHelper);
-			this.DisplayArticles(feature, articleHelper);
+			var todayQuantities = await GetTodayQuantitiesAsync(feature, queryHelper);
+			var viewItems = this.SetupQuantities(articleHelper, todayQuantities);
+			this.DisplayArticles(feature, viewItems);
 
+			this.FeatureManager.Stop(feature);
+		}
+
+		public void ExcludeSuppressed()
+		{
+			var feature = Feature.StartNew(this.Context, nameof(ExcludeSuppressed));
+			this.ExcludeSuppressedFilterOption.Flip();
+			this.ApplySearch();
+			this.FeatureManager.Stop(feature);
+		}
+
+		public void ExcludeNotInTerritory()
+		{
+			var feature = Feature.StartNew(this.Context, nameof(ExcludeNotInTerritory));
+			this.ExcludeNotInTerritoryFilterOption.Flip();
+			this.ApplySearch();
 			this.FeatureManager.Stop(feature);
 		}
 
@@ -136,27 +153,34 @@ namespace Cchbc.App.Articles.ViewModel
 			return articleHelper;
 		}
 
-		private void DisplayArticles(Feature feature, ArticleHelper articleHelper)
+		private async Task<Dictionary<long, long>> GetTodayQuantitiesAsync(Feature feature, ReadDataQueryHelper queryHelper)
+		{
+			var step = feature.AddStep(nameof(GetTodayQuantitiesAsync));
+			var helper = new QuantityHelper();
+			var quantities = await helper.GetByDateAsync(new QuantityAdapter(queryHelper), DateTime.Today);
+			step.Details = quantities.Count.ToString();
+			return quantities;
+		}
+
+		private ArticleViewItem[] SetupQuantities(ArticleHelper articleHelper, IReadOnlyDictionary<long, long> todayQuantities)
+		{
+			var viewItems = articleHelper.Items.Values.Select(v => new ArticleViewItem(v)).ToArray();
+
+			foreach (var viewItem in viewItems)
+			{
+				long quantity;
+				todayQuantities.TryGetValue(viewItem.Item.Id, out quantity);
+				viewItem.TodayQuantity = quantity;
+			}
+
+			return viewItems;
+		}
+
+		private void DisplayArticles(Feature feature, ArticleViewItem[] viewItems)
 		{
 			feature.AddStep(nameof(DisplayArticles));
-			this.Module.LoadData(articleHelper.Items.Values.Select(v => new ArticleViewItem(v)).ToArray());
+			this.Module.LoadData(viewItems);
 			this.ApplySearch();
-		}
-
-		public void ExcludeSuppressed()
-		{
-			var feature = Feature.StartNew(this.Context, nameof(ExcludeSuppressed));
-			this.ExcludeSuppressedFilterOption.Flip();
-			this.ApplySearch();
-			this.FeatureManager.Stop(feature);
-		}
-
-		public void ExcludeNotInTerritory()
-		{
-			var feature = Feature.StartNew(this.Context, nameof(ExcludeNotInTerritory));
-			this.ExcludeNotInTerritoryFilterOption.Flip();
-			this.ApplySearch();
-			this.FeatureManager.Stop(feature);
 		}
 
 		private void SearchByText() => this.ApplySearch();

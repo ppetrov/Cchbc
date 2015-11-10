@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Cchbc.App;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Objects;

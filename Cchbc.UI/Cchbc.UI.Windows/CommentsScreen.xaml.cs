@@ -1,42 +1,16 @@
 ﻿using System;
-using System.Diagnostics;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using Cchbc.Data;
+using Cchbc.App;
 using Cchbc.Features;
-using Cchbc.Features.Db;
 using Cchbc.UI.Comments;
 
 namespace Cchbc.UI
 {
-	public static class CurrentApp
-	{
-		private static Core Core { get; set; }
-
-		public static Core GetCore()
-		{
-			if (Core == null)
-			{
-				//var cn = new SQLiteConnection(@"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;");
-				//cn.Open();
-
-				//var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
-				//var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
-				//var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
-
-				Core = new Core(new DirectDebugLogger(@"N/A"), new QueryHelper(null, null));
-				Core.FeatureManager.Initialize(Core.Logger, new DbFeaturesManager(new DbFeaturesAdapter(new QueryHelper(null, null))));
-				Core.FeatureManager.StartDbWriters();
-			}
-
-			return Core;
-		}
-	}
-
 	public sealed partial class CommentsScreen
 	{
-		private readonly LoginViewModel _viewModel = new LoginViewModel(CurrentApp.GetCore());
+		private readonly LoginViewModel _viewModel = new LoginViewModel(Core.Current);
 
 		public CommentsScreen()
 		{
