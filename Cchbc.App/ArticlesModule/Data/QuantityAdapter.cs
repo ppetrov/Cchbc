@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cchbc.Data;
 
-namespace Cchbc.App.Articles.Data
+namespace Cchbc.App.ArticlesModule.Data
 {
 	public sealed class QuantityAdapter
 	{

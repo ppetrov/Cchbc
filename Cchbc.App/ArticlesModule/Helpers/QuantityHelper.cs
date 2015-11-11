@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Cchbc.App.Articles.Data;
+using Cchbc.App.ArticlesModule.Data;
 
-namespace Cchbc.App.Articles.Helpers
+namespace Cchbc.App.ArticlesModule.Helpers
 {
 	public sealed class QuantityHelper
 	{

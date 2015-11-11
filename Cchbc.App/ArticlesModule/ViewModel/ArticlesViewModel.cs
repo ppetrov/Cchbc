@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Cchbc.App.Articles.Data;
-using Cchbc.App.Articles.Helpers;
-using Cchbc.App.Articles.Objects;
+using Cchbc.App.ArticlesModule.Data;
+using Cchbc.App.ArticlesModule.Helpers;
+using Cchbc.App.ArticlesModule.Objects;
 using Cchbc.Data;
 using Cchbc.Features;
 using Cchbc.Localization;
@@ -13,19 +13,19 @@ using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
 
-namespace Cchbc.App.Articles.ViewModel
+namespace Cchbc.App.ArticlesModule.ViewModel
 {
 	public sealed class ArticlesViewModel : ViewObject
 	{
 		private Core Core { get; }
 		private FeatureManager FeatureManager => this.Core.FeatureManager;
 
-		private Module<Article, ArticleViewItem> Module { get; }
+		private ReadOnlyManager<Article, ArticleViewItem> ReadOnlyManager { get; }
 		private string Context { get; } = nameof(ArticlesViewModel);
 
 		public ObservableCollection<ArticleViewItem> Articles { get; } = new ObservableCollection<ArticleViewItem>();
-		public SortOption<ArticleViewItem>[] SortOptions => this.Module.Sorter.Options;
-		public SearchOption<ArticleViewItem>[] SearchOptions => this.Module.Searcher.Options;
+		public SortOption<ArticleViewItem>[] SortOptions => this.ReadOnlyManager.Sorter.Options;
+		public SearchOption<ArticleViewItem>[] SearchOptions => this.ReadOnlyManager.Searcher.Options;
 
 		private string _textSearch = string.Empty;
 		public string TextSearch
@@ -48,7 +48,7 @@ namespace Cchbc.App.Articles.ViewModel
 			set
 			{
 				this.SetField(ref _searchOption, value);
-				var feature = Feature.StartNew(this.Context, nameof(SearchByOption), value?.Name ?? @"N/A");
+				var feature = Feature.StartNew(this.Context, nameof(SearchByOption), value?.Name ?? string.Empty);
 				this.SearchByOption();
 				this.FeatureManager.Stop(feature);
 			}
@@ -67,8 +67,8 @@ namespace Cchbc.App.Articles.ViewModel
 			}
 		}
 
-		private FilterOption<ArticleViewItem> ExcludeSuppressedFilterOption => this.Module.FilterOptions[0];
-		private FilterOption<ArticleViewItem> ExcludeNotInTerritoryFilterOption => this.Module.FilterOptions[1];
+		private FilterOption<ArticleViewItem> ExcludeSuppressedFilterOption => this.ReadOnlyManager.FilterOptions[0];
+		private FilterOption<ArticleViewItem> ExcludeNotInTerritoryFilterOption => this.ReadOnlyManager.FilterOptions[1];
 
 		public ArticlesViewModel(Core core)
 		{
@@ -92,7 +92,7 @@ namespace Cchbc.App.Articles.ViewModel
 				new FilterOption<ArticleViewItem>(local[LocalizationKeys.OrderedToday], v => v.TodayQuantity > 0),
 			};
 
-			this.Module = new ArticlesModule(sorter, searcher, filterOptions);
+			this.ReadOnlyManager = new ArticlesReadOnlyManager(sorter, searcher, filterOptions);
 		}
 
 		public async Task LoadDataAsync()
@@ -100,11 +100,8 @@ namespace Cchbc.App.Articles.ViewModel
 			var queryHelper = this.Core.QueryHelper.ReadDataQueryHelper;
 			var feature = Feature.StartNew(this.Context, nameof(LoadDataAsync));
 
-			var brandHelper = await LoadBrandsAsync(feature, queryHelper);
-			var flavorHelper = await LoadFlavorsAsync(feature, queryHelper);
-			var articleHelper = await LoadArticlesAsync(feature, queryHelper, brandHelper, flavorHelper);
 			var todayQuantities = await GetTodayQuantitiesAsync(feature, queryHelper);
-			var viewItems = this.SetupQuantities(articleHelper, todayQuantities);
+			var viewItems = this.SetupQuantities(todayQuantities);
 			this.DisplayArticles(feature, viewItems);
 
 			this.FeatureManager.Stop(feature);
@@ -126,33 +123,6 @@ namespace Cchbc.App.Articles.ViewModel
 			this.FeatureManager.Stop(feature);
 		}
 
-		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadDataQueryHelper queryHelper)
-		{
-			var step = feature.AddStep(nameof(LoadBrandsAsync));
-			var brandHelper = new BrandHelper();
-			await brandHelper.LoadAsync(new BrandAdapter(queryHelper));
-			step.Details = brandHelper.Items.Count.ToString();
-			return brandHelper;
-		}
-
-		private async Task<FlavorHelper> LoadFlavorsAsync(Feature feature, ReadDataQueryHelper queryHelper)
-		{
-			var step = feature.AddStep(nameof(LoadFlavorsAsync));
-			var flavorHelper = new FlavorHelper();
-			await flavorHelper.LoadAsync(new FlavorAdapter(queryHelper));
-			step.Details = flavorHelper.Items.Count.ToString();
-			return flavorHelper;
-		}
-
-		private async Task<ArticleHelper> LoadArticlesAsync(Feature feature, ReadDataQueryHelper queryHelper, BrandHelper brandHelper, FlavorHelper flavorHelper)
-		{
-			var step = feature.AddStep(nameof(LoadArticlesAsync));
-			var articleHelper = new ArticleHelper();
-			await articleHelper.LoadAsync(new ArticleAdapter(queryHelper, brandHelper.Items, flavorHelper.Items));
-			step.Details = articleHelper.Items.Count.ToString();
-			return articleHelper;
-		}
-
 		private async Task<Dictionary<long, long>> GetTodayQuantitiesAsync(Feature feature, ReadDataQueryHelper queryHelper)
 		{
 			var step = feature.AddStep(nameof(GetTodayQuantitiesAsync));
@@ -162,8 +132,9 @@ namespace Cchbc.App.Articles.ViewModel
 			return quantities;
 		}
 
-		private ArticleViewItem[] SetupQuantities(ArticleHelper articleHelper, IReadOnlyDictionary<long, long> todayQuantities)
+		private ArticleViewItem[] SetupQuantities(IReadOnlyDictionary<long, long> todayQuantities)
 		{
+			var articleHelper = this.Core.DataCache.GetHelper<Article>();
 			var viewItems = articleHelper.Items.Values.Select(v => new ArticleViewItem(v)).ToArray();
 
 			foreach (var viewItem in viewItems)
@@ -179,7 +150,7 @@ namespace Cchbc.App.Articles.ViewModel
 		private void DisplayArticles(Feature feature, ArticleViewItem[] viewItems)
 		{
 			feature.AddStep(nameof(DisplayArticles));
-			this.Module.LoadData(viewItems);
+			this.ReadOnlyManager.LoadData(viewItems);
 			this.ApplySearch();
 		}
 
@@ -189,7 +160,7 @@ namespace Cchbc.App.Articles.ViewModel
 
 		private void ApplySearch()
 		{
-			var viewItems = this.Module.Search(this.TextSearch, this.SearchOption);
+			var viewItems = this.ReadOnlyManager.Search(this.TextSearch, this.SearchOption);
 
 			this.Articles.Clear();
 			foreach (var viewItem in viewItems)
@@ -201,7 +172,7 @@ namespace Cchbc.App.Articles.ViewModel
 		private void SortBy()
 		{
 			var index = 0;
-			foreach (var viewItem in this.Module.Sort(this.Articles, this.SortOption))
+			foreach (var viewItem in this.ReadOnlyManager.Sort(this.Articles, this.SortOption))
 			{
 				this.Articles[index++] = viewItem;
 			}

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Cchbc.App.Articles.Objects;
+using Cchbc.App.ArticlesModule.Objects;
 using Cchbc.Data;
 
-namespace Cchbc.App.Articles.Data
+namespace Cchbc.App.ArticlesModule.Data
 {
 	public sealed class ArticleAdapter : IReadOnlyAdapter<Article>
 	{

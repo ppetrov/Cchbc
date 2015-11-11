@@ -1,5 +1,4 @@
-﻿using System;
-using Cchbc.Data;
+﻿using Cchbc.Data;
 using Cchbc.Features;
 using Cchbc.Localization;
 

@@ -5,11 +5,16 @@ using System.Data.Common;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Cchbc.App;
-using Cchbc.App.Articles.ViewModel;
+using Cchbc.App.ArticlesModule.Data;
+using Cchbc.App.ArticlesModule.Helpers;
+using Cchbc.App.ArticlesModule.Objects;
+using Cchbc.App.ArticlesModule.ViewModel;
+using Cchbc.App.OrderModule;
 using Cchbc.Data;
 using Cchbc.Features;
 using Cchbc.Features.Db;
@@ -195,16 +200,48 @@ namespace Cchbc.ConsoleClient
 					var localizationManager = new LocalizationManager();
 					core.LocalizationManager = localizationManager;
 
+					// Register helpers
+					core.DataCache = new DataCache();
+					var cache = core.DataCache;
+					cache.AddHelper(new BrandHelper());
+					cache.AddHelper(new FlavorHelper());
+					cache.AddHelper(new ArticleHelper());
+					cache.AddHelper(new OrderTypeHelper());
+					cache.AddHelper(new VendorHelper());
+					cache.AddHelper(new WholesalerHelper());
+					cache.AddHelper(new OrderNoteTypeHelper());
+
+					// Load helpers
+					var brandHelper = cache.GetHelper<Brand>();
+					brandHelper.LoadAsync(new BrandAdapter(sqlReadDataQueryHelper)).Wait();
+					var flavorHelper = cache.GetHelper<Flavor>();
+					flavorHelper.LoadAsync(new FlavorAdapter(sqlReadDataQueryHelper)).Wait();
+					var articleHelper = cache.GetHelper<Article>();
+					articleHelper.LoadAsync(new ArticleAdapter(sqlReadDataQueryHelper, brandHelper.Items, flavorHelper.Items)).Wait();
+
+					cache.GetHelper<OrderType>().LoadAsync(new OrderTypeAdapter());
+					cache.GetHelper<Vendor>().LoadAsync(new VendorAdapter());
+					cache.GetHelper<Wholesaler>().LoadAsync(new WholesalerAdapter());
+					cache.GetHelper<OrderNoteType>().LoadAsync(new OrderNoteTypeAdapter());
+
 					localizationManager.LoadAsync();
 
 					var viewModel = new ArticlesViewModel(core);
 					try
 					{
-						for (int i = 0; i < 5; i++)
-						{
-							viewModel.LoadDataAsync().Wait();
-						}
+						//for (var i = 0; i < 5; i++)
+						//{
+						//	viewModel.LoadDataAsync().Wait();
+						//}
 
+						var manager = new OrderManager(core, new Activity { Id = 1, Outlet = new Outlet { Id = 1, Name = @"Billa" } });
+
+						for (int i = 0; i < 7; i++)
+						{
+							manager.LoadDataAsync().Wait();
+							var items = manager.Assortments;
+							Console.WriteLine(items.Count);
+						}
 					}
 					catch (Exception e)
 					{
@@ -254,6 +291,33 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
+		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadDataQueryHelper queryHelper)
+		{
+			var step = feature.AddStep(nameof(LoadBrandsAsync));
+			var brandHelper = new BrandHelper();
+			await brandHelper.LoadAsync(new BrandAdapter(queryHelper));
+			step.Details = brandHelper.Items.Count.ToString();
+			return brandHelper;
+		}
+
+		private async Task<FlavorHelper> LoadFlavorsAsync(Feature feature, ReadDataQueryHelper queryHelper)
+		{
+			var step = feature.AddStep(nameof(LoadFlavorsAsync));
+			var flavorHelper = new FlavorHelper();
+			await flavorHelper.LoadAsync(new FlavorAdapter(queryHelper));
+			step.Details = flavorHelper.Items.Count.ToString();
+			return flavorHelper;
+		}
+
+		private async Task<ArticleHelper> LoadArticlesAsync(Feature feature, ReadDataQueryHelper queryHelper, BrandHelper brandHelper, FlavorHelper flavorHelper)
+		{
+			var step = feature.AddStep(nameof(LoadArticlesAsync));
+			var articleHelper = new ArticleHelper();
+			await articleHelper.LoadAsync(new ArticleAdapter(queryHelper, brandHelper.Items, flavorHelper.Items));
+			step.Details = articleHelper.Items.Count.ToString();
+			return articleHelper;
+		}
+
 		private static Action<FeatureEntry> InspectFeature()
 		{
 			return f =>
@@ -266,15 +330,29 @@ namespace Cchbc.ConsoleClient
 				buffer.Append('\t');
 				buffer.AppendLine(f.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
 
-				foreach (var s in f.Steps)
+				if (f.Steps.Any())
 				{
-					buffer.Append('\t');
-					buffer.Append(s.Name);
-					buffer.Append('\t');
-					buffer.Append(s.Details);
-					buffer.Append('\t');
-					buffer.AppendLine(s.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
+					var max = f.Steps.Select(s => s.TimeSpent.TotalMilliseconds).Max();
+					var scale = max + (max / 2);
+
+					foreach (var s in f.Steps)
+					{
+						buffer.Append("  ");
+						buffer.Append(s.Name.PadRight(14));
+						buffer.Append("  ");
+						buffer.Append(s.Details);
+						buffer.Append('\t');
+						var milliseconds = s.TimeSpent.TotalMilliseconds;
+						var tmp = (milliseconds / scale) * 100;
+						var graph = new string('-', (int)tmp);
+						
+                        buffer.Append(milliseconds.ToString(CultureInfo.InvariantCulture).PadRight(8));
+						buffer.Append(tmp.ToString(@"F2").PadLeft(5));
+						buffer.Append(@"% ");
+						buffer.AppendLine(graph);
+					}
 				}
+
 
 				var output = buffer.ToString();
 				output = output.Replace(@"Async", "");
@@ -397,3 +475,4 @@ namespace Cchbc.ConsoleClient
 
 
 }
+

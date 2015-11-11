@@ -60,7 +60,7 @@
     <Compile Include="Localization\LocalizationKey.cs" />
     <Compile Include="Localization\LocalizationKeys.cs" />
     <Compile Include="Localization\LocalizationManager.cs" />
-    <Compile Include="Module.cs" />
+    <Compile Include="ReadOnlyManager.cs" />
     <Compile Include="Objects\ViewItem.cs" />
     <Compile Include="Search\FilterOption.cs" />
     <Compile Include="Search\Searcher.cs" />

@@ -1,27 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Cchbc.App.Articles.Objects;
+using Cchbc.App.ArticlesModule.Objects;
 using Cchbc.Data;
 
-namespace Cchbc.App.Articles.Data
+namespace Cchbc.App.ArticlesModule.Data
 {
-	public sealed class BrandAdapter : IReadOnlyAdapter<Brand>
+	public sealed class FlavorAdapter : IReadOnlyAdapter<Flavor>
 	{
 		private readonly ReadDataQueryHelper _queryHelper;
 
-		public BrandAdapter(ReadDataQueryHelper queryHelper)
+		public FlavorAdapter(ReadDataQueryHelper queryHelper)
 		{
 			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 
 			_queryHelper = queryHelper;
 		}
 
-		public async Task FillAsync(Dictionary<long, Brand> items)
+		public async Task FillAsync(Dictionary<long, Flavor> items)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
-			await _queryHelper.FillAsync(new Query<Brand>(@"SELECT ID, NAME FROM BRANDS", r =>
+			await _queryHelper.FillAsync(new Query<Flavor>(@"SELECT ID, NAME FROM FLAVORS", r =>
 			{
 				var id = r.GetInt64(0);
 				var name = string.Empty;
@@ -29,7 +29,7 @@ namespace Cchbc.App.Articles.Data
 				{
 					name = r.GetString(1);
 				}
-				return new Brand(id, name);
+				return new Flavor(id, name);
 			}), items);
 		}
 	}

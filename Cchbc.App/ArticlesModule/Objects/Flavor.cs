@@ -1,7 +1,7 @@
 ﻿using System;
 using Cchbc.Objects;
 
-namespace Cchbc.App.Articles.Objects
+namespace Cchbc.App.ArticlesModule.Objects
 {
 	public sealed class Flavor : IDbObject
 	{

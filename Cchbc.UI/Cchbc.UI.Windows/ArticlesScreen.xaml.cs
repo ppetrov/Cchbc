@@ -4,7 +4,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Cchbc.App;
-using Cchbc.App.Articles.ViewModel;
+using Cchbc.App.ArticlesModule.ViewModel;
 using Cchbc.Search;
 
 namespace Cchbc.UI

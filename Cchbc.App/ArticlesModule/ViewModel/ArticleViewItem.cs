@@ -1,7 +1,7 @@
-﻿using Cchbc.App.Articles.Objects;
+﻿using Cchbc.App.ArticlesModule.Objects;
 using Cchbc.Objects;
 
-namespace Cchbc.App.Articles.ViewModel
+namespace Cchbc.App.ArticlesModule.ViewModel
 {
 	public sealed class ArticleViewItem : ViewItem<Article>
 	{
