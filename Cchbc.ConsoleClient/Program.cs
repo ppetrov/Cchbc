@@ -20,6 +20,7 @@ using Cchbc.App.OrderModule;
 using Cchbc.Data;
 using Cchbc.Db;
 using Cchbc.Db.DDL;
+using Cchbc.Db.DML;
 using Cchbc.Features;
 using Cchbc.Features.Db;
 using Cchbc.Localization;
@@ -187,38 +188,6 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class AContextAdapter : IReadOnlyAdapter<AContext>
-	{
-		public ReadQueryHelper QueryHelper { get; }
-
-		public AContextAdapter(ReadQueryHelper queryHelper)
-		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public Task FillAsync(Dictionary<long, AContext> items)
-		{
-			if (items == null) throw new ArgumentNullException(nameof(items));
-
-			return this.QueryHelper.ExecuteAsync(new Query<AContext>(@"TODO : SQL Select Query", r =>
-			{
-				var id = 0L;
-				if (!r.IsDbNull(0))
-				{
-					id = r.GetInt64(0);
-				}
-				var name = string.Empty;
-				if (!r.IsDbNull(1))
-				{
-					name = r.GetString(1);
-				}
-				return new AContext(id, name);
-			}));
-		}
-	}
-
 	public sealed class AFeature : IDbObject
 	{
 		public long Id { get; set; }
@@ -292,6 +261,49 @@ namespace Cchbc.ConsoleClient
 	}
 
 
+	public sealed class AFeatureAdapter : IReadOnlyAdapter<AFeature>
+	{
+		public ReadQueryHelper QueryHelper { get; }
+
+		public AFeatureAdapter(ReadQueryHelper queryHelper)
+		{
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+
+			this.QueryHelper = queryHelper;
+		}
+
+		public Task FillAsync(Dictionary<long, AFeature> items)
+		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
+
+			return this.QueryHelper.ExecuteAsync(new Query<AFeature>(@"SELECT Id, Name, AContextId FROM AFeatures", r =>
+			{
+				var id = 0L;
+				if (!r.IsDbNull(0))
+				{
+					id = r.GetInt64(0);
+				}
+
+				var name = string.Empty;
+				if (!r.IsDbNull(1))
+				{
+					name = r.GetString(1);
+				}
+
+				var aContext = default(AContext);
+				if (!r.IsDbNull(2))
+				{
+					aContext = null;
+				}
+
+				return new AFeature(id, name, aContext);
+			}));
+		}
+	}
+
+
+
+
 
 
 
@@ -321,7 +333,7 @@ namespace Cchbc.ConsoleClient
 				var contexts = new DbTable(@"AContexts", new[]
 				{
 					DbColumn.PrimaryKey(),
-					DbColumn.String(@"Name"),
+					DbColumn.String(@"Name", true),
 				});
 				var features = new DbTable(@"AFeatures", new[]
 				{
@@ -350,6 +362,8 @@ namespace Cchbc.ConsoleClient
 					DbColumn.ForeignKey(featureEntry),
 				}, @"AFeatureStepEntry");
 
+				//Console.WriteLine(QueryCreator.GetSelect(stepsEntry));
+
 
 				var schema = new[]
 				{
@@ -363,8 +377,11 @@ namespace Cchbc.ConsoleClient
 				var buffer = new StringBuilder();
 				foreach (var t in schema)
 				{
-					buffer.AppendLine(ClrGenerator.Class(t));
+					//buffer.AppendLine(ClrGenerator.Class(t));
+					//buffer.AppendLine(ClrGenerator.ReadAdapter(t));
 				}
+
+				buffer.AppendLine(ClrGenerator.ReadAdapter(features));
 
 				Console.WriteLine(buffer.ToString());
 				File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
