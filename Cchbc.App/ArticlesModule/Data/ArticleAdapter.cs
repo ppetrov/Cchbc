@@ -8,11 +8,11 @@ namespace Cchbc.App.ArticlesModule.Data
 {
 	public sealed class ArticleAdapter : IReadOnlyAdapter<Article>
 	{
-		private readonly ReadDataQueryHelper _queryHelper;
+		private readonly ReadQueryHelper _queryHelper;
 		private readonly Dictionary<long, Brand> _brands;
 		private readonly Dictionary<long, Flavor> _flavors;
 
-		public ArticleAdapter(ReadDataQueryHelper queryHelper, Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
+		public ArticleAdapter(ReadQueryHelper queryHelper, Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
 		{
 			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 			if (brands == null) throw new ArgumentNullException(nameof(brands));

@@ -5,7 +5,9 @@ using System.Data.Common;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Runtime.Remoting.Contexts;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -16,9 +18,12 @@ using Cchbc.App.ArticlesModule.Objects;
 using Cchbc.App.ArticlesModule.ViewModel;
 using Cchbc.App.OrderModule;
 using Cchbc.Data;
+using Cchbc.Db;
+using Cchbc.Db.DDL;
 using Cchbc.Features;
 using Cchbc.Features.Db;
 using Cchbc.Localization;
+using Cchbc.Objects;
 
 
 namespace Cchbc.ConsoleClient
@@ -70,11 +75,11 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class SqlReadDataQueryHelper : ReadDataQueryHelper
+	public sealed class SqlReadQueryHelper : ReadQueryHelper
 	{
 		private readonly SQLiteConnection _connection;
 
-		public SqlReadDataQueryHelper(SQLiteConnection connection)
+		public SqlReadQueryHelper(SQLiteConnection connection)
 		{
 			if (connection == null) throw new ArgumentNullException(nameof(connection));
 
@@ -138,12 +143,12 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class SqlModifyDataQueryHelper : ModifyDataQueryHelper
+	public sealed class SqlModifyQueryHelper : ModifyQueryHelper
 	{
 		private readonly SQLiteConnection _connection;
 
-		public SqlModifyDataQueryHelper(ReadDataQueryHelper readDataQueryHelper, SQLiteConnection connection)
-			: base(readDataQueryHelper)
+		public SqlModifyQueryHelper(ReadQueryHelper readQueryHelper, SQLiteConnection connection)
+			: base(readQueryHelper)
 		{
 			if (connection == null) throw new ArgumentNullException(nameof(connection));
 
@@ -165,12 +170,232 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
+
+
+
+	public sealed class AContext : IDbObject
+	{
+		public long Id { get; set; }
+		public string Name { get; }
+
+		public AContext(long id, string name)
+		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			this.Id = id;
+			this.Name = name;
+		}
+	}
+
+	public sealed class AContextAdapter : IReadOnlyAdapter<AContext>
+	{
+		public ReadQueryHelper QueryHelper { get; }
+
+		public AContextAdapter(ReadQueryHelper queryHelper)
+		{
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+
+			this.QueryHelper = queryHelper;
+		}
+
+		public Task FillAsync(Dictionary<long, AContext> items)
+		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
+
+			return this.QueryHelper.ExecuteAsync(new Query<AContext>(@"TODO : SQL Select Query", r =>
+			{
+				var id = 0L;
+				if (!r.IsDbNull(0))
+				{
+					id = r.GetInt64(0);
+				}
+				var name = string.Empty;
+				if (!r.IsDbNull(1))
+				{
+					name = r.GetString(1);
+				}
+				return new AContext(id, name);
+			}));
+		}
+	}
+
+	public sealed class AFeature : IDbObject
+	{
+		public long Id { get; set; }
+		public string Name { get; }
+		public AContext AContext { get; }
+
+		public AFeature(long id, string name, AContext aContext)
+		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (aContext == null) throw new ArgumentNullException(nameof(aContext));
+
+			this.Id = id;
+			this.Name = name;
+			this.AContext = aContext;
+		}
+	}
+
+	public sealed class AStep : IDbObject
+	{
+		public long Id { get; set; }
+		public string Name { get; }
+
+		public AStep(long id, string name)
+		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			this.Id = id;
+			this.Name = name;
+		}
+	}
+
+	public sealed class AFeatureEntry : IDbObject
+	{
+		public long Id { get; set; }
+		public decimal TimeSpent { get; }
+		public string Details { get; }
+		public AFeature AFeature { get; }
+
+		public AFeatureEntry(long id, decimal timeSpent, string details, AFeature aFeature)
+		{
+			if (details == null) throw new ArgumentNullException(nameof(details));
+			if (aFeature == null) throw new ArgumentNullException(nameof(aFeature));
+
+			this.Id = id;
+			this.TimeSpent = timeSpent;
+			this.Details = details;
+			this.AFeature = aFeature;
+		}
+	}
+
+	public sealed class AFeatureStepEntry : IDbObject
+	{
+		public long Id { get; set; }
+		public decimal TimeSpent { get; }
+		public string Details { get; }
+		public AStep AStep { get; }
+		public AFeatureEntry AFeatureEntry { get; }
+
+		public AFeatureStepEntry(long id, decimal timeSpent, string details, AStep aStep, AFeatureEntry aFeatureEntry)
+		{
+			if (details == null) throw new ArgumentNullException(nameof(details));
+			if (aStep == null) throw new ArgumentNullException(nameof(aStep));
+			if (aFeatureEntry == null) throw new ArgumentNullException(nameof(aFeatureEntry));
+
+			this.Id = id;
+			this.TimeSpent = timeSpent;
+			this.Details = details;
+			this.AStep = aStep;
+			this.AFeatureEntry = aFeatureEntry;
+		}
+	}
+
+
+
+
+
 	public class Program
 	{
 		static void Main(string[] args)
 		{
 			try
 			{
+				//var brands = new DbTable(@"Brands", new[]
+				//{
+				//	DbColumn.PrimaryKey(),
+				//	DbColumn.String(@"Name"),
+				//	DbColumn.String(@"Description"),
+				//});
+
+				//var articles = new DbTable(@"Articles", new []
+				//{
+				//	DbColumn.PrimaryKey(),
+				//	DbColumn.String(@"Name"),
+				//	DbColumn.ForeignKey(brands, true)
+				//});
+
+
+				// 1.Db => CLR
+				// TODO : Adapter
+				var contexts = new DbTable(@"AContexts", new[]
+				{
+					DbColumn.PrimaryKey(),
+					DbColumn.String(@"Name"),
+				});
+				var features = new DbTable(@"AFeatures", new[]
+				{
+					DbColumn.PrimaryKey(),
+					DbColumn.String(@"Name"),
+					DbColumn.ForeignKey(contexts)
+				});
+				var steps = new DbTable(@"ASteps", new[]
+				{
+					DbColumn.PrimaryKey(),
+					DbColumn.String(@"Name"),
+				});
+				var featureEntry = new DbTable(@"AFeatureEntries", new[]
+				{
+					DbColumn.PrimaryKey(),
+					DbColumn.Decimal(@"TimeSpent"),
+					DbColumn.String(@"Details"),
+					DbColumn.ForeignKey(features)
+				}, @"AFeatureEntry");
+				var stepsEntry = new DbTable(@"AFeatureStepEntries", new[]
+				{
+					DbColumn.PrimaryKey(),
+					DbColumn.Decimal(@"TimeSpent"),
+					DbColumn.String(@"Details"),
+					DbColumn.ForeignKey(steps),
+					DbColumn.ForeignKey(featureEntry),
+				}, @"AFeatureStepEntry");
+
+
+				var schema = new[]
+				{
+					contexts,
+					features,
+					steps,
+					featureEntry,
+					stepsEntry
+				};
+
+				var buffer = new StringBuilder();
+				foreach (var t in schema)
+				{
+					buffer.AppendLine(ClrGenerator.Class(t));
+				}
+
+				Console.WriteLine(buffer.ToString());
+				File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
+
+				//var tmp = ClrClassGenerator.Generate(features);
+				//Console.WriteLine(tmp);
+
+				//foreach (var table in schema)
+				//{
+				//	var script = DbScriptGenerator.GenerateCreateTableScript(table);
+				//	Console.WriteLine(script);
+				//}
+
+				return;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 				//var connectionString = @"Server=cwpfsa04;Database=Cchbc;User Id=dev;Password='dev user password'";
 				var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
 
@@ -184,9 +409,9 @@ namespace Cchbc.ConsoleClient
 					core.Logger = new ConsoleLogger();
 
 					// Create Read query helper
-					var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
+					var sqlReadDataQueryHelper = new SqlReadQueryHelper(cn);
 					// Create Modify query helper
-					var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
+					var sqlModifyDataQueryHelper = new SqlModifyQueryHelper(sqlReadDataQueryHelper, cn);
 					// Create General query helper
 					var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
 					core.QueryHelper = queryHelper;
@@ -291,7 +516,7 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadDataQueryHelper queryHelper)
+		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadQueryHelper queryHelper)
 		{
 			var step = feature.AddStep(nameof(LoadBrandsAsync));
 			var brandHelper = new BrandHelper();
@@ -300,7 +525,7 @@ namespace Cchbc.ConsoleClient
 			return brandHelper;
 		}
 
-		private async Task<FlavorHelper> LoadFlavorsAsync(Feature feature, ReadDataQueryHelper queryHelper)
+		private async Task<FlavorHelper> LoadFlavorsAsync(Feature feature, ReadQueryHelper queryHelper)
 		{
 			var step = feature.AddStep(nameof(LoadFlavorsAsync));
 			var flavorHelper = new FlavorHelper();
@@ -309,7 +534,7 @@ namespace Cchbc.ConsoleClient
 			return flavorHelper;
 		}
 
-		private async Task<ArticleHelper> LoadArticlesAsync(Feature feature, ReadDataQueryHelper queryHelper, BrandHelper brandHelper, FlavorHelper flavorHelper)
+		private async Task<ArticleHelper> LoadArticlesAsync(Feature feature, ReadQueryHelper queryHelper, BrandHelper brandHelper, FlavorHelper flavorHelper)
 		{
 			var step = feature.AddStep(nameof(LoadArticlesAsync));
 			var articleHelper = new ArticleHelper();
@@ -345,8 +570,8 @@ namespace Cchbc.ConsoleClient
 						var milliseconds = s.TimeSpent.TotalMilliseconds;
 						var tmp = (milliseconds / scale) * 100;
 						var graph = new string('-', (int)tmp);
-						
-                        buffer.Append(milliseconds.ToString(CultureInfo.InvariantCulture).PadRight(8));
+
+						buffer.Append(milliseconds.ToString(CultureInfo.InvariantCulture).PadRight(8));
 						buffer.Append(tmp.ToString(@"F2").PadLeft(5));
 						buffer.Append(@"% ");
 						buffer.AppendLine(graph);

@@ -97,7 +97,7 @@ namespace Cchbc.App.ArticlesModule.ViewModel
 
 		public async Task LoadDataAsync()
 		{
-			var queryHelper = this.Core.QueryHelper.ReadDataQueryHelper;
+			var queryHelper = this.Core.QueryHelper.ReadQueryHelper;
 			var feature = Feature.StartNew(this.Context, nameof(LoadDataAsync));
 
 			var todayQuantities = await GetTodayQuantitiesAsync(feature, queryHelper);
@@ -123,7 +123,7 @@ namespace Cchbc.App.ArticlesModule.ViewModel
 			this.FeatureManager.Stop(feature);
 		}
 
-		private async Task<Dictionary<long, long>> GetTodayQuantitiesAsync(Feature feature, ReadDataQueryHelper queryHelper)
+		private async Task<Dictionary<long, long>> GetTodayQuantitiesAsync(Feature feature, ReadQueryHelper queryHelper)
 		{
 			var step = feature.AddStep(nameof(GetTodayQuantitiesAsync));
 			var helper = new QuantityHelper();

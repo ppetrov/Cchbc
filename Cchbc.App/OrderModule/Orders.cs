@@ -47,6 +47,7 @@ namespace Cchbc.App.OrderModule
 
 
 
+
 	public sealed class DeliveryAddress : IDbObject
 	{
 		public long Id { get; set; }

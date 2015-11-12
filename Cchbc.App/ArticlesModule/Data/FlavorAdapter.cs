@@ -8,9 +8,9 @@ namespace Cchbc.App.ArticlesModule.Data
 {
 	public sealed class FlavorAdapter : IReadOnlyAdapter<Flavor>
 	{
-		private readonly ReadDataQueryHelper _queryHelper;
+		private readonly ReadQueryHelper _queryHelper;
 
-		public FlavorAdapter(ReadDataQueryHelper queryHelper)
+		public FlavorAdapter(ReadQueryHelper queryHelper)
 		{
 			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 

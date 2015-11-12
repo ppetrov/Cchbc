@@ -8,9 +8,9 @@ namespace Cchbc.App.ArticlesModule.Data
 {
 	public sealed class BrandAdapter : IReadOnlyAdapter<Brand>
 	{
-		private readonly ReadDataQueryHelper _queryHelper;
+		private readonly ReadQueryHelper _queryHelper;
 
-		public BrandAdapter(ReadDataQueryHelper queryHelper)
+		public BrandAdapter(ReadQueryHelper queryHelper)
 		{
 			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 

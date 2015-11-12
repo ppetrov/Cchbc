@@ -35,13 +35,20 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DataCache.cs" />
+    <Compile Include="Db\ClrGenerator.cs" />
+    <Compile Include="Db\DDL\DbColumn.cs" />
+    <Compile Include="Db\DDL\DbForeignKey.cs" />
+    <Compile Include="Db\DDL\DbSchema.cs" />
+    <Compile Include="Db\DDL\DbScript.cs" />
+    <Compile Include="Db\DDL\DbTable.cs" />
+    <Compile Include="Db\NameProvider.cs" />
+    <Compile Include="Db\DDL\DbColumnType.cs" />
     <Compile Include="Data\ModifyDataQueryHelper.cs" />
     <Compile Include="Data\IFieldDataReader.cs" />
     <Compile Include="Data\IModifiableAdapter.cs" />
     <Compile Include="Data\Query.cs" />
     <Compile Include="Data\QueryHelper.cs" />
     <Compile Include="Data\QueryParameter.cs" />
-    <Compile Include="Data\ReadDataAdapter.cs" />
     <Compile Include="Data\ReadDataQueryHelper.cs" />
     <Compile Include="Features\Db\DbFeature.cs" />
     <Compile Include="Features\Db\DbContext.cs" />

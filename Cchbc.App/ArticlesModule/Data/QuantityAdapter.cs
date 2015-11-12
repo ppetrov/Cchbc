@@ -7,9 +7,9 @@ namespace Cchbc.App.ArticlesModule.Data
 {
 	public sealed class QuantityAdapter
 	{
-		private ReadDataQueryHelper QueryHelper { get; }
+		private ReadQueryHelper QueryHelper { get; }
 
-		public QuantityAdapter(ReadDataQueryHelper queryHelper)
+		public QuantityAdapter(ReadQueryHelper queryHelper)
 		{
 			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 

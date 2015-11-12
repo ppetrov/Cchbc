@@ -4,7 +4,7 @@ using Cchbc.Objects;
 
 namespace Cchbc.Data
 {
-	public abstract class ReadDataQueryHelper
+	public abstract class ReadQueryHelper
 	{
 		public abstract Task<List<T>> ExecuteAsync<T>(Query<T> query);
 
