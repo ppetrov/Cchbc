@@ -174,136 +174,6 @@ namespace Cchbc.ConsoleClient
 
 
 
-	public sealed class AContext : IDbObject
-	{
-		public long Id { get; set; }
-		public string Name { get; }
-
-		public AContext(long id, string name)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			this.Id = id;
-			this.Name = name;
-		}
-	}
-
-	public sealed class AFeature : IDbObject
-	{
-		public long Id { get; set; }
-		public string Name { get; }
-		public AContext AContext { get; }
-
-		public AFeature(long id, string name, AContext aContext)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
-			if (aContext == null) throw new ArgumentNullException(nameof(aContext));
-
-			this.Id = id;
-			this.Name = name;
-			this.AContext = aContext;
-		}
-	}
-
-	public sealed class AStep : IDbObject
-	{
-		public long Id { get; set; }
-		public string Name { get; }
-
-		public AStep(long id, string name)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			this.Id = id;
-			this.Name = name;
-		}
-	}
-
-	public sealed class AFeatureEntry : IDbObject
-	{
-		public long Id { get; set; }
-		public decimal TimeSpent { get; }
-		public string Details { get; }
-		public AFeature AFeature { get; }
-
-		public AFeatureEntry(long id, decimal timeSpent, string details, AFeature aFeature)
-		{
-			if (details == null) throw new ArgumentNullException(nameof(details));
-			if (aFeature == null) throw new ArgumentNullException(nameof(aFeature));
-
-			this.Id = id;
-			this.TimeSpent = timeSpent;
-			this.Details = details;
-			this.AFeature = aFeature;
-		}
-	}
-
-	public sealed class AFeatureStepEntry : IDbObject
-	{
-		public long Id { get; set; }
-		public decimal TimeSpent { get; }
-		public string Details { get; }
-		public AStep AStep { get; }
-		public AFeatureEntry AFeatureEntry { get; }
-
-		public AFeatureStepEntry(long id, decimal timeSpent, string details, AStep aStep, AFeatureEntry aFeatureEntry)
-		{
-			if (details == null) throw new ArgumentNullException(nameof(details));
-			if (aStep == null) throw new ArgumentNullException(nameof(aStep));
-			if (aFeatureEntry == null) throw new ArgumentNullException(nameof(aFeatureEntry));
-
-			this.Id = id;
-			this.TimeSpent = timeSpent;
-			this.Details = details;
-			this.AStep = aStep;
-			this.AFeatureEntry = aFeatureEntry;
-		}
-	}
-
-
-	public sealed class AFeatureAdapter : IReadOnlyAdapter<AFeature>
-	{
-		public ReadQueryHelper QueryHelper { get; }
-
-		public AFeatureAdapter(ReadQueryHelper queryHelper)
-		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public Task FillAsync(Dictionary<long, AFeature> items)
-		{
-			if (items == null) throw new ArgumentNullException(nameof(items));
-
-			return this.QueryHelper.ExecuteAsync(new Query<AFeature>(@"SELECT Id, Name, AContextId FROM AFeatures", r =>
-			{
-				var id = 0L;
-				if (!r.IsDbNull(0))
-				{
-					id = r.GetInt64(0);
-				}
-
-				var name = string.Empty;
-				if (!r.IsDbNull(1))
-				{
-					name = r.GetString(1);
-				}
-
-				var aContext = default(AContext);
-				if (!r.IsDbNull(2))
-				{
-					aContext = null;
-				}
-
-				return new AFeature(id, name, aContext);
-			}));
-		}
-	}
-
-
-
-
 
 
 
@@ -330,58 +200,45 @@ namespace Cchbc.ConsoleClient
 
 				// 1.Db => CLR
 				// TODO : Adapter
-				var contexts = new DbTable(@"AContexts", new[]
+				var orderTypes = new DbTable(@"OrderTypes", new[]
 				{
 					DbColumn.PrimaryKey(),
-					DbColumn.String(@"Name", true),
+					DbColumn.String(@"Name")
 				});
-				var features = new DbTable(@"AFeatures", new[]
+				var orderHeaders = new DbTable(@"OrderHeaders", new[]
 				{
 					DbColumn.PrimaryKey(),
 					DbColumn.String(@"Name"),
-					DbColumn.ForeignKey(contexts)
+					DbColumn.ForeignKey(orderTypes)
 				});
-				var steps = new DbTable(@"ASteps", new[]
+				var orderDetails = new DbTable(@"OrderDetails", new[]
 				{
 					DbColumn.PrimaryKey(),
 					DbColumn.String(@"Name"),
+					DbColumn.ForeignKey(orderHeaders)
 				});
-				var featureEntry = new DbTable(@"AFeatureEntries", new[]
-				{
-					DbColumn.PrimaryKey(),
-					DbColumn.Decimal(@"TimeSpent"),
-					DbColumn.String(@"Details"),
-					DbColumn.ForeignKey(features)
-				}, @"AFeatureEntry");
-				var stepsEntry = new DbTable(@"AFeatureStepEntries", new[]
-				{
-					DbColumn.PrimaryKey(),
-					DbColumn.Decimal(@"TimeSpent"),
-					DbColumn.String(@"Details"),
-					DbColumn.ForeignKey(steps),
-					DbColumn.ForeignKey(featureEntry),
-				}, @"AFeatureStepEntry");
-
-				//Console.WriteLine(QueryCreator.GetSelect(stepsEntry));
 
 
 				var schema = new[]
 				{
-					contexts,
-					features,
-					steps,
-					featureEntry,
-					stepsEntry
+					orderTypes,
+					orderHeaders,
+					orderDetails,
 				};
 
+
+
+				var tmp = DbScript.CreateTables(schema);
+
 				var buffer = new StringBuilder();
+
 				foreach (var t in schema)
 				{
-					//buffer.AppendLine(ClrGenerator.Class(t));
-					//buffer.AppendLine(ClrGenerator.ReadAdapter(t));
+					var table = DbScript.CreateTable(t);
+					buffer.AppendLine(table);
 				}
 
-				buffer.AppendLine(ClrGenerator.ReadAdapter(features));
+				//buffer.AppendLine(ClrGenerator.ReadAdapter(orderDetails));
 
 				Console.WriteLine(buffer.ToString());
 				File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
