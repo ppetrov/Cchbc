@@ -183,21 +183,6 @@ namespace Cchbc.ConsoleClient
 		{
 			try
 			{
-				//var brands = new DbTable(@"Brands", new[]
-				//{
-				//	DbColumn.PrimaryKey(),
-				//	DbColumn.String(@"Name"),
-				//	DbColumn.String(@"Description"),
-				//});
-
-				//var articles = new DbTable(@"Articles", new []
-				//{
-				//	DbColumn.PrimaryKey(),
-				//	DbColumn.String(@"Name"),
-				//	DbColumn.ForeignKey(brands, true)
-				//});
-
-
 				// 1.Db => CLR
 				// TODO : Adapter
 				var orderTypes = new DbTable(@"OrderTypes", new[]
@@ -222,20 +207,20 @@ namespace Cchbc.ConsoleClient
 				var schema = new[]
 				{
 					orderTypes,
-					orderHeaders,
-					orderDetails,
+					//orderHeaders,
+					//orderDetails,
 				};
 
 
 
-				var tmp = DbScript.CreateTables(schema);
+				
 
 				var buffer = new StringBuilder();
 
 				foreach (var t in schema)
 				{
-					var table = DbScript.CreateTable(t);
-					buffer.AppendLine(table);
+					var value = ClrGenerator.Class(t, orderHeaders);
+					buffer.AppendLine(value);
 				}
 
 				//buffer.AppendLine(ClrGenerator.ReadAdapter(orderDetails));

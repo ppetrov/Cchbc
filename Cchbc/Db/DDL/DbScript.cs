@@ -62,11 +62,16 @@ namespace Cchbc.Db.DDL
 			return buffer.ToString();
 		}
 
+		/// <summary>
+		/// Create a CREATE TABLE script
+		/// </summary>
+		/// <param name="tables"></param>
+		/// <returns></returns>
 		public static string CreateTables(DbTable[] tables)
 		{
 			if (tables == null) throw new ArgumentNullException(nameof(tables));
 			if (tables.Length == 0) throw new ArgumentOutOfRangeException(nameof(tables));
-			
+
 			var buffer = new StringBuilder(256 * tables.Length);
 
 			foreach (var table in tables)

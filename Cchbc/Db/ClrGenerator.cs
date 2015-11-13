@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Text;
 using Cchbc.Db.DDL;
 using Cchbc.Db.DML;
@@ -43,23 +42,30 @@ namespace Cchbc.Db
 			}
 		}
 
-		public static string Class(DbTable table)
+		public static string Class(DbTable table, DbTable inverseTable = null)
 		{
 			if (table == null) throw new ArgumentNullException(nameof(table));
 
-			var buffer = new StringBuilder();
+			var buffer = new StringBuilder(1024);
 
-			buffer.Append(@"public sealed class ");
-			buffer.Append(table.ClassName);
-			buffer.AppendLine(@" : IDbObject");
+			buffer.Append(@"public");
+			buffer.Append(' ');
+			buffer.Append(@"sealed");
+			buffer.Append(' ');
+			buffer.Append(@"class");
+			buffer.Append(' ');
+			buffer.AppendLine(table.ClassName);
 
-			buffer.AppendLine(@"{");
+			buffer.Append('{');
+			buffer.AppendLine();
 
 			var properties = GetProperties(table.Columns);
-			AppendProperties(properties, buffer);
-			AppendConstructor(table, buffer, properties);
+			AppendProperties(buffer, properties);
+			buffer.AppendLine();
+			AppendConstructor(buffer, table, properties);
 
-			buffer.AppendLine(@"}");
+			buffer.Append('}');
+			buffer.AppendLine();
 
 			return buffer.ToString();
 		}
@@ -184,18 +190,51 @@ namespace Cchbc.Db
 			return $@"default({type.Name})";
 		}
 
-		private static void AppendConstructor(DbTable table, StringBuilder buffer, ClrProperty[] properties)
+		private static void AppendProperties(StringBuilder buffer, ClrProperty[] properties)
 		{
-			buffer.AppendLine();
+			foreach (var property in properties)
+			{
+				buffer.Append('\t');
+				buffer.Append(@"public");
+				buffer.Append(' ');
+				buffer.Append(property.Type.Name);
+				buffer.Append(' ');
+				buffer.Append(property.Name);
+				buffer.Append(' ');
+				buffer.Append('{');
+				buffer.Append(' ');
+				buffer.Append(@"get");
+				buffer.Append(';');
+				buffer.Append(' ');
+				buffer.Append('}');
+				buffer.AppendLine();
+			}
+		}
+
+		private static void AppendConstructor(StringBuilder buffer, DbTable table, ClrProperty[] properties)
+		{
 			buffer.Append('\t');
-			buffer.Append(@"public ");
+			buffer.Append(@"public");
+			buffer.Append(' ');
 			buffer.Append(table.ClassName);
 			buffer.Append('(');
-			buffer.Append(string.Join(@", ", properties.Select(p => p.Type.Name + " " + p.ParameterName)));
+			for (var i = 0; i < properties.Length; i++)
+			{
+				var p = properties[i];
+				if (i > 0)
+				{
+					buffer.Append(',');
+					buffer.Append(' ');
+				}
+				buffer.Append(p.Type.Name);
+				buffer.Append(' ');
+				buffer.Append(p.ParameterName);
+			}
 			buffer.Append(')');
 			buffer.AppendLine();
 			buffer.Append('\t');
-			buffer.AppendLine(@"{");
+			buffer.Append('{');
+			buffer.AppendLine();
 
 			var addEmptyLine = false;
 			foreach (var p in properties)
@@ -203,44 +242,62 @@ namespace Cchbc.Db
 				if (p.IsReference)
 				{
 					addEmptyLine = true;
+
 					var name = p.ParameterName;
+
 					buffer.Append('\t');
 					buffer.Append('\t');
-					buffer.AppendLine($@"if ({name} == null) throw new ArgumentNullException(nameof({name}));");
+					buffer.Append(@"if");
+					buffer.Append(' ');
+					buffer.Append('(');
+					buffer.Append(name);
+					buffer.Append(' ');
+					buffer.Append('=');
+					buffer.Append('=');
+					buffer.Append(' ');
+					buffer.Append(@"null");
+					buffer.Append(')');
+					buffer.Append(' ');
+					buffer.Append(@"throw");
+					buffer.Append(' ');
+					buffer.Append(@"new");
+					buffer.Append(' ');
+					buffer.Append(@"ArgumentNullException");
+					buffer.Append('(');
+					buffer.Append(@"nameof");
+					buffer.Append('(');
+					buffer.Append(name);
+					buffer.Append(')');
+					buffer.Append(')');
+					buffer.Append(';');
+					buffer.AppendLine();
 				}
 			}
 
+			// Add empty line if we have argument null checks
 			if (addEmptyLine)
 			{
 				buffer.AppendLine();
 			}
 
-			foreach (var p in properties)
+			foreach (var property in properties)
 			{
 				buffer.Append('\t');
 				buffer.Append('\t');
-				buffer.Append(@"this.");
-				buffer.Append(p.Name);
-				buffer.Append(@" = ");
-				buffer.Append(p.ParameterName);
-				buffer.AppendLine(@";");
+				buffer.Append(@"this");
+				buffer.Append('.');
+				buffer.Append(property.Name);
+				buffer.Append(' ');
+				buffer.Append('=');
+				buffer.Append(' ');
+				buffer.Append(property.ParameterName);
+				buffer.Append(';');
+				buffer.AppendLine();
 			}
 
 			buffer.Append('\t');
-			buffer.AppendLine(@"}");
-		}
-
-		private static void AppendProperties(ClrProperty[] properties, StringBuilder buffer)
-		{
-			foreach (var p in properties)
-			{
-				buffer.Append('\t');
-				buffer.Append(@"public ");
-				buffer.Append(p.Type.Name);
-				buffer.Append(@" ");
-				buffer.Append(p.Name);
-				buffer.AppendLine(p.Name == NameProvider.IdName ? @" { get; set;}" : @" { get; }");
-			}
+			buffer.Append('}');
+			buffer.AppendLine();
 		}
 
 		private static ClrProperty[] GetProperties(DbColumn[] columns)
