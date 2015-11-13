@@ -59,7 +59,7 @@ namespace Cchbc.Db
 			buffer.Append('{');
 			buffer.AppendLine();
 
-			var properties = GetProperties(table.Columns);
+			var properties = GetProperties(table.Columns, inverseTable);
 			AppendProperties(buffer, properties);
 			buffer.AppendLine();
 			AppendConstructor(buffer, table, properties);
@@ -300,11 +300,17 @@ namespace Cchbc.Db
 			buffer.AppendLine();
 		}
 
-		private static ClrProperty[] GetProperties(DbColumn[] columns)
+		private static ClrProperty[] GetProperties(DbColumn[] columns, DbTable inverseTable = null)
 		{
-			var properties = new ClrProperty[columns.Length];
+			var totalColumns = columns.Length;
+			var totalProperties = totalColumns;
+			if (inverseTable != null)
+			{
+				totalProperties++;
+			}
+			var properties = new ClrProperty[totalProperties];
 
-			for (var i = 0; i < columns.Length; i++)
+			for (var i = 0; i < totalColumns; i++)
 			{
 				var column = columns[i];
 
@@ -322,6 +328,12 @@ namespace Cchbc.Db
 				}
 
 				properties[i] = clrProperty;
+			}
+
+			if (inverseTable != null)
+			{
+				var name = inverseTable.ClassName;
+				properties[properties.Length - 1] = new ClrProperty(inverseTable.Name, new ClrType(@"List<" + name + @">"), NameProvider.LowerFirst(inverseTable.Name), true);
 			}
 
 			return properties;
