@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Contexts;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -207,19 +208,31 @@ namespace Cchbc.ConsoleClient
 				var schema = new[]
 				{
 					orderTypes,
-					//orderHeaders,
-					//orderDetails,
+					orderHeaders,
+					orderDetails,
 				};
-
-
-
 
 
 				var buffer = new StringBuilder();
 
 				foreach (var t in schema)
 				{
-					var value = ClrGenerator.Class(t, orderHeaders);
+					var name = t.Name;
+					// Find inverse table
+					var inverseTable = default(DbTable);
+					foreach (var inner in schema)
+					{
+						foreach (var c in inner.Columns)
+						{
+							if (c.DbForeignKey != null && c.DbForeignKey.Table == name)
+							{
+								inverseTable = inner;
+								break;
+							}
+						}
+					}
+
+					var value = ClrGenerator.Class(t, inverseTable);
 					buffer.AppendLine(value);
 				}
 
