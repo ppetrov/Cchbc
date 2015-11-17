@@ -20,6 +20,7 @@ using Cchbc.App.ArticlesModule.ViewModel;
 using Cchbc.App.OrderModule;
 using Cchbc.Data;
 using Cchbc.Db;
+using Cchbc.Db.Clr;
 using Cchbc.Db.DDL;
 using Cchbc.Db.DML;
 using Cchbc.Features;
@@ -116,7 +117,7 @@ namespace Cchbc.ConsoleClient
 			return values;
 		}
 
-		public override async Task FillAsync<T>(Query<T> query, Dictionary<long, T> values)
+		public override async Task FillAsync<T>(Query<T> query, Dictionary<long, T> values, Func<T, long> selector)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 			if (values == null) throw new ArgumentNullException(nameof(values));
@@ -138,7 +139,7 @@ namespace Cchbc.ConsoleClient
 					while (dr.Read())
 					{
 						var value = query.Creator(dr);
-						values.Add(value.Id, value);
+						values.Add(selector(value), value);
 					}
 				}
 			}
@@ -178,6 +179,33 @@ namespace Cchbc.ConsoleClient
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	public class Program
 	{
 		static void Main(string[] args)
@@ -185,70 +213,104 @@ namespace Cchbc.ConsoleClient
 			try
 			{
 				// 1.Db => CLR
-				// TODO : Adapter
-				var orderTypes = new DbTable(@"OrderTypes", new[]
+				var outlets = new DbTable(@"Outlets", new[]
 				{
 					DbColumn.PrimaryKey(),
 					DbColumn.String(@"Name")
 				});
-				var orderHeaders = new DbTable(@"OrderHeaders", new[]
+				var visits = new DbTable(@"Visits", new[]
+				{
+					DbColumn.PrimaryKey(),
+					DbColumn.ForeignKey(outlets),
+					DbColumn.DateTime(@"Date"),
+				});
+				var activityTypes = new DbTable(@"ActivityTypes", new[]
 				{
 					DbColumn.PrimaryKey(),
 					DbColumn.String(@"Name"),
-					DbColumn.ForeignKey(orderTypes)
 				});
-				var orderDetails = new DbTable(@"OrderDetails", new[]
+				var activities = new DbTable(@"Activities", new[]
+				{
+					DbColumn.PrimaryKey(),
+					DbColumn.DateTime(@"Date"),
+					DbColumn.ForeignKey(activityTypes),
+					DbColumn.ForeignKey(visits),
+				}, @"Activity");
+
+				var brands = new DbTable(@"Brands", new[]
+				{
+					DbColumn.PrimaryKey(),
+					DbColumn.String(@"Name")
+				});
+				var flavors = new DbTable(@"Flavors", new[]
 				{
 					DbColumn.PrimaryKey(),
 					DbColumn.String(@"Name"),
-					DbColumn.ForeignKey(orderHeaders)
+				});
+				var articles = new DbTable(@"Articles", new[]
+				{
+					DbColumn.PrimaryKey(),
+					DbColumn.String(@"Name"),
+					DbColumn.ForeignKey(brands),
+					DbColumn.ForeignKey(flavors),
+				});
+
+				var schema = new DbSchema(@"ifsa", new[]
+				{
+					outlets,
+					visits,
+					activityTypes,
+					activities,
+					brands,
+					flavors,
+					articles
 				});
 
 
-				var schema = new[]
-				{
-					orderTypes,
-					orderHeaders,
-					orderDetails,
-				};
 
+				var project = new DbProject(schema, @"phoenix");
+
+				// Mark tables as ReadOnly
+				project.MarkReadOnly(outlets);
+				project.MarkReadOnly(activityTypes);
+				project.MarkReadOnly(brands);
+				project.MarkReadOnly(flavors);
+				project.MarkReadOnly(articles);
+
+				// Mark Inverse tables
+				project.AttachInverseTable(visits);
 
 				var buffer = new StringBuilder();
 
-				foreach (var t in schema)
+				foreach (var entity in project.GenerateEntities())
 				{
-					var name = t.Name;
-					// Find inverse table
-					var inverseTable = default(DbTable);
-					foreach (var inner in schema)
+					//var value = project.GenerateClass(entity);
+					//buffer.AppendLine(value);
+
+					if (entity.IsTableReadOnly)
 					{
-						foreach (var c in inner.Columns)
-						{
-							if (c.DbForeignKey != null && c.DbForeignKey.Table == name)
-							{
-								inverseTable = inner;
-								break;
-							}
-						}
+						var value = ClrCode.ReadOnlyAdapter(entity);
+						buffer.AppendLine(value);
 					}
-
-					var value = ClrGenerator.Class(t, inverseTable);
-					buffer.AppendLine(value);
 				}
-
-				//buffer.AppendLine(ClrGenerator.ReadAdapter(orderDetails));
 
 				Console.WriteLine(buffer.ToString());
 				File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
 
-				//var tmp = ClrClassGenerator.Generate(features);
-				//Console.WriteLine(tmp);
 
-				//foreach (var table in schema)
-				//{
-				//	var script = DbScriptGenerator.GenerateCreateTableScript(table);
-				//	Console.WriteLine(script);
-				//}
+
+
+
+
+
+				// TODO : !!!!
+				//project.Save(@"C:");
+				//project.Load(@"C:");
+
+
+
+
+
 
 				return;
 
@@ -271,82 +333,82 @@ namespace Cchbc.ConsoleClient
 				//var connectionString = @"Server=cwpfsa04;Database=Cchbc;User Id=dev;Password='dev user password'";
 				var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
 
-				using (var cn = new SQLiteConnection(connectionString))
-				{
-					cn.Open();
+				//using (var cn = new SQLiteConnection(connectionString))
+				//{
+				//	cn.Open();
 
-					var core = Core.Current;
+				//	var core = Core.Current;
 
-					// Set logger
-					core.Logger = new ConsoleLogger();
+				//	// Set logger
+				//	core.Logger = new ConsoleLogger();
 
-					// Create Read query helper
-					var sqlReadDataQueryHelper = new SqlReadQueryHelper(cn);
-					// Create Modify query helper
-					var sqlModifyDataQueryHelper = new SqlModifyQueryHelper(sqlReadDataQueryHelper, cn);
-					// Create General query helper
-					var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
-					core.QueryHelper = queryHelper;
+				//	// Create Read query helper
+				//	var sqlReadDataQueryHelper = new SqlReadQueryHelper(cn);
+				//	// Create Modify query helper
+				//	var sqlModifyDataQueryHelper = new SqlModifyQueryHelper(sqlReadDataQueryHelper, cn);
+				//	// Create General query helper
+				//	var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
+				//	core.QueryHelper = queryHelper;
 
-					var featureManager = new FeatureManager { InspectFeature = InspectFeature() };
-					core.FeatureManager = featureManager;
-					core.FeatureManager.Initialize(core.Logger, new DbFeaturesManager(new DbFeaturesAdapter(queryHelper)));
-					core.FeatureManager.LoadAsync().Wait();
-					core.FeatureManager.StartDbWriters();
+				//	var featureManager = new FeatureManager { InspectFeature = InspectFeature() };
+				//	core.FeatureManager = featureManager;
+				//	core.FeatureManager.Initialize(core.Logger, new DbFeaturesManager(new DbFeaturesAdapter(queryHelper)));
+				//	core.FeatureManager.LoadAsync().Wait();
+				//	core.FeatureManager.StartDbWriters();
 
-					var localizationManager = new LocalizationManager();
-					core.LocalizationManager = localizationManager;
+				//	var localizationManager = new LocalizationManager();
+				//	core.LocalizationManager = localizationManager;
 
-					// Register helpers
-					core.DataCache = new DataCache();
-					var cache = core.DataCache;
-					cache.AddHelper(new BrandHelper());
-					cache.AddHelper(new FlavorHelper());
-					cache.AddHelper(new ArticleHelper());
-					cache.AddHelper(new OrderTypeHelper());
-					cache.AddHelper(new VendorHelper());
-					cache.AddHelper(new WholesalerHelper());
-					cache.AddHelper(new OrderNoteTypeHelper());
+				//	// Register helpers
+				//	core.DataCache = new DataCache();
+				//	var cache = core.DataCache;
+				//	cache.AddHelper(new BrandHelper());
+				//	cache.AddHelper(new FlavorHelper());
+				//	cache.AddHelper(new ArticleHelper());
+				//	cache.AddHelper(new OrderTypeHelper());
+				//	cache.AddHelper(new VendorHelper());
+				//	cache.AddHelper(new WholesalerHelper());
+				//	cache.AddHelper(new OrderNoteTypeHelper());
 
-					// Load helpers
-					var brandHelper = cache.GetHelper<Brand>();
-					brandHelper.LoadAsync(new BrandAdapter(sqlReadDataQueryHelper)).Wait();
-					var flavorHelper = cache.GetHelper<Flavor>();
-					flavorHelper.LoadAsync(new FlavorAdapter(sqlReadDataQueryHelper)).Wait();
-					var articleHelper = cache.GetHelper<Article>();
-					articleHelper.LoadAsync(new ArticleAdapter(sqlReadDataQueryHelper, brandHelper.Items, flavorHelper.Items)).Wait();
+				//	// Load helpers
+				//	var brandHelper = cache.GetHelper<Brand>();
+				//	brandHelper.LoadAsync(new BrandAdapter(sqlReadDataQueryHelper)).Wait();
+				//	var flavorHelper = cache.GetHelper<Flavor>();
+				//	flavorHelper.LoadAsync(new FlavorAdapter(sqlReadDataQueryHelper)).Wait();
+				//	var articleHelper = cache.GetHelper<Article>();
+				//	articleHelper.LoadAsync(new ArticleAdapter(sqlReadDataQueryHelper, brandHelper.Items, flavorHelper.Items)).Wait();
 
-					cache.GetHelper<OrderType>().LoadAsync(new OrderTypeAdapter());
-					cache.GetHelper<Vendor>().LoadAsync(new VendorAdapter());
-					cache.GetHelper<Wholesaler>().LoadAsync(new WholesalerAdapter());
-					cache.GetHelper<OrderNoteType>().LoadAsync(new OrderNoteTypeAdapter());
+				//	cache.GetHelper<OrderType>().LoadAsync(new OrderTypeAdapter());
+				//	cache.GetHelper<Vendor>().LoadAsync(new VendorAdapter());
+				//	cache.GetHelper<Wholesaler>().LoadAsync(new WholesalerAdapter());
+				//	cache.GetHelper<OrderNoteType>().LoadAsync(new OrderNoteTypeAdapter());
 
-					localizationManager.LoadAsync();
+				//	localizationManager.LoadAsync();
 
-					var viewModel = new ArticlesViewModel(core);
-					try
-					{
-						//for (var i = 0; i < 5; i++)
-						//{
-						//	viewModel.LoadDataAsync().Wait();
-						//}
+				//	var viewModel = new ArticlesViewModel(core);
+				//	try
+				//	{
+				//		//for (var i = 0; i < 5; i++)
+				//		//{
+				//		//	viewModel.LoadDataAsync().Wait();
+				//		//}
 
-						var manager = new OrderManager(core, new Activity { Id = 1, Outlet = new Outlet { Id = 1, Name = @"Billa" } });
+				//		var manager = new OrderManager(core, new Activity { Id = 1, Outlet = new Outlet { Id = 1, Name = @"Billa" } });
 
-						for (int i = 0; i < 7; i++)
-						{
-							manager.LoadDataAsync().Wait();
-							var items = manager.Assortments;
-							Console.WriteLine(items.Count);
-						}
-					}
-					catch (Exception e)
-					{
-						Console.WriteLine(e);
-					}
+				//		for (int i = 0; i < 7; i++)
+				//		{
+				//			manager.LoadDataAsync().Wait();
+				//			var items = manager.Assortments;
+				//			Console.WriteLine(items.Count);
+				//		}
+				//	}
+				//	catch (Exception e)
+				//	{
+				//		Console.WriteLine(e);
+				//	}
 
-					featureManager.StopDbWriters();
-				}
+				//	featureManager.StopDbWriters();
+				//}
 
 
 
@@ -392,7 +454,7 @@ namespace Cchbc.ConsoleClient
 		{
 			var step = feature.AddStep(nameof(LoadBrandsAsync));
 			var brandHelper = new BrandHelper();
-			await brandHelper.LoadAsync(new BrandAdapter(queryHelper));
+			//await brandHelper.LoadAsync(new BrandAdapter(queryHelper), v => v.Id);
 			step.Details = brandHelper.Items.Count.ToString();
 			return brandHelper;
 		}
@@ -401,7 +463,7 @@ namespace Cchbc.ConsoleClient
 		{
 			var step = feature.AddStep(nameof(LoadFlavorsAsync));
 			var flavorHelper = new FlavorHelper();
-			await flavorHelper.LoadAsync(new FlavorAdapter(queryHelper));
+			//await flavorHelper.LoadAsync(new FlavorAdapter(queryHelper), v => v.Id);
 			step.Details = flavorHelper.Items.Count.ToString();
 			return flavorHelper;
 		}
@@ -410,7 +472,7 @@ namespace Cchbc.ConsoleClient
 		{
 			var step = feature.AddStep(nameof(LoadArticlesAsync));
 			var articleHelper = new ArticleHelper();
-			await articleHelper.LoadAsync(new ArticleAdapter(queryHelper, brandHelper.Items, flavorHelper.Items));
+			//await articleHelper.LoadAsync(new ArticleAdapter(queryHelper, brandHelper.Items, flavorHelper.Items));
 			step.Details = articleHelper.Items.Count.ToString();
 			return articleHelper;
 		}

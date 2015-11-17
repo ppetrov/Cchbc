@@ -10,11 +10,12 @@ namespace Cchbc.Helpers
 	{
 		public Dictionary<long, T> Items { get; } = new Dictionary<long, T>();
 
-		public Task LoadAsync(IReadOnlyAdapter<T> adapter)
+		public Task LoadAsync(IReadOnlyAdapter<T> adapter, Func<T, long> selector)
 		{
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
+			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			return adapter.FillAsync(this.Items);
+            return adapter.FillAsync(this.Items, selector);
 		}
 	}
 }

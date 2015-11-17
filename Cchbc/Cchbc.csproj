@@ -35,9 +35,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DataCache.cs" />
-    <Compile Include="Db\ClrGenerator.cs" />
+    <Compile Include="Db\ClrProject.cs" />
+    <Compile Include="Db\Clr\ClrClass.cs" />
+    <Compile Include="Db\ClrCode.cs" />
+    <Compile Include="Db\Clr\ClrProperty.cs" />
+    <Compile Include="Db\Clr\ClrType.cs" />
     <Compile Include="Db\DDL\DbColumn.cs" />
     <Compile Include="Db\DDL\DbForeignKey.cs" />
+    <Compile Include="Db\DbProject.cs" />
     <Compile Include="Db\DDL\DbSchema.cs" />
     <Compile Include="Db\DDL\DbScript.cs" />
     <Compile Include="Db\DDL\DbTable.cs" />

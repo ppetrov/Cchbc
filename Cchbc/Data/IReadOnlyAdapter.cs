@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Cchbc.Objects;
 
 namespace Cchbc.Data
 {
-	public interface IReadOnlyAdapter<T> where T : IDbObject
+	public interface IReadOnlyAdapter<T>
 	{
-		Task FillAsync(Dictionary<long, T> items);
+		Task FillAsync(Dictionary<long, T> items, Func<T, long> selector);
 	}
 }

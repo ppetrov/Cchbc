@@ -29,9 +29,10 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderTypeAdapter : IReadOnlyAdapter<OrderType>
 	{
-		public Task FillAsync(Dictionary<long, OrderType> items)
+		public Task FillAsync(Dictionary<long, OrderType> items, Func<OrderType, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
+			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
 			items.Add(1, new OrderType(1, @"ZOR"));
 
@@ -169,7 +170,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class VendorAdapter : IReadOnlyAdapter<Vendor>
 	{
-		public Task FillAsync(Dictionary<long, Vendor> items)
+		public Task FillAsync(Dictionary<long, Vendor> items, Func<Vendor, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
@@ -214,7 +215,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class WholesalerAdapter : IReadOnlyAdapter<Wholesaler>
 	{
-		public Task FillAsync(Dictionary<long, Wholesaler> items)
+		public Task FillAsync(Dictionary<long, Wholesaler> items, Func<Wholesaler, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
@@ -601,7 +602,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderNoteTypeAdapter : IReadOnlyAdapter<OrderNoteType>
 	{
-		public Task FillAsync(Dictionary<long, OrderNoteType> items)
+		public Task FillAsync(Dictionary<long, OrderNoteType> items, Func<OrderNoteType, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 

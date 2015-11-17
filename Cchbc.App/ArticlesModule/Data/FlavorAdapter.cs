@@ -17,11 +17,12 @@ namespace Cchbc.App.ArticlesModule.Data
 			_queryHelper = queryHelper;
 		}
 
-		public async Task FillAsync(Dictionary<long, Flavor> items)
+		public Task FillAsync(Dictionary<long, Flavor> items, Func<Flavor, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
+			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			await _queryHelper.FillAsync(new Query<Flavor>(@"SELECT ID, NAME FROM FLAVORS", r =>
+			return _queryHelper.FillAsync(new Query<Flavor>(@"SELECT ID, NAME FROM FLAVORS", r =>
 			{
 				var id = r.GetInt64(0);
 				var name = string.Empty;
@@ -30,7 +31,7 @@ namespace Cchbc.App.ArticlesModule.Data
 					name = r.GetString(1);
 				}
 				return new Flavor(id, name);
-			}), items);
+			}), items, selector);
 		}
 	}
 }

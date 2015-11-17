@@ -18,12 +18,18 @@ namespace Cchbc.Data
 
 		public Task<List<T>> ExecuteAsync<T>(Query<T> query) where T : IDbObject
 		{
+			if (query == null) throw new ArgumentNullException(nameof(query));
+
 			return this.ReadQueryHelper.ExecuteAsync(query);
 		}
 
-		public Task FillAsync<T>(Query<T> query, Dictionary<long, T> values) where T : IDbObject
+		public Task FillAsync<T>(Query<T> query, Dictionary<long, T> values, Func<T, long> selector) where T : IDbObject
 		{
-			return this.ReadQueryHelper.FillAsync(query, values);
+			if (query == null) throw new ArgumentNullException(nameof(query));
+			if (values == null) throw new ArgumentNullException(nameof(values));
+			if (selector == null) throw new ArgumentNullException(nameof(selector));
+
+			return this.ReadQueryHelper.FillAsync(query, values, selector);
 		}
 
 		public abstract Task ExecuteAsync(string statement, QueryParameter[] parameters);
