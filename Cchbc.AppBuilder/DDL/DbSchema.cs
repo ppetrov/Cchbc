@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.Db.DDL
+namespace Cchbc.AppBuilder.DDL
 {
 	public sealed class DbSchema
 	{
@@ -11,6 +11,7 @@ namespace Cchbc.Db.DDL
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 			if (tables == null) throw new ArgumentNullException(nameof(tables));
+			if (tables.Length == 0) throw new ArgumentOutOfRangeException(nameof(tables));
 
 			this.Name = name;
 			this.Tables = tables;

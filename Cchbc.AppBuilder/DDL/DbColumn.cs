@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.Db.DDL
+namespace Cchbc.AppBuilder.DDL
 {
 	public sealed class DbColumn
 	{
@@ -40,8 +40,7 @@ namespace Cchbc.Db.DDL
 		{
 			if (table == null) throw new ArgumentNullException(nameof(table));
 
-			var name = table.ClassName + NameProvider.IdName;
-			return new DbColumn(name, DbColumnType.Integer, isNullable, false, new DbForeignKey(table.Name, name));
+			return new DbColumn(table.Name + NameProvider.IdName, DbColumnType.Integer, isNullable, false, new DbForeignKey(table));
 		}
 
 		public static DbColumn Integer(string name, bool isNullable = false)

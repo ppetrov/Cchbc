@@ -1,7 +1,8 @@
 using System;
+using System.Linq;
 using System.Text;
 
-namespace Cchbc.Db.DDL
+namespace Cchbc.AppBuilder.DDL
 {
 	public static class DbScript
 	{
@@ -74,7 +75,7 @@ namespace Cchbc.Db.DDL
 
 			var buffer = new StringBuilder(256 * tables.Length);
 
-			foreach (var table in tables)
+			foreach (var table in GetTablesSorted(tables))
 			{
 				buffer.AppendLine(CreateTable(table));
 			}
@@ -111,7 +112,11 @@ namespace Cchbc.Db.DDL
 
 			var buffer = new StringBuilder(32 * tables.Length);
 
-			foreach (var table in tables)
+			var tablesSorted = GetTablesSorted(tables);
+
+			Array.Reverse(tablesSorted);
+			
+			foreach (var table in tablesSorted)
 			{
 				AppendDropTable(buffer, table.Name);
 				buffer.AppendLine();
@@ -154,25 +159,48 @@ namespace Cchbc.Db.DDL
 
 		private static void AppendForeignKeyDefinition(StringBuilder buffer, DbForeignKey foreignKey)
 		{
+			var name = foreignKey.Table.Name;
+			var id = NameProvider.IdName;
+
 			buffer.Append(@"FOREIGN KEY");
 			buffer.Append(' ');
 			buffer.Append('(');
 			buffer.Append('[');
-			buffer.Append(foreignKey.Column);
+			buffer.Append(name);
+			buffer.Append(id);
 			buffer.Append(']');
 			buffer.Append(')');
 			buffer.Append(' ');
 			buffer.Append(@"REFERENCES");
 			buffer.Append(' ');
 			buffer.Append('[');
-			buffer.Append(foreignKey.Table);
+			buffer.Append(name);
 			buffer.Append(']');
 			buffer.Append(' ');
 			buffer.Append('(');
 			buffer.Append('[');
-			buffer.Append(NameProvider.IdName);
+			buffer.Append(id);
 			buffer.Append(']');
 			buffer.Append(')');
+		}
+
+		private static DbTable[] GetTablesSorted(DbTable[] tables)
+		{
+			var sortedTables = new DbTable[tables.Length];
+			Array.Copy(tables, sortedTables, tables.Length);
+
+			Array.Sort(sortedTables, (x, y) =>
+			{
+				var a = x.Columns.Any(v => v.DbForeignKey != null);
+				var b = y.Columns.Any(v => v.DbForeignKey != null);
+				var cmp = a.CompareTo(b);
+				if (cmp == 0)
+				{
+					cmp = string.Compare(x.Name, y.Name, StringComparison.Ordinal);
+				}
+				return cmp;
+			});
+			return sortedTables;
 		}
 	}
 }

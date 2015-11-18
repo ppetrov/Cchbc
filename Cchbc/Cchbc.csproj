@@ -35,20 +35,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DataCache.cs" />
-    <Compile Include="Db\ClrProject.cs" />
-    <Compile Include="Db\Clr\ClrClass.cs" />
-    <Compile Include="Db\ClrCode.cs" />
-    <Compile Include="Db\Clr\ClrProperty.cs" />
-    <Compile Include="Db\Clr\ClrType.cs" />
-    <Compile Include="Db\DDL\DbColumn.cs" />
-    <Compile Include="Db\DDL\DbForeignKey.cs" />
-    <Compile Include="Db\DbProject.cs" />
-    <Compile Include="Db\DDL\DbSchema.cs" />
-    <Compile Include="Db\DDL\DbScript.cs" />
-    <Compile Include="Db\DDL\DbTable.cs" />
-    <Compile Include="Db\DML\QueryCreator.cs" />
-    <Compile Include="Db\NameProvider.cs" />
-    <Compile Include="Db\DDL\DbColumnType.cs" />
     <Compile Include="Data\ModifyQueryHelper.cs" />
     <Compile Include="Data\IFieldDataReader.cs" />
     <Compile Include="Data\IModifiableAdapter.cs" />

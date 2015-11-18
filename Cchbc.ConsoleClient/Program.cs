@@ -7,26 +7,14 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Runtime.Remoting.Contexts;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Cchbc.App;
-using Cchbc.App.ArticlesModule.Data;
 using Cchbc.App.ArticlesModule.Helpers;
-using Cchbc.App.ArticlesModule.Objects;
-using Cchbc.App.ArticlesModule.ViewModel;
-using Cchbc.App.OrderModule;
+using Cchbc.AppBuilder;
+using Cchbc.AppBuilder.DDL;
 using Cchbc.Data;
-using Cchbc.Db;
-using Cchbc.Db.Clr;
-using Cchbc.Db.DDL;
-using Cchbc.Db.DML;
 using Cchbc.Features;
-using Cchbc.Features.Db;
-using Cchbc.Localization;
-using Cchbc.Objects;
 
 
 namespace Cchbc.ConsoleClient
@@ -212,44 +200,38 @@ namespace Cchbc.ConsoleClient
 		{
 			try
 			{
-				// 1.Db => CLR
-				var outlets = new DbTable(@"Outlets", new[]
+				// 
+				// Define tables
+				//
+				var outlets = DbTable.Create(@"Outlet", new[]
 				{
-					DbColumn.PrimaryKey(),
-					DbColumn.String(@"Name")
+					DbColumn.String(@"Name"),
 				});
-				var visits = new DbTable(@"Visits", new[]
+				var visits = DbTable.Create(@"Visit", new[]
 				{
-					DbColumn.PrimaryKey(),
 					DbColumn.ForeignKey(outlets),
 					DbColumn.DateTime(@"Date"),
 				});
-				var activityTypes = new DbTable(@"ActivityTypes", new[]
+				var activityTypes = DbTable.Create(@"ActivityType", new[]
 				{
-					DbColumn.PrimaryKey(),
 					DbColumn.String(@"Name"),
 				});
-				var activities = new DbTable(@"Activities", new[]
+				var activities = DbTable.Create(@"Activity", new[]
 				{
-					DbColumn.PrimaryKey(),
 					DbColumn.DateTime(@"Date"),
 					DbColumn.ForeignKey(activityTypes),
 					DbColumn.ForeignKey(visits),
-				}, @"Activity");
-
-				var brands = new DbTable(@"Brands", new[]
-				{
-					DbColumn.PrimaryKey(),
-					DbColumn.String(@"Name")
 				});
-				var flavors = new DbTable(@"Flavors", new[]
+				var brands = DbTable.Create(@"Brand", new[]
 				{
-					DbColumn.PrimaryKey(),
 					DbColumn.String(@"Name"),
 				});
-				var articles = new DbTable(@"Articles", new[]
+				var flavors = DbTable.Create(@"Flavor", new[]
 				{
-					DbColumn.PrimaryKey(),
+					DbColumn.String(@"Name"),
+				});
+				var articles = DbTable.Create(@"Article", new[]
+				{
 					DbColumn.String(@"Name"),
 					DbColumn.ForeignKey(brands),
 					DbColumn.ForeignKey(flavors),
@@ -268,7 +250,7 @@ namespace Cchbc.ConsoleClient
 
 
 
-				var project = new DbProject(schema, @"phoenix");
+				var project = new DbProject(schema);
 
 				// Mark tables as ReadOnly
 				project.MarkReadOnly(outlets);
@@ -280,18 +262,21 @@ namespace Cchbc.ConsoleClient
 				// Mark Inverse tables
 				project.AttachInverseTable(visits);
 
-				var buffer = new StringBuilder();
 
+				var script = DbScript.CreateTables(schema.Tables);
+				File.WriteAllText(@"C:\temp\code.txt", script);
+				return;
+
+				var buffer = new StringBuilder();
 				foreach (var entity in project.GenerateEntities())
 				{
 					//var value = project.GenerateClass(entity);
 					//buffer.AppendLine(value);
-
-					if (entity.IsTableReadOnly)
-					{
-						var value = ClrCode.ReadOnlyAdapter(entity);
-						buffer.AppendLine(value);
-					}
+					//if (entity.IsTableReadOnly)
+					//{
+					//	var value = ClrCode.ReadOnlyAdapter(entity);
+					//	buffer.AppendLine(value);
+					//}
 				}
 
 				Console.WriteLine(buffer.ToString());

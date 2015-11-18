@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.Db
+namespace Cchbc.AppBuilder
 {
 	public static class NameProvider
 	{

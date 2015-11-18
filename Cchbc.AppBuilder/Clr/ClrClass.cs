@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Db.Clr
+namespace Cchbc.AppBuilder.Clr
 {
 	public sealed class ClrClass
 	{

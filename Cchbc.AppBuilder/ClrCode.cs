@@ -1,17 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Cchbc.Db.Clr;
-using Cchbc.Db.DML;
+using Cchbc.AppBuilder.Clr;
+using Cchbc.AppBuilder.DML;
 
-namespace Cchbc.Db
+namespace Cchbc.AppBuilder
 {
 	public static class ClrCode
 	{
 		private sealed class ClrField
 		{
 			public string Type { get; }
-			public string Name { get; }
 			public string ParameterName { get; }
 			public ClrType UserType { get; }
 
@@ -20,7 +19,6 @@ namespace Cchbc.Db
 				if (name == null) throw new ArgumentNullException(nameof(name));
 				if (type == null) throw new ArgumentNullException(nameof(type));
 
-				this.Name = name;
 				this.Type = type;
 				this.ParameterName = NameProvider.LowerFirst(name);
 				this.UserType = userType;
@@ -341,7 +339,7 @@ namespace Cchbc.Db
 			var addEmptyLine = false;
 			foreach (var p in properties)
 			{
-				if (p.IsReference)
+				if (p.Type.IsReference)
 				{
 					addEmptyLine = true;
 

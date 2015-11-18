@@ -1,4 +1,4 @@
-namespace Cchbc.Db
+namespace Cchbc.AppBuilder
 {
 	public sealed class ClrProject
 	{

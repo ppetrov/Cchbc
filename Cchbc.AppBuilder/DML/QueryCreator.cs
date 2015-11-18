@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Text;
-using Cchbc.Db.DDL;
+using Cchbc.AppBuilder.DDL;
 
-namespace Cchbc.Db.DML
+namespace Cchbc.AppBuilder.DML
 {
 	public static class QueryCreator
 	{
