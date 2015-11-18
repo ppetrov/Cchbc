@@ -59,7 +59,7 @@ namespace Cchbc.UI
 			if (core == null) throw new ArgumentNullException(nameof(core));
 
 			this.Core = core;
-			this.Manager = new LoginManager(core.Logger, new LoginAdapter(core.Logger), new Sorter<LoginViewItem>(new[]
+			this.Manager = new LoginManager(core.Logger, new LoginAdapter(), new Sorter<LoginViewItem>(new[]
 			{
 				new SortOption<LoginViewItem>(@"By Name", (x,y)=> string.Compare(x.Item.Name, y.Item.Name, StringComparison.Ordinal)),
 				new SortOption<LoginViewItem>(@"By Date", (x, y) =>

@@ -203,34 +203,34 @@ namespace Cchbc.ConsoleClient
 				// 
 				// Define tables
 				//
-				var outlets = DbTable.Create(@"Outlet", new[]
+				var outlets = DbTable.Create(@"Outlets", new[]
 				{
 					DbColumn.String(@"Name"),
 				});
-				var visits = DbTable.Create(@"Visit", new[]
+				var visits = DbTable.Create(@"Visits", new[]
 				{
 					DbColumn.ForeignKey(outlets),
 					DbColumn.DateTime(@"Date"),
 				});
-				var activityTypes = DbTable.Create(@"ActivityType", new[]
+				var activityTypes = DbTable.Create(@"ActivityTypes", new[]
 				{
 					DbColumn.String(@"Name"),
 				});
-				var activities = DbTable.Create(@"Activity", new[]
+				var activities = DbTable.Create(@"Activities", new[]
 				{
 					DbColumn.DateTime(@"Date"),
 					DbColumn.ForeignKey(activityTypes),
 					DbColumn.ForeignKey(visits),
 				});
-				var brands = DbTable.Create(@"Brand", new[]
+				var brands = DbTable.Create(@"Brands", new[]
 				{
 					DbColumn.String(@"Name"),
 				});
-				var flavors = DbTable.Create(@"Flavor", new[]
+				var flavors = DbTable.Create(@"Flavors", new[]
 				{
 					DbColumn.String(@"Name"),
 				});
-				var articles = DbTable.Create(@"Article", new[]
+				var articles = DbTable.Create(@"Articles", new[]
 				{
 					DbColumn.String(@"Name"),
 					DbColumn.ForeignKey(brands),
@@ -252,26 +252,29 @@ namespace Cchbc.ConsoleClient
 
 				var project = new DbProject(schema);
 
-				// Mark tables as ReadOnly
-				project.MarkReadOnly(outlets);
-				project.MarkReadOnly(activityTypes);
-				project.MarkReadOnly(brands);
-				project.MarkReadOnly(flavors);
-				project.MarkReadOnly(articles);
+				// Define class names
+				project.DefineClassName(activities, @"Activity");
 
-				// Mark Inverse tables
+				// Define tables as Modifiable, all tables are ReadOnly by default
+				project.DefineModifiable(visits);
+				project.DefineModifiable(activities);
+
+				// Attach Inverse tables
 				project.AttachInverseTable(visits);
 
-
-				var script = DbScript.CreateTables(schema.Tables);
-				File.WriteAllText(@"C:\temp\code.txt", script);
-				return;
-
 				var buffer = new StringBuilder();
-				foreach (var entity in project.GenerateEntities())
+				foreach (var entity in project.CreateEntities())
 				{
-					//var value = project.GenerateClass(entity);
-					//buffer.AppendLine(value);
+					var entityClass = project.CreateEntityClass(entity);
+					//buffer.AppendLine(entityClass);
+
+					if (project.IsModifiable(entity.Table))
+					{
+						var entityAdapter = project.CreateEntityAdapter(entity);
+						buffer.AppendLine(entityAdapter);
+					}
+
+
 					//if (entity.IsTableReadOnly)
 					//{
 					//	var value = ClrCode.ReadOnlyAdapter(entity);

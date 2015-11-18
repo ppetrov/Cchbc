@@ -6,7 +6,6 @@ namespace Cchbc.AppBuilder.Clr
 	{
 		public string Name { get; }
 		public ClrType Type { get; }
-		public string ParameterName { get; }
 
 		public ClrProperty(string name, ClrType type)
 		{
@@ -15,7 +14,6 @@ namespace Cchbc.AppBuilder.Clr
 
 			this.Name = name;
 			this.Type = type;
-			this.ParameterName = NameProvider.LowerFirst(name);
 		}
 	}
 }

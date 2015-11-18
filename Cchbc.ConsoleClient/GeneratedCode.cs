@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cchbc.Data;
+using Cchbc.Objects;
 
 namespace Cchbc.ConsoleClient
 {
@@ -12,17 +13,19 @@ namespace Cchbc.ConsoleClient
 
 		public Outlet(long id, string name)
 		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
 			this.Id = id;
 			this.Name = name;
 		}
 	}
 
-	public sealed class Visit
+	public sealed class Visit : IDbObject
 	{
-		public long Id { get; }
-		public Outlet Outlet { get; }
-		public DateTime Date { get; }
-		public List<Activity> Activities { get; }
+		public long Id { get; set; }
+		public Outlet Outlet { get; set; }
+		public DateTime Date { get; set; }
+		public List<Activity> Activities { get; set; }
 
 		public Visit(long id, Outlet outlet, DateTime date, List<Activity> activities)
 		{
@@ -43,17 +46,19 @@ namespace Cchbc.ConsoleClient
 
 		public ActivityType(long id, string name)
 		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
 			this.Id = id;
 			this.Name = name;
 		}
 	}
 
-	public sealed class Activity
+	public sealed class Activity : IDbObject
 	{
-		public long Id { get; }
-		public DateTime Date { get; }
-		public ActivityType ActivityType { get; }
-		public Visit Visit { get; }
+		public long Id { get; set; }
+		public DateTime Date { get; set; }
+		public ActivityType ActivityType { get; set; }
+		public Visit Visit { get; set; }
 
 		public Activity(long id, DateTime date, ActivityType activityType, Visit visit)
 		{
@@ -74,6 +79,8 @@ namespace Cchbc.ConsoleClient
 
 		public Brand(long id, string name)
 		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
 			this.Id = id;
 			this.Name = name;
 		}
@@ -86,6 +93,8 @@ namespace Cchbc.ConsoleClient
 
 		public Flavor(long id, string name)
 		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
 			this.Id = id;
 			this.Name = name;
 		}
@@ -100,6 +109,7 @@ namespace Cchbc.ConsoleClient
 
 		public Article(long id, string name, Brand brand, Flavor flavor)
 		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
 			if (brand == null) throw new ArgumentNullException(nameof(brand));
 			if (flavor == null) throw new ArgumentNullException(nameof(flavor));
 
@@ -114,15 +124,19 @@ namespace Cchbc.ConsoleClient
 
 
 
+
+
+
+
 	public sealed class OutletAdapter : IReadOnlyAdapter<Outlet>
 	{
-		private readonly ReadQueryHelper _queryHelper;
+		private ReadQueryHelper QueryHelper { get; }
 
 		public OutletAdapter(ReadQueryHelper queryHelper)
 		{
 			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 
-			_queryHelper = queryHelper;
+			this.QueryHelper = queryHelper;
 		}
 
 		public Task FillAsync(Dictionary<long, Outlet> items, Func<Outlet, long> selector)
@@ -130,7 +144,7 @@ namespace Cchbc.ConsoleClient
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			return _queryHelper.FillAsync(new Query<Outlet>(@"SELECT Id, Name FROM Outlets", r =>
+			return this.QueryHelper.FillAsync(new Query<Outlet>(@"SELECT Id, Name FROM Outlets", r =>
 			{
 				var id = 0L;
 				if (!r.IsDbNull(0))
@@ -148,6 +162,19 @@ namespace Cchbc.ConsoleClient
 			}), items, selector);
 		}
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	public sealed class ActivityTypeAdapter : IReadOnlyAdapter<ActivityType>
 	{
@@ -254,11 +281,13 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
+
+
 	public sealed class ArticleAdapter : IReadOnlyAdapter<Article>
 	{
-		private readonly ReadQueryHelper _queryHelper;
-		private readonly Dictionary<long, Brand> _brands;
-		private readonly Dictionary<long, Flavor> _flavors;
+		private ReadQueryHelper QueryHelper { get; }
+		private Dictionary<long, Brand> Brands { get; }
+		private Dictionary<long, Flavor> Flavors { get; }
 
 		public ArticleAdapter(ReadQueryHelper queryHelper, Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
 		{
@@ -266,9 +295,9 @@ namespace Cchbc.ConsoleClient
 			if (brands == null) throw new ArgumentNullException(nameof(brands));
 			if (flavors == null) throw new ArgumentNullException(nameof(flavors));
 
-			_queryHelper = queryHelper;
-			_brands = brands;
-			_flavors = flavors;
+			this.QueryHelper = queryHelper;
+			this.Brands = brands;
+			this.Flavors = flavors;
 		}
 
 		public Task FillAsync(Dictionary<long, Article> items, Func<Article, long> selector)
@@ -276,7 +305,7 @@ namespace Cchbc.ConsoleClient
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			return _queryHelper.FillAsync(new Query<Article>(@"SELECT Id, Name, BrandId, FlavorId FROM Articles", r =>
+			return this.QueryHelper.FillAsync(new Query<Article>(@"SELECT Id, Name, BrandsId, FlavorsId FROM Articles", r =>
 			{
 				var id = 0L;
 				if (!r.IsDbNull(0))
@@ -293,19 +322,86 @@ namespace Cchbc.ConsoleClient
 				var brand = default(Brand);
 				if (!r.IsDbNull(2))
 				{
-					brand = _brands[r.GetInt64(2)];
+					brand = this.Brands[r.GetInt64(2)];
 				}
 
 				var flavor = default(Flavor);
 				if (!r.IsDbNull(3))
 				{
-					flavor = _flavors[r.GetInt64(3)];
+					flavor = this.Flavors[r.GetInt64(3)];
 				}
 
 				return new Article(id, name, brand, flavor);
 			}), items, selector);
 		}
 	}
+
+
+
+
+	public sealed class VisitAdapter : IModifiableAdapter<Visit>
+	{
+		private ReadQueryHelper QueryHelper { get; }
+		private Dictionary<long, Outlet> Outlets { get; }
+
+		public VisitAdapter(ReadQueryHelper queryHelper, Dictionary<long, Outlet> outlets)
+		{
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (outlets == null) throw new ArgumentNullException(nameof(outlets));
+
+			this.QueryHelper = queryHelper;
+			this.Outlets = outlets;
+		}
+
+		//GET ALL !!!
+
+
+		public Task InsertAsync(Visit item)
+		{
+			throw new NotImplementedException();
+		}
+
+		public Task UpdateAsync(Visit item)
+		{
+			throw new NotImplementedException();
+		}
+
+		public Task DeleteAsync(Visit item)
+		{
+			throw new NotImplementedException();
+		}
+
+	}
+
+
+	public sealed class ActivityAdapter : IModifiableAdapter<Activity>
+	{
+		private ReadQueryHelper QueryHelper { get; }
+
+		public ActivityAdapter(ReadQueryHelper queryHelper)
+		{
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+
+			this.QueryHelper = queryHelper;
+		}
+
+		public Task InsertAsync(Activity item)
+		{
+			throw new NotImplementedException();
+		}
+
+		public Task UpdateAsync(Activity item)
+		{
+			throw new NotImplementedException();
+		}
+
+		public Task DeleteAsync(Activity item)
+		{
+			throw new NotImplementedException();
+		}
+
+	}
+
 
 
 

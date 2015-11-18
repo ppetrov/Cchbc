@@ -9,13 +9,43 @@ namespace Cchbc.AppBuilder
 		public DbSchema Schema { get; }
 
 		private Dictionary<string, DbTable> InverseTables { get; } = new Dictionary<string, DbTable>();
-		private Dictionary<string, DbTable> ReadOnlyTables { get; } = new Dictionary<string, DbTable>();
+		private Dictionary<string, DbTable> ModifiableTables { get; } = new Dictionary<string, DbTable>();
+		private NameProvider NameProvider { get; } = new NameProvider();
 
 		public DbProject(DbSchema schema)
 		{
 			if (schema == null) throw new ArgumentNullException(nameof(schema));
 
 			this.Schema = schema;
+		}
+
+		public void DefineClassName(DbTable table, string className)
+		{
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (className == null) throw new ArgumentNullException(nameof(className));
+
+			this.NameProvider.AddClassName(table, className);
+		}
+
+		public void DefineModifiable(DbTable table)
+		{
+			if (table == null) throw new ArgumentNullException(nameof(table));
+
+			this.ModifiableTables.Add(table.Name, table);
+		}
+
+		public bool IsModifiable(DbTable table)
+		{
+			if (table == null) throw new ArgumentNullException(nameof(table));
+
+			return this.ModifiableTables.ContainsKey(table.Name);
+		}
+
+		public bool IsReadOnly(DbTable table)
+		{
+			if (table == null) throw new ArgumentNullException(nameof(table));
+
+			return !this.IsModifiable(table);
 		}
 
 		public void AttachInverseTable(DbTable table)
@@ -40,43 +70,42 @@ namespace Cchbc.AppBuilder
 			throw new ArgumentOutOfRangeException(nameof(table));
 		}
 
-		public void MarkReadOnly(DbTable table)
-		{
-			if (table == null) throw new ArgumentNullException(nameof(table));
-
-			this.ReadOnlyTables.Add(table.Name, table);
-		}
-
-		public Entity[] GenerateEntities()
+		public Entity[] CreateEntities()
 		{
 			var tables = this.Schema.Tables;
-			var classes = new Entity[tables.Length];
-
-			var converter = new DbTable2ClrClassConverter();
+			var entities = new Entity[tables.Length];
 
 			for (var i = 0; i < tables.Length; i++)
 			{
 				var table = tables[i];
-				var inverseTable = this.GetInverseTable(table.Name);
-				var clrClass = converter.Convert(table, inverseTable);
-				classes[i] = new Entity(clrClass, table, this.ReadOnlyTables.ContainsKey(table.Name), inverseTable);
+
+				DbTable inverseTable;
+				this.InverseTables.TryGetValue(table.Name, out inverseTable);
+				var clrClass = DbTable2ClrClassConverter.Convert(table, this.NameProvider, inverseTable);
+				entities[i] = new Entity(clrClass, table, inverseTable);
 			}
 
-			return classes;
+			return entities;
 		}
 
-		public string GenerateClass(Entity entity)
+		public string CreateEntityClass(Entity entity)
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-			return ClrCode.Class(entity);
+			return EntityGenerator.CreateEntityClass(entity, !this.ModifiableTables.ContainsKey(entity.Table.Name));
 		}
 
-		private DbTable GetInverseTable(string name)
+		public string CreateEntityAdapter(Entity entity)
 		{
-			DbTable table;
-			this.InverseTables.TryGetValue(name, out table);
-			return table;
+			if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+			// TODO : !!!
+			// Remove all dictionaries from inversed table - Activities
+			// Copy all dictionaries from inverse table Activities to Visit
+			// Don't generate Get in the inversed table - Activities
+			//DbTable inverseTable;
+			//this.InverseTables.TryGetValue("", out inverseTable);
+			return EntityGenerator.CreateEntityAdapter(entity, this.NameProvider, !this.ModifiableTables.ContainsKey(entity.Table.Name));
 		}
 	}
 }
