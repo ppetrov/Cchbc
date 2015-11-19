@@ -122,14 +122,14 @@ namespace Cchbc.UI
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 
-			return this.Manager.ExecuteAsync(viewItem, dialog, new Feature(this.Context, nameof(PromoteUserAsync), string.Empty), this.Manager.CanPromoteAsync, this.PromoteValidatedAsync);
+			return this.Manager.ExecuteAsync(viewItem, dialog, new Feature(this.Context, nameof(PromoteUserAsync), string.Empty), this.Manager.CanPromoteAsync, this.PromoteValidated);
 		}
 
-		private async Task PromoteValidatedAsync(LoginViewItem viewItem, FeatureEventArgs args)
+		private void PromoteValidated(LoginViewItem viewItem, FeatureEventArgs args)
 		{
 			viewItem.IsSystem = true;
 
-			await this.Manager.UpdateValidatedAsync(viewItem, args);
+			this.Manager.UpdateValidated(viewItem, args);
 		}
 
 		private void ManagerOnItemInserted(object sender, ObjectEventArgs<LoginViewItem> args)

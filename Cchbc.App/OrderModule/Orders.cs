@@ -29,14 +29,12 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderTypeAdapter : IReadOnlyAdapter<OrderType>
 	{
-		public Task FillAsync(Dictionary<long, OrderType> items, Func<OrderType, long> selector)
+		public void Fill(Dictionary<long, OrderType> items, Func<OrderType, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
 			items.Add(1, new OrderType(1, @"ZOR"));
-
-			return Task.FromResult(true);
 		}
 	}
 
@@ -81,7 +79,7 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(addresses);
 		}
 
-		public Task InsertAsync(DeliveryAddress item)
+		public void Insert(DeliveryAddress item)
 		{
 			//public long Id { get; set; }
 			//public Outlet Outlet { get; }
@@ -91,12 +89,12 @@ namespace Cchbc.App.OrderModule
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(DeliveryAddress item)
+		public void Update(DeliveryAddress item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(DeliveryAddress item)
+		public void Delete(DeliveryAddress item)
 		{
 			throw new NotImplementedException();
 		}
@@ -170,13 +168,11 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class VendorAdapter : IReadOnlyAdapter<Vendor>
 	{
-		public Task FillAsync(Dictionary<long, Vendor> items, Func<Vendor, long> selector)
+		public void Fill(Dictionary<long, Vendor> items, Func<Vendor, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
 			items.Add(1, new Vendor(1, @"Cchbc"));
-
-			return Task.FromResult(true);
 		}
 	}
 
@@ -215,13 +211,11 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class WholesalerAdapter : IReadOnlyAdapter<Wholesaler>
 	{
-		public Task FillAsync(Dictionary<long, Wholesaler> items, Func<Wholesaler, long> selector)
+		public void Fill(Dictionary<long, Wholesaler> items, Func<Wholesaler, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
 			items.Add(1, new Wholesaler(1, @"Metro"));
-
-			return Task.FromResult(true);
 		}
 	}
 
@@ -288,17 +282,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(oh);
 		}
 
-		public Task InsertAsync(OrderHeader item)
+		public void Insert(OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(OrderHeader item)
+		public void Update(OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(OrderHeader item)
+		public void Delete(OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
@@ -602,13 +596,11 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderNoteTypeAdapter : IReadOnlyAdapter<OrderNoteType>
 	{
-		public Task FillAsync(Dictionary<long, OrderNoteType> items, Func<OrderNoteType, long> selector)
+		public void Fill(Dictionary<long, OrderNoteType> items, Func<OrderNoteType, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
 			items.Add(1, new OrderNoteType(1, @"Driver"));
-
-			return Task.FromResult(true);
 		}
 	}
 
@@ -657,17 +649,17 @@ namespace Cchbc.App.OrderModule
 			//}));
 		}
 
-		public Task InsertAsync(OrderNote item)
+		public void Insert(OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(OrderNote item)
+		public void Update(OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(OrderNote item)
+		public void Delete(OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
@@ -728,17 +720,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(new List<OrderDetail>());
 		}
 
-		public Task InsertAsync(OrderDetail item)
+		public void Insert(OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(OrderDetail item)
+		public void Update(OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(OrderDetail item)
+		public void Delete(OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
@@ -776,17 +768,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(assortments);
 		}
 
-		public Task InsertAsync(Assortment item)
+		public void Insert(Assortment item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(Assortment item)
+		public void Update(Assortment item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(Assortment item)
+		public void Delete(Assortment item)
 		{
 			throw new NotImplementedException();
 		}

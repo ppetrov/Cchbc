@@ -78,7 +78,7 @@ namespace Cchbc.ConsoleClient
 			_connection = connection;
 		}
 
-		public override async Task<List<T>> ExecuteAsync<T>(Query<T> query)
+		public override List<T> Execute<T>(Query<T> query)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 
@@ -93,7 +93,7 @@ namespace Cchbc.ConsoleClient
 					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
 				}
 
-				using (var r = await cmd.ExecuteReaderAsync())
+				using (var r = cmd.ExecuteReader())
 				{
 					var dr = new DelegateDataReader(r);
 					while (dr.Read())
@@ -106,7 +106,7 @@ namespace Cchbc.ConsoleClient
 			return values;
 		}
 
-		public override async Task FillAsync<T>(Query<T> query, Dictionary<long, T> values, Func<T, long> selector)
+		public override void Fill<T>(Query<T> query, Dictionary<long, T> values, Func<T, long> selector)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 			if (values == null) throw new ArgumentNullException(nameof(values));
@@ -122,7 +122,7 @@ namespace Cchbc.ConsoleClient
 					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
 				}
 
-				using (var r = await cmd.ExecuteReaderAsync())
+				using (var r = cmd.ExecuteReader())
 				{
 					var dr = new DelegateDataReader(r);
 					while (dr.Read())
@@ -147,7 +147,7 @@ namespace Cchbc.ConsoleClient
 			_connection = connection;
 		}
 
-		public override Task ExecuteAsync(string statement, QueryParameter[] parameters)
+		public override int Execute(string statement, QueryParameter[] parameters)
 		{
 			using (var cmd = _connection.CreateCommand())
 			{
@@ -157,7 +157,7 @@ namespace Cchbc.ConsoleClient
 				{
 					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
 				}
-				return cmd.ExecuteNonQueryAsync();
+				return cmd.ExecuteNonQuery();
 			}
 		}
 	}

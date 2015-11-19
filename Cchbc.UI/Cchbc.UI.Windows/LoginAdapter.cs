@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Cchbc.Data;
 
@@ -8,21 +7,21 @@ namespace Cchbc.UI
 {
 public sealed class LoginAdapter : IModifiableAdapter<Login>
 {
-	public Task InsertAsync(Login item)
+	public void Insert(Login item)
 	{
 		if (item == null) throw new ArgumentNullException(nameof(item));
 
 		throw new NotImplementedException();
 	}
 
-	public Task UpdateAsync(Login item)
+	public void Update(Login item)
 	{
 		if (item == null) throw new ArgumentNullException(nameof(item));
 
 		throw new NotImplementedException();
 	}
 
-	public Task DeleteAsync(Login item)
+	public void Delete(Login item)
 	{
 		if (item == null) throw new ArgumentNullException(nameof(item));
 

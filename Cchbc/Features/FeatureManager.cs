@@ -28,9 +28,9 @@ namespace Cchbc.Features
 			_dbFeaturesManager = dbFeaturesManager;
 		}
 
-		public Task LoadAsync()
+		public void Load()
 		{
-			return _dbFeaturesManager.LoadAsync();
+			_dbFeaturesManager.Load();
 		}
 
 		public void StartDbWriters()
@@ -38,26 +38,26 @@ namespace Cchbc.Features
 			_features = new BlockingCollection<FeatureEntry>();
 			_exceptions = new BlockingCollection<ExceptionEntry>();
 
-			_featuresTask = Task.Run(async () =>
+			_featuresTask = Task.Run(() =>
 			{
 				foreach (var entry in _features.GetConsumingEnumerable())
 				{
 					try
 					{
 						this.InspectFeature?.Invoke(entry);
-						await _dbFeaturesManager.SaveAsync(entry);
+						_dbFeaturesManager.Save(entry);
 					}
 					catch (Exception ex) { _logger.Error(ex.ToString()); }
 				}
 			});
-			_exceptionsTask = Task.Run(async () =>
+			_exceptionsTask = Task.Run(() =>
 			{
 				foreach (var entry in _exceptions.GetConsumingEnumerable())
 				{
 					try
 					{
 						this.InspectException?.Invoke(entry);
-						await _dbFeaturesManager.SaveAsync(entry);
+						_dbFeaturesManager.Save(entry);
 					}
 					catch (Exception ex) { _logger.Error(ex.ToString()); }
 				}

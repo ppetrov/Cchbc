@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Objects;
 
@@ -139,12 +138,12 @@ namespace Cchbc.ConsoleClient
 			this.QueryHelper = queryHelper;
 		}
 
-		public Task FillAsync(Dictionary<long, Outlet> items, Func<Outlet, long> selector)
+		public void Fill(Dictionary<long, Outlet> items, Func<Outlet, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			return this.QueryHelper.FillAsync(new Query<Outlet>(@"SELECT Id, Name FROM Outlets", r =>
+			this.QueryHelper.Fill(new Query<Outlet>(@"SELECT Id, Name FROM Outlets", r =>
 			{
 				var id = 0L;
 				if (!r.IsDbNull(0))
@@ -187,12 +186,12 @@ namespace Cchbc.ConsoleClient
 			_queryHelper = queryHelper;
 		}
 
-		public Task FillAsync(Dictionary<long, ActivityType> items, Func<ActivityType, long> selector)
+		public void Fill(Dictionary<long, ActivityType> items, Func<ActivityType, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			return _queryHelper.FillAsync(new Query<ActivityType>(@"SELECT Id, Name FROM ActivityTypes", r =>
+			_queryHelper.Fill(new Query<ActivityType>(@"SELECT Id, Name FROM ActivityTypes", r =>
 			{
 				var id = 0L;
 				if (!r.IsDbNull(0))
@@ -222,12 +221,12 @@ namespace Cchbc.ConsoleClient
 			_queryHelper = queryHelper;
 		}
 
-		public Task FillAsync(Dictionary<long, Brand> items, Func<Brand, long> selector)
+		public void Fill(Dictionary<long, Brand> items, Func<Brand, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			return _queryHelper.FillAsync(new Query<Brand>(@"SELECT Id, Name FROM Brands", r =>
+			_queryHelper.Fill(new Query<Brand>(@"SELECT Id, Name FROM Brands", r =>
 			{
 				var id = 0L;
 				if (!r.IsDbNull(0))
@@ -257,12 +256,12 @@ namespace Cchbc.ConsoleClient
 			_queryHelper = queryHelper;
 		}
 
-		public Task FillAsync(Dictionary<long, Flavor> items, Func<Flavor, long> selector)
+		public void Fill(Dictionary<long, Flavor> items, Func<Flavor, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			return _queryHelper.FillAsync(new Query<Flavor>(@"SELECT Id, Name FROM Flavors", r =>
+			_queryHelper.Fill(new Query<Flavor>(@"SELECT Id, Name FROM Flavors", r =>
 			{
 				var id = 0L;
 				if (!r.IsDbNull(0))
@@ -300,12 +299,12 @@ namespace Cchbc.ConsoleClient
 			this.Flavors = flavors;
 		}
 
-		public Task FillAsync(Dictionary<long, Article> items, Func<Article, long> selector)
+		public void Fill(Dictionary<long, Article> items, Func<Article, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			return this.QueryHelper.FillAsync(new Query<Article>(@"SELECT Id, Name, BrandsId, FlavorsId FROM Articles", r =>
+			this.QueryHelper.Fill(new Query<Article>(@"SELECT Id, Name, BrandsId, FlavorsId FROM Articles", r =>
 			{
 				var id = 0L;
 				if (!r.IsDbNull(0))
@@ -353,7 +352,7 @@ namespace Cchbc.ConsoleClient
 			this.QueryHelper = queryHelper;
 		}
 
-		public Task InsertAsync(Activity item)
+		public void Insert(Activity item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -366,10 +365,10 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"INSERT INTO Activities (Date, ActivityTypeId, VisitId) VALUES (@pDate, @pActivityTypeId, @pVisitId)";
 
-			return this.QueryHelper.ExecuteAsync(query, sqlParams);
+			this.QueryHelper.Execute(query, sqlParams);
 		}
 
-		public Task UpdateAsync(Activity item)
+		public void Update(Activity item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -383,10 +382,10 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"UPDATE Activities SET Date = @pDate, ActivityTypeId = @pActivityTypeId, VisitId = @pVisitId WHERE Id = @pId";
 
-			return this.QueryHelper.ExecuteAsync(query, sqlParams);
+			this.QueryHelper.Execute(query, sqlParams);
 		}
 
-		public Task DeleteAsync(Activity item)
+		public void Delete(Activity item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -397,7 +396,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"DELETE FROM Activities WHERE Id = @pId";
 
-			return this.QueryHelper.ExecuteAsync(query, sqlParams);
+			this.QueryHelper.Execute(query, sqlParams);
 		}
 
 	}
@@ -414,7 +413,7 @@ namespace Cchbc.ConsoleClient
 			this.QueryHelper = queryHelper;
 		}
 
-		public async Task InsertAsync(Visit item)
+		public void Insert(Visit item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -425,12 +424,12 @@ namespace Cchbc.ConsoleClient
 			};
 
 			var query = @"INSERT INTO Visits (OutletId, Date) VALUES (@pOutletId, @pDate)";
-			await this.QueryHelper.ExecuteAsync(query, sqlParams);
+			this.QueryHelper.Execute(query, sqlParams);
 
-			item.Id = (await this.QueryHelper.ExecuteAsync(new Query<long>(@"SELECT last_insert_rowid()", r => r.GetInt64(0))))[0];
+			item.Id = (this.QueryHelper.Execute(new Query<long>(@"SELECT last_insert_rowid()", r => r.GetInt64(0))))[0];
 		}
 
-		public Task UpdateAsync(Visit item)
+		public void Update(Visit item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -443,10 +442,10 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"UPDATE Visits SET OutletId = @pOutletId, Date = @pDate WHERE Id = @pId";
 
-			return this.QueryHelper.ExecuteAsync(query, sqlParams);
+			this.QueryHelper.Execute(query, sqlParams);
 		}
 
-		public Task DeleteAsync(Visit item)
+		public void Delete(Visit item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -457,7 +456,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"DELETE FROM Visits WHERE Id = @pId";
 
-			return this.QueryHelper.ExecuteAsync(query, sqlParams);
+			this.QueryHelper.Execute(query, sqlParams);
 		}
 
 	}

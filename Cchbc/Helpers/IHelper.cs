@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Objects;
 
@@ -10,6 +9,6 @@ namespace Cchbc.Helpers
 	{
 		Dictionary<long, T> Items { get; }
 
-		Task LoadAsync(IReadOnlyAdapter<T> adapter, Func<T, long> selector);
+		void Load(IReadOnlyAdapter<T> adapter, Func<T, long> selector);
 	}
 }

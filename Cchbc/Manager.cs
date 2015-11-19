@@ -96,7 +96,7 @@ namespace Cchbc
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			return ExecuteAsync(viewItem, dialog, feature, this.CanInsertAsync, this.InsertValidatedAsync);
+			return ExecuteAsync(viewItem, dialog, feature, this.CanInsertAsync, this.InsertValidated);
 		}
 
 		public Task UpdateAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
@@ -105,7 +105,7 @@ namespace Cchbc
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			return ExecuteAsync(viewItem, dialog, feature, this.CanUpdateAsync, this.UpdateValidatedAsync);
+			return ExecuteAsync(viewItem, dialog, feature, this.CanUpdateAsync, this.UpdateValidated);
 		}
 
 		public Task DeleteAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
@@ -114,10 +114,10 @@ namespace Cchbc
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			return ExecuteAsync(viewItem, dialog, feature, this.CanDeleteAsync, this.DeleteValidatedAsync);
+			return ExecuteAsync(viewItem, dialog, feature, this.CanDeleteAsync, this.DeleteValidated);
 		}
 
-		public async Task ExecuteAsync(TViewItem viewItem, ModalDialog dialog, Feature feature, Func<TViewItem, Feature, Task<PermissionResult>> verifier, Func<TViewItem, FeatureEventArgs, Task> performer)
+		public async Task ExecuteAsync(TViewItem viewItem, ModalDialog dialog, Feature feature, Func<TViewItem, Feature, Task<PermissionResult>> verifier, Action<TViewItem, FeatureEventArgs> performer)
 		{
 			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
@@ -137,11 +137,11 @@ namespace Cchbc
 					switch (permissionResult.Status)
 					{
 						case PermissionStatus.Allow:
-							await performer(viewItem, args);
+							performer(viewItem, args);
 							break;
 						case PermissionStatus.Confirm:
 							this.SetupDialog(dialog, args);
-							dialog.AcceptAction = async () => await performer(viewItem, args);
+							dialog.AcceptAction = () => performer(viewItem, args);
 							await dialog.ConfirmAsync(permissionResult.Message, feature);
 							break;
 						case PermissionStatus.Deny:
@@ -266,16 +266,16 @@ namespace Cchbc
 			return this.Searcher.Search(GetFilteredViewItems(viewItems ?? this.ViewItems), textSearch, searchOption);
 		}
 
-		public async Task InsertValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
+		public void InsertValidated(TViewItem viewItem, FeatureEventArgs args)
 		{
 			var feature = args.Feature;
-			feature.AddStep(nameof(InsertValidatedAsync));
+			feature.AddStep(nameof(InsertValidated));
 			try
 			{
 				try
 				{
 					// Add the item to the db
-					await this.Adapter.InsertAsync(viewItem.Item);
+					this.Adapter.Insert(viewItem.Item);
 
 					// Find the right index to insert the new element
 					var index = this.ViewItems.Count;
@@ -317,16 +317,16 @@ namespace Cchbc
 			}
 		}
 
-		public async Task UpdateValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
+		public void UpdateValidated(TViewItem viewItem, FeatureEventArgs args)
 		{
 			var feature = args.Feature;
-			feature.AddStep(nameof(UpdateValidatedAsync));
+			feature.AddStep(nameof(UpdateValidated));
 			try
 			{
 				try
 				{
 					// Update the item from the db
-					await this.Adapter.UpdateAsync(viewItem.Item);
+					this.Adapter.Update(viewItem.Item);
 
 					// Fire the event
 					this.OnItemUpdated(new ObjectEventArgs<TViewItem>(viewItem));
@@ -346,16 +346,16 @@ namespace Cchbc
 			}
 		}
 
-		public async Task DeleteValidatedAsync(TViewItem viewItem, FeatureEventArgs args)
+		public void DeleteValidated(TViewItem viewItem, FeatureEventArgs args)
 		{
 			var feature = args.Feature;
-			feature.AddStep(nameof(UpdateValidatedAsync));
+			feature.AddStep(nameof(UpdateValidated));
 			try
 			{
 				try
 				{
 					// Delete the item from the db
-					await this.Adapter.DeleteAsync(viewItem.Item);
+					this.Adapter.Delete(viewItem.Item);
 
 					// Delete the item into the list at the correct place
 					this.ViewItems.Remove(viewItem);

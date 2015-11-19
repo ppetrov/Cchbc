@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Cchbc.Features.Db
 {
@@ -18,70 +17,68 @@ namespace Cchbc.Features.Db
 			this.Adapter = adapter;
 		}
 
-		public Task CreateSchemaAsync()
+		public void CreateSchema()
 		{
-			return this.Adapter.CreateSchemaAsync();
+			this.Adapter.CreateSchema();
 		}
 
-		public Task LoadAsync()
+		public void Load()
 		{
-			var contextTesk = this.LoadContextsAsync();
-			var stepsTask = this.LoadStepsAsync();
-			var featuresTask = this.LoadFeaturesAsync();
-
-			return Task.WhenAll(contextTesk, stepsTask, featuresTask);
+			this.LoadContexts();
+			this.LoadSteps();
+			this.LoadFeatures();
 		}
 
-		public async Task SaveAsync(FeatureEntry featureEntry)
+		public void Save(FeatureEntry featureEntry)
 		{
 			if (featureEntry == null) throw new ArgumentNullException(nameof(featureEntry));
 
-			var context = await this.SaveContextAsync(featureEntry.Context);
-			var feature = await this.SaveFeatureAsync(context, featureEntry.Name);
-			var dbFeatureEntry = await this.Adapter.InsertFeatureEntryAsync(feature, featureEntry);
-			await this.SaveStepsAsync(dbFeatureEntry, featureEntry.Steps);
+			var context = this.SaveContext(featureEntry.Context);
+			var feature = this.SaveFeature(context, featureEntry.Name);
+			var dbFeatureEntry = this.Adapter.InsertFeatureEntry(feature, featureEntry);
+			this.SaveSteps(dbFeatureEntry, featureEntry.Steps);
 		}
 
-		public async Task SaveAsync(ExceptionEntry exceptionEntry)
+		public void Save(ExceptionEntry exceptionEntry)
 		{
 			if (exceptionEntry == null) throw new ArgumentNullException(nameof(exceptionEntry));
 
-			var context = await this.SaveContextAsync(exceptionEntry.Context);
-			var feature = await this.SaveFeatureAsync(context, exceptionEntry.Name);
-			await this.Adapter.InsertExceptionEntryAsync(feature, exceptionEntry);
+			var context = this.SaveContext(exceptionEntry.Context);
+			var feature = this.SaveFeature(context, exceptionEntry.Name);
+			this.Adapter.InsertExceptionEntry(feature, exceptionEntry);
 		}
 
-		private async Task LoadContextsAsync()
+		private void LoadContexts()
 		{
 			// Clear contexts from old values
 			this.Contexts.Clear();
 
 			// Fetch & add new values
-			foreach (var context in await this.Adapter.GetContextsAsync())
+			foreach (var context in this.Adapter.GetContexts())
 			{
 				this.Contexts.Add(context.Name, context);
 			}
 		}
 
-		private async Task LoadStepsAsync()
+		private void LoadSteps()
 		{
 			// Clear steps from old values
 			this.Steps.Clear();
 
 			// Fetch & add new values
-			foreach (var step in await this.Adapter.GetStepsAsync())
+			foreach (var step in this.Adapter.GetSteps())
 			{
 				this.Steps.Add(step.Name, step);
 			}
 		}
 
-		private async Task LoadFeaturesAsync()
+		private void LoadFeatures()
 		{
 			// Clear steps from old values
 			this.Features.Clear();
 
 			// Fetch & add new values
-			foreach (var feature in await this.Adapter.GetFeaturesAsync())
+			foreach (var feature in this.Adapter.GetFeatures())
 			{
 				var contextId = feature.ContextId;
 
@@ -97,14 +94,14 @@ namespace Cchbc.Features.Db
 			}
 		}
 
-		private async Task<DbContext> SaveContextAsync(string name)
+		private DbContext SaveContext(string name)
 		{
 			DbContext context;
 
 			if (!this.Contexts.TryGetValue(name, out context))
 			{
 				// Insert into database
-				context = await this.Adapter.InsertContextAsync(name);
+				context = this.Adapter.InsertContext(name);
 
 				// Insert the new context into the collection
 				this.Contexts.Add(name, context);
@@ -113,7 +110,7 @@ namespace Cchbc.Features.Db
 			return context;
 		}
 
-		private async Task<DbFeature> SaveFeatureAsync(DbContext context, string name)
+		private DbFeature SaveFeature(DbContext context, string name)
 		{
 			var contextId = context.Id;
 
@@ -129,7 +126,7 @@ namespace Cchbc.Features.Db
 			if (feature == null)
 			{
 				// Insert into database
-				feature = await this.Adapter.InsertFeatureAsync(context, name);
+				feature = this.Adapter.InsertFeature(context, name);
 
 				// Insert the new feature into the collection
 				this.Features.Add(contextId,
@@ -138,7 +135,7 @@ namespace Cchbc.Features.Db
 			return feature;
 		}
 
-		private async Task SaveStepsAsync(DbFeatureEntry featureEntry, FeatureEntryStep[] entrySteps)
+		private void SaveSteps(DbFeatureEntry featureEntry, FeatureEntryStep[] entrySteps)
 		{
 			foreach (var step in entrySteps)
 			{
@@ -148,7 +145,7 @@ namespace Cchbc.Features.Db
 				if (!this.Steps.TryGetValue(name, out current))
 				{
 					// Inser step
-					current = await this.Adapter.InsertStepAsync(name);
+					current = this.Adapter.InsertStep(name);
 					this.Steps.Add(name, current);
 				}
 			}
@@ -156,7 +153,7 @@ namespace Cchbc.Features.Db
 			// Inser step entries
 			foreach (var step in entrySteps)
 			{
-				await this.Adapter.InsertStepEntryAsync(featureEntry, this.Steps[step.Name], step);
+				this.Adapter.InsertStepEntry(featureEntry, this.Steps[step.Name], step);
 			}
 		}
 	}

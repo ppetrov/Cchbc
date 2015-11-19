@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cchbc.Objects;
 
 namespace Cchbc.Data
@@ -16,22 +15,22 @@ namespace Cchbc.Data
 			this.ReadQueryHelper = readQueryHelper;
 		}
 
-		public Task<List<T>> ExecuteAsync<T>(Query<T> query) where T : IDbObject
+		public List<T> Execute<T>(Query<T> query) where T : IDbObject
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 
-			return this.ReadQueryHelper.ExecuteAsync(query);
+			return this.ReadQueryHelper.Execute(query);
 		}
 
-		public Task FillAsync<T>(Query<T> query, Dictionary<long, T> values, Func<T, long> selector) where T : IDbObject
+		public void Fill<T>(Query<T> query, Dictionary<long, T> values, Func<T, long> selector) where T : IDbObject
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 			if (values == null) throw new ArgumentNullException(nameof(values));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			return this.ReadQueryHelper.FillAsync(query, values, selector);
+			this.ReadQueryHelper.Fill(query, values, selector);
 		}
 
-		public abstract Task ExecuteAsync(string statement, QueryParameter[] parameters);
+		public abstract int Execute(string statement, QueryParameter[] parameters);
 	}
 }

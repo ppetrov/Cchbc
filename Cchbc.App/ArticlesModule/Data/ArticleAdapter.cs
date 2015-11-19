@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cchbc.App.ArticlesModule.Objects;
 using Cchbc.Data;
 
@@ -23,11 +22,11 @@ namespace Cchbc.App.ArticlesModule.Data
 			_flavors = flavors;
 		}
 
-		public Task FillAsync(Dictionary<long, Article> items, Func<Article, long> selector)
+		public void Fill(Dictionary<long, Article> items, Func<Article, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
-			return _queryHelper.FillAsync(new Query<Article>(@"SELECT ID, NAME, BRAND_ID, FLAVOR_ID FROM ARTICLES", r =>
+			_queryHelper.Fill(new Query<Article>(@"SELECT ID, NAME, BRAND_ID, FLAVOR_ID FROM ARTICLES", r =>
 			{
 				var id = r.GetInt64(0);
 				var name = string.Empty;

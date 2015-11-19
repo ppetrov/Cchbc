@@ -17,12 +17,12 @@ namespace Cchbc.App.ArticlesModule.Data
 			_queryHelper = queryHelper;
 		}
 
-		public Task FillAsync(Dictionary<long, Flavor> items, Func<Flavor, long> selector)
+		public void Fill(Dictionary<long, Flavor> items, Func<Flavor, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			return _queryHelper.FillAsync(new Query<Flavor>(@"SELECT ID, NAME FROM FLAVORS", r =>
+			_queryHelper.Fill(new Query<Flavor>(@"SELECT ID, NAME FROM FLAVORS", r =>
 			{
 				var id = r.GetInt64(0);
 				var name = string.Empty;
