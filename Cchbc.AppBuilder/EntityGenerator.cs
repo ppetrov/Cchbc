@@ -23,7 +23,15 @@ namespace Cchbc.AppBuilder
 			buffer.Append(' ');
 			buffer.Append(@"class");
 			buffer.Append(' ');
-			buffer.AppendLine(@class.Name);
+			buffer.Append(@class.Name);
+			if (!readOnly)
+			{
+				buffer.Append(' ');
+				buffer.Append(':');
+				buffer.Append(' ');
+				buffer.Append(@"IDbObject");
+			}
+			buffer.AppendLine();
 
 			buffer.Append('{');
 			buffer.AppendLine();
@@ -36,17 +44,6 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 
 			return buffer.ToString();
-		}
-
-		public static string CreateEntityAdapter(Entity entity, NameProvider nameProvider, bool readOnly, bool includeDictionaries)
-		{
-			if (entity == null) throw new ArgumentNullException(nameof(entity));
-
-			if (readOnly)
-			{
-				return ReadOnlyAdapter(entity);
-			}
-			return ModifiableAdapter(entity, nameProvider, includeDictionaries);
 		}
 
 		private static void AppendClassProperties(StringBuilder buffer, ClrProperty[] properties, bool readOnly, bool publicAccess = true)
@@ -161,8 +158,11 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
-		private static string ReadOnlyAdapter(Entity entity)
+		public static string ReadOnlyAdapter(Entity entity, Dictionary<ClrType, ClrProperty> dictionaryProperties)
 		{
+			if (entity == null) throw new ArgumentNullException(nameof(entity));
+			if (dictionaryProperties == null) throw new ArgumentNullException(nameof(dictionaryProperties));
+
 			var buffer = new StringBuilder(2 * 1024);
 
 			var className = entity.Class.Name;
@@ -172,15 +172,7 @@ namespace Cchbc.AppBuilder
 			buffer.Append('{');
 			buffer.AppendLine();
 
-			var dictionaryProperties = GetDictionaryProperties(entity);
-
-			var i = 0;
-			var classProperties = new ClrProperty[dictionaryProperties.Count + 1];
-			classProperties[i++] = new ClrProperty(@"QueryHelper", new ClrType(@"ReadQueryHelper", true));
-			foreach (var classProperty in dictionaryProperties.Values)
-			{
-				classProperties[i++] = classProperty;
-			}
+			var classProperties = GetClassProperties(dictionaryProperties);
 
 			var adapterClass = new ClrClass(className + @"Adapter", classProperties);
 
@@ -199,51 +191,11 @@ namespace Cchbc.AppBuilder
 			return buffer.ToString();
 		}
 
-		private static Dictionary<ClrType, ClrProperty> GetDictionaryProperties(Entity entity)
+		public static string ModifiableAdapter(Entity entity, Dictionary<ClrType, ClrProperty> dictionaryProperties, bool generateGetMethod)
 		{
-			var dictionaryProperties = new Dictionary<ClrType, ClrProperty>();
+			if (entity == null) throw new ArgumentNullException(nameof(entity));
+			if (dictionaryProperties == null) throw new ArgumentNullException(nameof(dictionaryProperties));
 
-			foreach (var property in entity.Class.Properties)
-			{
-				var type = property.Type;
-				if (type.IsUserType)
-				{
-					string propertyType = null;
-
-					var name = type.Name;
-					foreach (var column in entity.Table.Columns)
-					{
-						var foreignKey = column.DbForeignKey;
-						if (foreignKey != null)
-						{
-							var fkTableClassName = foreignKey.Table.ClassName;
-							if (fkTableClassName == name)
-							{
-								propertyType = foreignKey.Table.Name;
-								break;
-							}
-						}
-					}
-
-					if (propertyType == null && entity.InverseTable != null)
-					{
-						var inverseTableClassName = @"List<" + entity.InverseTable.ClassName + @">";
-						if (inverseTableClassName == name)
-						{
-							// Ignore user type(List<T>) from Inverse table
-							continue;
-						}
-					}
-
-					dictionaryProperties.Add(type, new ClrProperty(propertyType, new ClrType($@"Dictionary<long, {name}>", true)));
-				}
-			}
-
-			return dictionaryProperties;
-		}
-
-		private static string ModifiableAdapter(Entity entity, NameProvider nameProvider, bool includeDictionaries)
-		{
 			var buffer = new StringBuilder(2 * 1024);
 
 			var className = entity.Class.Name;
@@ -253,18 +205,7 @@ namespace Cchbc.AppBuilder
 			buffer.Append('{');
 			buffer.AppendLine();
 
-			var classProperties = new[]
-			{
-				new ClrProperty(@"QueryHelper", new ClrType(@"QueryHelper", true))
-			};
-
-			if (includeDictionaries)
-			{
-				var properties = new List<ClrProperty>(classProperties);
-				properties.AddRange(GetDictionaryProperties(entity).Values);
-
-				classProperties = properties.ToArray();
-			}
+			var classProperties = GetClassProperties(dictionaryProperties);
 
 			var adapterClass = new ClrClass(className + @"Adapter", classProperties);
 
@@ -274,16 +215,17 @@ namespace Cchbc.AppBuilder
 			AppendClassConstructor(buffer, adapterClass);
 			buffer.AppendLine();
 
-			// TODO : !!!
-			//AppendGetAllMethod(buffer, entity);
-			//buffer.AppendLine();
+			if (generateGetMethod)
+			{
+				AppendGetAllMethod(buffer, entity, dictionaryProperties);
+				buffer.AppendLine();
+			}
 
 			AppendInsertMethod(buffer, entity);
 			buffer.AppendLine();
 			AppendUpdateMethod(buffer, entity);
 			buffer.AppendLine();
 			AppendDeleteMethod(buffer, entity);
-			buffer.AppendLine();
 
 			buffer.Append('}');
 			buffer.AppendLine();
@@ -291,15 +233,150 @@ namespace Cchbc.AppBuilder
 			return buffer.ToString();
 		}
 
-		//private static void AppendGetAllMethod(StringBuilder buffer, Entity entity)
-		//{
-		//	buffer.Append('\t');
-		//	buffer.AppendLine(@"//GET ALL !!!");
-		//}
+		private static void AppendGetAllMethod(StringBuilder buffer, Entity entity, Dictionary<ClrType, ClrProperty> dictionaries)
+		{
+			var @class = entity.Class;
+			var properties = @class.Properties;
+			var parameters = new string[properties.Length];
+			for (var i = 0; i < properties.Length; i++)
+			{
+				parameters[i] = NameProvider.LowerFirst(properties[i].Name);
+			}
+
+			buffer.Append('\t');
+			buffer.AppendFormat(@"public List<{0}> Get()", @class.Name);
+			buffer.AppendLine();
+
+			buffer.Append('\t');
+			buffer.Append('{');
+			buffer.AppendLine();
+
+			buffer.Append('\t');
+			buffer.Append('\t');
+			buffer.Append(@"var query = @");
+			buffer.Append('"');
+			QueryBuilder.AppendSelect(buffer, entity.Table);
+			buffer.Append('"');
+			buffer.Append(';');
+			buffer.AppendLine();
+			buffer.AppendLine();
+
+			buffer.Append('\t');
+			buffer.Append('\t');
+			buffer.AppendFormat(@"return this.QueryHelper.Execute(new Query<{0}>(query, r =>", @class.Name);
+			buffer.AppendLine();
+
+			buffer.Append('\t');
+			buffer.Append('\t');
+			buffer.Append('{');
+			buffer.AppendLine();
+
+			for (var i = 0; i < properties.Length; i++)
+			{
+				var p = properties[i];
+
+				var type = p.Type;
+				var name = parameters[i];
+
+				if (i > 0)
+				{
+					buffer.AppendLine();
+				}
+				// Variable declaration
+				buffer.Append("\t\t\t");
+				buffer.Append(@"var");
+				buffer.Append(' ');
+				buffer.Append(name);
+				buffer.Append(@" = ");
+				buffer.Append(GetDefaultValue(type));
+				buffer.Append(';');
+				buffer.AppendLine();
+
+				// Check for NULL
+				buffer.Append("\t\t\t");
+				buffer.Append(@"if (!r.IsDbNull(");
+				buffer.Append(i);
+				buffer.Append(')');
+				buffer.Append(')');
+				buffer.AppendLine();
+
+				buffer.Append("\t\t\t");
+				buffer.AppendLine(@"{");
+
+				// Read the value from the reader and assign to variable
+				buffer.Append("\t\t\t");
+				buffer.Append('\t');
+				buffer.Append(name);
+				buffer.Append(@" = ");
+				if (type.IsUserType)
+				{
+					buffer.Append(@"this");
+					buffer.Append('.');
+
+					var tmp = "_lookup";
+					ClrProperty t;
+					if (dictionaries.TryGetValue(type, out t))
+					{
+						tmp = t.Name;
+					}
+					;
+					//buffer.Append(dictionaries[type].Name);
+					buffer.Append(tmp);
+					buffer.Append('[');
+				}
+				buffer.Append(@"r.");
+				buffer.Append(GetReaderMethod(type));
+				buffer.Append('(');
+				buffer.Append(i);
+				buffer.Append(')');
+				if (type.IsUserType)
+				{
+					buffer.Append(']');
+				}
+				buffer.Append(';');
+				buffer.AppendLine();
+
+				buffer.Append("\t\t\t");
+				buffer.AppendLine(@"}");
+			}
+
+			// Create instance & return the value;
+			buffer.AppendLine();
+			buffer.Append("\t\t\t");
+			buffer.Append(@"return");
+			buffer.Append(' ');
+			buffer.Append(@"new");
+			buffer.Append(' ');
+			buffer.Append(@class.Name);
+			buffer.Append('(');
+			for (var i = 0; i < parameters.Length; i++)
+			{
+				if (i > 0)
+				{
+					buffer.Append(',');
+					buffer.Append(' ');
+				}
+				buffer.Append(parameters[i]);
+			}
+			buffer.Append(')');
+			buffer.Append(';');
+			buffer.AppendLine();
+
+			buffer.Append('\t');
+			buffer.Append('\t');
+			buffer.Append('}');
+			buffer.Append(@"));");
+			buffer.AppendLine();
+
+			buffer.Append('\t');
+			buffer.Append('}');
+
+			buffer.AppendLine();
+		}
 
 		private static void AppendInsertMethod(StringBuilder buffer, Entity entity)
 		{
-			AppendMethod(buffer, entity, @"Insert", QueryBuilder.AppendInsert, c => !c.IsPrimaryKey);
+			AppendMethod(buffer, entity, @"Insert", QueryBuilder.AppendInsert, c => !c.IsPrimaryKey, true);
 		}
 
 		private static void AppendUpdateMethod(StringBuilder buffer, Entity entity)
@@ -312,13 +389,13 @@ namespace Cchbc.AppBuilder
 			AppendMethod(buffer, entity, @"Delete", QueryBuilder.AppendDelete, c => c.IsPrimaryKey);
 		}
 
-		private static void AppendMethod(StringBuilder buffer, Entity entity, string operation, Action<StringBuilder, DbTable> queryAppender, Func<DbColumn, bool> columnMatcher)
+		private static void AppendMethod(StringBuilder buffer, Entity entity, string methodName, Action<StringBuilder, DbTable> queryAppender, Func<DbColumn, bool> columnMatcher, bool getNewId = false)
 		{
 			var className = entity.Class.Name;
 
 			buffer.Append('\t');
 			buffer.Append(@"public void ");
-			buffer.Append(operation);
+			buffer.Append(methodName);
 			buffer.AppendFormat(@"({0} item)", className);
 			buffer.AppendLine();
 
@@ -351,7 +428,9 @@ namespace Cchbc.AppBuilder
 				buffer.Append('\t');
 				buffer.Append('\t');
 				buffer.Append('\t');
-				buffer.Append(@"new QueryParameter");
+				buffer.Append(@"new");
+				buffer.Append(' ');
+				buffer.Append(@"QueryParameter");
 				buffer.Append('(');
 				buffer.Append('@');
 				buffer.Append('"');
@@ -398,6 +477,15 @@ namespace Cchbc.AppBuilder
 			buffer.Append('\t');
 			buffer.Append(@"this.QueryHelper.Execute(query, sqlParams);");
 			buffer.AppendLine();
+
+			if (getNewId)
+			{
+				buffer.AppendLine();
+				buffer.Append('\t');
+				buffer.Append('\t');
+				buffer.Append(@"item.Id = this.QueryHelper.GetNewId();");
+				buffer.AppendLine();
+			}
 
 			buffer.Append('\t');
 			buffer.Append('}');
@@ -510,7 +598,6 @@ namespace Cchbc.AppBuilder
 				buffer.Append(';');
 				buffer.AppendLine();
 
-				// Close brace
 				buffer.Append("\t\t\t");
 				buffer.AppendLine(@"}");
 			}
@@ -545,6 +632,21 @@ namespace Cchbc.AppBuilder
 
 			buffer.Append('\t');
 			buffer.Append('}');
+		}
+
+		private static ClrProperty[] GetClassProperties(Dictionary<ClrType, ClrProperty> dictionaryProperties)
+		{
+			var classProperties = new ClrProperty[dictionaryProperties.Count + 1];
+
+			classProperties[0] = new ClrProperty(@"QueryHelper", new ClrType(@"QueryHelper", true));
+
+			var i = 1;
+			foreach (var classProperty in dictionaryProperties.Values)
+			{
+				classProperties[i++] = classProperty;
+			}
+
+			return classProperties;
 		}
 
 		private static string GetReaderMethod(ClrType type)

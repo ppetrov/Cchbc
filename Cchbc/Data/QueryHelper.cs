@@ -49,5 +49,10 @@ namespace Cchbc.Data
 
 			this.ReadQueryHelper.Fill(query, values, selector);
 		}
+
+		public long GetNewId()
+		{
+			return this.Execute(ModifyQueryHelper.SelectNewIdQuery)[0];
+		}
 	}
 }

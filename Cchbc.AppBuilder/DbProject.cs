@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Cchbc.AppBuilder.Clr;
 using Cchbc.AppBuilder.DDL;
 
 namespace Cchbc.AppBuilder
@@ -10,7 +12,6 @@ namespace Cchbc.AppBuilder
 
 		private Dictionary<string, DbTable> InverseTables { get; } = new Dictionary<string, DbTable>();
 		private Dictionary<string, DbTable> ModifiableTables { get; } = new Dictionary<string, DbTable>();
-		private NameProvider NameProvider { get; } = new NameProvider();
 
 		public DbProject(DbSchema schema)
 		{
@@ -69,12 +70,7 @@ namespace Cchbc.AppBuilder
 
 			for (var i = 0; i < tables.Length; i++)
 			{
-				var table = tables[i];
-
-				DbTable inverseTable;
-				this.InverseTables.TryGetValue(table.Name, out inverseTable);
-				var clrClass = DbTable2ClrClassConverter.Convert(table, inverseTable);
-				entities[i] = new Entity(clrClass, table, inverseTable);
+				entities[i] = CreateEntity(tables[i]);
 			}
 
 			return entities;
@@ -92,15 +88,113 @@ namespace Cchbc.AppBuilder
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 
 			// TODO : !!!
-			// Remove all dictionaries from inversed table - Activities
-			// Copy all dictionaries from inverse table Activities to Visit
 			// Don't generate Get in the inversed table - Activities
 
-			//DbTable inverseTable;
-			//this.InverseTables.TryGetValue("", out inverseTable);
+			var table = entity.Table;
+			var readOnly = !this.ModifiableTables.ContainsKey(table.Name);
+			if (readOnly)
+			{
+				return EntityGenerator.ReadOnlyAdapter(entity, GetDictionaryProperties(entity));
+			}
 
-			var includeDictionaries = false;
-			return EntityGenerator.CreateEntityAdapter(entity, this.NameProvider, !this.ModifiableTables.ContainsKey(entity.Table.Name), includeDictionaries);
+			var currentTable = entity.Table;
+
+			// We need only the current entity
+			var entities = new[] { entity };
+
+			if (entity.InverseTable != null)
+			{
+				// If the entity has an inverse table
+				// we need both entities
+				entities = new[] { entity, this.CreateEntity(entity.InverseTable) };
+			}
+			else
+			{
+				foreach (var column in entity.Table.Columns)
+				{
+					var foreignKey = column.DbForeignKey;
+					if (foreignKey != null)
+					{
+						// Check if the current table isn't an inveverse table for other entity
+						DbTable inverseTable;
+						this.InverseTables.TryGetValue(foreignKey.Table.Name, out inverseTable);
+
+						if (inverseTable == currentTable)
+						{
+							entities = Enumerable.Empty<Entity>().ToArray();
+							break;
+						}
+					}
+				}
+			}
+
+
+			var dictionaryProperties = new Dictionary<ClrType, ClrProperty>();
+			foreach (var e in entities)
+			{
+				foreach (var typeProperty in GetDictionaryProperties(e))
+				{
+					if (entity.Class.Name != typeProperty.Key.Name)
+					{
+						dictionaryProperties.Add(typeProperty.Key, typeProperty.Value);
+					}
+				}
+			}
+
+			return EntityGenerator.ModifiableAdapter(entity, dictionaryProperties, entities.Length > 0);
+		}
+
+		private Entity CreateEntity(DbTable table)
+		{
+			DbTable inverseTable;
+			this.InverseTables.TryGetValue(table.Name, out inverseTable);
+
+			var clrClass = DbTable2ClrClassConverter.Convert(table, inverseTable);
+
+			return new Entity(clrClass, table, inverseTable);
+		}
+
+		private static Dictionary<ClrType, ClrProperty> GetDictionaryProperties(Entity entity)
+		{
+			var dictionaryProperties = new Dictionary<ClrType, ClrProperty>();
+
+			foreach (var property in entity.Class.Properties)
+			{
+				var type = property.Type;
+				if (type.IsUserType)
+				{
+					string propertyType = null;
+
+					var name = type.Name;
+					foreach (var column in entity.Table.Columns)
+					{
+						var foreignKey = column.DbForeignKey;
+						if (foreignKey != null)
+						{
+							var fkTableClassName = foreignKey.Table.ClassName;
+							if (fkTableClassName == name)
+							{
+								propertyType = foreignKey.Table.Name;
+								break;
+							}
+						}
+					}
+
+					if (propertyType == null && entity.InverseTable != null)
+					{
+						var inverseTableClassName = @"List<" + entity.InverseTable.ClassName + @">";
+						if (inverseTableClassName == name)
+						{
+							// Ignore user type(List<T>) from Inverse table
+							continue;
+						}
+					}
+
+					dictionaryProperties.Add(type, new ClrProperty(propertyType, new ClrType($@"Dictionary<long, {name}>", true)));
+				}
+			}
+
+			return dictionaryProperties;
 		}
 	}
 }

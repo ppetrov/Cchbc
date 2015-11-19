@@ -237,6 +237,16 @@ namespace Cchbc.ConsoleClient
 					DbColumn.ForeignKey(brands),
 					DbColumn.ForeignKey(flavors),
 				});
+				var activityNoteTypes = DbTable.Create(@"ActivityNoteTypes", new[]
+				{
+					DbColumn.String(@"Name"),
+				});
+				var activityNotes = DbTable.Create(@"ActivityNotes", new[]
+				{
+					DbColumn.String(@"Contents"),
+					DbColumn.ForeignKey(activityNoteTypes),
+					DbColumn.ForeignKey(activities),
+				});
 
 				var schema = new DbSchema(@"ifsa", new[]
 				{
@@ -246,7 +256,9 @@ namespace Cchbc.ConsoleClient
 					activities,
 					brands,
 					flavors,
-					articles
+					articles,
+					activityNoteTypes,
+					activityNotes
 				});
 
 
@@ -256,6 +268,7 @@ namespace Cchbc.ConsoleClient
 				// Define tables as Modifiable, all tables are ReadOnly by default
 				project.DefineModifiable(visits);
 				project.DefineModifiable(activities);
+				project.DefineModifiable(activityNotes);
 
 				// Attach Inverse tables
 				project.AttachInverseTable(visits);
@@ -265,6 +278,7 @@ namespace Cchbc.ConsoleClient
 				{
 					//var entityClass = project.CreateEntityClass(entity);
 					//buffer.AppendLine(entityClass);
+					//continue;
 
 					if (project.IsModifiable(entity.Table))
 					{
@@ -272,16 +286,14 @@ namespace Cchbc.ConsoleClient
 						//{
 						//	continue;
 						//}
+						if (entity.Table.Name != @"Visits")
+						{
+							continue;
+						}
 						var entityAdapter = project.CreateEntityAdapter(entity);
 						buffer.AppendLine(entityAdapter);
-						break;
+						//break;
 					}
-
-					//if (entity.IsTableReadOnly)
-					//{
-					//	var value = ClrCode.ReadOnlyAdapter(entity);
-					//	buffer.AppendLine(value);
-					//}
 				}
 
 				Console.WriteLine(buffer.ToString());

@@ -6,6 +6,8 @@ namespace Cchbc.Data
 {
 	public abstract class ModifyQueryHelper
 	{
+		public static readonly Query<long> SelectNewIdQuery = new Query<long>(@"SELECT LAST_INSERT_ROWID()", r => r.GetInt64(0));
+
 		private ReadQueryHelper ReadQueryHelper { get; }
 
 		protected ModifyQueryHelper(ReadQueryHelper readQueryHelper)
