@@ -147,7 +147,7 @@ namespace Cchbc.ConsoleClient
 			_connection = connection;
 		}
 
-		public override async Task ExecuteAsync(string statement, QueryParameter[] parameters)
+		public override Task ExecuteAsync(string statement, QueryParameter[] parameters)
 		{
 			using (var cmd = _connection.CreateCommand())
 			{
@@ -157,7 +157,7 @@ namespace Cchbc.ConsoleClient
 				{
 					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
 				}
-				await cmd.ExecuteNonQueryAsync();
+				return cmd.ExecuteNonQueryAsync();
 			}
 		}
 	}
@@ -260,39 +260,22 @@ namespace Cchbc.ConsoleClient
 				// Attach Inverse tables
 				project.AttachInverseTable(visits);
 
-				//var b = new StringBuilder();
-				//QueryBuilder.AppendInsert(b, activities);
-				//b.AppendLine();
-				//QueryBuilder.AppendUpdate(b, activities);
-				//b.AppendLine();
-				//QueryBuilder.AppendDelete(b, activities);
-				//Console.WriteLine(b);
-
 				var buffer = new StringBuilder(1024 * 2);
 				foreach (var entity in project.CreateEntities())
 				{
-					var t = entity.Table;
-					QueryBuilder.AppendInsert(buffer, t);
-					buffer.AppendLine();
-					QueryBuilder.AppendUpdate(buffer, t);
-					buffer.AppendLine();
-					QueryBuilder.AppendDelete(buffer, t);
-					buffer.AppendLine();
-					buffer.AppendLine();
-
 					//var entityClass = project.CreateEntityClass(entity);
 					//buffer.AppendLine(entityClass);
 
-					//if (project.IsModifiable(entity.Table))
-					//{
-					//	if (entity.Table.Name == @"Visits")
-					//	{
-					//		continue;
-					//	}
-					//	var entityAdapter = project.CreateEntityAdapter(entity);
-					//	buffer.AppendLine(entityAdapter);
-					//	break;
-					//}
+					if (project.IsModifiable(entity.Table))
+					{
+						//if (entity.Table.Name == @"Visits")
+						//{
+						//	continue;
+						//}
+						var entityAdapter = project.CreateEntityAdapter(entity);
+						buffer.AppendLine(entityAdapter);
+						break;
+					}
 
 					//if (entity.IsTableReadOnly)
 					//{

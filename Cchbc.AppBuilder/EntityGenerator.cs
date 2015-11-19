@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Cchbc.AppBuilder.Clr;
+using Cchbc.AppBuilder.DDL;
 using Cchbc.AppBuilder.DML;
 
 namespace Cchbc.AppBuilder
@@ -298,11 +299,27 @@ namespace Cchbc.AppBuilder
 
 		private static void AppendInsertMethod(StringBuilder buffer, Entity entity)
 		{
+			AppendMethod(buffer, entity, @"Insert", QueryBuilder.AppendInsert, c => !c.IsPrimaryKey);
+		}
+
+		private static void AppendUpdateMethod(StringBuilder buffer, Entity entity)
+		{
+			AppendMethod(buffer, entity, @"Update", QueryBuilder.AppendUpdate, c => true);
+		}
+
+		private static void AppendDeleteMethod(StringBuilder buffer, Entity entity)
+		{
+			AppendMethod(buffer, entity, @"Delete", QueryBuilder.AppendDelete, c => c.IsPrimaryKey);
+		}
+
+		private static void AppendMethod(StringBuilder buffer, Entity entity, string operation, Action<StringBuilder, DbTable> queryAppender, Func<DbColumn, bool> columnMatcher)
+		{
 			var className = entity.Class.Name;
 
 			buffer.Append('\t');
 			buffer.Append(@"public Task ");
-			buffer.AppendFormat(@"InsertAsync({0} item)", className);
+			buffer.Append(operation);
+			buffer.AppendFormat(@"Async({0} item)", className);
 			buffer.AppendLine();
 
 			buffer.Append('\t');
@@ -316,53 +333,70 @@ namespace Cchbc.AppBuilder
 
 			buffer.Append('\t');
 			buffer.Append('\t');
-			buffer.Append(@"throw new NotImplementedException();");
-			buffer.AppendLine();
+			buffer.AppendLine(@"var sqlParams = new[]");
 
 			buffer.Append('\t');
-			buffer.Append('}');
-			buffer.AppendLine();
-		}
-
-		private static void AppendUpdateMethod(StringBuilder buffer, Entity entity)
-		{
-			var className = entity.Class.Name;
-
-			buffer.Append('\t');
-			buffer.Append(@"public Task ");
-			buffer.AppendFormat(@"UpdateAsync({0} item)", className);
-			buffer.AppendLine();
-
 			buffer.Append('\t');
 			buffer.Append('{');
 			buffer.AppendLine();
 
-			buffer.Append('\t');
-			buffer.Append('\t');
-			buffer.Append(@"throw new NotImplementedException();");
-			buffer.AppendLine();
+			for (var index = 0; index < entity.Table.Columns.Length; index++)
+			{
+				var column = entity.Table.Columns[index];
+				if (!columnMatcher(column))
+				{
+					continue;
+				}
 
+				buffer.Append('\t');
+				buffer.Append('\t');
+				buffer.Append('\t');
+				buffer.Append(@"new QueryParameter");
+				buffer.Append('(');
+				buffer.Append('@');
+				buffer.Append('"');
+				buffer.Append(QueryBuilder.ParameterPlaceholder);
+				buffer.Append(QueryBuilder.ParameterPrefix);
+				buffer.Append(column.Name);
+				buffer.Append('"');
+				buffer.Append(',');
+				buffer.Append(' ');
+				buffer.Append(@"item");
+				buffer.Append('.');
+				var property = entity.Class.Properties[index];
+				buffer.Append(property.Name);
+				if (property.Type.IsUserType)
+				{
+					buffer.Append('.');
+					buffer.Append(NameProvider.IdName);
+				}
+				buffer.Append(')');
+				buffer.Append(',');
+				buffer.AppendLine();
+			}
+
+			buffer.Append('\t');
 			buffer.Append('\t');
 			buffer.Append('}');
-			buffer.AppendLine();
-		}
-
-		private static void AppendDeleteMethod(StringBuilder buffer, Entity entity)
-		{
-			var className = entity.Class.Name;
-
-			buffer.Append('\t');
-			buffer.Append(@"public Task ");
-			buffer.AppendFormat(@"DeleteAsync({0} item)", className);
+			buffer.Append(';');
 			buffer.AppendLine();
 
-			buffer.Append('\t');
-			buffer.Append('{');
 			buffer.AppendLine();
 
 			buffer.Append('\t');
 			buffer.Append('\t');
-			buffer.Append(@"throw new NotImplementedException();");
+			buffer.Append(@"var query = @");
+			buffer.Append('"');
+			queryAppender(buffer, entity.Table);
+			buffer.Append('"');
+			buffer.Append(';');
+			buffer.AppendLine();
+
+			buffer.AppendLine();
+
+			buffer.Append('\t');
+			buffer.Append('\t');
+			buffer.Append(@"return this.QueryHelper.ExecuteAsync(query, sqlParams);");
 			buffer.AppendLine();
 
 			buffer.Append('\t');

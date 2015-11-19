@@ -7,6 +7,9 @@ namespace Cchbc.AppBuilder.DML
 {
 	public static class QueryBuilder
 	{
+		public static readonly char ParameterPlaceholder = '@';
+		public static readonly char ParameterPrefix = 'p';
+
 		private static readonly DbColumn[] IdColumn = { new DbColumn(NameProvider.IdName, DbColumnType.Integer) };
 
 		public static void AppendSelect(StringBuilder buffer, DbTable table)
@@ -86,8 +89,8 @@ namespace Cchbc.AppBuilder.DML
 
 		private static void AppendParameterName(StringBuilder buffer, DbColumn column)
 		{
-			buffer.Append('@');
-			buffer.Append('p');
+			buffer.Append(ParameterPlaceholder);
+			buffer.Append(ParameterPrefix);
 			AppendColumnName(buffer, column);
 		}
 

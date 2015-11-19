@@ -339,39 +339,7 @@ namespace Cchbc.ConsoleClient
 
 
 
-	public sealed class VisitAdapter : IModifiableAdapter<Visit>
-	{
-		private ReadQueryHelper QueryHelper { get; }
-		private Dictionary<long, Outlet> Outlets { get; }
 
-		public VisitAdapter(ReadQueryHelper queryHelper, Dictionary<long, Outlet> outlets)
-		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-			if (outlets == null) throw new ArgumentNullException(nameof(outlets));
-
-			this.QueryHelper = queryHelper;
-			this.Outlets = outlets;
-		}
-
-		//GET ALL !!!
-
-
-		public Task InsertAsync(Visit item)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Task UpdateAsync(Visit item)
-		{
-			throw new NotImplementedException();
-		}
-
-		public Task DeleteAsync(Visit item)
-		{
-			throw new NotImplementedException();
-		}
-
-	}
 
 
 	public sealed class ActivityAdapter : IModifiableAdapter<Activity>
@@ -391,24 +359,111 @@ namespace Cchbc.ConsoleClient
 
 			var sqlParams = new[]
 			{
-                new QueryParameter(@"", item.Id),
-				new QueryParameter(@"", item.Id)
+				new QueryParameter(@"@pDate", item.Date),
+				new QueryParameter(@"@pActivityTypeId", item.ActivityType.Id),
+				new QueryParameter(@"@pVisitId", item.Visit.Id),
 			};
 
-			return this.QueryHelper.ExecuteAsync(@"", sqlParams);
+			var query = @"INSERT INTO Activities (Date, ActivityTypeId, VisitId) VALUES (@pDate, @pActivityTypeId, @pVisitId)";
+
+			return this.QueryHelper.ExecuteAsync(query, sqlParams);
 		}
 
 		public Task UpdateAsync(Activity item)
 		{
-			throw new NotImplementedException();
+			if (item == null) throw new ArgumentNullException(nameof(item));
+
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"@pId", item.Id),
+				new QueryParameter(@"@pDate", item.Date),
+				new QueryParameter(@"@pActivityTypeId", item.ActivityType.Id),
+				new QueryParameter(@"@pVisitId", item.Visit.Id),
+			};
+
+			var query = @"UPDATE Activities SET Date = @pDate, ActivityTypeId = @pActivityTypeId, VisitId = @pVisitId WHERE Id = @pId";
+
+			return this.QueryHelper.ExecuteAsync(query, sqlParams);
 		}
 
 		public Task DeleteAsync(Activity item)
 		{
-			throw new NotImplementedException();
+			if (item == null) throw new ArgumentNullException(nameof(item));
+
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"@pId", item.Id),
+			};
+
+			var query = @"DELETE FROM Activities WHERE Id = @pId";
+
+			return this.QueryHelper.ExecuteAsync(query, sqlParams);
 		}
 
 	}
+
+
+	public sealed class VisitAdapter : IModifiableAdapter<Visit>
+	{
+		private QueryHelper QueryHelper { get; }
+
+		public VisitAdapter(QueryHelper queryHelper)
+		{
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+
+			this.QueryHelper = queryHelper;
+		}
+
+		public async Task InsertAsync(Visit item)
+		{
+			if (item == null) throw new ArgumentNullException(nameof(item));
+
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"@pOutletId", item.Outlet.Id),
+				new QueryParameter(@"@pDate", item.Date),
+			};
+
+			var query = @"INSERT INTO Visits (OutletId, Date) VALUES (@pOutletId, @pDate)";
+			await this.QueryHelper.ExecuteAsync(query, sqlParams);
+
+			item.Id = (await this.QueryHelper.ExecuteAsync(new Query<long>(@"SELECT last_insert_rowid()", r => r.GetInt64(0))))[0];
+		}
+
+		public Task UpdateAsync(Visit item)
+		{
+			if (item == null) throw new ArgumentNullException(nameof(item));
+
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"@pId", item.Id),
+				new QueryParameter(@"@pOutletId", item.Outlet.Id),
+				new QueryParameter(@"@pDate", item.Date),
+			};
+
+			var query = @"UPDATE Visits SET OutletId = @pOutletId, Date = @pDate WHERE Id = @pId";
+
+			return this.QueryHelper.ExecuteAsync(query, sqlParams);
+		}
+
+		public Task DeleteAsync(Visit item)
+		{
+			if (item == null) throw new ArgumentNullException(nameof(item));
+
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"@pId", item.Id),
+			};
+
+			var query = @"DELETE FROM Visits WHERE Id = @pId";
+
+			return this.QueryHelper.ExecuteAsync(query, sqlParams);
+		}
+
+	}
+
+
+
 
 
 
