@@ -419,14 +419,13 @@ namespace Cchbc.ConsoleClient
 
 			var sqlParams = new[]
 			{
-				new QueryParameter(@"@pOutletId", item.Outlet.Id),
-				new QueryParameter(@"@pDate", item.Date),
-			};
+			new QueryParameter(@"@pOutletId", item.Outlet.Id),
+			new QueryParameter(@"@pDate", item.Date),
+		};
 
 			var query = @"INSERT INTO Visits (OutletId, Date) VALUES (@pOutletId, @pDate)";
-			this.QueryHelper.Execute(query, sqlParams);
 
-			item.Id = (this.QueryHelper.Execute(new Query<long>(@"SELECT last_insert_rowid()", r => r.GetInt64(0))))[0];
+			this.QueryHelper.Execute(query, sqlParams);
 		}
 
 		public void Update(Visit item)
@@ -435,10 +434,10 @@ namespace Cchbc.ConsoleClient
 
 			var sqlParams = new[]
 			{
-				new QueryParameter(@"@pId", item.Id),
-				new QueryParameter(@"@pOutletId", item.Outlet.Id),
-				new QueryParameter(@"@pDate", item.Date),
-			};
+			new QueryParameter(@"@pId", item.Id),
+			new QueryParameter(@"@pOutletId", item.Outlet.Id),
+			new QueryParameter(@"@pDate", item.Date),
+		};
 
 			var query = @"UPDATE Visits SET OutletId = @pOutletId, Date = @pDate WHERE Id = @pId";
 
@@ -451,8 +450,8 @@ namespace Cchbc.ConsoleClient
 
 			var sqlParams = new[]
 			{
-				new QueryParameter(@"@pId", item.Id),
-			};
+			new QueryParameter(@"@pId", item.Id),
+		};
 
 			var query = @"DELETE FROM Visits WHERE Id = @pId";
 
@@ -460,6 +459,10 @@ namespace Cchbc.ConsoleClient
 		}
 
 	}
+
+
+
+
 
 
 

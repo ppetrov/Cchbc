@@ -317,9 +317,9 @@ namespace Cchbc.AppBuilder
 			var className = entity.Class.Name;
 
 			buffer.Append('\t');
-			buffer.Append(@"public Task ");
+			buffer.Append(@"public void ");
 			buffer.Append(operation);
-			buffer.AppendFormat(@"Async({0} item)", className);
+			buffer.AppendFormat(@"({0} item)", className);
 			buffer.AppendLine();
 
 			buffer.Append('\t');
@@ -396,7 +396,7 @@ namespace Cchbc.AppBuilder
 
 			buffer.Append('\t');
 			buffer.Append('\t');
-			buffer.Append(@"return this.QueryHelper.ExecuteAsync(query, sqlParams);");
+			buffer.Append(@"this.QueryHelper.Execute(query, sqlParams);");
 			buffer.AppendLine();
 
 			buffer.Append('\t');
@@ -415,7 +415,7 @@ namespace Cchbc.AppBuilder
 			}
 
 			buffer.Append('\t');
-			buffer.AppendFormat(@"public Task FillAsync(Dictionary<long, {0}> items, Func<{0}, long> selector)", @class.Name);
+			buffer.AppendFormat(@"public void Fill(Dictionary<long, {0}> items, Func<{0}, long> selector)", @class.Name);
 			buffer.AppendLine();
 
 			buffer.Append('\t');
@@ -436,7 +436,11 @@ namespace Cchbc.AppBuilder
 
 			buffer.Append('\t');
 			buffer.Append('\t');
-			buffer.Append(@"return this.QueryHelper.FillAsync(new Query<");
+			buffer.Append(@"this");
+			buffer.Append('.');
+			buffer.Append(@"QueryHelper");
+			buffer.Append('.');
+			buffer.Append(@"Fill(new Query<");
 			buffer.Append(@class.Name);
 			buffer.Append(">(@");
 			buffer.Append('"');
