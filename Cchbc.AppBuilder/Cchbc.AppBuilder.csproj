@@ -54,7 +54,7 @@
     <Compile Include="DDL\DbSchema.cs" />
     <Compile Include="DDL\DbScript.cs" />
     <Compile Include="DDL\DbTable.cs" />
-    <Compile Include="DML\QueryCreator.cs" />
+    <Compile Include="DML\QueryBuilder.cs" />
     <Compile Include="Entity.cs" />
     <Compile Include="NameProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

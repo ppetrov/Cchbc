@@ -40,7 +40,7 @@ namespace Cchbc.AppBuilder.DDL
 		{
 			if (table == null) throw new ArgumentNullException(nameof(table));
 
-			return new DbColumn(table.Name + NameProvider.IdName, DbColumnType.Integer, isNullable, false, new DbForeignKey(table));
+			return new DbColumn(table.ClassName + NameProvider.IdName, DbColumnType.Integer, isNullable, false, new DbForeignKey(table));
 		}
 
 		public static DbColumn Integer(string name, bool isNullable = false)

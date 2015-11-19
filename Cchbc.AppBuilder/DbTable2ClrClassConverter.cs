@@ -6,16 +6,14 @@ namespace Cchbc.AppBuilder
 {
 	public static class DbTable2ClrClassConverter
 	{
-		public static ClrClass Convert(DbTable table, NameProvider nameProvider, DbTable inverseTable = null)
+		public static ClrClass Convert(DbTable table, DbTable inverseTable = null)
 		{
 			if (table == null) throw new ArgumentNullException(nameof(table));
-			if (nameProvider == null) throw new ArgumentNullException(nameof(nameProvider));
 
-			var className = nameProvider.GetClassName(table);
-			return new ClrClass(className, GetProperties(table.Columns, nameProvider, inverseTable));
+			return new ClrClass(table.ClassName, GetProperties(table.Columns, inverseTable));
 		}
 
-		private static ClrProperty[] GetProperties(DbColumn[] columns, NameProvider nameProvider, DbTable inverseTable = null)
+		private static ClrProperty[] GetProperties(DbColumn[] columns, DbTable inverseTable = null)
 		{
 			var totalColumns = columns.Length;
 			var totalProperties = totalColumns;
@@ -35,7 +33,7 @@ namespace Cchbc.AppBuilder
 				var foreignKey = column.DbForeignKey;
 				if (foreignKey != null)
 				{
-					name = nameProvider.GetClassName(foreignKey.Table);
+					name = foreignKey.Table.ClassName;
 					clrType = new ClrType(name, true);
 				}
 
@@ -46,7 +44,7 @@ namespace Cchbc.AppBuilder
 			if (inverseTable != null)
 			{
 				var name = inverseTable.Name;
-				var className = nameProvider.GetClassName(inverseTable);
+				var className = inverseTable.ClassName;
 				properties[properties.Length - 1] = new ClrProperty(name, new ClrType(@"List<" + className + @">", true));
 			}
 

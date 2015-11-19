@@ -37,15 +37,15 @@ namespace Cchbc.AppBuilder
 			return buffer.ToString();
 		}
 
-		public static string CreateEntityAdapter(Entity entity, NameProvider nameProvider, bool readOnly)
+		public static string CreateEntityAdapter(Entity entity, NameProvider nameProvider, bool readOnly, bool includeDictionaries)
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 
 			if (readOnly)
 			{
-				return ReadOnlyAdapter(entity, nameProvider);
+				return ReadOnlyAdapter(entity);
 			}
-			return ModifiableAdapter(entity, nameProvider);
+			return ModifiableAdapter(entity, nameProvider, includeDictionaries);
 		}
 
 		private static void AppendClassProperties(StringBuilder buffer, ClrProperty[] properties, bool readOnly, bool publicAccess = true)
@@ -160,7 +160,7 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
-		private static string ReadOnlyAdapter(Entity entity, NameProvider nameProvider)
+		private static string ReadOnlyAdapter(Entity entity)
 		{
 			var buffer = new StringBuilder(2 * 1024);
 
@@ -171,7 +171,7 @@ namespace Cchbc.AppBuilder
 			buffer.Append('{');
 			buffer.AppendLine();
 
-			var dictionaryProperties = GetDictionaryProperties(entity, nameProvider);
+			var dictionaryProperties = GetDictionaryProperties(entity);
 
 			var i = 0;
 			var classProperties = new ClrProperty[dictionaryProperties.Count + 1];
@@ -198,7 +198,7 @@ namespace Cchbc.AppBuilder
 			return buffer.ToString();
 		}
 
-		private static Dictionary<ClrType, ClrProperty> GetDictionaryProperties(Entity entity, NameProvider nameProvider)
+		private static Dictionary<ClrType, ClrProperty> GetDictionaryProperties(Entity entity)
 		{
 			var dictionaryProperties = new Dictionary<ClrType, ClrProperty>();
 
@@ -215,7 +215,7 @@ namespace Cchbc.AppBuilder
 						var foreignKey = column.DbForeignKey;
 						if (foreignKey != null)
 						{
-							var fkTableClassName = nameProvider.GetClassName(foreignKey.Table);
+							var fkTableClassName = foreignKey.Table.ClassName;
 							if (fkTableClassName == name)
 							{
 								propertyType = foreignKey.Table.Name;
@@ -226,7 +226,7 @@ namespace Cchbc.AppBuilder
 
 					if (propertyType == null && entity.InverseTable != null)
 					{
-						var inverseTableClassName = @"List<" + nameProvider.GetClassName(entity.InverseTable) + @">";
+						var inverseTableClassName = @"List<" + entity.InverseTable.ClassName + @">";
 						if (inverseTableClassName == name)
 						{
 							// Ignore user type(List<T>) from Inverse table
@@ -241,7 +241,7 @@ namespace Cchbc.AppBuilder
 			return dictionaryProperties;
 		}
 
-		private static string ModifiableAdapter(Entity entity, NameProvider nameProvider)
+		private static string ModifiableAdapter(Entity entity, NameProvider nameProvider, bool includeDictionaries)
 		{
 			var buffer = new StringBuilder(2 * 1024);
 
@@ -252,14 +252,17 @@ namespace Cchbc.AppBuilder
 			buffer.Append('{');
 			buffer.AppendLine();
 
-			var dictionaryProperties = GetDictionaryProperties(entity, nameProvider);
-
-			var i = 0;
-			var classProperties = new ClrProperty[dictionaryProperties.Count + 1];
-			classProperties[i++] = new ClrProperty(@"QueryHelper", new ClrType(@"ReadQueryHelper", true));
-			foreach (var classProperty in dictionaryProperties.Values)
+			var classProperties = new[]
 			{
-				classProperties[i++] = classProperty;
+				new ClrProperty(@"QueryHelper", new ClrType(@"QueryHelper", true))
+			};
+
+			if (includeDictionaries)
+			{
+				var properties = new List<ClrProperty>(classProperties);
+				properties.AddRange(GetDictionaryProperties(entity).Values);
+
+				classProperties = properties.ToArray();
 			}
 
 			var adapterClass = new ClrClass(className + @"Adapter", classProperties);
@@ -271,8 +274,9 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 
 			// TODO : !!!
-			AppendGetAllMethod(buffer, entity);
-			buffer.AppendLine();
+			//AppendGetAllMethod(buffer, entity);
+			//buffer.AppendLine();
+
 			AppendInsertMethod(buffer, entity);
 			buffer.AppendLine();
 			AppendUpdateMethod(buffer, entity);
@@ -286,11 +290,11 @@ namespace Cchbc.AppBuilder
 			return buffer.ToString();
 		}
 
-		private static void AppendGetAllMethod(StringBuilder buffer, Entity entity)
-		{
-			buffer.Append('\t');
-			buffer.AppendLine(@"//GET ALL !!!");
-		}
+		//private static void AppendGetAllMethod(StringBuilder buffer, Entity entity)
+		//{
+		//	buffer.Append('\t');
+		//	buffer.AppendLine(@"//GET ALL !!!");
+		//}
 
 		private static void AppendInsertMethod(StringBuilder buffer, Entity entity)
 		{
@@ -303,6 +307,11 @@ namespace Cchbc.AppBuilder
 
 			buffer.Append('\t');
 			buffer.Append('{');
+			buffer.AppendLine();
+
+			buffer.Append('\t');
+			buffer.Append('\t');
+			buffer.AppendLine(@"if (item == null) throw new ArgumentNullException(nameof(item));");
 			buffer.AppendLine();
 
 			buffer.Append('\t');
@@ -397,7 +406,7 @@ namespace Cchbc.AppBuilder
 			buffer.Append(@class.Name);
 			buffer.Append(">(@");
 			buffer.Append('"');
-			QueryCreator.AppendSelect(buffer, entity.Table);
+			QueryBuilder.AppendSelect(buffer, entity.Table);
 			buffer.Append('"');
 			buffer.Append(@", r =>");
 			buffer.AppendLine();

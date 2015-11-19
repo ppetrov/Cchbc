@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
+using Cchbc.AppBuilder.DML;
 using Cchbc.Data;
 using Cchbc.Features;
 
@@ -221,7 +222,7 @@ namespace Cchbc.ConsoleClient
 					DbColumn.DateTime(@"Date"),
 					DbColumn.ForeignKey(activityTypes),
 					DbColumn.ForeignKey(visits),
-				});
+				}, @"Activity");
 				var brands = DbTable.Create(@"Brands", new[]
 				{
 					DbColumn.String(@"Name"),
@@ -252,9 +253,6 @@ namespace Cchbc.ConsoleClient
 
 				var project = new DbProject(schema);
 
-				// Define class names
-				project.DefineClassName(activities, @"Activity");
-
 				// Define tables as Modifiable, all tables are ReadOnly by default
 				project.DefineModifiable(visits);
 				project.DefineModifiable(activities);
@@ -262,18 +260,39 @@ namespace Cchbc.ConsoleClient
 				// Attach Inverse tables
 				project.AttachInverseTable(visits);
 
-				var buffer = new StringBuilder();
+				//var b = new StringBuilder();
+				//QueryBuilder.AppendInsert(b, activities);
+				//b.AppendLine();
+				//QueryBuilder.AppendUpdate(b, activities);
+				//b.AppendLine();
+				//QueryBuilder.AppendDelete(b, activities);
+				//Console.WriteLine(b);
+
+				var buffer = new StringBuilder(1024 * 2);
 				foreach (var entity in project.CreateEntities())
 				{
-					var entityClass = project.CreateEntityClass(entity);
+					var t = entity.Table;
+					QueryBuilder.AppendInsert(buffer, t);
+					buffer.AppendLine();
+					QueryBuilder.AppendUpdate(buffer, t);
+					buffer.AppendLine();
+					QueryBuilder.AppendDelete(buffer, t);
+					buffer.AppendLine();
+					buffer.AppendLine();
+
+					//var entityClass = project.CreateEntityClass(entity);
 					//buffer.AppendLine(entityClass);
 
-					if (project.IsModifiable(entity.Table))
-					{
-						var entityAdapter = project.CreateEntityAdapter(entity);
-						buffer.AppendLine(entityAdapter);
-					}
-
+					//if (project.IsModifiable(entity.Table))
+					//{
+					//	if (entity.Table.Name == @"Visits")
+					//	{
+					//		continue;
+					//	}
+					//	var entityAdapter = project.CreateEntityAdapter(entity);
+					//	buffer.AppendLine(entityAdapter);
+					//	break;
+					//}
 
 					//if (entity.IsTableReadOnly)
 					//{

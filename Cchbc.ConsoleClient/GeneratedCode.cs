@@ -376,9 +376,9 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ActivityAdapter : IModifiableAdapter<Activity>
 	{
-		private ReadQueryHelper QueryHelper { get; }
+		private QueryHelper QueryHelper { get; }
 
-		public ActivityAdapter(ReadQueryHelper queryHelper)
+		public ActivityAdapter(QueryHelper queryHelper)
 		{
 			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 
@@ -387,7 +387,15 @@ namespace Cchbc.ConsoleClient
 
 		public Task InsertAsync(Activity item)
 		{
-			throw new NotImplementedException();
+			if (item == null) throw new ArgumentNullException(nameof(item));
+
+			var sqlParams = new[]
+			{
+                new QueryParameter(@"", item.Id),
+				new QueryParameter(@"", item.Id)
+			};
+
+			return this.QueryHelper.ExecuteAsync(@"", sqlParams);
 		}
 
 		public Task UpdateAsync(Activity item)

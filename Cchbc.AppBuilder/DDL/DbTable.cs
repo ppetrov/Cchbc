@@ -6,8 +6,9 @@ namespace Cchbc.AppBuilder.DDL
 	{
 		public string Name { get; }
 		public DbColumn[] Columns { get; }
+		public string ClassName { get; }
 
-		public DbTable(string name, DbColumn[] columns)
+		public DbTable(string name, DbColumn[] columns, string className = null)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 			if (columns == null) throw new ArgumentNullException(nameof(columns));
@@ -15,9 +16,10 @@ namespace Cchbc.AppBuilder.DDL
 
 			this.Name = name;
 			this.Columns = columns;
+			this.ClassName = className ?? name.Substring(0, name.Length - 1);
 		}
 
-		public static DbTable Create(string name, DbColumn[] columns)
+		public static DbTable Create(string name, DbColumn[] columns, string className = null)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 			if (columns == null) throw new ArgumentNullException(nameof(columns));
@@ -31,7 +33,7 @@ namespace Cchbc.AppBuilder.DDL
 			// Add other columns
 			Array.Copy(columns, 0, withPromaryKeyColumns, 1, columns.Length);
 
-			return new DbTable(name, withPromaryKeyColumns);
+			return new DbTable(name, withPromaryKeyColumns, className);
 		}
 	}
 }

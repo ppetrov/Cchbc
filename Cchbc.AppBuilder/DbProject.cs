@@ -19,14 +19,6 @@ namespace Cchbc.AppBuilder
 			this.Schema = schema;
 		}
 
-		public void DefineClassName(DbTable table, string className)
-		{
-			if (table == null) throw new ArgumentNullException(nameof(table));
-			if (className == null) throw new ArgumentNullException(nameof(className));
-
-			this.NameProvider.AddClassName(table, className);
-		}
-
 		public void DefineModifiable(DbTable table)
 		{
 			if (table == null) throw new ArgumentNullException(nameof(table));
@@ -81,7 +73,7 @@ namespace Cchbc.AppBuilder
 
 				DbTable inverseTable;
 				this.InverseTables.TryGetValue(table.Name, out inverseTable);
-				var clrClass = DbTable2ClrClassConverter.Convert(table, this.NameProvider, inverseTable);
+				var clrClass = DbTable2ClrClassConverter.Convert(table, inverseTable);
 				entities[i] = new Entity(clrClass, table, inverseTable);
 			}
 
@@ -103,9 +95,12 @@ namespace Cchbc.AppBuilder
 			// Remove all dictionaries from inversed table - Activities
 			// Copy all dictionaries from inverse table Activities to Visit
 			// Don't generate Get in the inversed table - Activities
+
 			//DbTable inverseTable;
 			//this.InverseTables.TryGetValue("", out inverseTable);
-			return EntityGenerator.CreateEntityAdapter(entity, this.NameProvider, !this.ModifiableTables.ContainsKey(entity.Table.Name));
+
+			var includeDictionaries = false;
+			return EntityGenerator.CreateEntityAdapter(entity, this.NameProvider, !this.ModifiableTables.ContainsKey(entity.Table.Name), includeDictionaries);
 		}
 	}
 }
