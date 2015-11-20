@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cchbc.Data;
 
 namespace Cchbc.ConsoleClient
 {
-
 	public sealed class VisitAdapter : IModifiableAdapter<Visit>
 	{
 		private QueryHelper QueryHelper { get; }
@@ -24,7 +24,7 @@ namespace Cchbc.ConsoleClient
 
 		public List<Visit> Get()
 		{
-			var query = @"SELECT Id, OutletId, Date FROM Visits";
+			var query = @"SELECT v.Id, v.OutletId, v.Date, a.Id, a.Date, a.ActivityTypeId, a.VisitId FROM Visits v INNER JOIN Activities a ON v.Id = a.VisitId";
 
 			return this.QueryHelper.Execute(new Query<Visit>(query, r =>
 			{
@@ -49,7 +49,7 @@ namespace Cchbc.ConsoleClient
 				var activities = default(List<Activity>);
 				if (!r.IsDbNull(3))
 				{
-					activities = null;
+					//activities = this._lookup[r.GetInt64(3)];
 				}
 
 				return new Visit(id, outlet, date, activities);
@@ -106,73 +106,19 @@ namespace Cchbc.ConsoleClient
 
 
 
-	public sealed class ActivityAdapter : IModifiableAdapter<Activity>
-	{
-		private QueryHelper QueryHelper { get; }
-
-		public ActivityAdapter(QueryHelper queryHelper)
-		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public void Insert(Activity item)
-		{
-			if (item == null) throw new ArgumentNullException(nameof(item));
-
-			var sqlParams = new[]
-			{
-			new QueryParameter(@"@pDate", item.Date),
-			new QueryParameter(@"@pActivityTypeId", item.ActivityType.Id),
-			new QueryParameter(@"@pVisitId", item.Visit.Id),
-		};
-
-			var query = @"INSERT INTO Activities (Date, ActivityTypeId, VisitId) VALUES (@pDate, @pActivityTypeId, @pVisitId)";
-
-			this.QueryHelper.Execute(query, sqlParams);
-
-			item.Id = this.QueryHelper.GetNewId();
-		}
-
-		public void Update(Activity item)
-		{
-			if (item == null) throw new ArgumentNullException(nameof(item));
-
-			var sqlParams = new[]
-			{
-			new QueryParameter(@"@pId", item.Id),
-			new QueryParameter(@"@pDate", item.Date),
-			new QueryParameter(@"@pActivityTypeId", item.ActivityType.Id),
-			new QueryParameter(@"@pVisitId", item.Visit.Id),
-		};
-
-			var query = @"UPDATE Activities SET Date = @pDate, ActivityTypeId = @pActivityTypeId, VisitId = @pVisitId WHERE Id = @pId";
-
-			this.QueryHelper.Execute(query, sqlParams);
-		}
-
-		public void Delete(Activity item)
-		{
-			if (item == null) throw new ArgumentNullException(nameof(item));
-
-			var sqlParams = new[]
-			{
-			new QueryParameter(@"@pId", item.Id),
-		};
-
-			var query = @"DELETE FROM Activities WHERE Id = @pId";
-
-			this.QueryHelper.Execute(query, sqlParams);
-		}
-	}
 
 
 
 
 
 
-	
+
+
+
+
+
+
+
 
 
 

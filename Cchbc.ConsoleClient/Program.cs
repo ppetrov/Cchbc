@@ -133,6 +133,35 @@ namespace Cchbc.ConsoleClient
 				}
 			}
 		}
+
+		public override void Fill<T>(string query, Dictionary<long, T> values, Action<IFieldDataReader, Dictionary<long, T>> filler, QueryParameter[] parameters)
+		{
+			if (query == null) throw new ArgumentNullException(nameof(query));
+			if (values == null) throw new ArgumentNullException(nameof(values));
+			if (filler == null) throw new ArgumentNullException(nameof(filler));
+			if (parameters == null) throw new ArgumentNullException(nameof(parameters));
+
+			values.Clear();
+
+			using (var cmd = _connection.CreateCommand())
+			{
+				cmd.CommandText = query;
+				cmd.CommandType = CommandType.Text;
+				foreach (var p in parameters)
+				{
+					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
+				}
+
+				using (var r = cmd.ExecuteReader())
+				{
+					var dr = new DelegateDataReader(r);
+					while (dr.Read())
+					{
+						filler(dr, values);
+					}
+				}
+			}
+		}
 	}
 
 	public sealed class SqlModifyQueryHelper : ModifyQueryHelper
@@ -263,22 +292,26 @@ namespace Cchbc.ConsoleClient
 
 
 
+
+
+
 				var project = new DbProject(schema);
 
-				// Define tables as Modifiable, all tables are ReadOnly by default
-				project.DefineModifiable(visits);
-				project.DefineModifiable(activities);
-				project.DefineModifiable(activityNotes);
+				// Mark tables as Modifiable, all tables are ReadOnly by default
+				project.MarkModifiable(visits);
+				project.MarkModifiable(activities);
+				project.MarkModifiable(activityNotes);
 
 				// Attach Inverse tables
 				project.AttachInverseTable(visits);
 
 				var buffer = new StringBuilder(1024 * 2);
+
 				foreach (var entity in project.CreateEntities())
 				{
-					//var entityClass = project.CreateEntityClass(entity);
-					//buffer.AppendLine(entityClass);
-					//continue;
+					var entityClass = project.CreateEntityClass(entity);
+					buffer.AppendLine(entityClass);
+					continue;
 
 					if (project.IsModifiable(entity.Table))
 					{
@@ -333,7 +366,7 @@ namespace Cchbc.ConsoleClient
 
 
 				//var connectionString = @"Server=cwpfsa04;Database=Cchbc;User Id=dev;Password='dev user password'";
-				var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
+
 
 				//using (var cn = new SQLiteConnection(connectionString))
 				//{

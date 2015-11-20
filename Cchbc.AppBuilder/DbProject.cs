@@ -20,7 +20,7 @@ namespace Cchbc.AppBuilder
 			this.Schema = schema;
 		}
 
-		public void DefineModifiable(DbTable table)
+		public void MarkModifiable(DbTable table)
 		{
 			if (table == null) throw new ArgumentNullException(nameof(table));
 
@@ -32,13 +32,6 @@ namespace Cchbc.AppBuilder
 			if (table == null) throw new ArgumentNullException(nameof(table));
 
 			return this.ModifiableTables.ContainsKey(table.Name);
-		}
-
-		public bool IsReadOnly(DbTable table)
-		{
-			if (table == null) throw new ArgumentNullException(nameof(table));
-
-			return !this.IsModifiable(table);
 		}
 
 		public void AttachInverseTable(DbTable table)
@@ -80,24 +73,14 @@ namespace Cchbc.AppBuilder
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-			return EntityGenerator.CreateEntityClass(entity, !this.ModifiableTables.ContainsKey(entity.Table.Name));
+			return EntityClass.Generate(entity, !this.ModifiableTables.ContainsKey(entity.Table.Name));
 		}
 
 		public string CreateEntityAdapter(Entity entity)
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-			// TODO : !!!
-			// Don't generate Get in the inversed table - Activities
-
-			var table = entity.Table;
-			var readOnly = !this.ModifiableTables.ContainsKey(table.Name);
-			if (readOnly)
-			{
-				return EntityGenerator.ReadOnlyAdapter(entity, GetDictionaryProperties(entity));
-			}
-
-			var currentTable = entity.Table;
+			if (!this.IsModifiable(entity.Table)) return EntityAdapter.GenerateReadOnly(entity, GetDictionaryProperties(entity));
 
 			// We need only the current entity
 			var entities = new[] { entity };
@@ -110,6 +93,7 @@ namespace Cchbc.AppBuilder
 			}
 			else
 			{
+				var currentTable = entity.Table;
 				foreach (var column in entity.Table.Columns)
 				{
 					var foreignKey = column.DbForeignKey;
@@ -128,7 +112,6 @@ namespace Cchbc.AppBuilder
 				}
 			}
 
-
 			var dictionaryProperties = new Dictionary<ClrType, ClrProperty>();
 			foreach (var e in entities)
 			{
@@ -141,7 +124,7 @@ namespace Cchbc.AppBuilder
 				}
 			}
 
-			return EntityGenerator.ModifiableAdapter(entity, dictionaryProperties, entities.Length > 0);
+			return EntityGenerator.ModifiableAdapter(entity, dictionaryProperties, entities);
 		}
 
 		private Entity CreateEntity(DbTable table)

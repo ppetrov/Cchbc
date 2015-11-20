@@ -7,158 +7,9 @@ using Cchbc.AppBuilder.DML;
 
 namespace Cchbc.AppBuilder
 {
-	public static class EntityGenerator
+	public static class EntityAdapter
 	{
-		public static string CreateEntityClass(Entity entity, bool readOnly)
-		{
-			if (entity == null) throw new ArgumentNullException(nameof(entity));
-
-			var buffer = new StringBuilder(1024);
-
-			var @class = entity.Class;
-
-			buffer.Append(@"public");
-			buffer.Append(' ');
-			buffer.Append(@"sealed");
-			buffer.Append(' ');
-			buffer.Append(@"class");
-			buffer.Append(' ');
-			buffer.Append(@class.Name);
-			if (!readOnly)
-			{
-				buffer.Append(' ');
-				buffer.Append(':');
-				buffer.Append(' ');
-				buffer.Append(@"IDbObject");
-			}
-			buffer.AppendLine();
-
-			buffer.Append('{');
-			buffer.AppendLine();
-
-			AppendClassProperties(buffer, @class.Properties, readOnly);
-			buffer.AppendLine();
-			AppendClassConstructor(buffer, @class);
-
-			buffer.Append('}');
-			buffer.AppendLine();
-
-			return buffer.ToString();
-		}
-
-		private static void AppendClassProperties(StringBuilder buffer, ClrProperty[] properties, bool readOnly, bool publicAccess = true)
-		{
-			var propertyAccess = @"get;";
-			if (!readOnly)
-			{
-				propertyAccess = @"get; set;";
-			}
-			var accessModifier = @"public";
-			if (!publicAccess)
-			{
-				accessModifier = @"private";
-			}
-			foreach (var property in properties)
-			{
-				buffer.Append('\t');
-				buffer.Append(accessModifier);
-				buffer.Append(' ');
-				buffer.Append(property.Type.Name);
-				buffer.Append(' ');
-				buffer.Append(property.Name);
-				buffer.Append(' ');
-				buffer.Append('{');
-				buffer.Append(' ');
-				buffer.Append(propertyAccess);
-				buffer.Append(' ');
-				buffer.Append('}');
-				buffer.AppendLine();
-			}
-		}
-
-		private static void AppendClassConstructor(StringBuilder buffer, ClrClass @class)
-		{
-			var properties = @class.Properties;
-
-			buffer.Append('\t');
-			buffer.Append(@"public");
-			buffer.Append(' ');
-			buffer.Append(@class.Name);
-			buffer.Append('(');
-
-			var parameterNames = new string[properties.Length];
-			for (var i = 0; i < properties.Length; i++)
-			{
-				parameterNames[i] = NameProvider.LowerFirst(properties[i].Name);
-			}
-
-			for (var i = 0; i < properties.Length; i++)
-			{
-				var propertyType = properties[i].Type.Name;
-				var parameterName = parameterNames[i];
-
-				if (i > 0)
-				{
-					buffer.Append(',');
-					buffer.Append(' ');
-				}
-
-				buffer.Append(propertyType);
-				buffer.Append(' ');
-				buffer.Append(parameterName);
-			}
-
-			buffer.Append(')');
-			buffer.AppendLine();
-			buffer.Append('\t');
-			buffer.Append('{');
-			buffer.AppendLine();
-
-			var addEmptyLine = false;
-			for (var i = 0; i < properties.Length; i++)
-			{
-				var property = properties[i];
-				if (property.Type.IsReference)
-				{
-					addEmptyLine = true;
-
-					var name = parameterNames[i];
-					buffer.Append('\t');
-					buffer.Append('\t');
-					buffer.AppendFormat(@"if ({0} == null) throw new ArgumentNullException(nameof({0}));", name);
-					buffer.AppendLine();
-				}
-			}
-
-			// Add empty line if we have argument null checks
-			if (addEmptyLine)
-			{
-				buffer.AppendLine();
-			}
-
-			// Assign properties to parameters
-			for (int i = 0; i < properties.Length; i++)
-			{
-				var propertyName = properties[i].Name;
-				var paramterName = parameterNames[i];
-
-				buffer.Append('\t');
-				buffer.Append('\t');
-				buffer.Append(@"this");
-				buffer.Append('.');
-				buffer.Append(propertyName);
-				buffer.Append(@" = ");
-				buffer.Append(paramterName);
-				buffer.Append(';');
-				buffer.AppendLine();
-			}
-
-			buffer.Append('\t');
-			buffer.Append('}');
-			buffer.AppendLine();
-		}
-
-		public static string ReadOnlyAdapter(Entity entity, Dictionary<ClrType, ClrProperty> dictionaryProperties)
+		public static string GenerateReadOnly(Entity entity, Dictionary<ClrType, ClrProperty> dictionaryProperties)
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 			if (dictionaryProperties == null) throw new ArgumentNullException(nameof(dictionaryProperties));
@@ -172,26 +23,29 @@ namespace Cchbc.AppBuilder
 			buffer.Append('{');
 			buffer.AppendLine();
 
-			var classProperties = GetClassProperties(dictionaryProperties);
+			//var classProperties = GetClassProperties(dictionaryProperties);
 
-			var adapterClass = new ClrClass(className + @"Adapter", classProperties);
+			//var adapterClass = new ClrClass(className + @"Adapter", classProperties);
 
-			AppendClassProperties(buffer, adapterClass.Properties, true, false);
-			buffer.AppendLine();
+			//EntityClass.AppendClassProperties(buffer, adapterClass.Properties, true, false);
+			//buffer.AppendLine();
 
-			AppendClassConstructor(buffer, adapterClass);
-			buffer.AppendLine();
+			//EntityClass.AppendClassConstructor(buffer, adapterClass.Name, adapterClass.Properties);
+			//buffer.AppendLine();
 
-			AppendFillMethod(buffer, entity, dictionaryProperties);
-			buffer.AppendLine();
+			//AppendFillMethod(buffer, entity, dictionaryProperties);
+			//buffer.AppendLine();
 
 			buffer.Append('}');
 			buffer.AppendLine();
 
 			return buffer.ToString();
 		}
+	}
 
-		public static string ModifiableAdapter(Entity entity, Dictionary<ClrType, ClrProperty> dictionaryProperties, bool generateGetMethod)
+	public static class EntityGenerator
+	{
+		public static string ModifiableAdapter(Entity entity, Dictionary<ClrType, ClrProperty> dictionaryProperties, Entity[] entities)
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 			if (dictionaryProperties == null) throw new ArgumentNullException(nameof(dictionaryProperties));
@@ -209,13 +63,13 @@ namespace Cchbc.AppBuilder
 
 			var adapterClass = new ClrClass(className + @"Adapter", classProperties);
 
-			AppendClassProperties(buffer, adapterClass.Properties, true, false);
+			EntityClass.AppendClassProperties(buffer, adapterClass.Properties, true, false);
 			buffer.AppendLine();
 
-			AppendClassConstructor(buffer, adapterClass);
+			EntityClass.AppendClassConstructor(buffer, adapterClass.Name, adapterClass.Properties);
 			buffer.AppendLine();
 
-			if (generateGetMethod)
+			if (entities.Length > 0)
 			{
 				AppendGetAllMethod(buffer, entity, dictionaryProperties);
 				buffer.AppendLine();
@@ -240,7 +94,7 @@ namespace Cchbc.AppBuilder
 			var parameters = new string[properties.Length];
 			for (var i = 0; i < properties.Length; i++)
 			{
-				parameters[i] = NameProvider.LowerFirst(properties[i].Name);
+				parameters[i] = @"_" + properties[i].Name;
 			}
 
 			buffer.Append('\t');
@@ -255,7 +109,15 @@ namespace Cchbc.AppBuilder
 			buffer.Append('\t');
 			buffer.Append(@"var query = @");
 			buffer.Append('"');
-			QueryBuilder.AppendSelect(buffer, entity.Table);
+			if (entity.InverseTable == null)
+			{
+				QueryBuilder.AppendSelect(buffer, entity.Table);
+			}
+			else
+			{
+				QueryBuilder.AppendSelectJoin(buffer, entity.Table, entity.InverseTable);
+			}
+
 			buffer.Append('"');
 			buffer.Append(';');
 			buffer.AppendLine();
@@ -288,7 +150,7 @@ namespace Cchbc.AppBuilder
 				buffer.Append(' ');
 				buffer.Append(name);
 				buffer.Append(@" = ");
-				buffer.Append(GetDefaultValue(type));
+				buffer.Append(TypeHelper.GetDefaultValue(type));
 				buffer.Append(';');
 				buffer.AppendLine();
 
@@ -319,13 +181,12 @@ namespace Cchbc.AppBuilder
 					{
 						tmp = t.Name;
 					}
-					;
 					//buffer.Append(dictionaries[type].Name);
 					buffer.Append(tmp);
 					buffer.Append('[');
 				}
 				buffer.Append(@"r.");
-				buffer.Append(GetReaderMethod(type));
+				buffer.Append(TypeHelper.GetReaderMethod(type));
 				buffer.Append('(');
 				buffer.Append(i);
 				buffer.Append(')');
@@ -496,11 +357,11 @@ namespace Cchbc.AppBuilder
 		{
 			var @class = entity.Class;
 			var properties = @class.Properties;
-			var parameters = new string[properties.Length];
-			for (var i = 0; i < properties.Length; i++)
-			{
-				parameters[i] = NameProvider.LowerFirst(properties[i].Name);
-			}
+			//var parameters = new string[properties.Length];
+			//for (var i = 0; i < properties.Length; i++)
+			//{
+			//	parameters[i] = NameProvider.LowerFirst(properties[i].Name);
+			//}
 
 			buffer.Append('\t');
 			buffer.AppendFormat(@"public void Fill(Dictionary<long, {0}> items, Func<{0}, long> selector)", @class.Name);
@@ -544,22 +405,21 @@ namespace Cchbc.AppBuilder
 
 			for (var i = 0; i < properties.Length; i++)
 			{
-				var p = properties[i];
-
-				var type = p.Type;
-				var name = parameters[i];
-
 				if (i > 0)
 				{
 					buffer.AppendLine();
 				}
+
+				var property = properties[i];
+				var type = property.Type;
+
 				// Variable declaration
 				buffer.Append("\t\t\t");
 				buffer.Append(@"var");
 				buffer.Append(' ');
-				buffer.Append(name);
+				BufferHelper.AppendLowerFirst(buffer, property.Name);
 				buffer.Append(@" = ");
-				buffer.Append(GetDefaultValue(type));
+				buffer.Append(TypeHelper.GetDefaultValue(type));
 				buffer.Append(';');
 				buffer.AppendLine();
 
@@ -577,7 +437,7 @@ namespace Cchbc.AppBuilder
 				// Read the value from the reader and assign to variable
 				buffer.Append("\t\t\t");
 				buffer.Append('\t');
-				buffer.Append(name);
+				BufferHelper.AppendLowerFirst(buffer, property.Name);
 				buffer.Append(@" = ");
 				if (type.IsUserType)
 				{
@@ -587,7 +447,7 @@ namespace Cchbc.AppBuilder
 					buffer.Append('[');
 				}
 				buffer.Append(@"r.");
-				buffer.Append(GetReaderMethod(type));
+				buffer.Append(TypeHelper.GetReaderMethod(type));
 				buffer.Append('(');
 				buffer.Append(i);
 				buffer.Append(')');
@@ -611,14 +471,15 @@ namespace Cchbc.AppBuilder
 			buffer.Append(' ');
 			buffer.Append(@class.Name);
 			buffer.Append('(');
-			for (var i = 0; i < parameters.Length; i++)
+
+			for (var i = 0; i < properties.Length; i++)
 			{
 				if (i > 0)
 				{
 					buffer.Append(',');
 					buffer.Append(' ');
 				}
-				buffer.Append(parameters[i]);
+				BufferHelper.AppendLowerFirst(buffer, properties[i].Name);
 			}
 			buffer.Append(')');
 			buffer.Append(';');
@@ -647,28 +508,6 @@ namespace Cchbc.AppBuilder
 			}
 
 			return classProperties;
-		}
-
-		private static string GetReaderMethod(ClrType type)
-		{
-			if (type == ClrType.Long) return @"GetInt64";
-			if (type == ClrType.String) return @"GetString";
-			if (type == ClrType.Decimal) return @"GetDecimal";
-			if (type == ClrType.DateTime) return @"GetDateTime";
-			if (type == ClrType.Bytes) return @"GetBytes";
-
-			return @"GetInt64";
-		}
-
-		private static string GetDefaultValue(ClrType type)
-		{
-			if (type == ClrType.Long) return @"0L";
-			if (type == ClrType.String) return @"string.Empty";
-			if (type == ClrType.Decimal) return @"0M";
-			if (type == ClrType.DateTime) return @"DateTime.MinValue";
-			if (type == ClrType.Bytes) return @"default(byte[])";
-
-			return $@"default({type.Name})";
 		}
 	}
 }

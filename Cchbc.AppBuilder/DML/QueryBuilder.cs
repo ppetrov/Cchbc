@@ -26,6 +26,72 @@ namespace Cchbc.AppBuilder.DML
 			buffer.Append(table.Name);
 		}
 
+		public static void AppendSelectJoin(StringBuilder buffer, DbTable a, DbTable b)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (a == null) throw new ArgumentNullException(nameof(a));
+			if (b == null) throw new ArgumentNullException(nameof(b));
+
+			var aPrefix = NameProvider.GetPrefix(a.Name);
+			var bPrefix = NameProvider.GetPrefix(b.Name);
+			if (aPrefix == bPrefix)
+			{
+				bPrefix = @"_" + bPrefix;
+			}
+
+			buffer.Append(@"SELECT");
+			buffer.Append(' ');
+			AppendPrefixedColumns(buffer, a.Columns, aPrefix);
+			buffer.Append(',');
+			buffer.Append(' ');
+			AppendPrefixedColumns(buffer, b.Columns, bPrefix);
+			buffer.Append(' ');
+			buffer.Append(@"FROM");
+			buffer.Append(' ');
+			buffer.Append(a.Name);
+			buffer.Append(' ');
+			buffer.Append(aPrefix);
+			buffer.Append(' ');
+			buffer.Append(@"INNER");
+			buffer.Append(' ');
+			buffer.Append(@"JOIN");
+			buffer.Append(' ');
+			buffer.Append(b.Name);
+			buffer.Append(' ');
+			buffer.Append(bPrefix);
+			buffer.Append(' ');
+			buffer.Append(@"ON");
+			buffer.Append(' ');
+			buffer.Append(aPrefix);
+			buffer.Append('.');
+
+			// Add Primary Key
+			foreach (var column in a.Columns)
+			{
+				if (column.IsPrimaryKey)
+				{
+					buffer.Append(column.Name);
+					break;
+				}
+			}
+			buffer.Append(' ');
+			buffer.Append('=');
+			buffer.Append(' ');
+			buffer.Append(bPrefix);
+			buffer.Append('.');
+
+			// Add Foreign key to the PK
+			foreach (var column in b.Columns)
+			{
+				var foreignKey = column.DbForeignKey;
+				if (foreignKey != null && foreignKey.Table == a)
+				{
+					buffer.Append(column.Name);
+					break;
+				}
+			}
+		}
+
 		public static void AppendInsert(StringBuilder buffer, DbTable table)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
@@ -118,6 +184,22 @@ namespace Cchbc.AppBuilder.DML
 					buffer.Append(' ');
 				}
 				appender(buffer, column);
+			}
+		}
+
+		private static void AppendPrefixedColumns(StringBuilder buffer, IEnumerable<DbColumn> columns, string aPrefix)
+		{
+			var index = 0;
+			foreach (var column in columns)
+			{
+				if (index++ > 0)
+				{
+					buffer.Append(',');
+					buffer.Append(' ');
+				}
+				buffer.Append(aPrefix);
+				buffer.Append('.');
+				buffer.Append(column.Name);
 			}
 		}
 	}

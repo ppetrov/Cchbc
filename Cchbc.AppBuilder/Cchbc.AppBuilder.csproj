@@ -41,6 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BufferHelper.cs" />
+    <Compile Include="EntityClass.cs" />
     <Compile Include="EntityGenerator.cs" />
     <Compile Include="ClrProject.cs" />
     <Compile Include="Clr\ClrClass.cs" />
@@ -58,6 +60,7 @@
     <Compile Include="Entity.cs" />
     <Compile Include="NameProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TypeHelper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

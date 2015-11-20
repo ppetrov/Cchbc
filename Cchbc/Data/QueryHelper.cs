@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cchbc.Objects;
 
 namespace Cchbc.Data
 {
@@ -41,13 +40,22 @@ namespace Cchbc.Data
 			return this.ReadQueryHelper.Execute(query);
 		}
 
-		public void Fill<T>(Query<T> query, Dictionary<long, T> values, Func<T, long> selector) where T : IDbObject
+		public void Fill<T>(Query<T> query, Dictionary<long, T> values, Func<T, long> selector)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 			if (values == null) throw new ArgumentNullException(nameof(values));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
 			this.ReadQueryHelper.Fill(query, values, selector);
+		}
+
+		public void Fill<T>(string query, Dictionary<long, T> values, Action<IFieldDataReader, Dictionary<long, T>> filler, QueryParameter[] parameters = null)
+		{
+			if (query == null) throw new ArgumentNullException(nameof(query));
+			if (values == null) throw new ArgumentNullException(nameof(values));
+			if (filler == null) throw new ArgumentNullException(nameof(filler));
+
+			this.ReadQueryHelper.Fill(query, values, filler, parameters ?? Enumerable.Empty<QueryParameter>().ToArray());
 		}
 
 		public long GetNewId()
