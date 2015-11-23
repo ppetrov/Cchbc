@@ -113,46 +113,22 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 
 			// ArgumentNullException checks for reference types
-			var addEmptyLine = false;
 			foreach (var property in properties)
 			{
 				if (property.Type.IsReference)
 				{
-					addEmptyLine = true;
-
-					buffer.Append('\t');
-					buffer.Append('\t');
-
-					buffer.Append(@"if");
-					buffer.Append(' ');
-					buffer.Append('(');
-					BufferHelper.AppendLowerFirst(buffer, property.Name);
-					buffer.Append(' ');
-					buffer.Append('=');
-					buffer.Append('=');
-					buffer.Append(@"null");
-					buffer.Append(')');
-					buffer.Append(' ');
-					buffer.Append(@"throw");
-					buffer.Append(' ');
-					buffer.Append(@"new");
-					buffer.Append(' ');
-					buffer.Append(@"ArgumentNullException");
-					buffer.Append('(');
-					buffer.Append(@"nameof");
-					buffer.Append('(');
-					BufferHelper.AppendLowerFirst(buffer, property.Name);
-					buffer.Append(')');
-					buffer.Append(')');
-					buffer.Append(';');
-					buffer.AppendLine();
+					AppendArgumentNullCheck(buffer, property.Name, 2);
 				}
 			}
 
 			// Add empty line if we have ArgumentNullException checks
-			if (addEmptyLine)
+			foreach (var property in properties)
 			{
-				buffer.AppendLine();
+				if (property.Type.IsReference)
+				{
+					buffer.AppendLine();
+					break;
+				}
 			}
 
 			// Assign properties to parameters
@@ -174,6 +150,70 @@ namespace Cchbc.AppBuilder
 			buffer.Append('\t');
 			buffer.Append('}');
 			buffer.AppendLine();
+		}
+
+		public static void AppendArgumentNullCheck(StringBuilder buffer, string name, int indentationLevel = 0)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			AppendIndentation(buffer, indentationLevel);
+
+			buffer.Append(@"if");
+			buffer.Append(' ');
+			buffer.Append('(');
+			BufferHelper.AppendLowerFirst(buffer, name);
+			buffer.Append(' ');
+			buffer.Append('=');
+			buffer.Append('=');
+			buffer.Append(@"null");
+			buffer.Append(')');
+			buffer.Append(' ');
+			buffer.Append(@"throw");
+			buffer.Append(' ');
+			buffer.Append(@"new");
+			buffer.Append(' ');
+			buffer.Append(@"ArgumentNullException");
+			buffer.Append('(');
+			buffer.Append(@"nameof");
+			buffer.Append('(');
+			BufferHelper.AppendLowerFirst(buffer, name);
+			buffer.Append(')');
+			buffer.Append(')');
+			buffer.Append(';');
+			buffer.AppendLine();
+		}
+
+		public static void AppendOpenBrace(StringBuilder buffer, int indentationLevel = 0)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+
+			AppendBrace(buffer, indentationLevel, '{');
+		}
+
+		public static void AppendCloseBrace(StringBuilder buffer, int indentationLevel = 0)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+
+			AppendBrace(buffer, indentationLevel, '}');
+		}
+
+		private static void AppendBrace(StringBuilder buffer, int indentationLevel, char symbol)
+		{
+			AppendIndentation(buffer, indentationLevel);
+
+			buffer.Append(symbol);
+			buffer.AppendLine();
+		}
+
+		public static void AppendIndentation(StringBuilder buffer, int indentationLevel)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+
+			for (var i = 0; i < indentationLevel; i++)
+			{
+				buffer.Append('\t');
+			}
 		}
 	}
 }

@@ -309,8 +309,16 @@ namespace Cchbc.ConsoleClient
 
 				foreach (var entity in project.CreateEntities())
 				{
-					var entityClass = project.CreateEntityClass(entity);
-					buffer.AppendLine(entityClass);
+					//var entityClass = project.CreateEntityClass(entity);
+					//buffer.AppendLine(entityClass);
+					//continue;
+
+					if (!project.IsModifiable(entity.Table))
+					{
+						var adapter = project.CreateEntityAdapter(entity);
+						buffer.AppendLine(adapter);
+						break;
+					}
 					continue;
 
 					if (project.IsModifiable(entity.Table))

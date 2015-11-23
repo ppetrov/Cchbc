@@ -1,109 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Cchbc.Data;
 
 namespace Cchbc.ConsoleClient
 {
-	public sealed class VisitAdapter : IModifiableAdapter<Visit>
+
+
+
+	public sealed class OutletAdapter : IReadOnlyAdapter<Outlet>
 	{
 		private QueryHelper QueryHelper { get; }
-		private Dictionary<long, Outlet> Outlets { get; }
-		private Dictionary<long, ActivityType> ActivityTypes { get; }
 
-		public VisitAdapter(QueryHelper queryHelper, Dictionary<long, Outlet> outlets, Dictionary<long, ActivityType> activityTypes)
+		public OutletAdapter(QueryHelper queryHelper)
 		{
 			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-			if (outlets == null) throw new ArgumentNullException(nameof(outlets));
-			if (activityTypes == null) throw new ArgumentNullException(nameof(activityTypes));
 
 			this.QueryHelper = queryHelper;
-			this.Outlets = outlets;
-			this.ActivityTypes = activityTypes;
 		}
 
-		public List<Visit> Get()
+		public void Fill(Dictionary<long, Outlet> items, Func<Outlet, long> selector)
 		{
-			var query = @"SELECT v.Id, v.OutletId, v.Date, a.Id, a.Date, a.ActivityTypeId, a.VisitId FROM Visits v INNER JOIN Activities a ON v.Id = a.VisitId";
+			if (items == null) throw new ArgumentNullException(nameof(items));
+			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			return this.QueryHelper.Execute(new Query<Visit>(query, r =>
-			{
-				var id = 0L;
-				if (!r.IsDbNull(0))
-				{
-					id = r.GetInt64(0);
-				}
+			var query = @"SELECT Id, Name FROM Outlets";
 
-				var outlet = default(Outlet);
-				if (!r.IsDbNull(1))
-				{
-					outlet = this.Outlets[r.GetInt64(1)];
-				}
-
-				var date = DateTime.MinValue;
-				if (!r.IsDbNull(2))
-				{
-					date = r.GetDateTime(2);
-				}
-
-				var activities = default(List<Activity>);
-				if (!r.IsDbNull(3))
-				{
-					//activities = this._lookup[r.GetInt64(3)];
-				}
-
-				return new Visit(id, outlet, date, activities);
-			}));
+			this.QueryHelper.Fill(new Query<Outlet>(query, OutletCreator), items, selector);
 		}
 
-		public void Insert(Visit item)
+		private static Outlet OutletCreator(IFieldDataReader r)
 		{
-			if (item == null) throw new ArgumentNullException(nameof(item));
-
-			var sqlParams = new[]
+			var id = 0L;
+			if (!r.IsDbNull(0))
 			{
-			new QueryParameter(@"@pOutletId", item.Outlet.Id),
-			new QueryParameter(@"@pDate", item.Date),
-		};
+				id = r.GetInt64(0);
+			}
 
-			var query = @"INSERT INTO Visits (OutletId, Date) VALUES (@pOutletId, @pDate)";
-
-			this.QueryHelper.Execute(query, sqlParams);
-
-			item.Id = this.QueryHelper.GetNewId();
-		}
-
-		public void Update(Visit item)
-		{
-			if (item == null) throw new ArgumentNullException(nameof(item));
-
-			var sqlParams = new[]
+			var name = string.Empty;
+			if (!r.IsDbNull(1))
 			{
-			new QueryParameter(@"@pId", item.Id),
-			new QueryParameter(@"@pOutletId", item.Outlet.Id),
-			new QueryParameter(@"@pDate", item.Date),
-		};
+				name = r.GetString(1);
+			}
 
-			var query = @"UPDATE Visits SET OutletId = @pOutletId, Date = @pDate WHERE Id = @pId";
-
-			this.QueryHelper.Execute(query, sqlParams);
+			return new Outlet(id, name);
 		}
-
-		public void Delete(Visit item)
-		{
-			if (item == null) throw new ArgumentNullException(nameof(item));
-
-			var sqlParams = new[]
-			{
-			new QueryParameter(@"@pId", item.Id),
-		};
-
-			var query = @"DELETE FROM Visits WHERE Id = @pId";
-
-			this.QueryHelper.Execute(query, sqlParams);
-		}
-	}
-
+    }
 
 
 
