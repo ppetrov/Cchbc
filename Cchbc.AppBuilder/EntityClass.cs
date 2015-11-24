@@ -260,7 +260,15 @@ namespace Cchbc.AppBuilder
 			{
 				buffer.Append(@"this");
 				buffer.Append('.');
-				buffer.Append(dictionaries[type].Name);
+
+				string v = null;
+				ClrProperty t;
+				if (dictionaries.TryGetValue(type, out t))
+				{
+					v = t.Name;
+				}
+
+				buffer.Append(v ?? @"N/A");
 				buffer.Append('[');
 				AppendReadValue(buffer, readerMethod, index);
 				buffer.Append(']');
@@ -273,14 +281,119 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
-		public static void AppendCreatorMethod(StringBuilder buffer, ClrClass @class, Dictionary<ClrType, ClrProperty> dictionaries)
+		public static void AppendCreatorMethod(StringBuilder buffer, Entity entity, Dictionary<ClrType, ClrProperty> dictionaryProperties, Entity[] readerEntities)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-			if (@class == null) throw new ArgumentNullException(nameof(@class));
-			if (dictionaries == null) throw new ArgumentNullException(nameof(dictionaries));
+			if (entity == null) throw new ArgumentNullException(nameof(entity));
+			if (dictionaryProperties == null) throw new ArgumentNullException(nameof(dictionaryProperties));
+			if (readerEntities == null) throw new ArgumentNullException(nameof(readerEntities));
 
+			if (readerEntities.Length == 1)
+			{
+				AppendCreatorMethod(buffer, entity, dictionaryProperties);
+			}
+			else
+			{
+				var level = 1;
+				var className = entity.Class.Name;
+				var properties = entity.Class.Properties;
+
+				AppendIndentation(buffer, level);
+
+				buffer.Append(@"private");
+				buffer.Append(' ');
+				buffer.Append(@"void");
+				buffer.Append(' ');
+				buffer.Append(className);
+				buffer.Append(@"Creator");
+				buffer.Append('(');
+				buffer.Append(@"IFieldDataReader");
+				buffer.Append(' ');
+				buffer.Append('r');
+				buffer.Append(',');
+				buffer.Append(' ');
+				buffer.Append(@"Dictionary");
+				buffer.Append('<');
+				buffer.Append(@"long");
+				buffer.Append(',');
+				buffer.Append(' ');
+				buffer.Append(className);
+				buffer.Append('>');
+				buffer.Append(' ');
+				BufferHelper.AppendLowerFirst(buffer, entity.Table.Name);
+				buffer.Append(')');
+				buffer.AppendLine();
+
+				AppendOpenBrace(buffer, level++);
+
+				// Read PrimaryKey
+				for (var index = 0; index < properties.Length; index++)
+				{
+					var property = properties[index];
+					if (!property.Name.Equals(NameProvider.IdName))
+					{
+						continue;
+					}
+					if (index > 0)
+					{
+						buffer.AppendLine();
+					}
+
+					AppendVariableDeclaration(buffer, property, level);
+					AppendCheckForDbNull(buffer, index, level);
+					AppendOpenBrace(buffer, level);
+					AppendAssignValue(buffer, property, index, dictionaryProperties, level + 1);
+					AppendCloseBrace(buffer, level);
+				}
+
+				buffer.AppendLine();
+				AppendIndentation(buffer, level);
+				buffer.Append(className);
+				buffer.Append(' ');
+				BufferHelper.AppendLowerFirst(buffer, className);
+				buffer.Append(';');
+				buffer.AppendLine();
+
+				AppendIndentation(buffer, level);
+				buffer.Append(@"if");
+				buffer.Append(' ');
+				buffer.Append('(');
+				buffer.Append('!');
+				BufferHelper.AppendLowerFirst(buffer, entity.Table.Name);
+				buffer.Append('.');
+				buffer.Append(@"TryGetValue");
+				buffer.Append('(');
+				BufferHelper.AppendLowerFirst(buffer, NameProvider.IdName);
+				buffer.Append(',');
+				buffer.Append(' ');
+				buffer.Append(@"out");
+				buffer.Append(' ');
+				BufferHelper.AppendLowerFirst(buffer, className);
+				buffer.Append(')');
+				buffer.Append(')');
+				buffer.AppendLine();
+
+				AppendOpenBrace(buffer, level++);
+
+				// TODO: !!!
+				buffer.Append(@"			//TODO : Read visit");
+				buffer.AppendLine();
+
+				AppendCloseBrace(buffer, --level);
+
+				// TODO: !!!
+				buffer.AppendLine();
+				buffer.Append(@"		//TODO : Read activity");
+				buffer.AppendLine();
+				AppendCloseBrace(buffer, --level);
+			}
+		}
+
+		private static void AppendCreatorMethod(StringBuilder buffer, Entity entity, Dictionary<ClrType, ClrProperty> dictionaryProperties)
+		{
 			var level = 1;
-			var className = @class.Name;
+			var className = entity.Class.Name;
+			var properties = entity.Class.Properties;
 
 			AppendIndentation(buffer, level);
 
@@ -300,19 +413,19 @@ namespace Cchbc.AppBuilder
 			AppendOpenBrace(buffer, level++);
 
 			// Read properties
-			var properties = @class.Properties;
 			for (var index = 0; index < properties.Length; index++)
 			{
+				var property = properties[index];
+
 				if (index > 0)
 				{
 					buffer.AppendLine();
 				}
 
-				var property = properties[index];
 				AppendVariableDeclaration(buffer, property, level);
 				AppendCheckForDbNull(buffer, index, level);
 				AppendOpenBrace(buffer, level);
-				AppendAssignValue(buffer, property, index, dictionaries, level + 1);
+				AppendAssignValue(buffer, property, index, dictionaryProperties, level + 1);
 				AppendCloseBrace(buffer, level);
 			}
 

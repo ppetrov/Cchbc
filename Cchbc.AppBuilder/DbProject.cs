@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cchbc.AppBuilder.Clr;
 using Cchbc.AppBuilder.DDL;
 
@@ -82,16 +83,25 @@ namespace Cchbc.AppBuilder
 			if (!this.IsModifiable(entity.Table)) return EntityAdapter.GenerateReadOnly(entity, GetDictionaryProperties(entity));
 
 			// We need Get method for this entity
-			var generateGet = true;
+			var entities = new[] { entity };
 			var dictionaryProperties = GetDictionaryProperties(entity);
 
 			var inverseTable = entity.InverseTable;
 			if (inverseTable != null)
 			{
+				var className = entity.Class.Name;
+				var inverseTableEntity = this.CreateEntity(inverseTable);
+
+				entities = new[] { entity, inverseTableEntity };
+
 				// We need Get method for this entity & the inverse table 
-				foreach (var dictionaryProperty in GetDictionaryProperties(this.CreateEntity(inverseTable)))
+				foreach (var dictionaryProperty in GetDictionaryProperties(inverseTableEntity))
 				{
-					dictionaryProperties.Add(dictionaryProperty.Key, dictionaryProperty.Value);
+					var type = dictionaryProperty.Key;
+					if (type.Name != className)
+					{
+						dictionaryProperties.Add(type, dictionaryProperty.Value);
+					}
 				}
 			}
 			else
@@ -100,11 +110,11 @@ namespace Cchbc.AppBuilder
 				var hasColumnToInverseTable = this.HasColumnToInverseTable(entity);
 				if (hasColumnToInverseTable)
 				{
-					generateGet = false;
+					entities = Enumerable.Empty<Entity>().ToArray();
 				}
 			}
 
-			return EntityGenerator.ModifiableAdapter(entity, dictionaryProperties, generateGet);
+			return EntityAdapter.GenerateModifiable(entity, dictionaryProperties, entities);
 		}
 
 		private bool HasColumnToInverseTable(Entity entity)

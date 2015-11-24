@@ -44,7 +44,6 @@
     <Compile Include="BufferHelper.cs" />
     <Compile Include="EntityAdapter.cs" />
     <Compile Include="EntityClass.cs" />
-    <Compile Include="EntityGenerator.cs" />
     <Compile Include="ClrProject.cs" />
     <Compile Include="Clr\ClrClass.cs" />
     <Compile Include="Clr\ClrProperty.cs" />

@@ -308,7 +308,7 @@ namespace Cchbc.ConsoleClient
 
 				if (project.IsModifiable(entity.Table))
 				{
-					if (entity.Table.Name != @"ActivityNotes")
+					if (entity.Table.Name != @"Visits")
 					{
 						continue;
 					}
