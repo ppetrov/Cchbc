@@ -228,57 +228,55 @@ namespace Cchbc.ConsoleClient
 	{
 		static void Main(string[] args)
 		{
-			try
+			// 
+			// Define tables
+			//
+			var outlets = DbTable.Create(@"Outlets", new[]
 			{
-				// 
-				// Define tables
-				//
-				var outlets = DbTable.Create(@"Outlets", new[]
-				{
 					DbColumn.String(@"Name"),
 				});
-				var visits = DbTable.Create(@"Visits", new[]
-				{
+			var visits = DbTable.Create(@"Visits", new[]
+			{
 					DbColumn.ForeignKey(outlets),
 					DbColumn.DateTime(@"Date"),
 				});
-				var activityTypes = DbTable.Create(@"ActivityTypes", new[]
-				{
+			var activityTypes = DbTable.Create(@"ActivityTypes", new[]
+			{
 					DbColumn.String(@"Name"),
 				});
-				var activities = DbTable.Create(@"Activities", new[]
-				{
+			var activities = DbTable.Create(@"Activities", new[]
+			{
 					DbColumn.DateTime(@"Date"),
 					DbColumn.ForeignKey(activityTypes),
 					DbColumn.ForeignKey(visits),
 				}, @"Activity");
-				var brands = DbTable.Create(@"Brands", new[]
-				{
+			var brands = DbTable.Create(@"Brands", new[]
+			{
 					DbColumn.String(@"Name"),
 				});
-				var flavors = DbTable.Create(@"Flavors", new[]
-				{
+			var flavors = DbTable.Create(@"Flavors", new[]
+			{
 					DbColumn.String(@"Name"),
 				});
-				var articles = DbTable.Create(@"Articles", new[]
-				{
+			var articles = DbTable.Create(@"Articles", new[]
+			{
 					DbColumn.String(@"Name"),
 					DbColumn.ForeignKey(brands),
 					DbColumn.ForeignKey(flavors),
 				});
-				var activityNoteTypes = DbTable.Create(@"ActivityNoteTypes", new[]
-				{
+			var activityNoteTypes = DbTable.Create(@"ActivityNoteTypes", new[]
+			{
 					DbColumn.String(@"Name"),
 				});
-				var activityNotes = DbTable.Create(@"ActivityNotes", new[]
-				{
+			var activityNotes = DbTable.Create(@"ActivityNotes", new[]
+			{
 					DbColumn.String(@"Contents"),
 					DbColumn.ForeignKey(activityNoteTypes),
 					DbColumn.ForeignKey(activities),
 				});
 
-				var schema = new DbSchema(@"ifsa", new[]
-				{
+			var schema = new DbSchema(@"ifsa", new[]
+			{
 					outlets,
 					visits,
 					activityTypes,
@@ -290,207 +288,197 @@ namespace Cchbc.ConsoleClient
 					activityNotes
 				});
 
+			var project = new DbProject(schema);
 
+			// Mark tables as Modifiable, all tables are ReadOnly by default
+			project.MarkModifiable(visits);
+			project.MarkModifiable(activities);
+			project.MarkModifiable(activityNotes);
 
+			// Attach Inverse tables
+			project.AttachInverseTable(visits);
 
+			var buffer = new StringBuilder(1024 * 2);
 
-
-				var project = new DbProject(schema);
-
-				// Mark tables as Modifiable, all tables are ReadOnly by default
-				project.MarkModifiable(visits);
-				project.MarkModifiable(activities);
-				project.MarkModifiable(activityNotes);
-
-				// Attach Inverse tables
-				project.AttachInverseTable(visits);
-
-				var buffer = new StringBuilder(1024 * 2);
-
-				foreach (var entity in project.CreateEntities())
-				{
-					//var entityClass = project.CreateEntityClass(entity);
-					//buffer.AppendLine(entityClass);
-					//continue;
-
-					if (!project.IsModifiable(entity.Table))
-					{
-						var adapter = project.CreateEntityAdapter(entity);
-						buffer.AppendLine(adapter);
-						break;
-					}
-					continue;
-
-					if (project.IsModifiable(entity.Table))
-					{
-						//if (entity.Table.Name == @"Visits")
-						//{
-						//	continue;
-						//}
-						if (entity.Table.Name != @"Visits")
-						{
-							continue;
-						}
-						var entityAdapter = project.CreateEntityAdapter(entity);
-						buffer.AppendLine(entityAdapter);
-						//break;
-					}
-				}
-
-				Console.WriteLine(buffer.ToString());
-				File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
-
-
-
-
-
-
-
-				// TODO : !!!!
-				//project.Save(@"C:");
-				//project.Load(@"C:");
-
-
-
-
-
-
-				return;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-				//var connectionString = @"Server=cwpfsa04;Database=Cchbc;User Id=dev;Password='dev user password'";
-
-
-				//using (var cn = new SQLiteConnection(connectionString))
-				//{
-				//	cn.Open();
-
-				//	var core = Core.Current;
-
-				//	// Set logger
-				//	core.Logger = new ConsoleLogger();
-
-				//	// Create Read query helper
-				//	var sqlReadDataQueryHelper = new SqlReadQueryHelper(cn);
-				//	// Create Modify query helper
-				//	var sqlModifyDataQueryHelper = new SqlModifyQueryHelper(sqlReadDataQueryHelper, cn);
-				//	// Create General query helper
-				//	var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
-				//	core.QueryHelper = queryHelper;
-
-				//	var featureManager = new FeatureManager { InspectFeature = InspectFeature() };
-				//	core.FeatureManager = featureManager;
-				//	core.FeatureManager.Initialize(core.Logger, new DbFeaturesManager(new DbFeaturesAdapter(queryHelper)));
-				//	core.FeatureManager.LoadAsync().Wait();
-				//	core.FeatureManager.StartDbWriters();
-
-				//	var localizationManager = new LocalizationManager();
-				//	core.LocalizationManager = localizationManager;
-
-				//	// Register helpers
-				//	core.DataCache = new DataCache();
-				//	var cache = core.DataCache;
-				//	cache.AddHelper(new BrandHelper());
-				//	cache.AddHelper(new FlavorHelper());
-				//	cache.AddHelper(new ArticleHelper());
-				//	cache.AddHelper(new OrderTypeHelper());
-				//	cache.AddHelper(new VendorHelper());
-				//	cache.AddHelper(new WholesalerHelper());
-				//	cache.AddHelper(new OrderNoteTypeHelper());
-
-				//	// Load helpers
-				//	var brandHelper = cache.GetHelper<Brand>();
-				//	brandHelper.LoadAsync(new BrandAdapter(sqlReadDataQueryHelper)).Wait();
-				//	var flavorHelper = cache.GetHelper<Flavor>();
-				//	flavorHelper.LoadAsync(new FlavorAdapter(sqlReadDataQueryHelper)).Wait();
-				//	var articleHelper = cache.GetHelper<Article>();
-				//	articleHelper.LoadAsync(new ArticleAdapter(sqlReadDataQueryHelper, brandHelper.Items, flavorHelper.Items)).Wait();
-
-				//	cache.GetHelper<OrderType>().LoadAsync(new OrderTypeAdapter());
-				//	cache.GetHelper<Vendor>().LoadAsync(new VendorAdapter());
-				//	cache.GetHelper<Wholesaler>().LoadAsync(new WholesalerAdapter());
-				//	cache.GetHelper<OrderNoteType>().LoadAsync(new OrderNoteTypeAdapter());
-
-				//	localizationManager.LoadAsync();
-
-				//	var viewModel = new ArticlesViewModel(core);
-				//	try
-				//	{
-				//		//for (var i = 0; i < 5; i++)
-				//		//{
-				//		//	viewModel.LoadDataAsync().Wait();
-				//		//}
-
-				//		var manager = new OrderManager(core, new Activity { Id = 1, Outlet = new Outlet { Id = 1, Name = @"Billa" } });
-
-				//		for (int i = 0; i < 7; i++)
-				//		{
-				//			manager.LoadDataAsync().Wait();
-				//			var items = manager.Assortments;
-				//			Console.WriteLine(items.Count);
-				//		}
-				//	}
-				//	catch (Exception e)
-				//	{
-				//		Console.WriteLine(e);
-				//	}
-
-				//	featureManager.StopDbWriters();
-				//}
-
-
-
-				//using (var featureManager = new FeatureManager(entries =>
-				//{
-				//	foreach (var entry in entries)
-				//	{
-				//		var context = entry.Context;
-				//		Console.WriteLine(context);
-				//		Console.WriteLine(entry.Name + " " + entry.TimeSpent.TotalMilliseconds);
-				//		foreach (var step in entry.Steps)
-				//		{
-				//			Console.WriteLine("\t" + step.Name + ":" + step.TimeSpent.TotalMilliseconds);
-				//		}
-				//		Console.WriteLine(@"---");
-				//	}
-				//}))
-				//{
-				//	using (var cn = new SQLiteConnection(connectionString))
-				//	{
-				//		cn.Open();
-
-				//		var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
-				//		var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
-				//		var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
-
-				//		var core = new Core(new ConsoleLogger(), featureManager, queryHelper);
-				//		var viewModel = new ArticlesViewModel(core);
-				//		viewModel.LoadDataAsync().Wait();
-				//		viewModel.LoadDataAsync().Wait();
-
-				//		Console.WriteLine(@"Done");
-				//	}
-				//}
-			}
-			catch (Exception ex)
+			foreach (var entity in project.CreateEntities())
 			{
-				Console.WriteLine(ex);
+				//var entityClass = project.CreateEntityClass(entity);
+				//buffer.AppendLine(entityClass);
+				//continue;
+
+				if (project.IsModifiable(entity.Table))
+				{
+					if (entity.Table.Name != @"ActivityNotes")
+					{
+						continue;
+					}
+					var adapter = project.CreateEntityAdapter(entity);
+					buffer.AppendLine(adapter);
+				}
+				continue;
+
+				if (project.IsModifiable(entity.Table))
+				{
+					if (entity.Table.Name != @"Visits")
+					{
+						continue;
+					}
+					var entityAdapter = project.CreateEntityAdapter(entity);
+					buffer.AppendLine(entityAdapter);
+					//break;
+				}
 			}
+
+			Console.WriteLine(buffer.ToString());
+			File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
+
+
+
+
+
+
+
+			// TODO : !!!!
+			//project.Save(@"C:");
+			//project.Load(@"C:");
+
+
+
+
+
+
+			return;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+			//var connectionString = @"Server=cwpfsa04;Database=Cchbc;User Id=dev;Password='dev user password'";
+
+
+			//using (var cn = new SQLiteConnection(connectionString))
+			//{
+			//	cn.Open();
+
+			//	var core = Core.Current;
+
+			//	// Set logger
+			//	core.Logger = new ConsoleLogger();
+
+			//	// Create Read query helper
+			//	var sqlReadDataQueryHelper = new SqlReadQueryHelper(cn);
+			//	// Create Modify query helper
+			//	var sqlModifyDataQueryHelper = new SqlModifyQueryHelper(sqlReadDataQueryHelper, cn);
+			//	// Create General query helper
+			//	var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
+			//	core.QueryHelper = queryHelper;
+
+			//	var featureManager = new FeatureManager { InspectFeature = InspectFeature() };
+			//	core.FeatureManager = featureManager;
+			//	core.FeatureManager.Initialize(core.Logger, new DbFeaturesManager(new DbFeaturesAdapter(queryHelper)));
+			//	core.FeatureManager.LoadAsync().Wait();
+			//	core.FeatureManager.StartDbWriters();
+
+			//	var localizationManager = new LocalizationManager();
+			//	core.LocalizationManager = localizationManager;
+
+			//	// Register helpers
+			//	core.DataCache = new DataCache();
+			//	var cache = core.DataCache;
+			//	cache.AddHelper(new BrandHelper());
+			//	cache.AddHelper(new FlavorHelper());
+			//	cache.AddHelper(new ArticleHelper());
+			//	cache.AddHelper(new OrderTypeHelper());
+			//	cache.AddHelper(new VendorHelper());
+			//	cache.AddHelper(new WholesalerHelper());
+			//	cache.AddHelper(new OrderNoteTypeHelper());
+
+			//	// Load helpers
+			//	var brandHelper = cache.GetHelper<Brand>();
+			//	brandHelper.LoadAsync(new BrandAdapter(sqlReadDataQueryHelper)).Wait();
+			//	var flavorHelper = cache.GetHelper<Flavor>();
+			//	flavorHelper.LoadAsync(new FlavorAdapter(sqlReadDataQueryHelper)).Wait();
+			//	var articleHelper = cache.GetHelper<Article>();
+			//	articleHelper.LoadAsync(new ArticleAdapter(sqlReadDataQueryHelper, brandHelper.Items, flavorHelper.Items)).Wait();
+
+			//	cache.GetHelper<OrderType>().LoadAsync(new OrderTypeAdapter());
+			//	cache.GetHelper<Vendor>().LoadAsync(new VendorAdapter());
+			//	cache.GetHelper<Wholesaler>().LoadAsync(new WholesalerAdapter());
+			//	cache.GetHelper<OrderNoteType>().LoadAsync(new OrderNoteTypeAdapter());
+
+			//	localizationManager.LoadAsync();
+
+			//	var viewModel = new ArticlesViewModel(core);
+			//	try
+			//	{
+			//		//for (var i = 0; i < 5; i++)
+			//		//{
+			//		//	viewModel.LoadDataAsync().Wait();
+			//		//}
+
+			//		var manager = new OrderManager(core, new Activity { Id = 1, Outlet = new Outlet { Id = 1, Name = @"Billa" } });
+
+			//		for (int i = 0; i < 7; i++)
+			//		{
+			//			manager.LoadDataAsync().Wait();
+			//			var items = manager.Assortments;
+			//			Console.WriteLine(items.Count);
+			//		}
+			//	}
+			//	catch (Exception e)
+			//	{
+			//		Console.WriteLine(e);
+			//	}
+
+			//	featureManager.StopDbWriters();
+			//}
+
+
+
+			//using (var featureManager = new FeatureManager(entries =>
+			//{
+			//	foreach (var entry in entries)
+			//	{
+			//		var context = entry.Context;
+			//		Console.WriteLine(context);
+			//		Console.WriteLine(entry.Name + " " + entry.TimeSpent.TotalMilliseconds);
+			//		foreach (var step in entry.Steps)
+			//		{
+			//			Console.WriteLine("\t" + step.Name + ":" + step.TimeSpent.TotalMilliseconds);
+			//		}
+			//		Console.WriteLine(@"---");
+			//	}
+			//}))
+			//{
+			//	using (var cn = new SQLiteConnection(connectionString))
+			//	{
+			//		cn.Open();
+
+			//		var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
+			//		var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
+			//		var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
+
+			//		var core = new Core(new ConsoleLogger(), featureManager, queryHelper);
+			//		var viewModel = new ArticlesViewModel(core);
+			//		viewModel.LoadDataAsync().Wait();
+			//		viewModel.LoadDataAsync().Wait();
+
+			//		Console.WriteLine(@"Done");
+			//	}
+			//}
+
 		}
 
 		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadQueryHelper queryHelper)
