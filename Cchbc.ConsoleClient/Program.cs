@@ -314,26 +314,26 @@ namespace Cchbc.ConsoleClient
 
 				//
 				// Read Only adapters
-				//if (!project.IsModifiable(entity.Table))
-				//{
-				//	var adapter = project.CreateEntityAdapter(entity);
-				//	buffer.AppendLine(adapter);
-				//}
+				if (!project.IsModifiable(entity.Table))
+				{
+					var adapter = project.CreateEntityAdapter(entity);
+					buffer.AppendLine(adapter);
+				}
 				//continue;
 
 				//
 				// Modifiable adapters
 				//
-				//if (project.IsModifiable(entity.Table))
-				//{
-				//	var adapter = project.CreateEntityAdapter(entity);
-				//	buffer.AppendLine(adapter);
-				//}
+				if (project.IsModifiable(entity.Table))
+				{
+					var adapter = project.CreateEntityAdapter(entity);
+					buffer.AppendLine(adapter);
+				}
 			}
 			s.Stop();
 			Console.WriteLine(s.ElapsedMilliseconds);
 
-			//Console.WriteLine(buffer.ToString());
+			Console.WriteLine(buffer.ToString());
 			File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
 
 
