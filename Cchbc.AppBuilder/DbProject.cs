@@ -111,6 +111,7 @@ namespace Cchbc.AppBuilder
 				if (hasColumnToInverseTable)
 				{
 					entities = Enumerable.Empty<Entity>().ToArray();
+					dictionaryProperties.Clear();
 				}
 			}
 
@@ -160,7 +161,7 @@ namespace Cchbc.AppBuilder
 					var foreignKeyTable = FindForeignKeyTable(entity, type.Name);
 					if (foreignKeyTable != null)
 					{
-						dictionaryProperties.Add(type, new ClrProperty(foreignKeyTable.Name, new ClrType(@"Dictionary<long, " + foreignKeyTable.ClassName + @">", true)));
+						dictionaryProperties.Add(type, new ClrProperty(foreignKeyTable.Name, new ClrType(@"Dictionary<long, " + foreignKeyTable.ClassName + @">", true, true)));
 					}
 				}
 			}

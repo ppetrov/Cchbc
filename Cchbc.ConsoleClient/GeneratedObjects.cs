@@ -26,7 +26,6 @@ namespace Cchbc.ConsoleClient
 
 
 
-
 	public sealed class Outlet
 	{
 		public long Id { get; }
@@ -159,10 +158,11 @@ namespace Cchbc.ConsoleClient
 	{
 		public long Id { get; set; }
 		public string Contents { get; set; }
+		public DateTime CreatedAt { get; set; }
 		public ActivityNoteType ActivityNoteType { get; set; }
 		public Activity Activity { get; set; }
 
-		public ActivityNote(long id, string contents, ActivityNoteType activityNoteType, Activity activity)
+		public ActivityNote(long id, string contents, DateTime createdAt, ActivityNoteType activityNoteType, Activity activity)
 		{
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
 			if (activityNoteType == null) throw new ArgumentNullException(nameof(activityNoteType));
@@ -170,11 +170,11 @@ namespace Cchbc.ConsoleClient
 
 			this.Id = id;
 			this.Contents = contents;
+			this.CreatedAt = createdAt;
 			this.ActivityNoteType = activityNoteType;
 			this.Activity = activity;
 		}
 	}
-
 
 
 

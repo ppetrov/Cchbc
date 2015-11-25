@@ -165,7 +165,20 @@ namespace Cchbc.AppBuilder
 					buffer.Append(',');
 					buffer.Append(' ');
 				}
-				BufferHelper.AppendLowerFirst(buffer, properties[i].Name);
+				var property = properties[i];
+				var type = property.Type;
+				if (type.IsCollection)
+				{
+					buffer.Append(@"new");
+					buffer.Append(' ');
+					buffer.Append(type.Name);
+					buffer.Append('(');
+					buffer.Append(')');
+				}
+				else
+				{
+					BufferHelper.AppendLowerFirst(buffer, property.Name);
+				}
 			}
 
 			buffer.Append(')');
@@ -176,15 +189,33 @@ namespace Cchbc.AppBuilder
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (property == null) throw new ArgumentNullException(nameof(property));
 
+			AppendVariableDeclaration(buffer, property.Name, string.Empty, property.Type, indentationLevel);
+		}
+
+		public static void AppendVariableDeclaration(StringBuilder buffer, string propertyName, string prefix, ClrType type, int indentationLevel = 0)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (prefix == null) throw new ArgumentNullException(nameof(prefix));
+			if (propertyName == null) throw new ArgumentNullException(nameof(propertyName));
+			if (type == null) throw new ArgumentNullException(nameof(type));
+
 			AppendIndentation(buffer, indentationLevel);
 
 			buffer.Append(@"var");
 			buffer.Append(' ');
-			BufferHelper.AppendLowerFirst(buffer, property.Name);
+			if (prefix != string.Empty)
+			{
+				BufferHelper.AppendLowerFirst(buffer, prefix);
+				buffer.Append(propertyName);
+			}
+			else
+			{
+				BufferHelper.AppendLowerFirst(buffer, propertyName);
+			}
 			buffer.Append(' ');
 			buffer.Append('=');
 			buffer.Append(' ');
-			buffer.Append(TypeHelper.GetDefaultValue(property.Type));
+			buffer.Append(TypeHelper.GetDefaultValue(type));
 			buffer.Append(';');
 			buffer.AppendLine();
 		}
@@ -242,17 +273,53 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
+		public static void AppendAssignValue(StringBuilder buffer, ClrProperty property, int index, int indentationLevel = 0)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (property == null) throw new ArgumentNullException(nameof(property));
+
+			AppendIndentation(buffer, indentationLevel);
+
+			buffer.Append(@"var");
+			buffer.Append(' ');
+			BufferHelper.AppendLowerFirst(buffer, property.Name);
+			buffer.Append(' ');
+			buffer.Append('=');
+			buffer.Append(' ');
+			AppendReadValue(buffer, TypeHelper.GetReaderMethod(ClrType.Long), index);
+			buffer.Append(';');
+			buffer.AppendLine();
+		}
+
 		public static void AppendAssignValue(StringBuilder buffer, ClrProperty property, int index, Dictionary<ClrType, ClrProperty> dictionaries, int indentationLevel = 0)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (property == null) throw new ArgumentNullException(nameof(property));
 			if (dictionaries == null) throw new ArgumentNullException(nameof(dictionaries));
 
-			var type = property.Type;
+			AppendAssignValue(buffer, property.Name, string.Empty, property.Type, index, dictionaries, indentationLevel);
+		}
+
+		public static void AppendAssignValue(StringBuilder buffer, string propertyName, string prefix, ClrType type, int index, Dictionary<ClrType, ClrProperty> dictionaries, int indentationLevel = 0)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (propertyName == null) throw new ArgumentNullException(nameof(propertyName));
+			if (prefix == null) throw new ArgumentNullException(nameof(prefix));
+			if (type == null) throw new ArgumentNullException(nameof(type));
+			if (dictionaries == null) throw new ArgumentNullException(nameof(dictionaries));
+
 			var readerMethod = TypeHelper.GetReaderMethod(type);
 
 			AppendIndentation(buffer, indentationLevel);
-			BufferHelper.AppendLowerFirst(buffer, property.Name);
+			if (prefix != string.Empty)
+			{
+				BufferHelper.AppendLowerFirst(buffer, prefix);
+				buffer.Append(propertyName);
+			}
+			else
+			{
+				BufferHelper.AppendLowerFirst(buffer, propertyName);
+			}
 			buffer.Append(' ');
 			buffer.Append('=');
 			buffer.Append(' ');
@@ -295,8 +362,9 @@ namespace Cchbc.AppBuilder
 			else
 			{
 				var level = 1;
-				var className = entity.Class.Name;
-				var properties = entity.Class.Properties;
+				var masterClass = entity.Class;
+				var masterClassName = masterClass.Name;
+				var masterProperties = masterClass.Properties;
 
 				AppendIndentation(buffer, level);
 
@@ -304,7 +372,7 @@ namespace Cchbc.AppBuilder
 				buffer.Append(' ');
 				buffer.Append(@"void");
 				buffer.Append(' ');
-				buffer.Append(className);
+				buffer.Append(masterClassName);
 				buffer.Append(@"Creator");
 				buffer.Append('(');
 				buffer.Append(@"IFieldDataReader");
@@ -317,7 +385,7 @@ namespace Cchbc.AppBuilder
 				buffer.Append(@"long");
 				buffer.Append(',');
 				buffer.Append(' ');
-				buffer.Append(className);
+				buffer.Append(masterClassName);
 				buffer.Append('>');
 				buffer.Append(' ');
 				BufferHelper.AppendLowerFirst(buffer, entity.Table.Name);
@@ -327,30 +395,21 @@ namespace Cchbc.AppBuilder
 				AppendOpenBrace(buffer, level++);
 
 				// Read PrimaryKey
-				for (var index = 0; index < properties.Length; index++)
+				for (var index = 0; index < masterProperties.Length; index++)
 				{
-					var property = properties[index];
+					var property = masterProperties[index];
 					if (!property.Name.Equals(NameProvider.IdName))
 					{
 						continue;
 					}
-					if (index > 0)
-					{
-						buffer.AppendLine();
-					}
-
-					AppendVariableDeclaration(buffer, property, level);
-					AppendCheckForDbNull(buffer, index, level);
-					AppendOpenBrace(buffer, level);
-					AppendAssignValue(buffer, property, index, dictionaryProperties, level + 1);
-					AppendCloseBrace(buffer, level);
+					AppendAssignValue(buffer, property, index, level);
 				}
 
 				buffer.AppendLine();
 				AppendIndentation(buffer, level);
-				buffer.Append(className);
+				buffer.Append(masterClassName);
 				buffer.Append(' ');
-				BufferHelper.AppendLowerFirst(buffer, className);
+				BufferHelper.AppendLowerFirst(buffer, masterClassName);
 				buffer.Append(';');
 				buffer.AppendLine();
 
@@ -368,23 +427,139 @@ namespace Cchbc.AppBuilder
 				buffer.Append(' ');
 				buffer.Append(@"out");
 				buffer.Append(' ');
-				BufferHelper.AppendLowerFirst(buffer, className);
+				BufferHelper.AppendLowerFirst(buffer, masterClassName);
 				buffer.Append(')');
 				buffer.Append(')');
 				buffer.AppendLine();
 
 				AppendOpenBrace(buffer, level++);
 
-				// TODO: !!!
-				buffer.Append(@"			//TODO : Read visit");
+				for (var index = 0; index < masterProperties.Length; index++)
+				{
+					var property = masterProperties[index];
+					if (property.Name.Equals(NameProvider.IdName))
+					{
+						continue;
+					}
+					if (property.Type.IsCollection)
+					{
+						continue;
+					}
+					AppendVariableDeclaration(buffer, property, level);
+					AppendCheckForDbNull(buffer, index, level);
+					AppendOpenBrace(buffer, level);
+					AppendAssignValue(buffer, property, index, dictionaryProperties, level + 1);
+					AppendCloseBrace(buffer, level);
+				}
+
+				AppendIndentation(buffer, level);
+				BufferHelper.AppendLowerFirst(buffer, masterClassName);
+				buffer.Append(' ');
+				buffer.Append('=');
+				buffer.Append(' ');
+				AppendCreateNewInstance(buffer, masterClassName, masterProperties);
+				buffer.Append(';');
+				buffer.AppendLine();
+
+				AppendIndentation(buffer, level);
+				BufferHelper.AppendLowerFirst(buffer, entity.Table.Name);
+				buffer.Append('.');
+				buffer.Append(@"Add");
+				buffer.Append('(');
+				BufferHelper.AppendLowerFirst(buffer, NameProvider.IdName);
+				buffer.Append(',');
+				buffer.Append(' ');
+				BufferHelper.AppendLowerFirst(buffer, masterClassName);
+				buffer.Append(')');
+				buffer.Append(';');
 				buffer.AppendLine();
 
 				AppendCloseBrace(buffer, --level);
 
-				// TODO: !!!
+				var offset = entity.Table.Columns.Length;
+				var detailEntity = readerEntities[1];
+				var detailClass = detailEntity.Class;
+				var detailClassName = detailClass.Name;
+				var detailProperties = detailClass.Properties;
+
+				for (var i = 0; i < detailProperties.Length; i++)
+				{
+					var index = i + offset;
+					var property = detailProperties[i];
+					if (property.Name == masterClassName)
+					{
+						continue;
+					}
+					var propertyName = property.Name;
+					AppendVariableDeclaration(buffer, propertyName, detailClassName, property.Type, level);
+					AppendCheckForDbNull(buffer, index, level);
+					AppendOpenBrace(buffer, level);
+					AppendAssignValue(buffer, propertyName, detailClassName, property.Type, index, dictionaryProperties, level + 1);
+					AppendCloseBrace(buffer, level);
+				}
+
 				buffer.AppendLine();
-				buffer.Append(@"		//TODO : Read activity");
+
+				AppendIndentation(buffer, level);
+				buffer.Append(@"var");
+				buffer.Append(' ');
+				BufferHelper.AppendLowerFirst(buffer, detailClassName);
+				buffer.Append(' ');
+				buffer.Append('=');
+				buffer.Append(' ');
+
+				buffer.Append(@"new");
+				buffer.Append(' ');
+				buffer.Append(detailClassName);
+				buffer.Append('(');
+
+				for (var i = 0; i < detailProperties.Length; i++)
+				{
+					if (i > 0)
+					{
+						buffer.Append(',');
+						buffer.Append(' ');
+					}
+					var property = detailProperties[i];
+					var type = property.Type;
+					if (type.IsCollection)
+					{
+						buffer.Append(@"new");
+						buffer.Append(' ');
+						buffer.Append(type.Name);
+						buffer.Append('(');
+						buffer.Append(')');
+					}
+					else
+					{
+						if (property.Name == masterClassName)
+						{
+							BufferHelper.AppendLowerFirst(buffer, masterClassName);
+						}
+						else
+						{
+							BufferHelper.AppendLowerFirst(buffer, detailClassName);
+							buffer.Append(property.Name);
+						}
+					}
+				}
+
+				buffer.Append(')');
+				buffer.Append(';');
 				buffer.AppendLine();
+
+				AppendIndentation(buffer, level);
+				BufferHelper.AppendLowerFirst(buffer, masterClassName);
+				buffer.Append('.');
+				buffer.Append(detailEntity.Table.Name);
+				buffer.Append('.');
+				buffer.Append(@"Add");
+				buffer.Append('(');
+				BufferHelper.AppendLowerFirst(buffer, detailClassName);
+				buffer.Append(')');
+				buffer.Append(';');
+				buffer.AppendLine();
+
 				AppendCloseBrace(buffer, --level);
 			}
 		}
@@ -417,16 +592,18 @@ namespace Cchbc.AppBuilder
 			{
 				var property = properties[index];
 
-				if (index > 0)
+				if (property.Name.Equals(NameProvider.IdName))
 				{
-					buffer.AppendLine();
+					AppendAssignValue(buffer, property, index, level);
 				}
-
-				AppendVariableDeclaration(buffer, property, level);
-				AppendCheckForDbNull(buffer, index, level);
-				AppendOpenBrace(buffer, level);
-				AppendAssignValue(buffer, property, index, dictionaryProperties, level + 1);
-				AppendCloseBrace(buffer, level);
+				else
+				{
+					AppendVariableDeclaration(buffer, property, level);
+					AppendCheckForDbNull(buffer, index, level);
+					AppendOpenBrace(buffer, level);
+					AppendAssignValue(buffer, property, index, dictionaryProperties, level + 1);
+					AppendCloseBrace(buffer, level);
+				}
 			}
 
 			// Create instance & return the value;

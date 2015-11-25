@@ -271,6 +271,7 @@ namespace Cchbc.ConsoleClient
 			var activityNotes = DbTable.Create(@"ActivityNotes", new[]
 			{
 					DbColumn.String(@"Contents"),
+					DbColumn.DateTime(@"CreatedAt"),
 					DbColumn.ForeignKey(activityNoteTypes),
 					DbColumn.ForeignKey(activities),
 				});
@@ -300,36 +301,39 @@ namespace Cchbc.ConsoleClient
 
 			var buffer = new StringBuilder(1024 * 2);
 
+			var s = Stopwatch.StartNew();
 			foreach (var entity in project.CreateEntities())
 			{
+				//
+				// Classes
+				//
 				//var entityClass = project.CreateEntityClass(entity);
 				//buffer.AppendLine(entityClass);
 				//continue;
 
+				//
+				// Read Only adapters
+				//if (!project.IsModifiable(entity.Table))
+				//{
+				//	var adapter = project.CreateEntityAdapter(entity);
+				//	buffer.AppendLine(adapter);
+				//}
+				//continue;
+
+				//
+				// Modifiable adapters
+				//
 				if (project.IsModifiable(entity.Table))
 				{
-					if (entity.Table.Name != @"Visits")
-					{
-						continue;
-					}
 					var adapter = project.CreateEntityAdapter(entity);
 					buffer.AppendLine(adapter);
 				}
-				continue;
-
-				if (project.IsModifiable(entity.Table))
-				{
-					if (entity.Table.Name != @"Visits")
-					{
-						continue;
-					}
-					var entityAdapter = project.CreateEntityAdapter(entity);
-					buffer.AppendLine(entityAdapter);
-					//break;
-				}
+				
 			}
+			s.Stop();
+			Console.WriteLine(s.ElapsedMilliseconds);
 
-			Console.WriteLine(buffer.ToString());
+			//Console.WriteLine(buffer.ToString());
 			File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
 
 

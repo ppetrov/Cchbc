@@ -34,7 +34,7 @@ namespace Cchbc.AppBuilder
 				if (foreignKey != null)
 				{
 					name = foreignKey.Table.ClassName;
-					clrType = new ClrType(name, true);
+					clrType = new ClrType(name, true, false);
 				}
 
 				var clrProperty = new ClrProperty(name, clrType);
@@ -45,7 +45,7 @@ namespace Cchbc.AppBuilder
 			{
 				var name = inverseTable.Name;
 				var className = inverseTable.ClassName;
-				properties[properties.Length - 1] = new ClrProperty(name, new ClrType(@"List<" + className + @">", true));
+				properties[properties.Length - 1] = new ClrProperty(name, new ClrType(@"List<" + className + @">", true, true));
 			}
 
 			return properties;

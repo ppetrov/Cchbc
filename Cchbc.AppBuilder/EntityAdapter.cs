@@ -354,7 +354,6 @@ namespace Cchbc.AppBuilder
 
 		private static void AppendMethod(StringBuilder buffer, Entity entity, string methodName, Action<StringBuilder, DbTable> queryAppender, Func<DbColumn, bool> columnMatcher, bool getNewId)
 		{
-			return;
 			var className = entity.Class.Name;
 
 			var level = 1;
@@ -492,7 +491,7 @@ namespace Cchbc.AppBuilder
 		{
 			var classProperties = new ClrProperty[dictionaryProperties.Count + 1];
 
-			classProperties[0] = new ClrProperty(@"QueryHelper", new ClrType(@"QueryHelper", true));
+			classProperties[0] = new ClrProperty(@"QueryHelper", new ClrType(@"QueryHelper", true, false));
 
 			var i = 1;
 			foreach (var classProperty in dictionaryProperties.Values)

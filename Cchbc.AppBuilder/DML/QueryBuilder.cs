@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Cchbc.AppBuilder.DDL;
 
@@ -41,10 +42,36 @@ namespace Cchbc.AppBuilder.DML
 
 			buffer.Append(@"SELECT");
 			buffer.Append(' ');
-			AppendPrefixedColumns(buffer, a.Columns, aPrefix);
+			var index = 0;
+			foreach (var column in a.Columns)
+			{
+				if (index++ > 0)
+				{
+					buffer.Append(',');
+					buffer.Append(' ');
+				}
+				buffer.Append(aPrefix);
+				buffer.Append('.');
+				buffer.Append(column.Name);
+			}
 			buffer.Append(',');
 			buffer.Append(' ');
-			AppendPrefixedColumns(buffer, b.Columns, bPrefix);
+			index = 0;
+			foreach (var column in b.Columns)
+			{
+				if (column.DbForeignKey != null && column.DbForeignKey.Table == a)
+				{
+					continue;
+				}
+				if (index++ > 0)
+				{
+					buffer.Append(',');
+					buffer.Append(' ');
+				}
+				buffer.Append(bPrefix);
+				buffer.Append('.');
+				buffer.Append(column.Name);
+			}
 			buffer.Append(' ');
 			buffer.Append(@"FROM");
 			buffer.Append(' ');
@@ -187,20 +214,20 @@ namespace Cchbc.AppBuilder.DML
 			}
 		}
 
-		private static void AppendPrefixedColumns(StringBuilder buffer, IEnumerable<DbColumn> columns, string aPrefix)
-		{
-			var index = 0;
-			foreach (var column in columns)
-			{
-				if (index++ > 0)
-				{
-					buffer.Append(',');
-					buffer.Append(' ');
-				}
-				buffer.Append(aPrefix);
-				buffer.Append('.');
-				buffer.Append(column.Name);
-			}
-		}
+		//private static void AppendPrefixedColumns(StringBuilder buffer, IEnumerable<DbColumn> columns, string aPrefix)
+		//{
+		//	var index = 0;
+		//	foreach (var column in columns)
+		//	{
+		//		if (index++ > 0)
+		//		{
+		//			buffer.Append(',');
+		//			buffer.Append(' ');
+		//		}
+		//		buffer.Append(aPrefix);
+		//		buffer.Append('.');
+		//		buffer.Append(column.Name);
+		//	}
+		//}
 	}
 }
