@@ -2,11 +2,16 @@ using System;
 
 namespace Cchbc.AppBuilder.DDL
 {
+	[Serializable]
 	public sealed class DbTable
 	{
-		public string Name { get; }
+		public string Name { get; } = string.Empty;
 		public DbColumn[] Columns { get; }
-		public string ClassName { get; }
+		public string ClassName { get; } = string.Empty;
+
+		public DbTable()
+		{
+		}
 
 		public DbTable(string name, DbColumn[] columns, string className = null)
 		{

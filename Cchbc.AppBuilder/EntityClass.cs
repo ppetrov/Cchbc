@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Cchbc.AppBuilder.Clr;
+using Cchbc.AppBuilder.DDL;
 
 namespace Cchbc.AppBuilder
 {
@@ -215,7 +216,7 @@ namespace Cchbc.AppBuilder
 			buffer.Append(' ');
 			buffer.Append('=');
 			buffer.Append(' ');
-			buffer.Append(TypeHelper.GetDefaultValue(type));
+			buffer.Append(GetDefaultValue(type));
 			buffer.Append(';');
 			buffer.AppendLine();
 		}
@@ -286,7 +287,7 @@ namespace Cchbc.AppBuilder
 			buffer.Append(' ');
 			buffer.Append('=');
 			buffer.Append(' ');
-			AppendReadValue(buffer, TypeHelper.GetReaderMethod(ClrType.Long), index);
+			AppendReadValue(buffer, GetReaderMethod(ClrType.Long), index);
 			buffer.Append(';');
 			buffer.AppendLine();
 		}
@@ -308,7 +309,7 @@ namespace Cchbc.AppBuilder
 			if (type == null) throw new ArgumentNullException(nameof(type));
 			if (dictionaries == null) throw new ArgumentNullException(nameof(dictionaries));
 
-			var readerMethod = TypeHelper.GetReaderMethod(type);
+			var readerMethod = GetReaderMethod(type);
 
 			AppendIndentation(buffer, indentationLevel);
 			if (prefix != string.Empty)
@@ -398,7 +399,7 @@ namespace Cchbc.AppBuilder
 				for (var index = 0; index < masterProperties.Length; index++)
 				{
 					var property = masterProperties[index];
-					if (!property.Name.Equals(NameProvider.IdName))
+					if (!property.Name.Equals(DbColumn.IdName))
 					{
 						continue;
 					}
@@ -422,7 +423,7 @@ namespace Cchbc.AppBuilder
 				buffer.Append('.');
 				buffer.Append(@"TryGetValue");
 				buffer.Append('(');
-				BufferHelper.AppendLowerFirst(buffer, NameProvider.IdName);
+				BufferHelper.AppendLowerFirst(buffer, DbColumn.IdName);
 				buffer.Append(',');
 				buffer.Append(' ');
 				buffer.Append(@"out");
@@ -437,7 +438,7 @@ namespace Cchbc.AppBuilder
 				for (var index = 0; index < masterProperties.Length; index++)
 				{
 					var property = masterProperties[index];
-					if (property.Name.Equals(NameProvider.IdName))
+					if (property.Name.Equals(DbColumn.IdName))
 					{
 						continue;
 					}
@@ -466,7 +467,7 @@ namespace Cchbc.AppBuilder
 				buffer.Append('.');
 				buffer.Append(@"Add");
 				buffer.Append('(');
-				BufferHelper.AppendLowerFirst(buffer, NameProvider.IdName);
+				BufferHelper.AppendLowerFirst(buffer, DbColumn.IdName);
 				buffer.Append(',');
 				buffer.Append(' ');
 				BufferHelper.AppendLowerFirst(buffer, masterClassName);
@@ -592,7 +593,7 @@ namespace Cchbc.AppBuilder
 			{
 				var property = properties[index];
 
-				if (property.Name.Equals(NameProvider.IdName))
+				if (property.Name.Equals(DbColumn.IdName))
 				{
 					AppendAssignValue(buffer, property, index, level);
 				}
@@ -658,6 +659,32 @@ namespace Cchbc.AppBuilder
 			buffer.Append('(');
 			buffer.Append(index);
 			buffer.Append(')');
+		}
+
+		public static string GetReaderMethod(ClrType type)
+		{
+			if (type == null) throw new ArgumentNullException(nameof(type));
+
+			if (type == ClrType.Long) return @"GetInt64";
+			if (type == ClrType.String) return @"GetString";
+			if (type == ClrType.Decimal) return @"GetDecimal";
+			if (type == ClrType.DateTime) return @"GetDateTime";
+			if (type == ClrType.Bytes) return @"GetBytes";
+
+			return @"GetInt64";
+		}
+
+		public static string GetDefaultValue(ClrType type)
+		{
+			if (type == null) throw new ArgumentNullException(nameof(type));
+
+			if (type == ClrType.Long) return @"0L";
+			if (type == ClrType.String) return @"string.Empty";
+			if (type == ClrType.Decimal) return @"0M";
+			if (type == ClrType.DateTime) return @"DateTime.MinValue";
+			if (type == ClrType.Bytes) return @"default(byte[])";
+
+			return $@"default({type.Name})";
 		}
 	}
 }

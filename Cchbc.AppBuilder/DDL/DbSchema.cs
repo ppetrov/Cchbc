@@ -2,10 +2,15 @@
 
 namespace Cchbc.AppBuilder.DDL
 {
+	[Serializable]
 	public sealed class DbSchema
 	{
-		public string Name { get; }
+		public string Name { get; } = string.Empty;
 		public DbTable[] Tables { get; }
+
+		public DbSchema()
+		{
+		}
 
 		public DbSchema(string name, DbTable[] tables)
 		{

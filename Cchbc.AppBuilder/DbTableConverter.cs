@@ -4,9 +4,9 @@ using Cchbc.AppBuilder.DDL;
 
 namespace Cchbc.AppBuilder
 {
-	public static class DbTable2ClrClassConverter
+	public static class DbTableConverter
 	{
-		public static ClrClass Convert(DbTable table, DbTable inverseTable = null)
+		public static ClrClass ConvertToClrClass(DbTable table, DbTable inverseTable = null)
 		{
 			if (table == null) throw new ArgumentNullException(nameof(table));
 

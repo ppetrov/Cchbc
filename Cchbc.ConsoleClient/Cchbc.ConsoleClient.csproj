@@ -42,8 +42,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GeneratedAdapters.cs" />
-    <Compile Include="GeneratedObjects.cs" />
+    <Compile Include="Adapters.cs" />
+    <Compile Include="Objects.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

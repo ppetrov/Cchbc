@@ -228,66 +228,63 @@ namespace Cchbc.ConsoleClient
 	{
 		static void Main(string[] args)
 		{
-			// 
-			// Define tables
-			//
 			var outlets = DbTable.Create(@"Outlets", new[]
 			{
-					DbColumn.String(@"Name"),
-				});
+				DbColumn.String(@"Name"),
+			});
 			var visits = DbTable.Create(@"Visits", new[]
 			{
-					DbColumn.ForeignKey(outlets),
-					DbColumn.DateTime(@"Date"),
-				});
+				DbColumn.ForeignKey(outlets),
+				DbColumn.DateTime(@"Date"),
+			});
 			var activityTypes = DbTable.Create(@"ActivityTypes", new[]
 			{
-					DbColumn.String(@"Name"),
-				});
+				DbColumn.String(@"Name"),
+			});
 			var activities = DbTable.Create(@"Activities", new[]
 			{
-					DbColumn.DateTime(@"Date"),
-					DbColumn.ForeignKey(activityTypes),
-					DbColumn.ForeignKey(visits),
-				}, @"Activity");
+				DbColumn.DateTime(@"Date"),
+				DbColumn.ForeignKey(activityTypes),
+				DbColumn.ForeignKey(visits),
+			}, @"Activity");
 			var brands = DbTable.Create(@"Brands", new[]
 			{
-					DbColumn.String(@"Name"),
-				});
+				DbColumn.String(@"Name"),
+			});
 			var flavors = DbTable.Create(@"Flavors", new[]
 			{
-					DbColumn.String(@"Name"),
-				});
+				DbColumn.String(@"Name"),
+			});
 			var articles = DbTable.Create(@"Articles", new[]
 			{
-					DbColumn.String(@"Name"),
-					DbColumn.ForeignKey(brands),
-					DbColumn.ForeignKey(flavors),
-				});
+				DbColumn.String(@"Name"),
+				DbColumn.ForeignKey(brands),
+				DbColumn.ForeignKey(flavors),
+			});
 			var activityNoteTypes = DbTable.Create(@"ActivityNoteTypes", new[]
 			{
-					DbColumn.String(@"Name"),
-				});
+				DbColumn.String(@"Name"),
+			});
 			var activityNotes = DbTable.Create(@"ActivityNotes", new[]
 			{
-					DbColumn.String(@"Contents"),
-					DbColumn.DateTime(@"CreatedAt"),
-					DbColumn.ForeignKey(activityNoteTypes),
-					DbColumn.ForeignKey(activities),
-				});
+				DbColumn.String(@"Contents"),
+				DbColumn.DateTime(@"CreatedAt"),
+				DbColumn.ForeignKey(activityNoteTypes),
+				DbColumn.ForeignKey(activities),
+			});
 
 			var schema = new DbSchema(@"ifsa", new[]
 			{
-					outlets,
-					visits,
-					activityTypes,
-					activities,
-					brands,
-					flavors,
-					articles,
-					activityNoteTypes,
-					activityNotes
-				});
+				outlets,
+				visits,
+				activityTypes,
+				activities,
+				brands,
+				flavors,
+				articles,
+				activityNoteTypes,
+				activityNotes
+			});
 
 			var project = new DbProject(schema);
 
@@ -299,6 +296,10 @@ namespace Cchbc.ConsoleClient
 			// Attach Inverse tables
 			project.AttachInverseTable(visits);
 
+			var filePath = @"c:\temp\ifsa.ctx";
+			project.Save(filePath);
+			var copy = DbProject.Load(filePath);
+
 			var buffer = new StringBuilder(1024 * 2);
 
 			var s = Stopwatch.StartNew();
@@ -307,8 +308,8 @@ namespace Cchbc.ConsoleClient
 				//
 				// Classes
 				//
-				//var entityClass = project.CreateEntityClass(entity);
-				//buffer.AppendLine(entityClass);
+				var entityClass = project.CreateEntityClass(entity);
+				buffer.AppendLine(entityClass);
 				//continue;
 
 				//
@@ -323,31 +324,17 @@ namespace Cchbc.ConsoleClient
 				//
 				// Modifiable adapters
 				//
-				if (project.IsModifiable(entity.Table))
-				{
-					var adapter = project.CreateEntityAdapter(entity);
-					buffer.AppendLine(adapter);
-				}
-				
+				//if (project.IsModifiable(entity.Table))
+				//{
+				//	var adapter = project.CreateEntityAdapter(entity);
+				//	buffer.AppendLine(adapter);
+				//}
 			}
 			s.Stop();
 			Console.WriteLine(s.ElapsedMilliseconds);
 
 			//Console.WriteLine(buffer.ToString());
 			File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
-
-
-
-
-
-
-
-			// TODO : !!!!
-			//project.Save(@"C:");
-			//project.Load(@"C:");
-
-
-
 
 
 

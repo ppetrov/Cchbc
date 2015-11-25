@@ -2,6 +2,7 @@
 
 namespace Cchbc.AppBuilder.DDL
 {
+	[Serializable]
 	public sealed class DbColumnType
 	{
 		public readonly static DbColumnType Integer = new DbColumnType(@"INTEGER");
@@ -10,7 +11,11 @@ namespace Cchbc.AppBuilder.DDL
 		public readonly static DbColumnType DateTime = new DbColumnType(@"DATETIME");
 		public readonly static DbColumnType Bytes = new DbColumnType(@"BLOB");
 
-		public string Name { get; }
+		public string Name { get; } = string.Empty;
+
+		public DbColumnType()
+		{
+		}
 
 		public DbColumnType(string name)
 		{

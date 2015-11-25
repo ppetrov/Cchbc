@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Cchbc.AppBuilder.DDL;
 
@@ -11,7 +10,7 @@ namespace Cchbc.AppBuilder.DML
 		public static readonly char ParameterPlaceholder = '@';
 		public static readonly char ParameterPrefix = 'p';
 
-		private static readonly DbColumn[] IdColumn = { new DbColumn(NameProvider.IdName, DbColumnType.Integer) };
+		private static readonly DbColumn[] IdColumn = { new DbColumn(DbColumn.IdName, DbColumnType.Integer) };
 
 		public static void AppendSelect(StringBuilder buffer, DbTable table)
 		{
@@ -33,8 +32,8 @@ namespace Cchbc.AppBuilder.DML
 			if (a == null) throw new ArgumentNullException(nameof(a));
 			if (b == null) throw new ArgumentNullException(nameof(b));
 
-			var aPrefix = NameProvider.GetPrefix(a.Name);
-			var bPrefix = NameProvider.GetPrefix(b.Name);
+			var aPrefix = GetPrefix(a.Name);
+			var bPrefix = GetPrefix(b.Name);
 			if (aPrefix == bPrefix)
 			{
 				bPrefix = @"_" + bPrefix;
@@ -214,20 +213,19 @@ namespace Cchbc.AppBuilder.DML
 			}
 		}
 
-		//private static void AppendPrefixedColumns(StringBuilder buffer, IEnumerable<DbColumn> columns, string aPrefix)
-		//{
-		//	var index = 0;
-		//	foreach (var column in columns)
-		//	{
-		//		if (index++ > 0)
-		//		{
-		//			buffer.Append(',');
-		//			buffer.Append(' ');
-		//		}
-		//		buffer.Append(aPrefix);
-		//		buffer.Append('.');
-		//		buffer.Append(column.Name);
-		//	}
-		//}
+		private static string GetPrefix(string name)
+		{
+			var uppers = new List<char>();
+
+			foreach (var symbol in name)
+			{
+				if (char.IsUpper(symbol))
+				{
+					uppers.Add(char.ToLowerInvariant(symbol));
+				}
+			}
+
+			return new string(uppers.ToArray());
+		}
 	}
 }

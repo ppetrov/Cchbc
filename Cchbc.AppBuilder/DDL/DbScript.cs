@@ -160,14 +160,13 @@ namespace Cchbc.AppBuilder.DDL
 		private static void AppendForeignKeyDefinition(StringBuilder buffer, DbForeignKey foreignKey)
 		{
 			var name = foreignKey.Table.Name;
-			var id = NameProvider.IdName;
 
 			buffer.Append(@"FOREIGN KEY");
 			buffer.Append(' ');
 			buffer.Append('(');
 			buffer.Append('[');
 			buffer.Append(name);
-			buffer.Append(id);
+			buffer.Append(DbColumn.IdName);
 			buffer.Append(']');
 			buffer.Append(')');
 			buffer.Append(' ');
@@ -179,7 +178,7 @@ namespace Cchbc.AppBuilder.DDL
 			buffer.Append(' ');
 			buffer.Append('(');
 			buffer.Append('[');
-			buffer.Append(id);
+			buffer.Append(DbColumn.IdName);
 			buffer.Append(']');
 			buffer.Append(')');
 		}

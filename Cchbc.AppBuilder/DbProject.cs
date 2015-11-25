@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using Cchbc.AppBuilder.Clr;
 using Cchbc.AppBuilder.DDL;
 
@@ -8,8 +10,30 @@ namespace Cchbc.AppBuilder
 {
 	public sealed class DbProject
 	{
-		public DbSchema Schema { get; }
+		[Serializable]
+		public sealed class Project
+		{
+			public DbSchema Schema { get; set; }
+			public Dictionary<string, DbTable> InverseTables { get; set; }
+			public Dictionary<string, DbTable> ModifiableTables { get; set; }
 
+			public Project()
+			{
+			}
+
+			public Project(DbSchema schema, Dictionary<string, DbTable> inverseTables, Dictionary<string, DbTable> modifiableTables)
+			{
+				if (schema == null) throw new ArgumentNullException(nameof(schema));
+				if (inverseTables == null) throw new ArgumentNullException(nameof(inverseTables));
+				if (modifiableTables == null) throw new ArgumentNullException(nameof(modifiableTables));
+
+				this.Schema = schema;
+				this.InverseTables = inverseTables;
+				this.ModifiableTables = modifiableTables;
+			}
+		}
+
+		private DbSchema Schema { get; }
 		private Dictionary<string, DbTable> InverseTables { get; } = new Dictionary<string, DbTable>();
 		private Dictionary<string, DbTable> ModifiableTables { get; } = new Dictionary<string, DbTable>();
 
@@ -146,7 +170,7 @@ namespace Cchbc.AppBuilder
 			DbTable inverseTable;
 			this.InverseTables.TryGetValue(table.Name, out inverseTable);
 
-			return new Entity(DbTable2ClrClassConverter.Convert(table, inverseTable), table, inverseTable);
+			return new Entity(DbTableConverter.ConvertToClrClass(table, inverseTable), table, inverseTable);
 		}
 
 		private static Dictionary<ClrType, ClrProperty> GetDictionaryProperties(Entity entity)
@@ -186,6 +210,43 @@ namespace Cchbc.AppBuilder
 			}
 
 			return null;
+		}
+
+		public void Save(string path)
+		{
+			if (path == null) throw new ArgumentNullException(nameof(path));
+
+			var project = new Project(this.Schema, this.InverseTables, this.ModifiableTables);
+
+			var formatter = new BinaryFormatter();
+			using (var fs = File.OpenWrite(path))
+			{
+				formatter.Serialize(fs, project);
+			}
+		}
+
+		public static DbProject Load(string path)
+		{
+			if (path == null) throw new ArgumentNullException(nameof(path));
+
+			var formatter = new BinaryFormatter();
+			using (var fs = File.OpenRead(path))
+			{
+				var project = (Project)formatter.Deserialize(fs);
+
+				var dbProject = new DbProject(project.Schema);
+
+				foreach (var pair in project.InverseTables)
+				{
+					dbProject.InverseTables.Add(pair.Key, pair.Value);
+				}
+				foreach (var pair in project.ModifiableTables)
+				{
+					dbProject.ModifiableTables.Add(pair.Key, pair.Value);
+				}
+
+				return dbProject;
+			}
 		}
 	}
 }

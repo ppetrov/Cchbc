@@ -417,7 +417,7 @@ namespace Cchbc.AppBuilder
 				if (property.Type.IsUserType)
 				{
 					buffer.Append('.');
-					buffer.Append(NameProvider.IdName);
+					buffer.Append(DbColumn.IdName);
 				}
 				buffer.Append(')');
 				buffer.Append(',');
@@ -469,7 +469,7 @@ namespace Cchbc.AppBuilder
 				EntityClass.AppendIndentation(buffer, level);
 				buffer.Append(@"item");
 				buffer.Append('.');
-				buffer.Append(NameProvider.IdName);
+				buffer.Append(DbColumn.IdName);
 				buffer.Append(' ');
 				buffer.Append('=');
 				buffer.Append(' ');

@@ -2,13 +2,20 @@
 
 namespace Cchbc.AppBuilder.DDL
 {
+	[Serializable]
 	public sealed class DbColumn
 	{
-		public string Name { get; }
+		public static readonly string IdName = @"Id";
+
+		public string Name { get; } = string.Empty;
 		public DbColumnType Type { get; }
 		public bool IsNullable { get; }
 		public bool IsPrimaryKey { get; }
 		public DbForeignKey DbForeignKey { get; }
+
+		public DbColumn()
+		{
+		}
 
 		public DbColumn(string name, DbColumnType type)
 		{
@@ -33,14 +40,14 @@ namespace Cchbc.AppBuilder.DDL
 
 		public static DbColumn PrimaryKey()
 		{
-			return new DbColumn(NameProvider.IdName, DbColumnType.Integer, false, true);
+			return new DbColumn(IdName, DbColumnType.Integer, false, true);
 		}
 
 		public static DbColumn ForeignKey(DbTable table, bool isNullable = false)
 		{
 			if (table == null) throw new ArgumentNullException(nameof(table));
 
-			return new DbColumn(table.ClassName + NameProvider.IdName, DbColumnType.Integer, isNullable, false, new DbForeignKey(table));
+			return new DbColumn(table.ClassName + IdName, DbColumnType.Integer, isNullable, false, new DbForeignKey(table));
 		}
 
 		public static DbColumn Integer(string name, bool isNullable = false)

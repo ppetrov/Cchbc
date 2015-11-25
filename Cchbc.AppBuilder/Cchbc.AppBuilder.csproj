@@ -44,12 +44,11 @@
     <Compile Include="BufferHelper.cs" />
     <Compile Include="EntityAdapter.cs" />
     <Compile Include="EntityClass.cs" />
-    <Compile Include="ClrProject.cs" />
     <Compile Include="Clr\ClrClass.cs" />
     <Compile Include="Clr\ClrProperty.cs" />
     <Compile Include="Clr\ClrType.cs" />
     <Compile Include="DbProject.cs" />
-    <Compile Include="DbTable2ClrClassConverter.cs" />
+    <Compile Include="DbTableConverter.cs" />
     <Compile Include="DDL\DbColumn.cs" />
     <Compile Include="DDL\DbColumnType.cs" />
     <Compile Include="DDL\DbForeignKey.cs" />
@@ -58,9 +57,7 @@
     <Compile Include="DDL\DbTable.cs" />
     <Compile Include="DML\QueryBuilder.cs" />
     <Compile Include="Entity.cs" />
-    <Compile Include="NameProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TypeHelper.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
