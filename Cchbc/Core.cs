@@ -2,7 +2,7 @@
 using Cchbc.Features;
 using Cchbc.Localization;
 
-namespace Cchbc.App
+namespace Cchbc
 {
 	public sealed class Core
 	{

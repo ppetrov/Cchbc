@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BufferHelper.cs" />
+    <Compile Include="ClrProject.cs" />
     <Compile Include="EntityAdapter.cs" />
     <Compile Include="EntityClass.cs" />
     <Compile Include="Clr\ClrClass.cs" />

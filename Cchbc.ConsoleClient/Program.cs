@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -10,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Cchbc;
 using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
@@ -220,14 +222,12 @@ namespace Cchbc.ConsoleClient
 
 
 
-
-
-
-
 	public class Program
 	{
 		static void Main(string[] args)
 		{
+
+
 			var outlets = DbTable.Create(@"Outlets", new[]
 			{
 				DbColumn.String(@"Name"),
@@ -273,7 +273,7 @@ namespace Cchbc.ConsoleClient
 				DbColumn.ForeignKey(activities),
 			});
 
-			var schema = new DbSchema(@"ifsa", new[]
+			var schema = new DbSchema(@"IfsaBuilder", new[]
 			{
 				outlets,
 				visits,
@@ -296,9 +296,9 @@ namespace Cchbc.ConsoleClient
 			// Attach Inverse tables
 			project.AttachInverseTable(visits);
 
-			var filePath = @"c:\temp\ifsa.ctx";
-			project.Save(filePath);
-			var copy = DbProject.Load(filePath);
+			//var filePath = @"c:\temp\ifsa.ctx";
+			//project.Save(filePath);
+			//var copy = DbProject.Load(filePath);
 
 			var buffer = new StringBuilder(1024 * 2);
 
@@ -333,10 +333,11 @@ namespace Cchbc.ConsoleClient
 			s.Stop();
 			Console.WriteLine(s.ElapsedMilliseconds);
 
-			Console.WriteLine(buffer.ToString());
-			File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
+			//Console.WriteLine(buffer.ToString());
+			//File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
 
-
+			var prj = new ClrProject();
+			prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
 
 			return;
 
@@ -653,7 +654,4 @@ namespace Cchbc.ConsoleClient
 
 
 
-
-
 }
-

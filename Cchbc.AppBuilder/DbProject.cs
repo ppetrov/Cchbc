@@ -33,7 +33,7 @@ namespace Cchbc.AppBuilder
 			}
 		}
 
-		private DbSchema Schema { get; }
+		public DbSchema Schema { get; }
 		private Dictionary<string, DbTable> InverseTables { get; } = new Dictionary<string, DbTable>();
 		private Dictionary<string, DbTable> ModifiableTables { get; } = new Dictionary<string, DbTable>();
 
@@ -42,6 +42,43 @@ namespace Cchbc.AppBuilder
 			if (schema == null) throw new ArgumentNullException(nameof(schema));
 
 			this.Schema = schema;
+		}
+
+		public void Save(string path)
+		{
+			if (path == null) throw new ArgumentNullException(nameof(path));
+
+			var project = new Project(this.Schema, this.InverseTables, this.ModifiableTables);
+
+			var formatter = new BinaryFormatter();
+			using (var fs = File.OpenWrite(path))
+			{
+				formatter.Serialize(fs, project);
+			}
+		}
+
+		public static DbProject Load(string path)
+		{
+			if (path == null) throw new ArgumentNullException(nameof(path));
+
+			var formatter = new BinaryFormatter();
+			using (var fs = File.OpenRead(path))
+			{
+				var project = (Project)formatter.Deserialize(fs);
+
+				var dbProject = new DbProject(project.Schema);
+
+				foreach (var pair in project.InverseTables)
+				{
+					dbProject.InverseTables.Add(pair.Key, pair.Value);
+				}
+				foreach (var pair in project.ModifiableTables)
+				{
+					dbProject.ModifiableTables.Add(pair.Key, pair.Value);
+				}
+
+				return dbProject;
+			}
 		}
 
 		public void MarkModifiable(DbTable table)
@@ -142,6 +179,16 @@ namespace Cchbc.AppBuilder
 			return EntityAdapter.GenerateModifiable(entity, dictionaryProperties, entities);
 		}
 
+		public string CreateEntityHelper(Entity entity)
+		{
+			if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+			// TODO : !!
+			if (!this.IsModifiable(entity.Table)) return EntityAdapter.GenerateReadOnly(entity, GetDictionaryProperties(entity));
+
+			return string.Empty;
+		}
+
 		private bool HasColumnToInverseTable(Entity entity)
 		{
 			var entityTable = entity.Table;
@@ -210,43 +257,6 @@ namespace Cchbc.AppBuilder
 			}
 
 			return null;
-		}
-
-		public void Save(string path)
-		{
-			if (path == null) throw new ArgumentNullException(nameof(path));
-
-			var project = new Project(this.Schema, this.InverseTables, this.ModifiableTables);
-
-			var formatter = new BinaryFormatter();
-			using (var fs = File.OpenWrite(path))
-			{
-				formatter.Serialize(fs, project);
-			}
-		}
-
-		public static DbProject Load(string path)
-		{
-			if (path == null) throw new ArgumentNullException(nameof(path));
-
-			var formatter = new BinaryFormatter();
-			using (var fs = File.OpenRead(path))
-			{
-				var project = (Project)formatter.Deserialize(fs);
-
-				var dbProject = new DbProject(project.Schema);
-
-				foreach (var pair in project.InverseTables)
-				{
-					dbProject.InverseTables.Add(pair.Key, pair.Value);
-				}
-				foreach (var pair in project.ModifiableTables)
-				{
-					dbProject.ModifiableTables.Add(pair.Key, pair.Value);
-				}
-
-				return dbProject;
-			}
 		}
 	}
 }

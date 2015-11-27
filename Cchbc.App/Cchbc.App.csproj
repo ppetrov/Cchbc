@@ -55,7 +55,6 @@
     <Compile Include="ArticlesModule\Objects\Flavor.cs" />
     <Compile Include="ArticlesModule\ViewModel\ArticlesViewModel.cs" />
     <Compile Include="ArticlesModule\ViewModel\ArticleViewItem.cs" />
-    <Compile Include="Core.cs" />
     <Compile Include="OrderModule\Orders.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
