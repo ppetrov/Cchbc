@@ -3,7 +3,7 @@ using Cchbc.Objects;
 
 namespace Cchbc.Search
 {
-	public sealed class SearchOption<T> : ViewObject
+	public sealed class SearchOption<T> : ViewModel
 	{
 		public string Name { get; }
 		public Func<T, bool> IsMatch { get; }

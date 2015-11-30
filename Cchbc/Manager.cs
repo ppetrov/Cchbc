@@ -13,9 +13,9 @@ using Cchbc.Validation;
 
 namespace Cchbc
 {
-	public abstract class Manager<T, TViewItem> where T : IDbObject where TViewItem : ViewItem<T>
+	public abstract class Manager<T, TViewModel> where T : IDbObject where TViewModel : ViewModel<T>
 	{
-		public List<TViewItem> ViewItems { get; } = new List<TViewItem>();
+		public List<TViewModel> ViewModels { get; } = new List<TViewModel>();
 
 		public event EventHandler<FeatureEventArgs> OperationStart;
 		private void OnOperationStart(FeatureEventArgs e)
@@ -35,30 +35,30 @@ namespace Cchbc
 			OperationError?.Invoke(this, e);
 		}
 
-		public event EventHandler<ObjectEventArgs<TViewItem>> ItemInserted;
-		private void OnItemInserted(ObjectEventArgs<TViewItem> e)
+		public event EventHandler<ObjectEventArgs<TViewModel>> ItemInserted;
+		private void OnItemInserted(ObjectEventArgs<TViewModel> e)
 		{
 			ItemInserted?.Invoke(this, e);
 		}
 
-		public event EventHandler<ObjectEventArgs<TViewItem>> ItemUpdated;
-		private void OnItemUpdated(ObjectEventArgs<TViewItem> e)
+		public event EventHandler<ObjectEventArgs<TViewModel>> ItemUpdated;
+		private void OnItemUpdated(ObjectEventArgs<TViewModel> e)
 		{
 			ItemUpdated?.Invoke(this, e);
 		}
 
-		public event EventHandler<ObjectEventArgs<TViewItem>> ItemDeleted;
-		private void OnItemDeleted(ObjectEventArgs<TViewItem> e)
+		public event EventHandler<ObjectEventArgs<TViewModel>> ItemDeleted;
+		private void OnItemDeleted(ObjectEventArgs<TViewModel> e)
 		{
 			ItemDeleted?.Invoke(this, e);
 		}
 
 		private IModifiableAdapter<T> Adapter { get; }
-		public Sorter<TViewItem> Sorter { get; }
-		public Searcher<TViewItem> Searcher { get; }
-		public FilterOption<TViewItem>[] FilterOptions { get; set; }
+		public Sorter<TViewModel> Sorter { get; }
+		public Searcher<TViewModel> Searcher { get; }
+		public FilterOption<TViewModel>[] FilterOptions { get; set; }
 
-		protected Manager(IModifiableAdapter<T> adapter, Sorter<TViewItem> sorter, Searcher<TViewItem> searcher, FilterOption<TViewItem>[] filterOptions = null)
+		protected Manager(IModifiableAdapter<T> adapter, Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
 		{
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 			if (sorter == null) throw new ArgumentNullException(nameof(sorter));
@@ -70,56 +70,56 @@ namespace Cchbc
 			this.FilterOptions = filterOptions;
 		}
 
-		public void SetupData(IEnumerable<TViewItem> viewItems)
+		public void SetupData(IEnumerable<TViewModel> viewModels)
 		{
-			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
+			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
 
-			this.ViewItems.Clear();
-			foreach (var viewItem in viewItems)
+			this.ViewModels.Clear();
+			foreach (var viewModel in viewModels)
 			{
-				this.ViewItems.Add(viewItem);
+				this.ViewModels.Add(viewModel);
 			}
-			this.Sorter.Sort(this.ViewItems, this.Sorter.CurrentOption);
+			this.Sorter.Sort(this.ViewModels, this.Sorter.CurrentOption);
 		}
 
-		public abstract ValidationResult[] ValidateProperties(TViewItem viewItem, Feature feature);
+		public abstract ValidationResult[] ValidateProperties(TViewModel viewModel, Feature feature);
 
-		public abstract Task<PermissionResult> CanInsertAsync(TViewItem viewItem, Feature feature);
+		public abstract Task<PermissionResult> CanInsertAsync(TViewModel viewModel, Feature feature);
 
-		public abstract Task<PermissionResult> CanUpdateAsync(TViewItem viewItem, Feature feature);
+		public abstract Task<PermissionResult> CanUpdateAsync(TViewModel viewModel, Feature feature);
 
-		public abstract Task<PermissionResult> CanDeleteAsync(TViewItem viewItem, Feature feature);
+		public abstract Task<PermissionResult> CanDeleteAsync(TViewModel viewModel, Feature feature);
 
-		public Task InsertAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
+		public Task InsertAsync(TViewModel viewModel, ModalDialog dialog, Feature feature)
 		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			return ExecuteAsync(viewItem, dialog, feature, this.CanInsertAsync, this.InsertValidated);
+			return ExecuteAsync(viewModel, dialog, feature, this.CanInsertAsync, this.InsertValidated);
 		}
 
-		public Task UpdateAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
+		public Task UpdateAsync(TViewModel viewModel, ModalDialog dialog, Feature feature)
 		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			return ExecuteAsync(viewItem, dialog, feature, this.CanUpdateAsync, this.UpdateValidated);
+			return ExecuteAsync(viewModel, dialog, feature, this.CanUpdateAsync, this.UpdateValidated);
 		}
 
-		public Task DeleteAsync(TViewItem viewItem, ModalDialog dialog, Feature feature)
+		public Task DeleteAsync(TViewModel viewModel, ModalDialog dialog, Feature feature)
 		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			return ExecuteAsync(viewItem, dialog, feature, this.CanDeleteAsync, this.DeleteValidated);
+			return ExecuteAsync(viewModel, dialog, feature, this.CanDeleteAsync, this.DeleteValidated);
 		}
 
-		public async Task ExecuteAsync(TViewItem viewItem, ModalDialog dialog, Feature feature, Func<TViewItem, Feature, Task<PermissionResult>> verifier, Action<TViewItem, FeatureEventArgs> performer)
+		public async Task ExecuteAsync(TViewModel viewModel, ModalDialog dialog, Feature feature, Func<TViewModel, Feature, Task<PermissionResult>> verifier, Action<TViewModel, FeatureEventArgs> performer)
 		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (verifier == null) throw new ArgumentNullException(nameof(verifier));
@@ -131,17 +131,17 @@ namespace Cchbc
 
 			try
 			{
-				var permissionResult = await GetPermissionResult(viewItem, feature, verifier);
+				var permissionResult = await GetPermissionResultAsync(viewModel, feature, verifier);
 				if (permissionResult != null)
 				{
 					switch (permissionResult.Status)
 					{
 						case PermissionStatus.Allow:
-							performer(viewItem, args);
+							performer(viewModel, args);
 							break;
 						case PermissionStatus.Confirm:
 							this.SetupDialog(dialog, args);
-							dialog.AcceptAction = () => performer(viewItem, args);
+							dialog.AcceptAction = () => performer(viewModel, args);
 							await dialog.ConfirmAsync(permissionResult.Message, feature);
 							break;
 						case PermissionStatus.Deny:
@@ -160,76 +160,76 @@ namespace Cchbc
 			}
 		}
 
-		public void Insert(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
+		public void Insert(ObservableCollection<TViewModel> viewModels, TViewModel viewModel, string textSearch, SearchOption<TViewModel> searchOption)
 		{
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
-			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			var results = this.Search(textSearch, searchOption, new List<TViewItem>(1) { viewItem });
+			var results = this.Search(textSearch, searchOption, new List<TViewModel>(1) { viewModel });
 			if (results.Any())
 			{
-				viewItems.Insert(this.FindNewIndex(viewItems, viewItem), viewItem);
+				viewModels.Insert(this.FindNewIndex(viewModels, viewModel), viewModel);
 
-				this.Searcher.SetupCounts(viewItems);
+				this.Searcher.SetupCounts(viewModels);
 			}
 		}
 
-		public void Update(ObservableCollection<TViewItem> viewItems, TViewItem viewItem, string textSearch, SearchOption<TViewItem> searchOption)
+		public void Update(ObservableCollection<TViewModel> viewModels, TViewModel viewModel, string textSearch, SearchOption<TViewModel> searchOption)
 		{
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
-			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
 			var newIndex = -1;
 
-			var results = this.Search(textSearch, searchOption, new List<TViewItem>(1) { viewItem });
+			var results = this.Search(textSearch, searchOption, new List<TViewModel>(1) { viewModel });
 			if (results.Any())
 			{
 				// Find the new index
-				newIndex = this.FindNewIndex(viewItems, viewItem);
+				newIndex = this.FindNewIndex(viewModels, viewModel);
 
 				// New index can be at the end
-				newIndex = Math.Min(newIndex, viewItems.Count - 1);
+				newIndex = Math.Min(newIndex, viewModels.Count - 1);
 			}
 
 			if (newIndex >= 0)
 			{
 				// Find the old index before insert
-				var oldIndex = viewItems.IndexOf(viewItem);
+				var oldIndex = viewModels.IndexOf(viewModel);
 				if (oldIndex != newIndex)
 				{
-					var tmp = viewItems[newIndex];
-					viewItems[newIndex] = viewItem;
-					viewItems[oldIndex] = tmp;
+					var tmp = viewModels[newIndex];
+					viewModels[newIndex] = viewModel;
+					viewModels[oldIndex] = tmp;
 				}
 			}
 
-			this.Searcher.SetupCounts(viewItems);
+			this.Searcher.SetupCounts(viewModels);
 		}
 
-		public void Delete(ObservableCollection<TViewItem> viewItems, TViewItem viewItem)
+		public void Delete(ObservableCollection<TViewModel> viewModels, TViewModel viewModel)
 		{
-			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			viewItems.Remove(viewItem);
+			viewModels.Remove(viewModel);
 
 			// Only recalculate filter counts. Delete doesn't affect sort
-			this.Searcher.SetupCounts(viewItems);
+			this.Searcher.SetupCounts(viewModels);
 		}
 
-		public IEnumerable<TViewItem> Sort(ICollection<TViewItem> currenTiewItems, SortOption<TViewItem> sortOption)
+		public IEnumerable<TViewModel> Sort(ICollection<TViewModel> currenTiewItems, SortOption<TViewModel> sortOption)
 		{
 			if (sortOption == null) throw new ArgumentNullException(nameof(sortOption));
 
 			var flag = sortOption.Ascending ?? true;
 
 			// Sort view items
-			this.Sorter.Sort(this.ViewItems, sortOption);
+			this.Sorter.Sort(this.ViewModels, sortOption);
 
 			// Sort current view items
-			var copy = new TViewItem[currenTiewItems.Count];
+			var copy = new TViewModel[currenTiewItems.Count];
 			currenTiewItems.CopyTo(copy, 0);
 			this.Sorter.Sort(copy, sortOption);
 
@@ -253,20 +253,20 @@ namespace Cchbc
 			}
 
 			// Return current view items sorted
-			foreach (var viewItem in copy)
+			foreach (var viewModel in copy)
 			{
-				yield return viewItem;
+				yield return viewModel;
 			}
 		}
 
-		public IEnumerable<TViewItem> Search(string textSearch, SearchOption<TViewItem> searchOption, List<TViewItem> viewItems = null)
+		public IEnumerable<TViewModel> Search(string textSearch, SearchOption<TViewModel> searchOption, List<TViewModel> viewModels = null)
 		{
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
 
-			return this.Searcher.Search(GetFilteredViewItems(viewItems ?? this.ViewItems), textSearch, searchOption);
+			return this.Searcher.Search(GetFilteredViewModels(viewModels ?? this.ViewModels), textSearch, searchOption);
 		}
 
-		public void InsertValidated(TViewItem viewItem, FeatureEventArgs args)
+		public void InsertValidated(TViewModel viewModel, FeatureEventArgs args)
 		{
 			var feature = args.Feature;
 			feature.AddStep(nameof(InsertValidated));
@@ -275,19 +275,19 @@ namespace Cchbc
 				try
 				{
 					// Add the item to the db
-					this.Adapter.Insert(viewItem.Item);
+					this.Adapter.Insert(viewModel.Model);
 
 					// Find the right index to insert the new element
-					var index = this.ViewItems.Count;
+					var index = this.ViewModels.Count;
 					var option = this.Sorter.CurrentOption;
 					if (option != null)
 					{
 						index = 0;
 
 						var cmp = option.Comparison;
-						foreach (var current in this.ViewItems)
+						foreach (var current in this.ViewModels)
 						{
-							var result = cmp(current, viewItem);
+							var result = cmp(current, viewModel);
 							if (result > 0)
 							{
 								break;
@@ -297,10 +297,10 @@ namespace Cchbc
 					}
 
 					// Insert the item into the list at the correct place
-					this.ViewItems.Insert(index, viewItem);
+					this.ViewModels.Insert(index, viewModel);
 
 					// Fire the event
-					this.OnItemInserted(new ObjectEventArgs<TViewItem>(viewItem));
+					this.OnItemInserted(new ObjectEventArgs<TViewModel>(viewModel));
 				}
 				catch (Exception ex)
 				{
@@ -317,7 +317,7 @@ namespace Cchbc
 			}
 		}
 
-		public void UpdateValidated(TViewItem viewItem, FeatureEventArgs args)
+		public void UpdateValidated(TViewModel viewModel, FeatureEventArgs args)
 		{
 			var feature = args.Feature;
 			feature.AddStep(nameof(UpdateValidated));
@@ -326,10 +326,10 @@ namespace Cchbc
 				try
 				{
 					// Update the item from the db
-					this.Adapter.Update(viewItem.Item);
+					this.Adapter.Update(viewModel.Model);
 
 					// Fire the event
-					this.OnItemUpdated(new ObjectEventArgs<TViewItem>(viewItem));
+					this.OnItemUpdated(new ObjectEventArgs<TViewModel>(viewModel));
 				}
 				catch (Exception ex)
 				{
@@ -346,7 +346,7 @@ namespace Cchbc
 			}
 		}
 
-		public void DeleteValidated(TViewItem viewItem, FeatureEventArgs args)
+		public void DeleteValidated(TViewModel viewModel, FeatureEventArgs args)
 		{
 			var feature = args.Feature;
 			feature.AddStep(nameof(UpdateValidated));
@@ -355,13 +355,13 @@ namespace Cchbc
 				try
 				{
 					// Delete the item from the db
-					this.Adapter.Delete(viewItem.Item);
+					this.Adapter.Delete(viewModel.Model);
 
 					// Delete the item into the list at the correct place
-					this.ViewItems.Remove(viewItem);
+					this.ViewModels.Remove(viewModel);
 
 					// Fire the event
-					this.OnItemDeleted(new ObjectEventArgs<TViewItem>(viewItem));
+					this.OnItemDeleted(new ObjectEventArgs<TViewModel>(viewModel));
 				}
 				catch (Exception ex)
 				{
@@ -378,10 +378,10 @@ namespace Cchbc
 			}
 		}
 
-		private int FindNewIndex(ObservableCollection<TViewItem> viewItems, TViewItem viewItem)
+		private int FindNewIndex(ObservableCollection<TViewModel> viewModels, TViewModel viewModel)
 		{
 			// At the end by default
-			var index = viewItems.Count;
+			var index = viewModels.Count;
 
 			var option = this.Sorter.CurrentOption;
 			if (option != null)
@@ -390,9 +390,9 @@ namespace Cchbc
 
 				// Insert at the right place according to the current sort option
 				var comparison = option.Comparison;
-				foreach (var item in viewItems)
+				foreach (var item in viewModels)
 				{
-					var cmp = comparison(item, viewItem);
+					var cmp = comparison(item, viewModel);
 					if (cmp > 0)
 					{
 						break;
@@ -404,13 +404,13 @@ namespace Cchbc
 			return index;
 		}
 
-		private ICollection<TViewItem> GetFilteredViewItems(ICollection<TViewItem> viewItems)
+		private ICollection<TViewModel> GetFilteredViewModels(ICollection<TViewModel> viewModels)
 		{
 			if (this.FilterOptions != null && this.FilterOptions.Length > 0)
 			{
-				viewItems = new List<TViewItem>();
+				viewModels = new List<TViewModel>();
 
-				foreach (var item in this.ViewItems)
+				foreach (var item in this.ViewModels)
 				{
 					var include = true;
 
@@ -428,24 +428,24 @@ namespace Cchbc
 
 					if (include)
 					{
-						viewItems.Add(item);
+						viewModels.Add(item);
 					}
 				}
 			}
 
-			return viewItems;
+			return viewModels;
 		}
 
-		private async Task<PermissionResult> GetPermissionResult(TViewItem viewItem, Feature feature, Func<TViewItem, Feature, Task<PermissionResult>> checker)
+		private async Task<PermissionResult> GetPermissionResultAsync(TViewModel viewModel, Feature feature, Func<TViewModel, Feature, Task<PermissionResult>> checker)
 		{
 			PermissionResult permissionResult = null;
 
 			// Validate properties
-			var validationResults = this.ValidateProperties(viewItem, feature);
+			var validationResults = this.ValidateProperties(viewModel, feature);
 			if (validationResults.Length == 0)
 			{
 				// Apply business logic
-				permissionResult = await checker(viewItem, feature);
+				permissionResult = await checker(viewModel, feature);
 			}
 
 			return permissionResult;

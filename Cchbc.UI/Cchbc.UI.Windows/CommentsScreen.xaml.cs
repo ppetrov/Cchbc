@@ -10,7 +10,7 @@ namespace Cchbc.UI
 {
 	public sealed partial class CommentsScreen
 	{
-		private readonly LoginViewModel _viewModel = new LoginViewModel(Core.Current);
+		private readonly LoginsViewModel _viewModel = new LoginsViewModel(Core.Current);
 
 		public CommentsScreen()
 		{
@@ -30,7 +30,7 @@ namespace Cchbc.UI
 			{
 				try
 				{
-					await _viewModel.AddAsync(new LoginViewItem(new Login(2, @"ZDoctor@", @"123456789", DateTime.Now, false)), new WinRtModalDialog());
+					await _viewModel.AddAsync(new LoginViewModel(new Login(2, @"ZDoctor@", @"123456789", DateTime.Now, false)), new WinRtModalDialog());
 				}
 				catch (Exception ex)
 				{
@@ -44,11 +44,11 @@ namespace Cchbc.UI
 			var btn = sender as Button;
 			if (btn != null)
 			{
-				var viewItem = btn.DataContext as LoginViewItem;
-				if (viewItem != null)
+				var viewModel = btn.DataContext as LoginViewModel;
+				if (viewModel != null)
 				{
 					var dialog = new WinRtModalDialog();
-					dialog.AcceptAction = async () => { await _viewModel.DeleteAsync(viewItem, dialog); };
+					dialog.AcceptAction = async () => { await _viewModel.DeleteAsync(viewModel, dialog); };
 					await dialog.ConfirmAsync(@"Are you sure you want to delete this user?", Feature.None);
 				}
 			}
@@ -59,13 +59,13 @@ namespace Cchbc.UI
 			var btn = sender as Button;
 			if (btn != null)
 			{
-				var viewItem = btn.DataContext as LoginViewItem;
-				if (viewItem != null)
+				var viewModel = btn.DataContext as LoginViewModel;
+				if (viewModel != null)
 				{
 					var dialog = new WinRtModalDialog();
 					dialog.AcceptAction = async () =>
 					{
-						await _viewModel.PromoteUserAsync(viewItem, dialog);
+						await _viewModel.PromoteUserAsync(viewModel, dialog);
 					};
 					await dialog.ConfirmAsync(@"Are you sure you want to promote this user?", Feature.None);
 				}

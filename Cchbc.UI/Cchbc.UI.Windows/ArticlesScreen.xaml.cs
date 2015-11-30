@@ -1,18 +1,15 @@
 ﻿using System;
 using System.Text;
 using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using Cchbc.App;
-using Cchbc.App.ArticlesModule.ViewModel;
-using Cchbc.Search;
+using Cchbc.App.ArticlesModule.ViewModels;
 
 namespace Cchbc.UI
 {
 	/// <summary>
 	/// An empty page that can be used on its own or navigated to within a Frame.
 	/// </summary>
-	public sealed partial class ArticlesScreen : Page
+	public sealed partial class ArticlesScreen
 	{
 		private readonly ArticlesViewModel _viewModel = new ArticlesViewModel(default(Core));
 
@@ -23,21 +20,20 @@ namespace Cchbc.UI
 			this.DataContext = _viewModel;
 		}
 
-		private async void ArticlesScreenOnLoaded(object sender, RoutedEventArgs e)
+		private void ArticlesScreenOnLoaded(object sender, RoutedEventArgs e)
 		{
-			await _viewModel.LoadDataAsync();
+			_viewModel.LoadData();
 		}
 
 		private void UIElement_OnTapped(object sender, TappedRoutedEventArgs e)
 		{
-			_viewModel.ExcludeSuppressed();
+			//_viewModel.ExcludeSuppressed();
 		}
 
 		private void UIElement_OnTapped2(object sender, TappedRoutedEventArgs e)
 		{
-			_viewModel.ExcludeNotInTerritory();
+			//_viewModel.ExcludeNotInTerritory();
 		}
-
 	}
 
 	public abstract class BufferedLogger : ILogger

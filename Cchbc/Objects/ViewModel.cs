@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace Cchbc.Objects
 {
-	public abstract class ViewObject : INotifyPropertyChanged
+	public abstract class ViewModel : INotifyPropertyChanged
 	{
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -20,6 +21,18 @@ namespace Cchbc.Objects
 
 			field = value;
 			this.OnPropertyChanged(propertyName);
+		}
+	}
+
+	public class ViewModel<T> : ViewModel where T : IDbObject
+	{
+		public T Model { get; }
+
+		public ViewModel(T model)
+		{
+			if (model == null) throw new ArgumentNullException(nameof(model));
+
+			this.Model = model;
 		}
 	}
 }

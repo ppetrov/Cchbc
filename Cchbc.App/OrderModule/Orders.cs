@@ -100,42 +100,42 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class DeliveryAddressManager : Manager<DeliveryAddress, DeliveryAddressViewItem>
+	public sealed class DeliveryAddressManager : Manager<DeliveryAddress, DeliveryAddressViewModel>
 	{
 		public DeliveryAddressManager(IModifiableAdapter<DeliveryAddress> adapter,
-			Sorter<DeliveryAddressViewItem> sorter,
-			Searcher<DeliveryAddressViewItem> searcher, FilterOption<DeliveryAddressViewItem>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
+			Sorter<DeliveryAddressViewModel> sorter,
+			Searcher<DeliveryAddressViewModel> searcher, FilterOption<DeliveryAddressViewModel>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
 		{
 		}
 
-		public override ValidationResult[] ValidateProperties(DeliveryAddressViewItem viewItem, Feature feature)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override Task<PermissionResult> CanInsertAsync(DeliveryAddressViewItem viewItem, Feature feature)
+		public override ValidationResult[] ValidateProperties(DeliveryAddressViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}
 
-		public override Task<PermissionResult> CanUpdateAsync(DeliveryAddressViewItem viewItem, Feature feature)
+		public override Task<PermissionResult> CanInsertAsync(DeliveryAddressViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}
 
-		public override Task<PermissionResult> CanDeleteAsync(DeliveryAddressViewItem viewItem, Feature feature)
+		public override Task<PermissionResult> CanUpdateAsync(DeliveryAddressViewModel viewModel, Feature feature)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override Task<PermissionResult> CanDeleteAsync(DeliveryAddressViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}
 	}
 
-	public sealed class DeliveryAddressViewItem : ViewItem<DeliveryAddress>
+	public sealed class DeliveryAddressViewModel : ViewModel<DeliveryAddress>
 	{
 		public string Name { get; }
 
-		public DeliveryAddressViewItem(DeliveryAddress item) : base(item)
+		public DeliveryAddressViewModel(DeliveryAddress model) : base(model)
 		{
-			this.Name = item.Name;
+			this.Name = model.Name;
 		}
 	}
 
@@ -156,13 +156,13 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class VendorViewItem : ViewItem<Vendor>
+	public sealed class VendorViewModel : ViewModel<Vendor>
 	{
 		public string Name { get; }
 
-		public VendorViewItem(Vendor item) : base(item)
+		public VendorViewModel(Vendor model) : base(model)
 		{
-			this.Name = item.Name;
+			this.Name = model.Name;
 		}
 	}
 
@@ -199,13 +199,13 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class WholesalerViewItem : ViewItem<Wholesaler>
+	public sealed class WholesalerViewModel : ViewModel<Wholesaler>
 	{
 		public string Name { get; }
 
-		public WholesalerViewItem(Wholesaler item) : base(item)
+		public WholesalerViewModel(Wholesaler model) : base(model)
 		{
-			this.Name = item.Name;
+			this.Name = model.Name;
 		}
 	}
 
@@ -298,9 +298,9 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class OrderTypeViewItem : ViewItem<OrderType>
+	public sealed class OrderTypeViewModel : ViewModel<OrderType>
 	{
-		public OrderTypeViewItem(OrderType item) : base(item)
+		public OrderTypeViewModel(OrderType model) : base(model)
 		{
 		}
 	}
@@ -336,12 +336,12 @@ namespace Cchbc.App.OrderModule
 		public Core Core { get; }
 		public Activity Activity { get; }
 		public Order Order { get; } = new Order();
-		public ObservableCollection<OrderTypeViewItem> OrderTypes = new ObservableCollection<OrderTypeViewItem>();
-		public ObservableCollection<VendorViewItem> Vendors = new ObservableCollection<VendorViewItem>();
-		public ObservableCollection<WholesalerViewItem> Wholesalers = new ObservableCollection<WholesalerViewItem>();
-		public ObservableCollection<DeliveryAddressViewItem> Addresses = new ObservableCollection<DeliveryAddressViewItem>();
-		public ObservableCollection<OrderNoteViewItem> Notes = new ObservableCollection<OrderNoteViewItem>();
-		public ObservableCollection<AssortmentViewItem> Assortments = new ObservableCollection<AssortmentViewItem>();
+		public ObservableCollection<OrderTypeViewModel> OrderTypes = new ObservableCollection<OrderTypeViewModel>();
+		public ObservableCollection<VendorViewModel> Vendors = new ObservableCollection<VendorViewModel>();
+		public ObservableCollection<WholesalerViewModel> Wholesalers = new ObservableCollection<WholesalerViewModel>();
+		public ObservableCollection<DeliveryAddressViewModel> Addresses = new ObservableCollection<DeliveryAddressViewModel>();
+		public ObservableCollection<OrderNoteViewModel> Notes = new ObservableCollection<OrderNoteViewModel>();
+		public ObservableCollection<AssortmentViewModel> Assortments = new ObservableCollection<AssortmentViewModel>();
 
 		private DeliveryAddressManager DeliveryAddressManager { get; }
 		private OrderNoteManager OrderNoteManager { get; }
@@ -355,11 +355,11 @@ namespace Cchbc.App.OrderModule
 			this.Core = core;
 			this.Activity = activity;
 
-			var deliveryAddressSorter = new Sorter<DeliveryAddressViewItem>(new[]
+			var deliveryAddressSorter = new Sorter<DeliveryAddressViewModel>(new[]
 			{
-				new SortOption<DeliveryAddressViewItem>(@"Default",(x,y)=>
+				new SortOption<DeliveryAddressViewModel>(@"Default",(x,y)=>
 				{
-					var cmp = x.Item.IsPrimary.CompareTo(y.Item.IsPrimary);
+					var cmp = x.Model.IsPrimary.CompareTo(y.Model.IsPrimary);
 					if (cmp == 0)
 					{
 						cmp = string.Compare(x.Name, y.Name, StringComparison.Ordinal);
@@ -367,31 +367,31 @@ namespace Cchbc.App.OrderModule
 					return cmp;
 				}),
 			});
-			var deliveryAddressSearcher = new Searcher<DeliveryAddressViewItem>(new[]
+			var deliveryAddressSearcher = new Searcher<DeliveryAddressViewModel>(new[]
 			{
-				new SearchOption<DeliveryAddressViewItem>(@"All", v=> true),
-				new SearchOption<DeliveryAddressViewItem>(@"Primary", v=> v.Item.IsPrimary),
+				new SearchOption<DeliveryAddressViewModel>(@"All", v=> true),
+				new SearchOption<DeliveryAddressViewModel>(@"Primary", v=> v.Model.IsPrimary),
 			}, (vi, s) => vi.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
 			this.DeliveryAddressManager = new DeliveryAddressManager(new DeliveryAddressAdapter(), deliveryAddressSorter, deliveryAddressSearcher);
 
 
-			var orderNoteSorter = new Sorter<OrderNoteViewItem>(new[]
+			var orderNoteSorter = new Sorter<OrderNoteViewModel>(new[]
 			{
-				new SortOption<OrderNoteViewItem>(@"Default", (x,y)=> string.Compare(x.Type, y.Type, StringComparison.OrdinalIgnoreCase)),
+				new SortOption<OrderNoteViewModel>(@"Default", (x,y)=> string.Compare(x.Type, y.Type, StringComparison.OrdinalIgnoreCase)),
 			});
 			var orderNoteSearcher =
-				new Searcher<OrderNoteViewItem>((vi, s) => vi.Type.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0 ||
+				new Searcher<OrderNoteViewModel>((vi, s) => vi.Type.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0 ||
 														   vi.Contents.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
 			this.OrderNoteManager = new OrderNoteManager(new OrderNoteAdapter(this.Core.QueryHelper), orderNoteSorter, orderNoteSearcher);
 
-			var sorter = new Sorter<AssortmentViewItem>(new[]
+			var sorter = new Sorter<AssortmentViewModel>(new[]
 			{
-				new SortOption<AssortmentViewItem>(@"Number", (x,y)=> x.Item.Article.Id.CompareTo(y.Item.Article.Id)),
+				new SortOption<AssortmentViewModel>(@"Number", (x,y)=> x.Model.Article.Id.CompareTo(y.Model.Article.Id)),
 			});
-			var searcher = new Searcher<AssortmentViewItem>(new[]
+			var searcher = new Searcher<AssortmentViewModel>(new[]
 			{
-				new SearchOption<AssortmentViewItem>(@"All", v => true),
-				new SearchOption<AssortmentViewItem>(@"Empties", v => v.Item.Article.Brand == Brand.Empty),
+				new SearchOption<AssortmentViewModel>(@"All", v => true),
+				new SearchOption<AssortmentViewModel>(@"Empties", v => v.Model.Article.Brand == Brand.Empty),
 			},
 				(vi, s) => vi.Number.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0 ||
 						   vi.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
@@ -439,34 +439,34 @@ namespace Cchbc.App.OrderModule
 				var articleId = detail.Article;
 
 				// Find assortment
-				var viewItem = default(AssortmentViewItem);
+				var viewModel = default(AssortmentViewModel);
 
 				foreach (var assortment in this.Assortments)
 				{
-					var article = assortment.Item.Article;
+					var article = assortment.Model.Article;
 					if (article.Id == articleId)
 					{
-						viewItem = assortment;
+						viewModel = assortment;
 
 						break;
 					}
 				}
 
 				// No assortment found
-				if (viewItem == null)
+				if (viewModel == null)
 				{
 					// Create new assortment
 					var articleHelper = this.Core.DataCache.GetHelper<Article>();
 					var article = articleHelper.Items[articleId];
 					var assortment = new Assortment(article);
-					viewItem = new AssortmentViewItem(assortment);
+					viewModel = new AssortmentViewModel(assortment);
 
 					// Add to assortments
-					this.Assortments.Add(viewItem);
+					this.Assortments.Add(viewModel);
 				}
 
 				// Set quantity
-				viewItem.Quantity = detail.Quantity;
+				viewModel.Quantity = detail.Quantity;
 			}
 		}
 
@@ -485,7 +485,7 @@ namespace Cchbc.App.OrderModule
 			var addressId = orderHeader.Address.Id;
 			foreach (var vi in this.Addresses)
 			{
-				var address = vi.Item;
+				var address = vi.Model;
 				if (address.Id == addressId)
 				{
 					orderHeader.Address = address;
@@ -499,17 +499,17 @@ namespace Cchbc.App.OrderModule
 		private async Task LoadAssortments()
 		{
 			var assortments = await new AssortmentAdapter().GetByOutletAsync(this.Activity.Outlet);
-			var assortmentViewItems = new AssortmentViewItem[assortments.Count];
+			var assortmentViewModels = new AssortmentViewModel[assortments.Count];
 			for (var i = 0; i < assortments.Count; i++)
 			{
-				assortmentViewItems[i] = new AssortmentViewItem(assortments[i]);
+				assortmentViewModels[i] = new AssortmentViewModel(assortments[i]);
 			}
-			this.AssortmentManager.SetupData(assortmentViewItems);
+			this.AssortmentManager.SetupData(assortmentViewModels);
 
 			this.Assortments.Clear();
-			foreach (var viewItem in this.AssortmentManager.ViewItems)
+			foreach (var viewModel in this.AssortmentManager.ViewModels)
 			{
-				this.Assortments.Add(viewItem);
+				this.Assortments.Add(viewModel);
 			}
 		}
 
@@ -517,17 +517,17 @@ namespace Cchbc.App.OrderModule
 		{
 			var addresses = await new DeliveryAddressAdapter().GetByOutletAsync(this.Activity.Outlet);
 
-			var addressViewItems = new DeliveryAddressViewItem[addresses.Count];
+			var addressViewModels = new DeliveryAddressViewModel[addresses.Count];
 			for (var i = 0; i < addresses.Count; i++)
 			{
-				addressViewItems[i] = new DeliveryAddressViewItem(addresses[i]);
+				addressViewModels[i] = new DeliveryAddressViewModel(addresses[i]);
 			}
-			this.DeliveryAddressManager.SetupData(addressViewItems);
+			this.DeliveryAddressManager.SetupData(addressViewModels);
 
 			this.Addresses.Clear();
-			foreach (var viewItem in this.DeliveryAddressManager.ViewItems)
+			foreach (var viewModel in this.DeliveryAddressManager.ViewModels)
 			{
-				this.Addresses.Add(viewItem);
+				this.Addresses.Add(viewModel);
 			}
 		}
 
@@ -535,17 +535,17 @@ namespace Cchbc.App.OrderModule
 		{
 			var adapter = new OrderNoteAdapter(this.Core.QueryHelper);
 			var orderNotes = await adapter.GetByOutletAsync(this.Order.OrderHeader, this.Core.DataCache.GetHelper<OrderNoteType>().Items);
-			var orderNotesViewItems = new OrderNoteViewItem[orderNotes.Count];
+			var orderNotesViewModels = new OrderNoteViewModel[orderNotes.Count];
 			for (var i = 0; i < orderNotes.Count; i++)
 			{
-				orderNotesViewItems[i] = new OrderNoteViewItem(orderNotes[i]);
+				orderNotesViewModels[i] = new OrderNoteViewModel(orderNotes[i]);
 			}
-			this.OrderNoteManager.SetupData(orderNotesViewItems);
+			this.OrderNoteManager.SetupData(orderNotesViewModels);
 
 			this.Notes.Clear();
-			foreach (var viewItem in this.OrderNoteManager.ViewItems)
+			foreach (var viewModel in this.OrderNoteManager.ViewModels)
 			{
-				this.Notes.Add(viewItem);
+				this.Notes.Add(viewModel);
 			}
 		}
 
@@ -555,7 +555,7 @@ namespace Cchbc.App.OrderModule
 			this.OrderTypes.Clear();
 			foreach (var orderType in orderTypeHelper.Items.Values)
 			{
-				this.OrderTypes.Add(new OrderTypeViewItem(orderType));
+				this.OrderTypes.Add(new OrderTypeViewModel(orderType));
 			}
 		}
 
@@ -565,7 +565,7 @@ namespace Cchbc.App.OrderModule
 			this.Vendors.Clear();
 			foreach (var vendor in vendorHelper.Items.Values)
 			{
-				this.Vendors.Add(new VendorViewItem(vendor));
+				this.Vendors.Add(new VendorViewModel(vendor));
 			}
 		}
 
@@ -575,7 +575,7 @@ namespace Cchbc.App.OrderModule
 			this.Wholesalers.Clear();
 			foreach (var wholesaler in wholesalerHelper.Items.Values)
 			{
-				this.Wholesalers.Add(new WholesalerViewItem(wholesaler));
+				this.Wholesalers.Add(new WholesalerViewModel(wholesaler));
 			}
 		}
 	}
@@ -665,42 +665,42 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class OrderNoteManager : Manager<OrderNote, OrderNoteViewItem>
+	public sealed class OrderNoteManager : Manager<OrderNote, OrderNoteViewModel>
 	{
-		public OrderNoteManager(IModifiableAdapter<OrderNote> adapter, Sorter<OrderNoteViewItem> sorter, Searcher<OrderNoteViewItem> searcher, FilterOption<OrderNoteViewItem>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
+		public OrderNoteManager(IModifiableAdapter<OrderNote> adapter, Sorter<OrderNoteViewModel> sorter, Searcher<OrderNoteViewModel> searcher, FilterOption<OrderNoteViewModel>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
 		{
 		}
 
-		public override ValidationResult[] ValidateProperties(OrderNoteViewItem viewItem, Feature feature)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override Task<PermissionResult> CanInsertAsync(OrderNoteViewItem viewItem, Feature feature)
+		public override ValidationResult[] ValidateProperties(OrderNoteViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}
 
-		public override Task<PermissionResult> CanUpdateAsync(OrderNoteViewItem viewItem, Feature feature)
+		public override Task<PermissionResult> CanInsertAsync(OrderNoteViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}
 
-		public override Task<PermissionResult> CanDeleteAsync(OrderNoteViewItem viewItem, Feature feature)
+		public override Task<PermissionResult> CanUpdateAsync(OrderNoteViewModel viewModel, Feature feature)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override Task<PermissionResult> CanDeleteAsync(OrderNoteViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}
 	}
 
-	public sealed class OrderNoteViewItem : ViewItem<OrderNote>
+	public sealed class OrderNoteViewModel : ViewModel<OrderNote>
 	{
 		public string Type { get; }
 		public string Contents { get; }
 
-		public OrderNoteViewItem(OrderNote item) : base(item)
+		public OrderNoteViewModel(OrderNote model) : base(model)
 		{
-			this.Type = item.Type.Name;
-			this.Contents = item.Contents;
+			this.Type = model.Type.Name;
+			this.Contents = model.Contents;
 		}
 	}
 
@@ -784,34 +784,34 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class AssortmentManager : Manager<Assortment, AssortmentViewItem>
+	public sealed class AssortmentManager : Manager<Assortment, AssortmentViewModel>
 	{
-		public AssortmentManager(IModifiableAdapter<Assortment> adapter, Sorter<AssortmentViewItem> sorter, Searcher<AssortmentViewItem> searcher, FilterOption<AssortmentViewItem>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
+		public AssortmentManager(IModifiableAdapter<Assortment> adapter, Sorter<AssortmentViewModel> sorter, Searcher<AssortmentViewModel> searcher, FilterOption<AssortmentViewModel>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
 		{
 		}
 
-		public override ValidationResult[] ValidateProperties(AssortmentViewItem viewItem, Feature feature)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override Task<PermissionResult> CanInsertAsync(AssortmentViewItem viewItem, Feature feature)
+		public override ValidationResult[] ValidateProperties(AssortmentViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}
 
-		public override Task<PermissionResult> CanUpdateAsync(AssortmentViewItem viewItem, Feature feature)
+		public override Task<PermissionResult> CanInsertAsync(AssortmentViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}
 
-		public override Task<PermissionResult> CanDeleteAsync(AssortmentViewItem viewItem, Feature feature)
+		public override Task<PermissionResult> CanUpdateAsync(AssortmentViewModel viewModel, Feature feature)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override Task<PermissionResult> CanDeleteAsync(AssortmentViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}
 	}
 
-	public sealed class AssortmentViewItem : ViewItem<Assortment>
+	public sealed class AssortmentViewModel : ViewModel<Assortment>
 	{
 		public string Number { get; }
 		public string Name { get; }
@@ -822,10 +822,10 @@ namespace Cchbc.App.OrderModule
 			set { this.SetField(ref _quantity, value); }
 		}
 
-		public AssortmentViewItem(Assortment item) : base(item)
+		public AssortmentViewModel(Assortment model) : base(model)
 		{
-			this.Number = item.Article.Id.ToString();
-			this.Name = item.Article.Name;
+			this.Number = model.Article.Id.ToString();
+			this.Name = model.Article.Name;
 		}
 	}
 }

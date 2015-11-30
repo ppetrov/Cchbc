@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cchbc.App.ArticlesModule.Objects;
 using Cchbc.Data;
 
-namespace Cchbc.App.ArticlesModule.Data
+namespace Cchbc.App.ArticlesModule.Adapters
 {
 	public sealed class FlavorAdapter : IReadOnlyAdapter<Flavor>
 	{

@@ -7,12 +7,12 @@ using Cchbc.Validation;
 
 namespace Cchbc.UI
 {
-	public sealed class LoginManager : Manager<Login, LoginViewItem>
+	public sealed class LoginManager : Manager<Login, LoginViewModel>
 	{
 		public ILogger Logger { get; }
 		public LoginAdapter Adapter { get; }
 
-		public LoginManager(ILogger logger, LoginAdapter adapter, Sorter<LoginViewItem> sorter, Searcher<LoginViewItem> searcher, FilterOption<LoginViewItem>[] filterOptions = null)
+		public LoginManager(ILogger logger, LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher, FilterOption<LoginViewModel>[] filterOptions = null)
 			: base(adapter, sorter, searcher, filterOptions)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
@@ -22,9 +22,9 @@ namespace Cchbc.UI
 			this.Adapter = adapter;
 		}
 
-		public override ValidationResult[] ValidateProperties(LoginViewItem viewItem, Feature feature)
+		public override ValidationResult[] ValidateProperties(LoginViewModel viewModel, Feature feature)
 		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(ValidateProperties));
@@ -33,14 +33,14 @@ namespace Cchbc.UI
 			{
 				return Validator.GetViolated(new[]
 				{
-					Validator.ValidateNotNull(viewItem.Name, @"Name cannot be null"),
-					Validator.ValidateNotEmpty(viewItem.Name, @"Name cannot be empty"),
-					Validator.ValidateMaxLength(viewItem.Name, 8, @"Name cannot be more then 8"),
+					Validator.ValidateNotNull(viewModel.Name, @"Name cannot be null"),
+					Validator.ValidateNotEmpty(viewModel.Name, @"Name cannot be empty"),
+					Validator.ValidateMaxLength(viewModel.Name, 8, @"Name cannot be more then 8"),
 
-					Validator.ValidateNotNull(viewItem.Password, @"Password cannot be null"),
-					Validator.ValidateNotEmpty(viewItem.Password, @"Password cannot be empty"),
-					Validator.ValidateMinLength(viewItem.Password, 8, @"Password is too short. Must be at least 8 symbols"),
-					Validator.ValidateMaxLength(viewItem.Password, 20, @"Password is too long. Must be less then or equal to 20")
+					Validator.ValidateNotNull(viewModel.Password, @"Password cannot be null"),
+					Validator.ValidateNotEmpty(viewModel.Password, @"Password cannot be empty"),
+					Validator.ValidateMinLength(viewModel.Password, 8, @"Password is too short. Must be at least 8 symbols"),
+					Validator.ValidateMaxLength(viewModel.Password, 20, @"Password is too long. Must be less then or equal to 20")
 				});
 			}
 			finally
@@ -49,9 +49,9 @@ namespace Cchbc.UI
 			}
 		}
 
-		public override Task<PermissionResult> CanInsertAsync(LoginViewItem viewItem, Feature feature)
+		public override Task<PermissionResult> CanInsertAsync(LoginViewModel viewModel, Feature feature)
 		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(CanInsertAsync));
@@ -65,9 +65,9 @@ namespace Cchbc.UI
 			}
 		}
 
-		public override Task<PermissionResult> CanUpdateAsync(LoginViewItem viewItem, Feature feature)
+		public override Task<PermissionResult> CanUpdateAsync(LoginViewModel viewModel, Feature feature)
 		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(CanUpdateAsync));
@@ -81,15 +81,15 @@ namespace Cchbc.UI
 			}
 		}
 
-		public override Task<PermissionResult> CanDeleteAsync(LoginViewItem viewItem, Feature feature)
+		public override Task<PermissionResult> CanDeleteAsync(LoginViewModel viewModel, Feature feature)
 		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(CanDeleteAsync));
 			try
 			{
-				if (viewItem.Item.CreatedAt.Date == DateTime.Today)
+				if (viewModel.Model.CreatedAt.Date == DateTime.Today)
 				{
 					return Task.FromResult(PermissionResult.Confirm(@"Cannot delete today logins"));
 				}
@@ -101,9 +101,9 @@ namespace Cchbc.UI
 			}
 		}
 
-		public Task<PermissionResult> CanPromoteAsync(LoginViewItem viewItem, Feature feature)
+		public Task<PermissionResult> CanPromoteAsync(LoginViewModel viewModel, Feature feature)
 		{
-			if (viewItem == null) throw new ArgumentNullException(nameof(viewItem));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(CanPromoteAsync));

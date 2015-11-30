@@ -6,15 +6,15 @@ using Cchbc.Sort;
 
 namespace Cchbc
 {
-	public class ReadOnlyManager<T, TViewItem> where T : IDbObject where TViewItem : ViewItem<T>
+	public class ReadOnlyManager<T, TViewModel> where T : IDbObject where TViewModel : ViewModel<T>
 	{
-		private TViewItem[] ViewItems { get; set; }
+		private TViewModel[] ViewModels { get; set; }
 
-		public Sorter<TViewItem> Sorter { get; }
-		public Searcher<TViewItem> Searcher { get; }
-		public FilterOption<TViewItem>[] FilterOptions { get; }
+		public Sorter<TViewModel> Sorter { get; }
+		public Searcher<TViewModel> Searcher { get; }
+		public FilterOption<TViewModel>[] FilterOptions { get; }
 
-		public ReadOnlyManager(Sorter<TViewItem> sorter, Searcher<TViewItem> searcher, FilterOption<TViewItem>[] filterOptions = null)
+		public ReadOnlyManager(Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
 		{
 			if (sorter == null) throw new ArgumentNullException(nameof(sorter));
 			if (searcher == null) throw new ArgumentNullException(nameof(searcher));
@@ -24,51 +24,51 @@ namespace Cchbc
 			this.FilterOptions = filterOptions;
 		}
 
-		public void LoadData(TViewItem[] viewItems)
+		public void LoadData(TViewModel[] viewModels)
 		{
-			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
+			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
 
-			this.ViewItems = viewItems;
-			this.Sorter.Sort(this.ViewItems, this.Sorter.CurrentOption);
+			this.ViewModels = viewModels;
+			this.Sorter.Sort(this.ViewModels, this.Sorter.CurrentOption);
 		}
 
-		public IEnumerable<TViewItem> Sort(ICollection<TViewItem> currentViewItems, SortOption<TViewItem> sortOption)
+		public IEnumerable<TViewModel> Sort(ICollection<TViewModel> currentViewModels, SortOption<TViewModel> sortOption)
 		{
-			if (currentViewItems == null) throw new ArgumentNullException(nameof(currentViewItems));
+			if (currentViewModels == null) throw new ArgumentNullException(nameof(currentViewModels));
 			if (sortOption == null) throw new ArgumentNullException(nameof(sortOption));
 
 			var flag = sortOption.Ascending ?? true;
 
 			// Sort view items
-			this.Sorter.Sort(this.ViewItems, sortOption);
+			this.Sorter.Sort(this.ViewModels, sortOption);
 
 			// Sort current view items
-			var copy = new TViewItem[currentViewItems.Count];
-			currentViewItems.CopyTo(copy, 0);
+			var copy = new TViewModel[currentViewModels.Count];
+			currentViewModels.CopyTo(copy, 0);
 			this.Sorter.Sort(copy, sortOption);
 			this.Sorter.SetupFlag(sortOption, flag);
 
 			// Return current view items sorted
-			foreach (var viewItem in copy)
+			foreach (var viewModel in copy)
 			{
-				yield return viewItem;
+				yield return viewModel;
 			}
 		}
 
-		public IEnumerable<TViewItem> Search(string textSearch, SearchOption<TViewItem> searchOption)
+		public IEnumerable<TViewModel> Search(string textSearch, SearchOption<TViewModel> searchOption)
 		{
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
 
-			return this.Searcher.Search(GetFilteredViewItems(this.ViewItems), textSearch, searchOption);
+			return this.Searcher.Search(GetFilteredViewModels(this.ViewModels), textSearch, searchOption);
 		}
 
-		private ICollection<TViewItem> GetFilteredViewItems(ICollection<TViewItem> viewItems)
+		private ICollection<TViewModel> GetFilteredViewModels(ICollection<TViewModel> viewModels)
 		{
 			if (this.FilterOptions != null && this.FilterOptions.Length > 0)
 			{
-				viewItems = new List<TViewItem>();
+				viewModels = new List<TViewModel>();
 
-				foreach (var item in this.ViewItems)
+				foreach (var item in this.ViewModels)
 				{
 					var include = true;
 
@@ -86,12 +86,12 @@ namespace Cchbc
 
 					if (include)
 					{
-						viewItems.Add(item);
+						viewModels.Add(item);
 					}
 				}
 			}
 
-			return viewItems;
+			return viewModels;
 		}
 	}
 }

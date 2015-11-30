@@ -1,21 +1,19 @@
 ﻿using Cchbc.App.ArticlesModule.Objects;
 using Cchbc.Objects;
 
-namespace Cchbc.App.ArticlesModule.ViewModel
+namespace Cchbc.App.ArticlesModule.ViewModels
 {
-	public sealed class ArticleViewItem : ViewItem<Article>
+	public sealed class ArticleViewModel : ViewModel<Article>
 	{
 		public string Name { get; }
 		public string Brand { get; }
 		public string Flavor { get; }
-		public long TodayQuantity { get; set; }
 
-		public ArticleViewItem(Article article) : base(article)
+		public ArticleViewModel(Article article) : base(article)
 		{
 			this.Name = article.Name;
 			this.Brand = article.Brand.Name;
 			this.Flavor = article.Flavor.Name;
-			this.TodayQuantity = 0;
 		}
 	}
 }

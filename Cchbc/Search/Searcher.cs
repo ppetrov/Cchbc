@@ -4,7 +4,7 @@ using Cchbc.Objects;
 
 namespace Cchbc.Search
 {
-	public sealed class Searcher<T> where T : ViewObject
+	public sealed class Searcher<T> where T : ViewModel
 	{
 		private Func<T, string, bool> TextMatch { get; } = (item, search) => true;
 		public SearchOption<T>[] Options { get; } = new SearchOption<T>[0];
@@ -34,9 +34,9 @@ namespace Cchbc.Search
 			this.TextMatch = textMatch;
 		}
 
-		public IEnumerable<T> Search(ICollection<T> viewItems, string textSearch, SearchOption<T> option)
+		public IEnumerable<T> Search(ICollection<T> viewModels, string textSearch, SearchOption<T> option)
 		{
-			if (viewItems == null) throw new ArgumentNullException(nameof(viewItems));
+			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
 			if (textSearch == null) throw new ArgumentNullException(nameof(textSearch));
 
 			this.CurrentOption = option;
@@ -54,38 +54,38 @@ namespace Cchbc.Search
 
 			this.TextSearch = textSearch;
 
-			IEnumerable<T> currentViewItems;
+			IEnumerable<T> currentViewModels;
 
 			if (textSearch == string.Empty)
 			{
-				this.SetupCounts(viewItems);
-				currentViewItems = viewItems;
+				this.SetupCounts(viewModels);
+				currentViewModels = viewModels;
 			}
 			else
 			{
-				var filteredByTextViewItems = new List<T>();
+				var filteredByTextViewModels = new List<T>();
 
-				foreach (var item in viewItems)
+				foreach (var item in viewModels)
 				{
 					if (this.TextMatch(item, textSearch))
 					{
-						filteredByTextViewItems.Add(item);
+						filteredByTextViewModels.Add(item);
 					}
 				}
 
-				this.SetupCounts(filteredByTextViewItems);
-				currentViewItems = filteredByTextViewItems;
+				this.SetupCounts(filteredByTextViewModels);
+				currentViewModels = filteredByTextViewModels;
 			}
 
 			if (option == null)
 			{
-				foreach (var item in currentViewItems)
+				foreach (var item in currentViewModels)
 				{
 					yield return item;
 				}
 				yield break;
 			}
-			foreach (var item in currentViewItems)
+			foreach (var item in currentViewModels)
 			{
 				if (option.IsMatch(item))
 				{
@@ -94,14 +94,14 @@ namespace Cchbc.Search
 			}
 		}
 
-		public void SetupCounts(IEnumerable<T> items)
+		public void SetupCounts(IEnumerable<T> models)
 		{
-			if (items == null) throw new ArgumentNullException(nameof(items));
+			if (models == null) throw new ArgumentNullException(nameof(models));
 
 			foreach (var option in this.Options)
 			{
 				var count = 0;
-				foreach (var item in items)
+				foreach (var item in models)
 				{
 					if (option.IsMatch(item))
 					{

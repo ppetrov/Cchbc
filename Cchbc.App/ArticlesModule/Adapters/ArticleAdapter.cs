@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Cchbc.App.ArticlesModule.Objects;
 using Cchbc.Data;
 
-namespace Cchbc.App.ArticlesModule.Data
+namespace Cchbc.App.ArticlesModule.Adapters
 {
 	public sealed class ArticleAdapter : IReadOnlyAdapter<Article>
 	{

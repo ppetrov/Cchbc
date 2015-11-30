@@ -3,7 +3,7 @@ using Cchbc.Objects;
 
 namespace Cchbc.Sort
 {
-	public sealed class SortOption<T> : ViewObject
+	public sealed class SortOption<T> : ViewModel
 	{
 		public string Name { get; }
 		public Func<T, T, int> Comparison { get; }

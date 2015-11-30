@@ -61,7 +61,6 @@
     <Compile Include="Localization\LocalizationKeys.cs" />
     <Compile Include="Localization\LocalizationManager.cs" />
     <Compile Include="ReadOnlyManager.cs" />
-    <Compile Include="Objects\ViewItem.cs" />
     <Compile Include="Search\FilterOption.cs" />
     <Compile Include="Search\Searcher.cs" />
     <Compile Include="Search\SearchOption.cs" />
@@ -73,7 +72,7 @@
     <Compile Include="Helpers\IHelper.cs" />
     <Compile Include="Objects\IDbObject.cs" />
     <Compile Include="Objects\ObjectEventArgs.cs" />
-    <Compile Include="Objects\ViewObject.cs" />
+    <Compile Include="Objects\ViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sort\Sorter.cs" />
     <Compile Include="Sort\SortOption.cs" />
