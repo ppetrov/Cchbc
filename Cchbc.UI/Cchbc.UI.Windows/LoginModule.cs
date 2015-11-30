@@ -7,12 +7,12 @@ using Cchbc.Validation;
 
 namespace Cchbc.UI
 {
-	public sealed class LoginManager : Manager<Login, LoginViewModel>
+	public sealed class LoginModule : Module<Login, LoginViewModel>
 	{
 		public ILogger Logger { get; }
 		public LoginAdapter Adapter { get; }
 
-		public LoginManager(ILogger logger, LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher, FilterOption<LoginViewModel>[] filterOptions = null)
+		public LoginModule(ILogger logger, LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher, FilterOption<LoginViewModel>[] filterOptions = null)
 			: base(adapter, sorter, searcher, filterOptions)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));

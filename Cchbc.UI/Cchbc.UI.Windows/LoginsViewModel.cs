@@ -13,12 +13,12 @@ namespace Cchbc.UI
 	public sealed class LoginsViewModel : ViewModel
 	{
 		private Core Core { get; }
-		private LoginManager Manager { get; }
+		private LoginModule Module { get; }
 		private string Context { get; } = nameof(LoginsViewModel);
 
 		public ObservableCollection<LoginViewModel> Logins { get; } = new ObservableCollection<LoginViewModel>();
-		public SortOption<LoginViewModel>[] SortOptions => this.Manager.Sorter.Options;
-		public SearchOption<LoginViewModel>[] SearchOptions => this.Manager.Searcher.Options;
+		public SortOption<LoginViewModel>[] SortOptions => this.Module.Sorter.Options;
+		public SearchOption<LoginViewModel>[] SearchOptions => this.Module.Searcher.Options;
 
 		private string _textSearch = string.Empty;
 		public string TextSearch
@@ -58,7 +58,7 @@ namespace Cchbc.UI
 			if (core == null) throw new ArgumentNullException(nameof(core));
 
 			this.Core = core;
-			this.Manager = new LoginManager(core.Logger, new LoginAdapter(), new Sorter<LoginViewModel>(new[]
+			this.Module = new LoginModule(core.Logger, new LoginAdapter(), new Sorter<LoginViewModel>(new[]
 			{
 				new SortOption<LoginViewModel>(@"By Name", (x,y)=> string.Compare(x.Model.Name, y.Model.Name, StringComparison.Ordinal)),
 				new SortOption<LoginViewModel>(@"By Date", (x, y) =>
@@ -72,29 +72,29 @@ namespace Cchbc.UI
 				})
 			}), new Searcher<LoginViewModel>((v, s) => v.Model.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
 
-			this.Manager.OperationStart += (sender, args) =>
+			this.Module.OperationStart += (sender, args) =>
 			{
 				this.Core.FeatureManager.Start(args.Feature);
 			};
-			this.Manager.OperationEnd += (sender, args) =>
+			this.Module.OperationEnd += (sender, args) =>
 			{
 				this.Core.FeatureManager.Stop(args.Feature);
 			};
-			this.Manager.OperationError += (sender, args) =>
+			this.Module.OperationError += (sender, args) =>
 			{
 				this.Core.FeatureManager.LogException(args.Feature, args.Exception);
 			};
 
-			this.Manager.ItemInserted += ManagerOnItemInserted;
-			this.Manager.ItemUpdated += ManagerOnItemUpdated;
-			this.Manager.ItemDeleted += ManagerOnItemDeleted;
+			this.Module.ItemInserted += ModuleOnItemInserted;
+			this.Module.ItemUpdated += ModuleOnItemUpdated;
+			this.Module.ItemDeleted += ModuleOnItemDeleted;
 		}
 
 		public async Task LoadDataAsync()
 		{
 			this.Logins.Clear();
-			this.Manager.SetupData((await this.Manager.Adapter.GetAllAsync()).Select(v => new LoginViewModel(v)).ToList());
-			foreach (var login in this.Manager.ViewModels)
+			this.Module.SetupData((await this.Module.Adapter.GetAllAsync()).Select(v => new LoginViewModel(v)).ToList());
+			foreach (var login in this.Module.ViewModels)
 			{
 				this.Logins.Add(login);
 			}
@@ -105,7 +105,7 @@ namespace Cchbc.UI
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Manager.InsertAsync(viewModel, dialog, new Feature(this.Context, nameof(AddAsync), string.Empty));
+			return this.Module.InsertAsync(viewModel, dialog, new Feature(this.Context, nameof(AddAsync), string.Empty));
 		}
 
 		public Task DeleteAsync(LoginViewModel viewModel, ModalDialog dialog)
@@ -113,7 +113,7 @@ namespace Cchbc.UI
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Manager.DeleteAsync(viewModel, dialog, new Feature(this.Context, nameof(DeleteAsync), string.Empty));
+			return this.Module.DeleteAsync(viewModel, dialog, new Feature(this.Context, nameof(DeleteAsync), string.Empty));
 		}
 
 		public Task PromoteUserAsync(LoginViewModel viewModel, ModalDialog dialog)
@@ -121,34 +121,34 @@ namespace Cchbc.UI
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Manager.ExecuteAsync(viewModel, dialog, new Feature(this.Context, nameof(PromoteUserAsync), string.Empty), this.Manager.CanPromoteAsync, this.PromoteValidated);
+			return this.Module.ExecuteAsync(viewModel, dialog, new Feature(this.Context, nameof(PromoteUserAsync), string.Empty), this.Module.CanPromoteAsync, this.PromoteValidated);
 		}
 
 		private void PromoteValidated(LoginViewModel viewModel, FeatureEventArgs args)
 		{
 			viewModel.IsSystem = true;
 
-			this.Manager.UpdateValidated(viewModel, args);
+			this.Module.UpdateValidated(viewModel, args);
 		}
 
-		private void ManagerOnItemInserted(object sender, ObjectEventArgs<LoginViewModel> args)
+		private void ModuleOnItemInserted(object sender, ObjectEventArgs<LoginViewModel> args)
 		{
-			this.Manager.Insert(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
+			this.Module.Insert(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
 		}
 
-		private void ManagerOnItemUpdated(object sender, ObjectEventArgs<LoginViewModel> args)
+		private void ModuleOnItemUpdated(object sender, ObjectEventArgs<LoginViewModel> args)
 		{
-			this.Manager.Update(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
+			this.Module.Update(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
 		}
 
-		private void ManagerOnItemDeleted(object sender, ObjectEventArgs<LoginViewModel> args)
+		private void ModuleOnItemDeleted(object sender, ObjectEventArgs<LoginViewModel> args)
 		{
-			this.Manager.Delete(this.Logins, args.ViewModel);
+			this.Module.Delete(this.Logins, args.ViewModel);
 		}
 
 		private void ApplySearch()
 		{
-			var viewModels = this.Manager.Search(this.TextSearch, this.SearchOption);
+			var viewModels = this.Module.Search(this.TextSearch, this.SearchOption);
 
 			this.Logins.Clear();
 			foreach (var viewModel in viewModels)
@@ -160,7 +160,7 @@ namespace Cchbc.UI
 		private void ApplySort()
 		{
 			var index = 0;
-			foreach (var viewModel in this.Manager.Sort(this.Logins, this.SortOption))
+			foreach (var viewModel in this.Module.Sort(this.Logins, this.SortOption))
 			{
 				this.Logins[index++] = viewModel;
 			}

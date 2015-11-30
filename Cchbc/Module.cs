@@ -13,7 +13,7 @@ using Cchbc.Validation;
 
 namespace Cchbc
 {
-	public abstract class Manager<T, TViewModel> where T : IDbObject where TViewModel : ViewModel<T>
+	public abstract class Module<T, TViewModel> where T : IDbObject where TViewModel : ViewModel<T>
 	{
 		public List<TViewModel> ViewModels { get; } = new List<TViewModel>();
 
@@ -58,7 +58,7 @@ namespace Cchbc
 		public Searcher<TViewModel> Searcher { get; }
 		public FilterOption<TViewModel>[] FilterOptions { get; set; }
 
-		protected Manager(IModifiableAdapter<T> adapter, Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
+		protected Module(IModifiableAdapter<T> adapter, Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
 		{
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 			if (sorter == null) throw new ArgumentNullException(nameof(sorter));

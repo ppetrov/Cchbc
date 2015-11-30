@@ -6,7 +6,7 @@ using Cchbc.Sort;
 
 namespace Cchbc
 {
-	public class ReadOnlyManager<T, TViewModel> where T : IDbObject where TViewModel : ViewModel<T>
+	public class ReadOnlyModule<T, TViewModel> where TViewModel : ViewModel<T>
 	{
 		private TViewModel[] ViewModels { get; set; }
 
@@ -14,7 +14,7 @@ namespace Cchbc
 		public Searcher<TViewModel> Searcher { get; }
 		public FilterOption<TViewModel>[] FilterOptions { get; }
 
-		public ReadOnlyManager(Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
+		public ReadOnlyModule(Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
 		{
 			if (sorter == null) throw new ArgumentNullException(nameof(sorter));
 			if (searcher == null) throw new ArgumentNullException(nameof(searcher));

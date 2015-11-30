@@ -296,6 +296,10 @@ namespace Cchbc.ConsoleClient
 			// Attach Inverse tables
 			project.AttachInverseTable(visits);
 
+			// Hidden tables
+			project.MarkHidden(brands);
+			project.MarkHidden(flavors);
+
 			//var filePath = @"c:\temp\ifsa.ctx";
 			//project.Save(filePath);
 			//var copy = DbProject.Load(filePath);
@@ -308,9 +312,15 @@ namespace Cchbc.ConsoleClient
 				//
 				// Classes
 				//
-				var entityClass = project.CreateEntityClass(entity);
-				buffer.AppendLine(entityClass);
+				//var entityClass = project.CreateEntityClass(entity);
+				//buffer.AppendLine(entityClass);
 				//continue;
+
+				if (!project.IsModifiable(entity.Table))
+				{
+					buffer.AppendLine(project.CreateClassModule(entity));
+				}
+				continue;
 
 				//
 				// Read Only adapters
@@ -334,7 +344,7 @@ namespace Cchbc.ConsoleClient
 			Console.WriteLine(s.ElapsedMilliseconds);
 
 			//Console.WriteLine(buffer.ToString());
-			//File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
+			File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
 
 			var prj = new ClrProject();
 			prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);

@@ -24,7 +24,7 @@ namespace Cchbc.Objects
 		}
 	}
 
-	public class ViewModel<T> : ViewModel where T : IDbObject
+	public class ViewModel<T> : ViewModel
 	{
 		public T Model { get; }
 

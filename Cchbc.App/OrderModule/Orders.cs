@@ -100,9 +100,9 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class DeliveryAddressManager : Manager<DeliveryAddress, DeliveryAddressViewModel>
+	public sealed class DeliveryAddressModule : Module<DeliveryAddress, DeliveryAddressViewModel>
 	{
-		public DeliveryAddressManager(IModifiableAdapter<DeliveryAddress> adapter,
+		public DeliveryAddressModule(IModifiableAdapter<DeliveryAddress> adapter,
 			Sorter<DeliveryAddressViewModel> sorter,
 			Searcher<DeliveryAddressViewModel> searcher, FilterOption<DeliveryAddressViewModel>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
 		{
@@ -343,9 +343,9 @@ namespace Cchbc.App.OrderModule
 		public ObservableCollection<OrderNoteViewModel> Notes = new ObservableCollection<OrderNoteViewModel>();
 		public ObservableCollection<AssortmentViewModel> Assortments = new ObservableCollection<AssortmentViewModel>();
 
-		private DeliveryAddressManager DeliveryAddressManager { get; }
-		private OrderNoteManager OrderNoteManager { get; }
-		private AssortmentManager AssortmentManager { get; }
+		private DeliveryAddressModule DeliveryAddressModule { get; }
+		private OrderNoteModule OrderNoteModule { get; }
+		private AssortmentModule AssortmentModule { get; }
 
 		public OrderManager(Core core, Activity activity)
 		{
@@ -372,7 +372,7 @@ namespace Cchbc.App.OrderModule
 				new SearchOption<DeliveryAddressViewModel>(@"All", v=> true),
 				new SearchOption<DeliveryAddressViewModel>(@"Primary", v=> v.Model.IsPrimary),
 			}, (vi, s) => vi.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-			this.DeliveryAddressManager = new DeliveryAddressManager(new DeliveryAddressAdapter(), deliveryAddressSorter, deliveryAddressSearcher);
+			this.DeliveryAddressModule = new DeliveryAddressModule(new DeliveryAddressAdapter(), deliveryAddressSorter, deliveryAddressSearcher);
 
 
 			var orderNoteSorter = new Sorter<OrderNoteViewModel>(new[]
@@ -382,7 +382,7 @@ namespace Cchbc.App.OrderModule
 			var orderNoteSearcher =
 				new Searcher<OrderNoteViewModel>((vi, s) => vi.Type.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0 ||
 														   vi.Contents.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-			this.OrderNoteManager = new OrderNoteManager(new OrderNoteAdapter(this.Core.QueryHelper), orderNoteSorter, orderNoteSearcher);
+			this.OrderNoteModule = new OrderNoteModule(new OrderNoteAdapter(this.Core.QueryHelper), orderNoteSorter, orderNoteSearcher);
 
 			var sorter = new Sorter<AssortmentViewModel>(new[]
 			{
@@ -395,7 +395,7 @@ namespace Cchbc.App.OrderModule
 			},
 				(vi, s) => vi.Number.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0 ||
 						   vi.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-			this.AssortmentManager = new AssortmentManager(new AssortmentAdapter(), sorter, searcher);
+			this.AssortmentModule = new AssortmentModule(new AssortmentAdapter(), sorter, searcher);
 		}
 
 		public async Task LoadDataAsync()
@@ -504,10 +504,10 @@ namespace Cchbc.App.OrderModule
 			{
 				assortmentViewModels[i] = new AssortmentViewModel(assortments[i]);
 			}
-			this.AssortmentManager.SetupData(assortmentViewModels);
+			this.AssortmentModule.SetupData(assortmentViewModels);
 
 			this.Assortments.Clear();
-			foreach (var viewModel in this.AssortmentManager.ViewModels)
+			foreach (var viewModel in this.AssortmentModule.ViewModels)
 			{
 				this.Assortments.Add(viewModel);
 			}
@@ -522,10 +522,10 @@ namespace Cchbc.App.OrderModule
 			{
 				addressViewModels[i] = new DeliveryAddressViewModel(addresses[i]);
 			}
-			this.DeliveryAddressManager.SetupData(addressViewModels);
+			this.DeliveryAddressModule.SetupData(addressViewModels);
 
 			this.Addresses.Clear();
-			foreach (var viewModel in this.DeliveryAddressManager.ViewModels)
+			foreach (var viewModel in this.DeliveryAddressModule.ViewModels)
 			{
 				this.Addresses.Add(viewModel);
 			}
@@ -540,10 +540,10 @@ namespace Cchbc.App.OrderModule
 			{
 				orderNotesViewModels[i] = new OrderNoteViewModel(orderNotes[i]);
 			}
-			this.OrderNoteManager.SetupData(orderNotesViewModels);
+			this.OrderNoteModule.SetupData(orderNotesViewModels);
 
 			this.Notes.Clear();
-			foreach (var viewModel in this.OrderNoteManager.ViewModels)
+			foreach (var viewModel in this.OrderNoteModule.ViewModels)
 			{
 				this.Notes.Add(viewModel);
 			}
@@ -665,9 +665,9 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class OrderNoteManager : Manager<OrderNote, OrderNoteViewModel>
+	public sealed class OrderNoteModule : Module<OrderNote, OrderNoteViewModel>
 	{
-		public OrderNoteManager(IModifiableAdapter<OrderNote> adapter, Sorter<OrderNoteViewModel> sorter, Searcher<OrderNoteViewModel> searcher, FilterOption<OrderNoteViewModel>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
+		public OrderNoteModule(IModifiableAdapter<OrderNote> adapter, Sorter<OrderNoteViewModel> sorter, Searcher<OrderNoteViewModel> searcher, FilterOption<OrderNoteViewModel>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
 		{
 		}
 
@@ -784,9 +784,9 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class AssortmentManager : Manager<Assortment, AssortmentViewModel>
+	public sealed class AssortmentModule : Module<Assortment, AssortmentViewModel>
 	{
-		public AssortmentManager(IModifiableAdapter<Assortment> adapter, Sorter<AssortmentViewModel> sorter, Searcher<AssortmentViewModel> searcher, FilterOption<AssortmentViewModel>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
+		public AssortmentModule(IModifiableAdapter<Assortment> adapter, Sorter<AssortmentViewModel> sorter, Searcher<AssortmentViewModel> searcher, FilterOption<AssortmentViewModel>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
 		{
 		}
 

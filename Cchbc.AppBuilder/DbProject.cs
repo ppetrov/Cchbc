@@ -16,26 +16,30 @@ namespace Cchbc.AppBuilder
 			public DbSchema Schema { get; set; }
 			public Dictionary<string, DbTable> InverseTables { get; set; }
 			public Dictionary<string, DbTable> ModifiableTables { get; set; }
+			public Dictionary<string, DbTable> HiddenTables { get; set; }
 
 			public Project()
 			{
 			}
 
-			public Project(DbSchema schema, Dictionary<string, DbTable> inverseTables, Dictionary<string, DbTable> modifiableTables)
+			public Project(DbSchema schema, Dictionary<string, DbTable> inverseTables, Dictionary<string, DbTable> modifiableTables, Dictionary<string, DbTable> hiddenTables)
 			{
 				if (schema == null) throw new ArgumentNullException(nameof(schema));
 				if (inverseTables == null) throw new ArgumentNullException(nameof(inverseTables));
 				if (modifiableTables == null) throw new ArgumentNullException(nameof(modifiableTables));
+				if (hiddenTables == null) throw new ArgumentNullException(nameof(hiddenTables));
 
 				this.Schema = schema;
 				this.InverseTables = inverseTables;
 				this.ModifiableTables = modifiableTables;
+				this.HiddenTables = hiddenTables;
 			}
 		}
 
 		public DbSchema Schema { get; }
 		private Dictionary<string, DbTable> InverseTables { get; } = new Dictionary<string, DbTable>();
 		private Dictionary<string, DbTable> ModifiableTables { get; } = new Dictionary<string, DbTable>();
+		private Dictionary<string, DbTable> HiddenTables { get; } = new Dictionary<string, DbTable>();
 
 		public DbProject(DbSchema schema)
 		{
@@ -48,7 +52,7 @@ namespace Cchbc.AppBuilder
 		{
 			if (path == null) throw new ArgumentNullException(nameof(path));
 
-			var project = new Project(this.Schema, this.InverseTables, this.ModifiableTables);
+			var project = new Project(this.Schema, this.InverseTables, this.ModifiableTables, this.HiddenTables);
 
 			var formatter = new BinaryFormatter();
 			using (var fs = File.OpenWrite(path))
@@ -76,9 +80,20 @@ namespace Cchbc.AppBuilder
 				{
 					dbProject.ModifiableTables.Add(pair.Key, pair.Value);
 				}
+				foreach (var pair in project.HiddenTables)
+				{
+					dbProject.HiddenTables.Add(pair.Key, pair.Value);
+				}
 
 				return dbProject;
 			}
+		}
+
+		public void MarkHidden(DbTable table)
+		{
+			if (table == null) throw new ArgumentNullException(nameof(table));
+
+			this.HiddenTables.Add(table.Name, table);
 		}
 
 		public void MarkModifiable(DbTable table)
@@ -93,6 +108,13 @@ namespace Cchbc.AppBuilder
 			if (table == null) throw new ArgumentNullException(nameof(table));
 
 			return this.ModifiableTables.ContainsKey(table.Name);
+		}
+
+		public bool IsHidden(DbTable table)
+		{
+			if (table == null) throw new ArgumentNullException(nameof(table));
+
+			return this.HiddenTables.ContainsKey(table.Name);
 		}
 
 		public void AttachInverseTable(DbTable table)
@@ -134,7 +156,7 @@ namespace Cchbc.AppBuilder
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-			return EntityClass.Generate(entity, !this.ModifiableTables.ContainsKey(entity.Table.Name));
+			return EntityClass.Generate(entity, !this.IsModifiable(entity.Table));
 		}
 
 		public string CreateEntityAdapter(Entity entity)
@@ -186,6 +208,20 @@ namespace Cchbc.AppBuilder
 			if (!this.IsModifiable(entity.Table)) return EntityHelper.Generate(entity);
 
 			return string.Empty;
+		}
+
+		public string CreateClassViewModel(Entity entity)
+		{
+			if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+			return EntityClass.GenerateViewModel(entity, !this.IsModifiable(entity.Table));
+		}
+
+		public string CreateClassModule(Entity entity)
+		{
+			if (entity == null) throw new ArgumentNullException(nameof(entity));
+			
+			return EntityClass.GenerateClassModule(entity, !this.IsModifiable(entity.Table));
 		}
 
 		private bool HasColumnToInverseTable(Entity entity)

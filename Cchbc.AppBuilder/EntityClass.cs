@@ -29,6 +29,93 @@ namespace Cchbc.AppBuilder
 			return buffer.ToString();
 		}
 
+		public static string GenerateViewModel(Entity entity, bool readOnly)
+		{
+			if (readOnly)
+			{
+				var indentationLevel = 0;
+				var buffer = new StringBuilder(1024);
+				var name = entity.Class.Name;
+
+				var suffix = @"ViewModel";
+				AppendClassDefinition(buffer, name + suffix, suffix, name);
+				AppendOpenBrace(buffer, indentationLevel++);
+
+				AppendIndentation(buffer, indentationLevel);
+				buffer.Append(@"public");
+				buffer.Append(' ');
+				buffer.Append(name);
+				buffer.Append(suffix);
+				buffer.Append('(');
+				AppendParametersWithType(buffer, new[] { new ClrProperty(name, new ClrType(name, true, false)) });
+				buffer.Append(')');
+				buffer.Append(' ');
+				buffer.Append(':');
+				buffer.Append(' ');
+				buffer.Append(@"base");
+				buffer.Append('(');
+				BufferHelper.AppendLowerFirst(buffer, name);
+				buffer.Append(')');
+				buffer.AppendLine();
+
+				AppendOpenBrace(buffer, indentationLevel++);
+				buffer.AppendLine();
+				AppendCloseBrace(buffer, --indentationLevel);
+
+				AppendCloseBrace(buffer, --indentationLevel);
+
+				return buffer.ToString();
+			}
+
+			throw new NotImplementedException(@"Create ViewModel for Modifiable table");
+		}
+
+		public static string GenerateClassModule(Entity entity, bool readOnly)
+		{
+			if (readOnly)
+			{
+				var indentationLevel = 0;
+				var buffer = new StringBuilder(1024);
+				var name = entity.Class.Name;
+
+				var className = entity.Table.Name + @"ReadOnlyModule";
+				AppendClassDefinition(buffer, className, @"ReadOnlyModule", name + ", " + name + @"ViewModel");
+				AppendOpenBrace(buffer, indentationLevel++);
+
+				AppendIndentation(buffer, indentationLevel++);
+				buffer.Append(@"public");
+				buffer.Append(' ');
+				buffer.Append(className);
+				buffer.Append('(');
+				buffer.AppendLine();
+
+				AppendIndentation(buffer, indentationLevel);
+				buffer.AppendFormat(@"Sorter<{0}ViewModel> sorter,", name);
+				buffer.AppendLine();
+
+				AppendIndentation(buffer, indentationLevel);
+				buffer.AppendFormat(@"Searcher<{0}ViewModel> searcher,", name);
+				buffer.AppendLine();
+
+				AppendIndentation(buffer, indentationLevel);
+				buffer.AppendFormat(@"FilterOption<{0}ViewModel>[] filterOptions = null)", name);
+				buffer.AppendLine();
+
+				AppendIndentation(buffer, indentationLevel);
+				buffer.Append(@": base(sorter, searcher, filterOptions)");
+				buffer.AppendLine();
+
+				AppendOpenBrace(buffer, indentationLevel - 1);
+				AppendCloseBrace(buffer, --indentationLevel);
+
+				AppendCloseBrace(buffer, --indentationLevel);
+
+				return buffer.ToString();
+			}
+
+			throw new NotImplementedException(@"Create ViewModel for Modifiable table");
+		}
+
 		public static void AppendClassDefinition(StringBuilder buffer, string className, string baseClass, string baseClassGnericType)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));

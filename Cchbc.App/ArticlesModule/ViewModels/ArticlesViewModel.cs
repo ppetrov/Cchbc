@@ -15,12 +15,12 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 		private Core Core { get; }
 		private FeatureManager FeatureManager => this.Core.FeatureManager;
 
-		private ReadOnlyManager<Article, ArticleViewModel> ReadOnlyManager { get; }
+		private ReadOnlyModule<Article, ArticleViewModel> ReadOnlyModule { get; }
 		private string Context { get; } = nameof(ArticlesViewModel);
 
 		public ObservableCollection<ArticleViewModel> Articles { get; } = new ObservableCollection<ArticleViewModel>();
-		public SortOption<ArticleViewModel>[] SortOptions => this.ReadOnlyManager.Sorter.Options;
-		public SearchOption<ArticleViewModel>[] SearchOptions => this.ReadOnlyManager.Searcher.Options;
+		public SortOption<ArticleViewModel>[] SortOptions => this.ReadOnlyModule.Sorter.Options;
+		public SearchOption<ArticleViewModel>[] SearchOptions => this.ReadOnlyModule.Searcher.Options;
 
 		private string _textSearch = string.Empty;
 		public string TextSearch
@@ -79,7 +79,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 				new SearchOption<ArticleViewModel>(local[LocalizationKeys.All], v => true, true),
 			}, (item, search) => item.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
 
-			this.ReadOnlyManager = new ArticlesReadOnlyManager(sorter, searcher);
+			this.ReadOnlyModule = new ArticlesReadOnlyModule(sorter, searcher);
 		}
 
 		public void LoadData()
@@ -96,7 +96,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 		private void DisplayArticles(Feature feature, ArticleViewModel[] viewModels)
 		{
 			feature.AddStep(nameof(DisplayArticles));
-			this.ReadOnlyManager.LoadData(viewModels);
+			this.ReadOnlyModule.LoadData(viewModels);
 			this.ApplySearch();
 		}
 
@@ -106,7 +106,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 
 		private void ApplySearch()
 		{
-			var viewModels = this.ReadOnlyManager.Search(this.TextSearch, this.SearchOption);
+			var viewModels = this.ReadOnlyModule.Search(this.TextSearch, this.SearchOption);
 
 			this.Articles.Clear();
 			foreach (var viewModel in viewModels)
@@ -118,7 +118,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 		private void SortBy()
 		{
 			var index = 0;
-			foreach (var viewModel in this.ReadOnlyManager.Sort(this.Articles, this.SortOption))
+			foreach (var viewModel in this.ReadOnlyModule.Sort(this.Articles, this.SortOption))
 			{
 				this.Articles[index++] = viewModel;
 			}
