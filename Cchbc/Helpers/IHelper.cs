@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cchbc.Data;
-using Cchbc.Objects;
 
 namespace Cchbc.Helpers
 {
-	public interface IHelper<T> where T : IDbObject
+	public interface IHelper<T>
 	{
 		Dictionary<long, T> Items { get; }
 

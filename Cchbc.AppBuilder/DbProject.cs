@@ -183,8 +183,7 @@ namespace Cchbc.AppBuilder
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-			// TODO : !!
-			if (!this.IsModifiable(entity.Table)) return EntityAdapter.GenerateReadOnly(entity, GetDictionaryProperties(entity));
+			if (!this.IsModifiable(entity.Table)) return EntityHelper.Generate(entity);
 
 			return string.Empty;
 		}

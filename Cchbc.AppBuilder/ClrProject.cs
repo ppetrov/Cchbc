@@ -108,55 +108,24 @@ namespace Cchbc.AppBuilder
 
 		private void SaveHelpers(string dirPath, DbProject project, Entity[] entities)
 		{
-			//using Cchbc.App.ArticlesModule.Objects;
-			//using Cchbc.Helpers;
-
-			//namespace Cchbc.App.ArticlesModule.Helpers
-			//	{
-			//		public sealed class BrandHelper : Helper<Brand>
-			//		{
-
-			//		}
-			//	}
-
 			var appName = project.Schema.Name;
 			var objectDirectoryName = CreateDirectory(dirPath, _helpersName);
 
 			foreach (var entity in entities)
 			{
 				var table = entity.Table;
+				if (project.IsModifiable(table))
+				{
+					continue;
+				}
 				var code = project.CreateEntityHelper(entity);
 
 				var buffer = new StringBuilder(code.Length);
 
-				// For ArgumentNullException class
-				buffer.AppendLine(@"using System;");
-
-				var useGenerics = true;
-				foreach (var e in entities)
-				{
-					if (e.InverseTable != null && e.InverseTable == table)
-					{
-						// Inversed table doesn't use generics
-						useGenerics = false;
-						break;
-					}
-				}
-				if (useGenerics)
-				{
-					// For Dictionary<long, T> & List<T> classes
-					buffer.AppendLine(@"using System.Collections.Generic;");
-				}
-				if (entity.InverseTable != null)
-				{
-					// For .ToList() extension method
-					buffer.AppendLine(@"using System.Linq;");
-				}
-				// For QueryHelper class
-				buffer.AppendLine(@"using Cchbc.Data;");
 				// For the concrete T class
 				buffer.AppendFormat(@"using {0}.Objects;", appName);
 				buffer.AppendLine();
+				buffer.AppendLine(@"using Cchbc.Helpers;");
 				buffer.AppendLine();
 
 				AppendCode(buffer, appName, _helpersName, code);
