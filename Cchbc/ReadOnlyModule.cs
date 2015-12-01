@@ -24,7 +24,7 @@ namespace Cchbc
 			this.FilterOptions = filterOptions;
 		}
 
-		public void LoadData(TViewModel[] viewModels)
+		public void SetupViewModels(TViewModel[] viewModels)
 		{
 			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
 

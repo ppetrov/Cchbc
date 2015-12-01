@@ -214,7 +214,14 @@ namespace Cchbc.AppBuilder
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-			return EntityClass.GenerateViewModel(entity, !this.IsModifiable(entity.Table));
+			return EntityClass.GenerateClassViewModel(entity, !this.IsModifiable(entity.Table));
+		}
+
+		public string CreateTableViewModel(Entity entity)
+		{
+			if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+			return EntityClass.GenerateTableViewModel(entity, !this.IsModifiable(entity.Table));
 		}
 
 		public string CreateClassModule(Entity entity)

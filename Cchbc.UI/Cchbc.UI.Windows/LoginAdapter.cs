@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cchbc.Data;
 
 namespace Cchbc.UI
@@ -28,7 +27,7 @@ public sealed class LoginAdapter : IModifiableAdapter<Login>
 		throw new NotImplementedException();
 	}
 
-	public Task<List<Login>> GetAllAsync()
+	public List<Login> GetAll()
 	{
 		throw new NotImplementedException();
 	}

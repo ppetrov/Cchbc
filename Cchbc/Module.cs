@@ -70,15 +70,13 @@ namespace Cchbc
 			this.FilterOptions = filterOptions;
 		}
 
-		public void SetupData(IEnumerable<TViewModel> viewModels)
+		public void SetupViewModels(TViewModel[] viewModels)
 		{
 			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
 
 			this.ViewModels.Clear();
-			foreach (var viewModel in viewModels)
-			{
-				this.ViewModels.Add(viewModel);
-			}
+			this.ViewModels.AddRange(viewModels);
+
 			this.Sorter.Sort(this.ViewModels, this.Sorter.CurrentOption);
 		}
 

@@ -318,8 +318,9 @@ namespace Cchbc.ConsoleClient
 
 				if (!project.IsModifiable(entity.Table))
 				{
-					buffer.AppendLine(project.CreateClassModule(entity));
-				}
+					buffer.AppendLine(project.CreateTableViewModel(entity));
+					
+                }
 				continue;
 
 				//
@@ -480,7 +481,6 @@ namespace Cchbc.ConsoleClient
 			//		Console.WriteLine(@"Done");
 			//	}
 			//}
-
 		}
 
 		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadQueryHelper queryHelper)

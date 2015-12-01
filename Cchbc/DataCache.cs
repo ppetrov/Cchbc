@@ -16,7 +16,7 @@ namespace Cchbc
 			_helpers.Add(typeof(T).Name, helper);
 		}
 
-		public Helper<T> GetHelper<T>() where T : IDbObject
+		public Helper<T> GetHelper<T>()
 		{
 			object helper;
 			if (_helpers.TryGetValue(typeof(T).Name, out helper))

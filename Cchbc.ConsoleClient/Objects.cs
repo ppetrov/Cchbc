@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Cchbc.Data;
+using Cchbc.Features;
 using Cchbc.Objects;
+using Cchbc.Search;
+using Cchbc.Sort;
 
 namespace Cchbc.ConsoleClient
 {
@@ -673,10 +677,135 @@ namespace Cchbc.ConsoleClient
 	}
 
 
+	public sealed class OutletViewModel : ViewModel<Outlet>
+	{
+		public OutletViewModel(Outlet model) : base(model)
+		{
+		}
+	}
+
+	public sealed class OutletsReadOnlyModule : ReadOnlyModule<Outlet, OutletViewModel>
+	{
+		public OutletsReadOnlyModule(
+			Sorter<OutletViewModel> sorter,
+			Searcher<OutletViewModel> searcher,
+			FilterOption<OutletViewModel>[] filterOptions = null)
+			: base(sorter, searcher, filterOptions)
+		{
+		}
+	}
 
 
+	public sealed class OutletsViewModel : ViewModel
+	{
+		private Core Core { get; }
+		private FeatureManager FeatureManager => this.Core.FeatureManager;
+		private ReadOnlyModule<Outlet, OutletViewModel> Module { get; }
+		private string Context { get; } = nameof(OutletsViewModel);
 
+		public ObservableCollection<OutletViewModel> Outlets { get; } = new ObservableCollection<OutletViewModel>();
+		public SortOption<OutletViewModel>[] SortOptions => this.Module.Sorter.Options;
+		public SearchOption<OutletViewModel>[] SearchOptions => this.Module.Searcher.Options;
 
+		private string _textSearch = string.Empty;
+		public string TextSearch
+		{
+			get { return _textSearch; }
+			set
+			{
+				this.SetField(ref _textSearch, value);
+
+				var feature = Feature.StartNew(this.Context, nameof(SearchByText));
+				this.SearchByText();
+				this.FeatureManager.Stop(feature);
+			}
+		}
+
+		private SearchOption<OutletViewModel> _searchOption;
+		public SearchOption<OutletViewModel> SearchOption
+		{
+			get { return _searchOption; }
+			set
+			{
+				this.SetField(ref _searchOption, value);
+				var feature = Feature.StartNew(this.Context, nameof(SearchByOption), value?.Name ?? string.Empty);
+				this.SearchByOption();
+				this.FeatureManager.Stop(feature);
+			}
+		}
+
+		private SortOption<OutletViewModel> _sortOption;
+		public SortOption<OutletViewModel> SortOption
+		{
+			get { return _sortOption; }
+			set
+			{
+				this.SetField(ref _sortOption, value);
+				var feature = Feature.StartNew(this.Context, nameof(SortBy));
+				this.SortBy();
+				this.FeatureManager.Stop(feature);
+			}
+		}
+
+		public OutletsViewModel(Core core)
+		{
+			if (core == null) throw new ArgumentNullException(nameof(core));
+
+			this.Core = core;
+			var sorter = new Sorter<OutletViewModel>(new[]
+			{
+			new SortOption<OutletViewModel>(string.Empty, (x, y) => 0),
+		});
+			var searcher = new Searcher<OutletViewModel>(new[]
+			{
+			new SearchOption<OutletViewModel>(string.Empty, v => true, true),
+		}, (item, search) => true);
+
+			this.Module = new OutletsReadOnlyModule(sorter, searcher);
+		}
+
+		public void LoadData()
+		{
+			var feature = Feature.StartNew(this.Context, nameof(LoadData));
+
+			var helper = this.Core.DataCache.GetHelper<Outlet>();
+			var viewModels = helper.Items.Values.Select(v => new OutletViewModel(v)).ToArray();
+			this.DisplayOutlets(feature, viewModels);
+
+			this.FeatureManager.Stop(feature);
+		}
+
+		private void DisplayOutlets(Feature feature, OutletViewModel[] viewModels)
+		{
+			feature.AddStep(nameof(DisplayOutlets));
+			this.Module.SetupViewModels(viewModels);
+			this.ApplySearch();
+		}
+
+		private void SearchByText() => this.ApplySearch();
+
+		private void SearchByOption() => this.ApplySearch();
+
+		private void ApplySearch()
+		{
+			var viewModels = this.Module.Search(this.TextSearch, this.SearchOption);
+
+			this.Outlets.Clear();
+			foreach (var viewModel in viewModels)
+			{
+				this.Outlets.Add(viewModel);
+			}
+		}
+
+		private void SortBy()
+		{
+			var index = 0;
+			foreach (var viewModel in this.Module.Sort(this.Outlets, this.SortOption))
+			{
+				this.Outlets[index++] = viewModel;
+			}
+		}
+	}
 
 
 

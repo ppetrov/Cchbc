@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 using Cchbc.Dialog;
 using Cchbc.Features;
@@ -13,6 +12,7 @@ namespace Cchbc.UI
 	public sealed class LoginsViewModel : ViewModel
 	{
 		private Core Core { get; }
+		private FeatureManager FeatureManager => this.Core.FeatureManager;
 		private LoginModule Module { get; }
 		private string Context { get; } = nameof(LoginsViewModel);
 
@@ -58,7 +58,7 @@ namespace Cchbc.UI
 			if (core == null) throw new ArgumentNullException(nameof(core));
 
 			this.Core = core;
-			this.Module = new LoginModule(core.Logger, new LoginAdapter(), new Sorter<LoginViewModel>(new[]
+			this.Module = new LoginModule(new LoginAdapter(), new Sorter<LoginViewModel>(new[]
 			{
 				new SortOption<LoginViewModel>(@"By Name", (x,y)=> string.Compare(x.Model.Name, y.Model.Name, StringComparison.Ordinal)),
 				new SortOption<LoginViewModel>(@"By Date", (x, y) =>
@@ -90,14 +90,20 @@ namespace Cchbc.UI
 			this.Module.ItemDeleted += ModuleOnItemDeleted;
 		}
 
-		public async Task LoadDataAsync()
+		public void LoadData()
 		{
-			this.Logins.Clear();
-			this.Module.SetupData((await this.Module.Adapter.GetAllAsync()).Select(v => new LoginViewModel(v)).ToList());
-			foreach (var login in this.Module.ViewModels)
+			var feature = Feature.StartNew(this.Context, nameof(LoadData));
+
+			var models = this.Module.Adapter.GetAll();
+			var viewModels = new LoginViewModel[models.Count];
+			var index = 0;
+			foreach (var model in models)
 			{
-				this.Logins.Add(login);
+				viewModels[index++] = new LoginViewModel(model);
 			}
+			this.DisplayLogins(viewModels, feature);
+
+			this.FeatureManager.Stop(feature);
 		}
 
 		public Task AddAsync(LoginViewModel viewModel, ModalDialog dialog)
@@ -108,27 +114,20 @@ namespace Cchbc.UI
 			return this.Module.InsertAsync(viewModel, dialog, new Feature(this.Context, nameof(AddAsync), string.Empty));
 		}
 
-		public Task DeleteAsync(LoginViewModel viewModel, ModalDialog dialog)
+		public Task UpdateAsync(LoginViewModel viewModel, ModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.DeleteAsync(viewModel, dialog, new Feature(this.Context, nameof(DeleteAsync), string.Empty));
+			return this.Module.UpdateAsync(viewModel, dialog, new Feature(this.Context, nameof(UpdateAsync), string.Empty));
 		}
 
-		public Task PromoteUserAsync(LoginViewModel viewModel, ModalDialog dialog)
+		public Task RemoveAsync(LoginViewModel viewModel, ModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.ExecuteAsync(viewModel, dialog, new Feature(this.Context, nameof(PromoteUserAsync), string.Empty), this.Module.CanPromoteAsync, this.PromoteValidated);
-		}
-
-		private void PromoteValidated(LoginViewModel viewModel, FeatureEventArgs args)
-		{
-			viewModel.IsSystem = true;
-
-			this.Module.UpdateValidated(viewModel, args);
+			return this.Module.DeleteAsync(viewModel, dialog, new Feature(this.Context, nameof(RemoveAsync), string.Empty));
 		}
 
 		private void ModuleOnItemInserted(object sender, ObjectEventArgs<LoginViewModel> args)
@@ -144,6 +143,14 @@ namespace Cchbc.UI
 		private void ModuleOnItemDeleted(object sender, ObjectEventArgs<LoginViewModel> args)
 		{
 			this.Module.Delete(this.Logins, args.ViewModel);
+		}
+
+		private void DisplayLogins(LoginViewModel[] viewModels, Feature feature)
+		{
+			feature.AddStep(nameof(DisplayLogins));
+
+			this.Module.SetupViewModels(viewModels);
+			this.ApplySearch();
 		}
 
 		private void ApplySearch()

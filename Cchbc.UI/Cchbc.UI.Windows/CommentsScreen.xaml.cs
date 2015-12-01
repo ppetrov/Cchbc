@@ -18,9 +18,9 @@ namespace Cchbc.UI
 			this.DataContext = _viewModel;
 		}
 
-		private async void CommentsScreen_OnLoaded(object sender, RoutedEventArgs e)
+		private void CommentsScreen_OnLoaded(object sender, RoutedEventArgs e)
 		{
-			await _viewModel.LoadDataAsync();
+			_viewModel.LoadData();
 		}
 
 		private async void AddLoginTapped(object sender, TappedRoutedEventArgs e)
@@ -48,7 +48,7 @@ namespace Cchbc.UI
 				if (viewModel != null)
 				{
 					var dialog = new WinRtModalDialog();
-					dialog.AcceptAction = async () => { await _viewModel.DeleteAsync(viewModel, dialog); };
+					dialog.AcceptAction = async () => { await _viewModel.RemoveAsync(viewModel, dialog); };
 					await dialog.ConfirmAsync(@"Are you sure you want to delete this user?", Feature.None);
 				}
 			}
@@ -65,7 +65,7 @@ namespace Cchbc.UI
 					var dialog = new WinRtModalDialog();
 					dialog.AcceptAction = async () =>
 					{
-						await _viewModel.PromoteUserAsync(viewModel, dialog);
+						//await _viewModel.PromoteUserAsync(viewModel, dialog);
 					};
 					await dialog.ConfirmAsync(@"Are you sure you want to promote this user?", Feature.None);
 				}

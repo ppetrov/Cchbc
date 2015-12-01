@@ -504,7 +504,7 @@ namespace Cchbc.App.OrderModule
 			{
 				assortmentViewModels[i] = new AssortmentViewModel(assortments[i]);
 			}
-			this.AssortmentModule.SetupData(assortmentViewModels);
+			this.AssortmentModule.SetupViewModels(assortmentViewModels);
 
 			this.Assortments.Clear();
 			foreach (var viewModel in this.AssortmentModule.ViewModels)
@@ -522,7 +522,7 @@ namespace Cchbc.App.OrderModule
 			{
 				addressViewModels[i] = new DeliveryAddressViewModel(addresses[i]);
 			}
-			this.DeliveryAddressModule.SetupData(addressViewModels);
+			this.DeliveryAddressModule.SetupViewModels(addressViewModels);
 
 			this.Addresses.Clear();
 			foreach (var viewModel in this.DeliveryAddressModule.ViewModels)
@@ -540,7 +540,7 @@ namespace Cchbc.App.OrderModule
 			{
 				orderNotesViewModels[i] = new OrderNoteViewModel(orderNotes[i]);
 			}
-			this.OrderNoteModule.SetupData(orderNotesViewModels);
+			this.OrderNoteModule.SetupViewModels(orderNotesViewModels);
 
 			this.Notes.Clear();
 			foreach (var viewModel in this.OrderNoteModule.ViewModels)

@@ -2,283 +2,325 @@
 using System.IO;
 using System.Text;
 
+
 namespace Cchbc.AppBuilder
 {
 	public sealed class ClrProject
 	{
-		private readonly string _objectsName = @"Objects";
-		private readonly string _adaptersName = @"Adapters";
-		private readonly string _helpersName = @"Helpers";
-		private readonly string _managersName = @"Managers";
-		private readonly string _viewModelsName = @"ViewModels";
-		private readonly string _modulesName = @"Modules";
+		private static readonly string Objects = @"Objects";
+		private static readonly string Adapters = @"Adapters";
+		private static readonly string Helpers = @"Helpers";
+		private static readonly string ViewModels = @"ViewModels";
+		private static readonly string Modules = @"Modules";
 
-		public void Save(string dirPath, DbProject project)
+		public void Save(string directoryPath, DbProject project)
 		{
-			if (dirPath == null) throw new ArgumentNullException(nameof(dirPath));
+			if (directoryPath == null) throw new ArgumentNullException(nameof(directoryPath));
 			if (project == null) throw new ArgumentNullException(nameof(project));
 
-			var entities = project.CreateEntities();
+			// Create directory names for Objects, Adapters, Helpers, ...
+			var objectsPath = Path.Combine(directoryPath, Objects);
+			var adaptersPath = Path.Combine(directoryPath, Adapters);
+			var helpersPath = Path.Combine(directoryPath, Helpers);
+			var modulesPath = Path.Combine(directoryPath, Modules);
+			var viewModelsPath = Path.Combine(directoryPath, ViewModels);
 
-			this.SaveObjects(dirPath, project, entities);
-			this.SaveAdapters(dirPath, project, entities);
-			this.SaveHelpers(dirPath, project, entities);
-			this.SaveManagers(dirPath, project, entities);
-			this.SaveModules(dirPath, project, entities);
-			this.SaveViewModels(dirPath, project, entities);
+			// Create directories
+			CreateDirectory(objectsPath);
+			CreateDirectory(adaptersPath);
+			CreateDirectory(helpersPath);
+			CreateDirectory(modulesPath);
+			CreateDirectory(viewModelsPath);
+
+			var namespaceName = project.Schema.Name;
+			var entities = project.CreateEntities();
+			SaveObjects(objectsPath, project, entities, namespaceName);
+			SaveAdapters(adaptersPath, project, entities, namespaceName);
+			SaveHelpers(helpersPath, project, entities, namespaceName);
+			SaveModules(modulesPath, project, entities, namespaceName);
+			SaveViewModels(viewModelsPath, project, entities, namespaceName);
 		}
 
-		private void SaveModules(string dirPath, DbProject project, Entity[] entities)
+		private static void CreateDirectory(string path)
 		{
-			var appName = project.Schema.Name;
-			var objectDirectoryName = CreateDirectory(dirPath, _modulesName);
+			if (Directory.Exists(path))
+			{
+				Directory.Delete(path, true);
+			}
+			Directory.CreateDirectory(path);
+		}
 
+		private static void SaveObjects(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
+		{
 			foreach (var entity in entities)
 			{
-				var table = entity.Table;
-				if (project.IsModifiable(table) || project.IsHidden(table))
-				{
-					continue;
-				}
-				var code = project.CreateClassModule(entity);
+				var className = entity.Class.Name + @".cs";
+				var sourceCode = project.CreateEntityClass(entity);
 
-				var buffer = new StringBuilder(code.Length);
+				var buffer = new StringBuilder(sourceCode.Length);
+				AddUsingsForObjects(buffer, entity, project);
+				AddNamespace(buffer, namespaceName, Objects, sourceCode);
 
-				// For the concrete T class
-				buffer.AppendFormat(@"using {0}.Objects;", appName);
-				buffer.AppendLine();
-				buffer.AppendFormat(@"using {0}.ViewModels;", appName);
-				buffer.AppendLine();
-				buffer.AppendLine(@"using Cchbc;");
-				buffer.AppendLine(@"using Cchbc.Search;");
-				buffer.AppendLine(@"using Cchbc.Sort;");
-				buffer.AppendLine();
-
-				AppendCode(buffer, appName, _modulesName, code);
-				SaveToFile(objectDirectoryName, buffer, entity.Class.Name + _modulesName + @".cs");
+				SaveToFile(directoryPath, className, buffer);
 			}
 		}
 
-		private void SaveObjects(string dirPath, DbProject project, Entity[] entities)
+		private static void SaveAdapters(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
 		{
-			var appName = project.Schema.Name;
-			var objectDirectoryName = CreateDirectory(dirPath, _objectsName);
-
 			foreach (var entity in entities)
 			{
-				var code = project.CreateEntityClass(entity);
+				var className = entity.Class.Name + @"Adapter" + @".cs";
+				var sourceCode = project.CreateEntityAdapter(entity);
 
-				var buffer = new StringBuilder(code.Length);
-				if (HasReference(entity))
-				{
-					// For ArgumentNullException class
-					buffer.AppendLine(@"using System;");
-				}
+				var buffer = new StringBuilder(sourceCode.Length);
+				AddUsingsForAdapters(buffer, entity, namespaceName);
+				AddNamespace(buffer, namespaceName, Adapters, sourceCode);
+
+				SaveToFile(directoryPath, className, buffer);
+			}
+		}
+
+		private static void SaveHelpers(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
+		{
+			foreach (var entity in entities)
+			{
+				// Create helpers only fore ReadOnly tables
 				if (project.IsModifiable(entity.Table))
 				{
-					// For IDbObject interface
-					buffer.AppendLine(@"using Cchbc.Objects;");
-				}
-				if (entity.InverseTable != null)
-				{
-					// For the List<T> class
-					buffer.AppendLine(@"using System.Collections.Generic;");
-				}
-				var hasUsings = buffer.Length > 0;
-				if (hasUsings)
-				{
-					buffer.AppendLine();
+					continue;
 				}
 
-				AppendCode(buffer, appName, _objectsName, code);
-				SaveToFile(objectDirectoryName, buffer, entity.Class.Name + @".cs");
+				var className = entity.Class.Name + @"Helper" + @".cs";
+				var sourceCode = project.CreateEntityHelper(entity);
+
+				var buffer = new StringBuilder(sourceCode.Length);
+				AddUsingsForHelpers(buffer, namespaceName);
+				AddNamespace(buffer, namespaceName, Helpers, sourceCode);
+
+				SaveToFile(directoryPath, className, buffer);
 			}
 		}
 
-		private void SaveAdapters(string dirPath, DbProject project, Entity[] entities)
+		private static void SaveModules(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
 		{
-			var appName = project.Schema.Name;
-			var objectDirectoryName = CreateDirectory(dirPath, _adaptersName);
-
 			foreach (var entity in entities)
 			{
-				var table = entity.Table;
-				var code = project.CreateEntityAdapter(entity);
-
-				var buffer = new StringBuilder(code.Length);
-
-				// For ArgumentNullException class
-				buffer.AppendLine(@"using System;");
-
-				var useGenerics = true;
-				foreach (var e in entities)
-				{
-					if (e.InverseTable != null && e.InverseTable == table)
-					{
-						// Inversed table doesn't use generics
-						useGenerics = false;
-						break;
-					}
-				}
-				if (useGenerics)
-				{
-					// For Dictionary<long, T> & List<T> classes
-					buffer.AppendLine(@"using System.Collections.Generic;");
-				}
-				if (entity.InverseTable != null)
-				{
-					// For .ToList() extension method
-					buffer.AppendLine(@"using System.Linq;");
-				}
-				// For QueryHelper class
-				buffer.AppendLine(@"using Cchbc.Data;");
-				// For the concrete T class
-				buffer.AppendFormat(@"using {0}.Objects;", appName);
-				buffer.AppendLine();
-				buffer.AppendLine();
-
-				AppendCode(buffer, appName, _adaptersName, code);
-				SaveToFile(objectDirectoryName, buffer, entity.Class.Name + _adaptersName + @".cs");
-			}
-		}
-
-		private void SaveHelpers(string dirPath, DbProject project, Entity[] entities)
-		{
-			var appName = project.Schema.Name;
-			var objectDirectoryName = CreateDirectory(dirPath, _helpersName);
-
-			foreach (var entity in entities)
-			{
-				var table = entity.Table;
-				if (project.IsModifiable(table))
+				if (project.IsHidden(entity.Table))
 				{
 					continue;
 				}
-				var code = project.CreateEntityHelper(entity);
 
-				var buffer = new StringBuilder(code.Length);
+				var className = entity.Class.Name + @"Module" + @".cs";
+				var sourceCode = project.CreateClassModule(entity);
 
-				// For the concrete T class
-				buffer.AppendFormat(@"using {0}.Objects;", appName);
-				buffer.AppendLine();
-				buffer.AppendLine(@"using Cchbc.Helpers;");
-				buffer.AppendLine();
+				var buffer = new StringBuilder(sourceCode.Length);
+				AddUsingsForModules(namespaceName, buffer, !project.IsModifiable(entity.Table));
+				AddNamespace(buffer, namespaceName, Modules, sourceCode);
 
-				AppendCode(buffer, appName, _helpersName, code);
-				SaveToFile(objectDirectoryName, buffer, entity.Class.Name + _helpersName + @".cs");
+				SaveToFile(directoryPath, className, buffer);
 			}
 		}
 
-		private void SaveManagers(string dirPath, DbProject project, Entity[] entities)
+		private static void SaveViewModels(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
 		{
-			//var appName = project.Schema.Name;
-			//var objectDirectoryName = CreateDirectory(dirPath, _managersName);
-
-			//foreach (var entity in entities)
-			//{
-			//	var table = entity.Table;
-			//	if (project.IsModifiable(table) || project.IsHidden(table))
-			//	{
-			//		continue;
-			//	}
-			//	var code = project.CreateClassViewModel(entity);
-
-			//	var buffer = new StringBuilder(code.Length);
-
-			//	// For the concrete T class
-			//	buffer.AppendFormat(@"using {0}.Objects;", appName);
-			//	buffer.AppendLine();
-			//	buffer.AppendLine(@"using Cchbc.Objects;");
-			//	buffer.AppendLine();
-
-			//	AppendCode(buffer, appName, _viewModelsName, code);
-			//	SaveToFile(objectDirectoryName, buffer, entity.Class.Name + _managersName + @".cs");
-			//}
-		}
-
-		private void SaveViewModels(string dirPath, DbProject project, Entity[] entities)
-		{
-			var appName = project.Schema.Name;
-			var objectDirectoryName = CreateDirectory(dirPath, _viewModelsName);
-
 			foreach (var entity in entities)
 			{
-				var table = entity.Table;
-				if (project.IsModifiable(table) || project.IsHidden(table))
+				if (project.IsHidden(entity.Table))
 				{
 					continue;
 				}
-				var code = project.CreateClassViewModel(entity);
-
-				var buffer = new StringBuilder(code.Length);
-
-				// For the concrete T class
-				buffer.AppendFormat(@"using {0}.Objects;", appName);
-				buffer.AppendLine();
-				buffer.AppendLine(@"using Cchbc.Objects;");
-				buffer.AppendLine();
-
-				AppendCode(buffer, appName, _viewModelsName, code);
-				SaveToFile(objectDirectoryName, buffer, entity.Class.Name + _viewModelsName + @".cs");
+				SaveClassViewModel(directoryPath, project, entity, namespaceName);
+				if (project.IsModifiable(entity.Table))
+				{
+					continue;
+				}
+				SaveTableViewModel(directoryPath, project, entity, namespaceName);
 			}
 		}
 
-		private static bool HasReference(Entity entity)
+		private static void SaveClassViewModel(string directoryPath, DbProject project, Entity entity, string namespaceName)
 		{
-			var hasReference = false;
+			var className = entity.Class.Name + @"ViewModel" + @".cs";
+			var sourceCode = project.CreateClassViewModel(entity);
 
+			var buffer = new StringBuilder(sourceCode.Length);
+			AddUsingsForClassViewModels(namespaceName, buffer);
+			AddNamespace(buffer, namespaceName, ViewModels, sourceCode);
+
+			SaveToFile(directoryPath, className, buffer);
+		}
+
+		private static void SaveTableViewModel(string directoryPath, DbProject project, Entity entity, string namespaceName)
+		{
+			var className = entity.Table.Name + @"ViewModel" + @".cs";
+			var sourceCode = project.CreateTableViewModel(entity);
+
+			var buffer = new StringBuilder(sourceCode.Length);
+			AddUsingsForTableViewModels(namespaceName, buffer);
+			AddNamespace(buffer, namespaceName, ViewModels, sourceCode);
+
+			SaveToFile(directoryPath, className, buffer);
+		}
+
+		private static void AddUsingsForObjects(StringBuilder buffer, Entity entity, DbProject project)
+		{
+			var hasReferenceType = false;
 			foreach (var clrProperty in entity.Class.Properties)
 			{
 				if (clrProperty.Type.IsReference)
 				{
-					hasReference = true;
+					hasReferenceType = true;
 					break;
 				}
 			}
-
-			return hasReference;
-		}
-
-		private static string CreateDirectory(string dirPath, string name)
-		{
-			var objectDirectoryName = Path.Combine(dirPath, name);
-
-			if (Directory.Exists(objectDirectoryName))
+			if (hasReferenceType)
 			{
-				Directory.Delete(objectDirectoryName, true);
+				// For ArgumentNullException class
+				buffer.AppendLine(@"using System;");
 			}
-			Directory.CreateDirectory(objectDirectoryName);
+			if (project.IsModifiable(entity.Table))
+			{
+				// For IDbObject interface
+				buffer.AppendLine(@"using Cchbc.Objects;");
+			}
+			if (entity.InverseTable != null)
+			{
+				// For the List<T> class
+				buffer.AppendLine(@"using System.Collections.Generic;");
+			}
 
-			return objectDirectoryName;
+			// Separate usings from namespace if any usings
+			var hasUsings = buffer.Length > 0;
+			if (hasUsings)
+			{
+				buffer.AppendLine();
+			}
 		}
 
-		private static void AppendCode(StringBuilder buffer, string appName, string name, string code)
+		private static void AddUsingsForAdapters(StringBuilder buffer, Entity entity, string namespaceName)
+		{
+			// For ArgumentNullException class
+			buffer.AppendLine(@"using System;");
+
+			// For Dictionary<long, T> & List<T> classes
+			buffer.AppendLine(@"using System.Collections.Generic;");
+
+			if (entity.InverseTable != null)
+			{
+				// For .ToList() extension method
+				buffer.AppendLine(@"using System.Linq;");
+			}
+
+			// For QueryHelper class
+			buffer.AppendLine(@"using Cchbc.Data;");
+
+			// For the concrete T class
+			buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
+			buffer.AppendLine();
+
+			//Separate usings from namespace
+			buffer.AppendLine();
+		}
+
+		private static void AddUsingsForHelpers(StringBuilder buffer, string namespaceName)
+		{
+			// For the concrete T class
+			buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
+			buffer.AppendLine();
+			buffer.AppendLine(@"using Cchbc.Helpers;");
+			buffer.AppendLine();
+		}
+
+		private static void AddUsingsForModules(string namespaceName, StringBuilder buffer, bool readOnly)
+		{
+			if (readOnly)
+			{
+				// For the concrete T class
+				buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
+				buffer.AppendLine();
+				buffer.AppendFormat(@"using {0}.ViewModels;", namespaceName);
+				buffer.AppendLine();
+				buffer.AppendLine(@"using Cchbc;");
+				buffer.AppendLine(@"using Cchbc.Search;");
+				buffer.AppendLine(@"using Cchbc.Sort;");
+			}
+			else
+			{
+				buffer.AppendLine(@"using System;");
+				buffer.AppendLine(@"using System.Threading.Tasks;");
+				buffer.AppendLine(@"using Cchbc;");
+				buffer.AppendLine(@"using Cchbc.Features;");
+				buffer.AppendLine(@"using Cchbc.Search;");
+				buffer.AppendLine(@"using Cchbc.Sort;");
+				buffer.AppendLine(@"using Cchbc.Validation;");
+				buffer.AppendFormat(@"using {0}.Adapters;", namespaceName);
+				buffer.AppendLine();
+				buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
+				buffer.AppendLine();
+				buffer.AppendFormat(@"using {0}.ViewModels;", namespaceName);
+				buffer.AppendLine();
+			}
+
+			buffer.AppendLine();
+		}
+
+		private static void AddUsingsForClassViewModels(string namespaceName, StringBuilder buffer)
+		{
+			// For the concrete T class
+			buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
+			buffer.AppendLine();
+			buffer.AppendLine(@"using Cchbc.Objects;");
+			buffer.AppendLine();
+		}
+
+		private static void AddUsingsForTableViewModels(string namespaceName, StringBuilder buffer)
+		{
+			buffer.AppendLine(@"using System;");
+			buffer.AppendLine(@"using System.Collections.ObjectModel;");
+			buffer.AppendLine(@"using Cchbc;");
+			buffer.AppendLine(@"using Cchbc.Features;");
+			buffer.AppendLine(@"using Cchbc.Objects;");
+			buffer.AppendLine(@"using Cchbc.Search;");
+			buffer.AppendLine(@"using Cchbc.Sort;");
+			buffer.AppendFormat(@"using {0}.Modules;", namespaceName);
+			buffer.AppendLine();
+			buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
+			buffer.AppendLine();
+
+			buffer.AppendLine();
+		}
+
+		private static void AddNamespace(StringBuilder buffer, string namespaceName, string name, string sourceCode)
 		{
 			buffer.Append(@"namespace");
 			buffer.Append(' ');
-			buffer.Append(appName);
+			buffer.Append(namespaceName);
 			buffer.Append('.');
 			buffer.Append(name);
 			buffer.AppendLine();
-			buffer.AppendLine(@"{");
-			using (var sr = new StringReader(code))
+			buffer.Append('{');
+			buffer.AppendLine();
+
+			using (var r = new StringReader(sourceCode))
 			{
 				string line;
-				while ((line = sr.ReadLine()) != null)
+				while ((line = r.ReadLine()) != null)
 				{
 					if (line != string.Empty)
 					{
-						line = "\t" + line;
+						buffer.Append('\t');
 					}
 					buffer.AppendLine(line);
 				}
 			}
-			buffer.AppendLine(@"}");
+
+			buffer.Append('}');
+			buffer.AppendLine();
 		}
 
-		private static void SaveToFile(string directoryName, StringBuilder buffer, string className)
+		private static void SaveToFile(string directoryPath, string className, StringBuilder buffer)
 		{
-			File.WriteAllText(Path.Combine(directoryName, className), buffer.ToString());
+			File.WriteAllText(Path.Combine(directoryPath, className), buffer.ToString());
 		}
 	}
 }
