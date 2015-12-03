@@ -129,8 +129,12 @@ namespace Cchbc.Features.Db
 				feature = this.Adapter.InsertFeature(context, name);
 
 				// Insert the new feature into the collection
-				this.Features.Add(contextId,
-					new Dictionary<string, DbFeature>(StringComparer.OrdinalIgnoreCase) { { feature.Name, feature } });
+				if (!this.Features.TryGetValue(contextId, out features))
+				{
+					features = new Dictionary<string, DbFeature>(StringComparer.OrdinalIgnoreCase);
+					this.Features.Add(contextId, features);
+				}
+				features.Add(name, feature);
 			}
 			return feature;
 		}

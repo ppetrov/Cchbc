@@ -55,6 +55,8 @@ namespace Cchbc.Features.Db
 
 		public void CreateSchema()
 		{
+			this.DropSchema();
+
 			this.QueryHelper.Execute(@"
 CREATE TABLE[FEATURE_CONTEXTS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -113,6 +115,23 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 		REFERENCES [FEATURE_STEPS] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE		
 )");
+		}
+
+		public void DropSchema()
+		{
+			try
+			{
+				this.QueryHelper.Execute(@"DROP TABLE FEATURE_ENTRY_STEPS");
+				this.QueryHelper.Execute(@"DROP TABLE EXCEPTION_ENTRIES");
+				this.QueryHelper.Execute(@"DROP TABLE FEATURE_ENTRIES");
+				this.QueryHelper.Execute(@"DROP TABLE FEATURES");
+				this.QueryHelper.Execute(@"DROP TABLE FEATURE_STEPS");
+				this.QueryHelper.Execute(@"DROP TABLE FEATURE_CONTEXTS");
+			}
+			catch (Exception e)
+			{
+				
+			}
 		}
 
 		public List<DbContext> GetContexts()

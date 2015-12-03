@@ -95,8 +95,8 @@ namespace Cchbc.Features
 				return;
 			}
 
-			feature.EndStep();
-			feature.StopMeasure();
+			feature.FinishMeasure();
+			
 
 			var steps = Enumerable.Empty<FeatureEntryStep>().ToArray();
 

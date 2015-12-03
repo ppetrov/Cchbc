@@ -60,17 +60,9 @@ namespace Cchbc.UI
 			this.Core = core;
 			this.Module = new LoginModule(new LoginAdapter(), new Sorter<LoginViewModel>(new[]
 			{
-				new SortOption<LoginViewModel>(@"By Name", (x,y)=> string.Compare(x.Model.Name, y.Model.Name, StringComparison.Ordinal)),
-				new SortOption<LoginViewModel>(@"By Date", (x, y) =>
-				{
-					var cmp = x.Model.CreatedAt.CompareTo(y.Model.CreatedAt);
-					if (cmp == 0)
-					{
-						cmp = string.Compare(x.Model.Name, y.Model.Name, StringComparison.Ordinal);
-					}
-					return cmp;
-				})
-			}), new Searcher<LoginViewModel>((v, s) => v.Model.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0));
+				new SortOption<LoginViewModel>(string.Empty, (x, y) => 0)
+			}),
+			new Searcher<LoginViewModel>((v, s) => false));
 
 			this.Module.OperationStart += (sender, args) =>
 			{
@@ -122,6 +114,17 @@ namespace Cchbc.UI
 			return this.Module.UpdateAsync(viewModel, dialog, new Feature(this.Context, nameof(UpdateAsync), string.Empty));
 		}
 
+		public Task ChangePasswordAsync(LoginViewModel viewModel, ModalDialog dialog, string newPassword)
+		{
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+			if (newPassword == null) throw new ArgumentNullException(nameof(newPassword));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+
+			var copyViewModel = new LoginViewModel(viewModel.Model) { Password = newPassword };
+
+			return this.Module.ExecuteAsync(copyViewModel, dialog, new Feature(this.Context, nameof(ChangePasswordAsync), string.Empty), this.Module.CanChangePassword, this.ChangePasswordValidated);
+		}
+
 		public Task RemoveAsync(LoginViewModel viewModel, ModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
@@ -170,6 +173,22 @@ namespace Cchbc.UI
 			foreach (var viewModel in this.Module.Sort(this.Logins, this.SortOption))
 			{
 				this.Logins[index++] = viewModel;
+			}
+		}
+
+		private void ChangePasswordValidated(LoginViewModel copyViewModel, FeatureEventArgs args)
+		{
+			var model = copyViewModel.Model;
+
+			foreach (var viewModel in this.Module.ViewModels)
+			{
+				if (viewModel.Model == model)
+				{
+					viewModel.Password = copyViewModel.Password;
+
+					this.Module.UpdateValidated(viewModel, args);
+					break;
+				}
 			}
 		}
 	}

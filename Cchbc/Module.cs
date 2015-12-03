@@ -13,7 +13,9 @@ using Cchbc.Validation;
 
 namespace Cchbc
 {
-	public abstract class Module<T, TViewModel> where T : IDbObject where TViewModel : ViewModel<T>
+	public abstract class Module<T, TViewModel>
+		where T : class, IDbObject
+		where TViewModel : ViewModel<T>
 	{
 		public List<TViewModel> ViewModels { get; } = new List<TViewModel>();
 
@@ -78,6 +80,21 @@ namespace Cchbc
 			this.ViewModels.AddRange(viewModels);
 
 			this.Sorter.Sort(this.ViewModels, this.Sorter.CurrentOption);
+		}
+
+		public TViewModel FindViewModel(T model)
+		{
+			if (model == null) throw new ArgumentNullException(nameof(model));
+
+			foreach (var viewModel in this.ViewModels)
+			{
+				if (viewModel.Model == model)
+				{
+					return viewModel;
+				}
+			}
+
+			return null;
 		}
 
 		public abstract ValidationResult[] ValidateProperties(TViewModel viewModel, Feature feature);
@@ -270,48 +287,41 @@ namespace Cchbc
 			feature.AddStep(nameof(InsertValidated));
 			try
 			{
-				try
-				{
-					// Add the item to the db
-					this.Adapter.Insert(viewModel.Model);
+				// Add the item to the db
+				this.Adapter.Insert(viewModel.Model);
 
-					// Find the right index to insert the new element
-					var index = this.ViewModels.Count;
-					var option = this.Sorter.CurrentOption;
-					if (option != null)
+				// Find the right index to insert the new element
+				var index = this.ViewModels.Count;
+				var option = this.Sorter.CurrentOption;
+				if (option != null)
+				{
+					index = 0;
+
+					var cmp = option.Comparison;
+					foreach (var current in this.ViewModels)
 					{
-						index = 0;
-
-						var cmp = option.Comparison;
-						foreach (var current in this.ViewModels)
+						var result = cmp(current, viewModel);
+						if (result > 0)
 						{
-							var result = cmp(current, viewModel);
-							if (result > 0)
-							{
-								break;
-							}
-							index++;
+							break;
 						}
+						index++;
 					}
+				}
 
-					// Insert the item into the list at the correct place
-					this.ViewModels.Insert(index, viewModel);
+				// Insert the item into the list at the correct place
+				this.ViewModels.Insert(index, viewModel);
 
-					// Fire the event
-					this.OnItemInserted(new ObjectEventArgs<TViewModel>(viewModel));
-				}
-				catch (Exception ex)
-				{
-					this.OnOperationError(args.WithException(ex));
-				}
-				finally
-				{
-					this.OnOperationEnd(args);
-				}
+				// Fire the event
+				this.OnItemInserted(new ObjectEventArgs<TViewModel>(viewModel));
+			}
+			catch (Exception ex)
+			{
+				this.OnOperationError(args.WithException(ex));
 			}
 			finally
 			{
-				feature.EndStep();
+				this.OnOperationEnd(args);
 			}
 		}
 
@@ -321,26 +331,19 @@ namespace Cchbc
 			feature.AddStep(nameof(UpdateValidated));
 			try
 			{
-				try
-				{
-					// Update the item from the db
-					this.Adapter.Update(viewModel.Model);
+				// Update the item from the db
+				this.Adapter.Update(viewModel.Model);
 
-					// Fire the event
-					this.OnItemUpdated(new ObjectEventArgs<TViewModel>(viewModel));
-				}
-				catch (Exception ex)
-				{
-					this.OnOperationError(args.WithException(ex));
-				}
-				finally
-				{
-					this.OnOperationEnd(args);
-				}
+				// Fire the event
+				this.OnItemUpdated(new ObjectEventArgs<TViewModel>(viewModel));
+			}
+			catch (Exception ex)
+			{
+				this.OnOperationError(args.WithException(ex));
 			}
 			finally
 			{
-				feature.EndStep();
+				this.OnOperationEnd(args);
 			}
 		}
 
@@ -350,29 +353,22 @@ namespace Cchbc
 			feature.AddStep(nameof(UpdateValidated));
 			try
 			{
-				try
-				{
-					// Delete the item from the db
-					this.Adapter.Delete(viewModel.Model);
+				// Delete the item from the db
+				this.Adapter.Delete(viewModel.Model);
 
-					// Delete the item into the list at the correct place
-					this.ViewModels.Remove(viewModel);
+				// Delete the item into the list at the correct place
+				this.ViewModels.Remove(viewModel);
 
-					// Fire the event
-					this.OnItemDeleted(new ObjectEventArgs<TViewModel>(viewModel));
-				}
-				catch (Exception ex)
-				{
-					this.OnOperationError(args.WithException(ex));
-				}
-				finally
-				{
-					this.OnOperationEnd(args);
-				}
+				// Fire the event
+				this.OnItemDeleted(new ObjectEventArgs<TViewModel>(viewModel));
+			}
+			catch (Exception ex)
+			{
+				this.OnOperationError(args.WithException(ex));
 			}
 			finally
 			{
-				feature.EndStep();
+				this.OnOperationEnd(args);
 			}
 		}
 
@@ -436,17 +432,15 @@ namespace Cchbc
 
 		private async Task<PermissionResult> GetPermissionResultAsync(TViewModel viewModel, Feature feature, Func<TViewModel, Feature, Task<PermissionResult>> checker)
 		{
-			PermissionResult permissionResult = null;
-
 			// Validate properties
 			var validationResults = this.ValidateProperties(viewModel, feature);
 			if (validationResults.Length == 0)
 			{
 				// Apply business logic
-				permissionResult = await checker(viewModel, feature);
+				return await checker(viewModel, feature);
 			}
 
-			return permissionResult;
+			return null;
 		}
 
 		private void SetupDialog(ModalDialog dialog, FeatureEventArgs args)

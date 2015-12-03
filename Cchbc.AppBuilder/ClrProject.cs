@@ -130,10 +130,6 @@ namespace Cchbc.AppBuilder
 					continue;
 				}
 				SaveClassViewModel(directoryPath, project, entity, namespaceName);
-				if (project.IsModifiable(entity.Table))
-				{
-					continue;
-				}
 				SaveTableViewModel(directoryPath, project, entity, namespaceName);
 			}
 		}

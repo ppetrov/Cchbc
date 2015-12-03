@@ -187,8 +187,7 @@ namespace Cchbc.AppBuilder
 			this.{1}[index++] = viewModel;
 		}}
 	}}
-}}
-";
+}}";
 				return string.Format(template, entity.Class.Name, entity.Table.Name);
 			}
 

@@ -25,14 +25,7 @@ namespace Cchbc.UI
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(ValidateProperties));
-			try
-			{
-				return new[] { ValidationResult.Success };
-			}
-			finally
-			{
-				feature.EndStep();
-			}
+			return new[] { ValidationResult.Success };
 		}
 
 		public override Task<PermissionResult> CanInsertAsync(LoginViewModel viewModel, Feature feature)
@@ -41,14 +34,7 @@ namespace Cchbc.UI
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(CanInsertAsync));
-			try
-			{
-				return Task.FromResult(PermissionResult.Deny(string.Empty));
-			}
-			finally
-			{
-				feature.EndStep();
-			}
+			return Task.FromResult(PermissionResult.Deny(string.Empty));
 		}
 
 		public override Task<PermissionResult> CanUpdateAsync(LoginViewModel viewModel, Feature feature)
@@ -57,14 +43,7 @@ namespace Cchbc.UI
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(CanUpdateAsync));
-			try
-			{
-				return Task.FromResult(PermissionResult.Deny(string.Empty));
-			}
-			finally
-			{
-				feature.EndStep();
-			}
+			return Task.FromResult(PermissionResult.Deny(string.Empty));
 		}
 
 		public override Task<PermissionResult> CanDeleteAsync(LoginViewModel viewModel, Feature feature)
@@ -73,14 +52,16 @@ namespace Cchbc.UI
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(CanDeleteAsync));
-			try
-			{
-				return Task.FromResult(PermissionResult.Deny(string.Empty));
-			}
-			finally
-			{
-				feature.EndStep();
-			}
+			return Task.FromResult(PermissionResult.Deny(string.Empty));
+		}
+
+		public Task<PermissionResult> CanChangePassword(LoginViewModel viewModel, Feature feature)
+		{
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			feature.AddStep(nameof(CanChangePassword));
+			return PermissionResult.Allow;
 		}
 	}
 }

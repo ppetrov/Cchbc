@@ -50,6 +50,12 @@ namespace Cchbc.Features
 			this.Stopwatch.Stop();
 		}
 
+		public void FinishMeasure()
+		{
+			this.EndPreviousStep();
+			this.StopMeasure();
+		}
+
 		public void Pause()
 		{
 			this.Stopwatch.Stop();
@@ -64,16 +70,16 @@ namespace Cchbc.Features
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
-			var step = new FeatureStep(name);
-			step.TimeSpent = this.Stopwatch.Elapsed;
+			this.EndPreviousStep();
 
-			this.EndStep();
+			var step = new FeatureStep(name) { TimeSpent = this.Stopwatch.Elapsed };
+
 			this.Steps.Add(step);
 
 			return step;
 		}
 
-		public void EndStep()
+		private void EndPreviousStep()
 		{
 			if (this.Steps.Count > 0)
 			{

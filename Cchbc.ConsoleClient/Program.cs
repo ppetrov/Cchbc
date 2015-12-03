@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
@@ -11,17 +11,349 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Cchbc;
 using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
-using Cchbc.AppBuilder.DML;
 using Cchbc.Data;
+using Cchbc.Dialog;
 using Cchbc.Features;
+using Cchbc.Features.Db;
+using Cchbc.Objects;
+using Cchbc.Search;
+using Cchbc.Sort;
+using Cchbc.Validation;
 
 
 namespace Cchbc.ConsoleClient
 {
+	public sealed class ConsoleDialog : ModalDialog
+	{
+		public override Task ShowAsync(string message, DialogType? type = null)
+		{
+			return Task.FromResult(true);
+			//throw new NotImplementedException();
+		}
+	}
+
+	public sealed class Login : IDbObject
+	{
+		public long Id { get; set; }
+		public string Name { get; }
+		public string Password { get; }
+		public DateTime CreatedAt { get; }
+		public bool IsSystem { get; set; }
+
+		public Login(long id, string name, string password, DateTime createdAt, bool isSystem)
+		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (password == null) throw new ArgumentNullException(nameof(password));
+
+			this.Id = id;
+			this.Name = name;
+			this.Password = password;
+			this.CreatedAt = createdAt;
+			this.IsSystem = isSystem;
+		}
+	}
+
+	public sealed class LoginViewModel : ViewModel<Login>
+	{
+		public string Name { get; }
+
+		private string _password = string.Empty;
+		public string Password
+		{
+			get { return _password; }
+			set { this.SetField(ref _password, value); }
+		}
+
+		public string CreatedAt { get; }
+
+		private bool _isSystem;
+		public bool IsSystem
+		{
+			get { return _isSystem; }
+			set { this.SetField(ref _isSystem, value); }
+		}
+
+		public LoginViewModel(Login login) : base(login)
+		{
+			if (login == null) throw new ArgumentNullException(nameof(login));
+
+			this.Name = login.Name;
+			this.Password = login.Password;
+			this.CreatedAt = login.CreatedAt.ToString(@"f");
+			this.IsSystem = login.IsSystem;
+		}
+	}
+
+	public sealed class LoginAdapter : IModifiableAdapter<Login>
+	{
+		public void Insert(Login item)
+		{
+			if (item == null) throw new ArgumentNullException(nameof(item));
+
+			//throw new NotImplementedException();
+		}
+
+		public void Update(Login item)
+		{
+			if (item == null) throw new ArgumentNullException(nameof(item));
+
+			//throw new NotImplementedException();
+		}
+
+		public void Delete(Login item)
+		{
+			if (item == null) throw new ArgumentNullException(nameof(item));
+
+			//throw new NotImplementedException();
+		}
+
+		public List<Login> GetAll()
+		{
+			//throw new NotImplementedException();
+			return new List<Login>();
+		}
+	}
+
+	public sealed class LoginModule : Module<Login, LoginViewModel>
+	{
+		public LoginAdapter Adapter { get; }
+
+		public LoginModule(LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher, FilterOption<LoginViewModel>[] filterOptions = null)
+			: base(adapter, sorter, searcher, filterOptions)
+		{
+			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
+
+			this.Adapter = adapter;
+		}
+
+		public override ValidationResult[] ValidateProperties(LoginViewModel viewModel, Feature feature)
+		{
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			feature.AddStep(nameof(ValidateProperties));
+			return Enumerable.Empty<ValidationResult>().ToArray();
+		}
+
+		public override Task<PermissionResult> CanInsertAsync(LoginViewModel viewModel, Feature feature)
+		{
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			feature.AddStep(nameof(CanInsertAsync));
+			return PermissionResult.Allow;
+		}
+
+		public override Task<PermissionResult> CanUpdateAsync(LoginViewModel viewModel, Feature feature)
+		{
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			feature.AddStep(nameof(CanUpdateAsync));
+			return PermissionResult.Allow;
+		}
+
+		public override Task<PermissionResult> CanDeleteAsync(LoginViewModel viewModel, Feature feature)
+		{
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			feature.AddStep(nameof(CanDeleteAsync));
+			return PermissionResult.Allow;
+		}
+
+		public Task<PermissionResult> CanChangePassword(LoginViewModel viewModel, Feature feature)
+		{
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			feature.AddStep(nameof(CanChangePassword));
+			return PermissionResult.Allow;
+		}
+
+
+	}
+
+	public sealed class LoginsViewModel : ViewModel
+	{
+		private Core Core { get; }
+		private FeatureManager FeatureManager => this.Core.FeatureManager;
+		private LoginModule Module { get; }
+		private string Context { get; } = nameof(LoginsViewModel);
+
+		public ObservableCollection<LoginViewModel> Logins { get; } = new ObservableCollection<LoginViewModel>();
+		public SortOption<LoginViewModel>[] SortOptions => this.Module.Sorter.Options;
+		public SearchOption<LoginViewModel>[] SearchOptions => this.Module.Searcher.Options;
+
+		private string _textSearch = string.Empty;
+		public string TextSearch
+		{
+			get { return _textSearch; }
+			set
+			{
+				this.SetField(ref _textSearch, value);
+				this.ApplySearch();
+			}
+		}
+
+		private SearchOption<LoginViewModel> _searchOption;
+		public SearchOption<LoginViewModel> SearchOption
+		{
+			get { return _searchOption; }
+			set
+			{
+				this.SetField(ref _searchOption, value);
+				this.ApplySearch();
+			}
+		}
+
+		private SortOption<LoginViewModel> _sortOption;
+		public SortOption<LoginViewModel> SortOption
+		{
+			get { return _sortOption; }
+			set
+			{
+				this.SetField(ref _sortOption, value);
+				this.ApplySort();
+			}
+		}
+
+		public LoginsViewModel(Core core)
+		{
+			if (core == null) throw new ArgumentNullException(nameof(core));
+
+			this.Core = core;
+			this.Module = new LoginModule(new LoginAdapter(), new Sorter<LoginViewModel>(new[]
+			{
+				new SortOption<LoginViewModel>(string.Empty, (x, y) => 0)
+			}),
+			new Searcher<LoginViewModel>((v, s) => false));
+
+			this.Module.OperationStart += (sender, args) =>
+			{
+				this.Core.FeatureManager.Start(args.Feature);
+			};
+			this.Module.OperationEnd += (sender, args) =>
+			{
+				this.Core.FeatureManager.Stop(args.Feature);
+			};
+			this.Module.OperationError += (sender, args) =>
+			{
+				this.Core.FeatureManager.LogException(args.Feature, args.Exception);
+			};
+
+			this.Module.ItemInserted += ModuleOnItemInserted;
+			this.Module.ItemUpdated += ModuleOnItemUpdated;
+			this.Module.ItemDeleted += ModuleOnItemDeleted;
+		}
+
+		public void LoadData()
+		{
+			var feature = Feature.StartNew(this.Context, nameof(LoadData));
+
+			var models = this.Module.Adapter.GetAll();
+			var viewModels = new LoginViewModel[models.Count];
+			var index = 0;
+			foreach (var model in models)
+			{
+				viewModels[index++] = new LoginViewModel(model);
+			}
+			this.DisplayLogins(viewModels, feature);
+
+			this.FeatureManager.Stop(feature);
+		}
+
+		public Task AddAsync(LoginViewModel viewModel, ModalDialog dialog)
+		{
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+
+			return this.Module.InsertAsync(viewModel, dialog, new Feature(this.Context, nameof(AddAsync), string.Empty));
+		}
+
+		public Task UpdateAsync(LoginViewModel viewModel, ModalDialog dialog)
+		{
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+
+			return this.Module.UpdateAsync(viewModel, dialog, new Feature(this.Context, nameof(UpdateAsync), string.Empty));
+		}
+
+		public Task ChangePasswordAsync(LoginViewModel viewModel, ModalDialog dialog, string newPassword)
+		{
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+			if (newPassword == null) throw new ArgumentNullException(nameof(newPassword));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+
+			var copyViewModel = new LoginViewModel(viewModel.Model) { Password = newPassword };
+
+			return this.Module.ExecuteAsync(copyViewModel, dialog, new Feature(this.Context, nameof(ChangePasswordAsync), string.Empty), this.Module.CanChangePassword, this.ChangePasswordValidated);
+		}
+
+		public Task RemoveAsync(LoginViewModel viewModel, ModalDialog dialog)
+		{
+			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+
+			return this.Module.DeleteAsync(viewModel, dialog, new Feature(this.Context, nameof(RemoveAsync), string.Empty));
+		}
+
+		private void ModuleOnItemInserted(object sender, ObjectEventArgs<LoginViewModel> args)
+		{
+			this.Module.Insert(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
+		}
+
+		private void ModuleOnItemUpdated(object sender, ObjectEventArgs<LoginViewModel> args)
+		{
+			this.Module.Update(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
+		}
+
+		private void ModuleOnItemDeleted(object sender, ObjectEventArgs<LoginViewModel> args)
+		{
+			this.Module.Delete(this.Logins, args.ViewModel);
+		}
+
+		private void DisplayLogins(LoginViewModel[] viewModels, Feature feature)
+		{
+			feature.AddStep(nameof(DisplayLogins));
+
+			this.Module.SetupViewModels(viewModels);
+			this.ApplySearch();
+		}
+
+		private void ApplySearch()
+		{
+			var viewModels = this.Module.Search(this.TextSearch, this.SearchOption);
+
+			this.Logins.Clear();
+			foreach (var viewModel in viewModels)
+			{
+				this.Logins.Add(viewModel);
+			}
+		}
+
+		private void ApplySort()
+		{
+			var index = 0;
+			foreach (var viewModel in this.Module.Sort(this.Logins, this.SortOption))
+			{
+				this.Logins[index++] = viewModel;
+			}
+		}
+
+		private void ChangePasswordValidated(LoginViewModel copyViewModel, FeatureEventArgs args)
+		{
+			var viewModel = this.Module.FindViewModel(copyViewModel.Model);
+
+			viewModel.Password = copyViewModel.Password;
+
+			this.Module.UpdateValidated(viewModel, args);
+		}
+	}
+
 	public sealed class DelegateDataReader : IFieldDataReader
 	{
 		private readonly DbDataReader _r;
@@ -319,8 +651,8 @@ namespace Cchbc.ConsoleClient
 				if (!project.IsModifiable(entity.Table))
 				{
 					buffer.AppendLine(project.CreateTableViewModel(entity));
-					
-                }
+
+				}
 				continue;
 
 				//
@@ -347,10 +679,8 @@ namespace Cchbc.ConsoleClient
 			//Console.WriteLine(buffer.ToString());
 			File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
 
-			var prj = new ClrProject();
-			prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
-
-			return;
+			//var prj = new ClrProject();
+			//prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
 
 
 
@@ -368,85 +698,69 @@ namespace Cchbc.ConsoleClient
 
 
 
-			//var connectionString = @"Server=cwpfsa04;Database=Cchbc;User Id=dev;Password='dev user password'";
+
+			var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
+
+			using (var cn = new SQLiteConnection(connectionString))
+			{
+				cn.Open();
+
+				var core = Core.Current;
+
+				// Set logger
+				core.Logger = new ConsoleLogger();
+
+				// Create Read query helper
+				var sqlReadDataQueryHelper = new SqlReadQueryHelper(cn);
+				// Create Modify query helper
+				var sqlModifyDataQueryHelper = new SqlModifyQueryHelper(sqlReadDataQueryHelper, cn);
+				// Create General query helper
+				var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
+				core.QueryHelper = queryHelper;
+
+				var featureManager = new FeatureManager { InspectFeature = InspectFeature() };
+				core.FeatureManager = featureManager;
+				var manager = new DbFeaturesManager(new DbFeaturesAdapter(queryHelper));
+				manager.CreateSchema();
+				core.FeatureManager.Initialize(core.Logger, manager);
+				core.FeatureManager.Load();
+				core.FeatureManager.StartDbWriters();
+
+				// Register helpers
+				core.DataCache = new DataCache();
+				var cache = core.DataCache;
+				cache.AddHelper(new BrandHelper());
+				cache.AddHelper(new FlavorHelper());
+				cache.AddHelper(new ArticleHelper());
 
 
-			//using (var cn = new SQLiteConnection(connectionString))
-			//{
-			//	cn.Open();
+				try
+				{
+					File.WriteAllText(@"C:\temp\diagnostics.txt", string.Empty);
 
-			//	var core = Core.Current;
+					var viewModel = new LoginsViewModel(core);
+					viewModel.LoadData();
 
-			//	// Set logger
-			//	core.Logger = new ConsoleLogger();
+					var v = new LoginViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
+					var dialog = new ConsoleDialog();
+					viewModel.AddAsync(v, dialog).Wait();
+					viewModel.AddAsync(v, dialog).Wait();
+					viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hack").Wait();
+					viewModel.AddAsync(v, dialog).Wait();
+					viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hackV2").Wait();
 
-			//	// Create Read query helper
-			//	var sqlReadDataQueryHelper = new SqlReadQueryHelper(cn);
-			//	// Create Modify query helper
-			//	var sqlModifyDataQueryHelper = new SqlModifyQueryHelper(sqlReadDataQueryHelper, cn);
-			//	// Create General query helper
-			//	var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
-			//	core.QueryHelper = queryHelper;
+					foreach (var login in viewModel.Logins)
+					{
+						Console.WriteLine(login.Name + " " + v.Password);
+					}
+				}
+				catch (Exception e)
+				{
+					Console.WriteLine(e);
+				}
 
-			//	var featureManager = new FeatureManager { InspectFeature = InspectFeature() };
-			//	core.FeatureManager = featureManager;
-			//	core.FeatureManager.Initialize(core.Logger, new DbFeaturesManager(new DbFeaturesAdapter(queryHelper)));
-			//	core.FeatureManager.LoadAsync().Wait();
-			//	core.FeatureManager.StartDbWriters();
-
-			//	var localizationManager = new LocalizationManager();
-			//	core.LocalizationManager = localizationManager;
-
-			//	// Register helpers
-			//	core.DataCache = new DataCache();
-			//	var cache = core.DataCache;
-			//	cache.AddHelper(new BrandHelper());
-			//	cache.AddHelper(new FlavorHelper());
-			//	cache.AddHelper(new ArticleHelper());
-			//	cache.AddHelper(new OrderTypeHelper());
-			//	cache.AddHelper(new VendorHelper());
-			//	cache.AddHelper(new WholesalerHelper());
-			//	cache.AddHelper(new OrderNoteTypeHelper());
-
-			//	// Load helpers
-			//	var brandHelper = cache.GetHelper<Brand>();
-			//	brandHelper.LoadAsync(new BrandAdapter(sqlReadDataQueryHelper)).Wait();
-			//	var flavorHelper = cache.GetHelper<Flavor>();
-			//	flavorHelper.LoadAsync(new FlavorAdapter(sqlReadDataQueryHelper)).Wait();
-			//	var articleHelper = cache.GetHelper<Article>();
-			//	articleHelper.LoadAsync(new ArticleAdapter(sqlReadDataQueryHelper, brandHelper.Items, flavorHelper.Items)).Wait();
-
-			//	cache.GetHelper<OrderType>().LoadAsync(new OrderTypeAdapter());
-			//	cache.GetHelper<Vendor>().LoadAsync(new VendorAdapter());
-			//	cache.GetHelper<Wholesaler>().LoadAsync(new WholesalerAdapter());
-			//	cache.GetHelper<OrderNoteType>().LoadAsync(new OrderNoteTypeAdapter());
-
-			//	localizationManager.LoadAsync();
-
-			//	var viewModel = new ArticlesViewModel(core);
-			//	try
-			//	{
-			//		//for (var i = 0; i < 5; i++)
-			//		//{
-			//		//	viewModel.LoadDataAsync().Wait();
-			//		//}
-
-			//		var manager = new OrderManager(core, new Activity { Id = 1, Outlet = new Outlet { Id = 1, Name = @"Billa" } });
-
-			//		for (int i = 0; i < 7; i++)
-			//		{
-			//			manager.LoadDataAsync().Wait();
-			//			var items = manager.Assortments;
-			//			Console.WriteLine(items.Count);
-			//		}
-			//	}
-			//	catch (Exception e)
-			//	{
-			//		Console.WriteLine(e);
-			//	}
-
-			//	featureManager.StopDbWriters();
-			//}
+				featureManager.StopDbWriters();
+			}
 
 
 
@@ -516,26 +830,29 @@ namespace Cchbc.ConsoleClient
 			{
 				var buffer = new StringBuilder();
 
-				buffer.Append(f.Context);
-				buffer.Append('\t');
-				buffer.Append(f.Details);
-				buffer.Append('\t');
-				buffer.AppendLine(f.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture));
+				buffer.Append(f.Context.PadRight(20));
+				buffer.Append(' ');
+				buffer.Append(f.Details.PadRight(12));
+				buffer.Append(' ');
+				buffer.AppendLine(f.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture).PadRight(6));
 
 				if (f.Steps.Any())
 				{
-					var max = f.Steps.Select(s => s.TimeSpent.TotalMilliseconds).Max();
-					var scale = max + (max / 2);
+					var totalMilliseconds = f.TimeSpent.TotalMilliseconds;
+					var remaingTime = totalMilliseconds - (f.Steps.Select(v => v.TimeSpent.TotalMilliseconds).Sum());
 
-					foreach (var s in f.Steps)
+					foreach (var s in f.Steps.Concat(new FeatureEntryStep[] { new FeatureEntryStep(@"Other", TimeSpan.FromMilliseconds(remaingTime)) }))
 					{
-						buffer.Append("  ");
-						buffer.Append(s.Name.PadRight(14));
-						buffer.Append("  ");
-						buffer.Append(s.Details);
 						buffer.Append('\t');
+
+						var value = s.Name.Replace(@"Async", string.Empty);
+						value = Regex.Replace(value, @"[A-Z]", m => @" " + m.Value).TrimStart();
+						buffer.Append(value.PadRight(24));
+						buffer.Append(' ');
+						buffer.Append(s.Details.PadRight(4));
+						buffer.Append(' ');
 						var milliseconds = s.TimeSpent.TotalMilliseconds;
-						var tmp = (milliseconds / scale) * 100;
+						var tmp = (milliseconds / totalMilliseconds) * 100;
 						var graph = new string('-', (int)tmp);
 
 						buffer.Append(milliseconds.ToString(CultureInfo.InvariantCulture).PadRight(8));
@@ -546,11 +863,12 @@ namespace Cchbc.ConsoleClient
 				}
 
 
+				buffer.AppendLine();
 				var output = buffer.ToString();
-				output = output.Replace(@"Async", "");
-				output = Regex.Replace(output, @"[A-Z]", m => @" " + m.Value).TrimStart();
 				Debug.WriteLine(output);
 				Console.WriteLine(output);
+
+				File.AppendAllText(@"C:\temp\diagnostics.txt", output);
 			};
 		}
 	}
