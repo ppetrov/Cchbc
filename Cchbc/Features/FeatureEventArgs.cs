@@ -5,7 +5,7 @@ namespace Cchbc.Features
 	public sealed class FeatureEventArgs : EventArgs
 	{
 		public Feature Feature { get; }
-		public Exception Exception { get; }
+		public Exception Exception { get; private set; }
 
 		public FeatureEventArgs(Feature feature)
 		{
@@ -15,20 +15,13 @@ namespace Cchbc.Features
 			this.Exception = null;
 		}
 
-		private FeatureEventArgs(Feature feature, Exception exception)
-		{
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-			if (exception == null) throw new ArgumentNullException(nameof(exception));
-
-			this.Feature = feature;
-			this.Exception = exception;
-		}
-
 		public FeatureEventArgs WithException(Exception exception)
 		{
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			return new FeatureEventArgs(this.Feature, exception);
+			this.Exception = exception;
+
+			return this;
 		}
 	}
 }

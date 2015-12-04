@@ -128,8 +128,13 @@ namespace Cchbc.AppBuilder
 				if (project.IsHidden(entity.Table))
 				{
 					continue;
-				}
+				}				
 				SaveClassViewModel(directoryPath, project, entity, namespaceName);
+
+				if (project.HasColumnToInverseTable(entity))
+				{
+					continue;
+				}
 				SaveTableViewModel(directoryPath, project, entity, namespaceName);
 			}
 		}
@@ -152,7 +157,7 @@ namespace Cchbc.AppBuilder
 			var sourceCode = project.CreateTableViewModel(entity);
 
 			var buffer = new StringBuilder(sourceCode.Length);
-			AddUsingsForTableViewModels(namespaceName, buffer);
+			AddUsingsForTableViewModels(namespaceName, buffer, !project.IsModifiable(entity.Table));
 			AddNamespace(buffer, namespaceName, ViewModels, sourceCode);
 
 			SaveToFile(directoryPath, className, buffer);
@@ -243,6 +248,7 @@ namespace Cchbc.AppBuilder
 			else
 			{
 				buffer.AppendLine(@"using System;");
+				buffer.AppendLine(@"using System.Collections.Generic;");
 				buffer.AppendLine(@"using System.Threading.Tasks;");
 				buffer.AppendLine(@"using Cchbc;");
 				buffer.AppendLine(@"using Cchbc.Features;");
@@ -269,19 +275,38 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
-		private static void AddUsingsForTableViewModels(string namespaceName, StringBuilder buffer)
+		private static void AddUsingsForTableViewModels(string namespaceName, StringBuilder buffer, bool readOnly)
 		{
-			buffer.AppendLine(@"using System;");
-			buffer.AppendLine(@"using System.Collections.ObjectModel;");
-			buffer.AppendLine(@"using Cchbc;");
-			buffer.AppendLine(@"using Cchbc.Features;");
-			buffer.AppendLine(@"using Cchbc.Objects;");
-			buffer.AppendLine(@"using Cchbc.Search;");
-			buffer.AppendLine(@"using Cchbc.Sort;");
-			buffer.AppendFormat(@"using {0}.Modules;", namespaceName);
-			buffer.AppendLine();
-			buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
-			buffer.AppendLine();
+			if (readOnly)
+			{
+				buffer.AppendLine(@"using System;");
+				buffer.AppendLine(@"using System.Collections.ObjectModel;");
+				buffer.AppendLine(@"using Cchbc;");
+				buffer.AppendLine(@"using Cchbc.Features;");
+				buffer.AppendLine(@"using Cchbc.Objects;");
+				buffer.AppendLine(@"using Cchbc.Search;");
+				buffer.AppendLine(@"using Cchbc.Sort;");
+				buffer.AppendFormat(@"using {0}.Modules;", namespaceName);
+				buffer.AppendLine();
+				buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
+				buffer.AppendLine();
+			}
+			else
+			{
+				buffer.AppendLine(@"using System;");
+				buffer.AppendLine(@"using System.Collections.ObjectModel;");
+				buffer.AppendLine(@"using System.Threading.Tasks;");
+				buffer.AppendLine(@"using Cchbc;");
+				buffer.AppendLine(@"using Cchbc.Dialog;");
+				buffer.AppendLine(@"using Cchbc.Features;");
+				buffer.AppendLine(@"using Cchbc.Objects;");
+				buffer.AppendLine(@"using Cchbc.Search;");
+				buffer.AppendLine(@"using Cchbc.Sort;");
+				buffer.AppendFormat(@"using {0}.Adapters;", namespaceName);
+				buffer.AppendLine();
+				buffer.AppendFormat(@"using {0}.Modules;", namespaceName);
+				buffer.AppendLine();
+			}
 
 			buffer.AppendLine();
 		}

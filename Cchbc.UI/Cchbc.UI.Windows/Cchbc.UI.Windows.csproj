@@ -119,7 +119,7 @@
     </Compile>
     <Compile Include="Login.cs" />
     <Compile Include="LoginAdapter.cs" />
-    <Compile Include="LoginModule.cs" />
+    <Compile Include="LoginsModule.cs" />
     <Compile Include="CommentsScreen.xaml.cs">
       <DependentUpon>CommentsScreen.xaml</DependentUpon>
     </Compile>

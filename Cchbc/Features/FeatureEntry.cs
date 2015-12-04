@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 
 namespace Cchbc.Features
 {
@@ -10,21 +9,9 @@ namespace Cchbc.Features
 		public string Details { get; }
 		public TimeSpan TimeSpent { get; }
 		public FeatureEntryStep[] Steps { get; }
+		public ExceptionEntry ExceptionEntry { get; }
 
-		public FeatureEntry(string context, string name, string details, TimeSpan timeSpent)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (name == null) throw new ArgumentNullException(nameof(name));
-			if (details == null) throw new ArgumentNullException(nameof(details));
-
-			this.Context = context;
-			this.Name = name;
-			this.Details = details;
-			this.TimeSpent = timeSpent;
-			this.Steps = Enumerable.Empty<FeatureEntryStep>().ToArray();
-		}
-
-		public FeatureEntry(string context, string name, string details, TimeSpan timeSpent, FeatureEntryStep[] entrySteps)
+		public FeatureEntry(string context, string name, string details, TimeSpan timeSpent, FeatureEntryStep[] entrySteps, ExceptionEntry exceptionEntry = null)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
@@ -36,6 +23,7 @@ namespace Cchbc.Features
 			this.Details = details;
 			this.TimeSpent = timeSpent;
 			this.Steps = entrySteps;
+			this.ExceptionEntry = exceptionEntry;
 		}
 	}
 }

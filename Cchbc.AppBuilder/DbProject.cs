@@ -228,10 +228,10 @@ namespace Cchbc.AppBuilder
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 			
-			return EntityClass.GenerateClassModule(entity, !this.IsModifiable(entity.Table));
+			return EntityClass.GenerateClassModule(entity, !this.IsModifiable(entity.Table), this.HasColumnToInverseTable(entity));
 		}
 
-		private bool HasColumnToInverseTable(Entity entity)
+		public bool HasColumnToInverseTable(Entity entity)
 		{
 			var entityTable = entity.Table;
 

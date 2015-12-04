@@ -26,6 +26,7 @@ namespace Cchbc.Features.Db
 		{
 			new QueryParameter(@"@TIMESPENT", 0M),
 			new QueryParameter(@"@DETAILS", string.Empty),
+			new QueryParameter(@"@CREATEDAT", DateTime.MinValue),
 			new QueryParameter(@"@FEATURE", 0L),
 		};
 
@@ -33,6 +34,7 @@ namespace Cchbc.Features.Db
 		{
 			new QueryParameter(@"@MESSAGE", string.Empty),
 			new QueryParameter(@"@STACKTRACE", string.Empty),
+			new QueryParameter(@"@CREATEDAT", DateTime.MinValue),
 			new QueryParameter(@"@FEATURE", 0L),
 		};
 
@@ -84,6 +86,7 @@ CREATE TABLE [FEATURE_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
 	[Details] nvarchar(254) NULL, 
+	[CreatedAt] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Id])
 		REFERENCES [FEATURES] ([Id])
@@ -95,6 +98,7 @@ CREATE TABLE [EXCEPTION_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[Message] nvarchar(254) NOT NULL, 
 	[StackTrace] nvarchar(254) NOT NULL, 
+	[CreatedAt] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Id])
 		REFERENCES [FEATURES] ([Id])
@@ -128,10 +132,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 				this.QueryHelper.Execute(@"DROP TABLE FEATURE_STEPS");
 				this.QueryHelper.Execute(@"DROP TABLE FEATURE_CONTEXTS");
 			}
-			catch (Exception e)
-			{
-				
-			}
+			catch { }
 		}
 
 		public List<DbContext> GetContexts()
@@ -190,10 +191,11 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			// Set parameters values
 			_insertFeatureEntrySqlParams[0].Value = Convert.ToDecimal(timeSpent.TotalMilliseconds);
 			_insertFeatureEntrySqlParams[1].Value = details;
-			_insertFeatureEntrySqlParams[2].Value = feature.Id;
+			_insertFeatureEntrySqlParams[2].Value = DateTime.Now;
+			_insertFeatureEntrySqlParams[3].Value = feature.Id;
 
 			// Insert the record
-			this.QueryHelper.Execute(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @FEATURE)", _insertFeatureEntrySqlParams);
+			this.QueryHelper.Execute(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATEDAT, @FEATURE)", _insertFeatureEntrySqlParams);
 
 			// Get new Id back
 			return new DbFeatureEntry(this.QueryHelper.GetNewId(), feature, details, timeSpent);
@@ -221,10 +223,11 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			// Set parameters values
 			_insertExcetionEntrySqlParams[0].Value = exceptionEntry.Exception.Message;
 			_insertExcetionEntrySqlParams[1].Value = exceptionEntry.Exception.StackTrace;
-			_insertExcetionEntrySqlParams[2].Value = feature.Id;
+			_insertExcetionEntrySqlParams[2].Value = DateTime.Now;
+			_insertExcetionEntrySqlParams[3].Value = feature.Id;
 
 			// Insert the record
-			this.QueryHelper.Execute(@"INSERT INTO EXCEPTION_ENTRIES(MESSAGE, STACKTRACE, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @FEATURE)", _insertExcetionEntrySqlParams);
+			this.QueryHelper.Execute(@"INSERT INTO EXCEPTION_ENTRIES(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE)", _insertExcetionEntrySqlParams);
 		}
 
 		public void InsertStepEntry(DbFeatureEntry featureEntry, DbFeatureStep step, FeatureEntryStep entryStep)

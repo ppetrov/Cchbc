@@ -17,19 +17,15 @@ namespace Cchbc.Features
 		private BlockingCollection<ExceptionEntry> _exceptions;
 
 		public Action<FeatureEntry> InspectFeature { get; set; }
-		public Action<ExceptionEntry> InspectException { get; set; }
 
-		public void Initialize(ILogger logger, DbFeaturesManager dbFeaturesManager)
+		public void Load(ILogger logger, DbFeaturesManager dbFeaturesManager)
 		{
 			if (logger == null) throw new ArgumentNullException(nameof(logger));
 			if (dbFeaturesManager == null) throw new ArgumentNullException(nameof(dbFeaturesManager));
 
 			_logger = logger;
 			_dbFeaturesManager = dbFeaturesManager;
-		}
 
-		public void Load()
-		{
 			_dbFeaturesManager.Load();
 		}
 
@@ -56,7 +52,6 @@ namespace Cchbc.Features
 				{
 					try
 					{
-						this.InspectException?.Invoke(entry);
 						_dbFeaturesManager.Save(entry);
 					}
 					catch (Exception ex) { _logger.Error(ex.ToString()); }
@@ -85,18 +80,30 @@ namespace Cchbc.Features
 			feature.StartMeasure();
 		}
 
-		public void Stop(Feature feature)
+		public void Stop(Feature feature, Exception exception = null)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			// Ignore None(empty) features
+			// Exceptions have higher priority and will be logged even for None features
+			ExceptionEntry exceptionEntry = null;
+			if (exception != null)
+			{
+				exceptionEntry = new ExceptionEntry(feature.Context, feature.Name, exception);
+				_exceptions.TryAdd(exceptionEntry);
+			}
+
+			// Ignore None(empty) features without exception
 			if (feature == Feature.None)
 			{
 				return;
 			}
 
+			this.Finish(feature, exceptionEntry);
+		}
+
+		private void Finish(Feature feature, ExceptionEntry exceptionEntry)
+		{
 			feature.FinishMeasure();
-			
 
 			var steps = Enumerable.Empty<FeatureEntryStep>().ToArray();
 
@@ -111,15 +118,7 @@ namespace Cchbc.Features
 				}
 			}
 
-			_features.TryAdd(new FeatureEntry(feature.Context, feature.Name, feature.Details, feature.TimeSpent, steps));
-		}
-
-		public void LogException(Feature feature, Exception exception)
-		{
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-			if (exception == null) throw new ArgumentNullException(nameof(exception));
-
-			_exceptions.TryAdd(new ExceptionEntry(feature.Context, feature.Name, exception));
+			_features.TryAdd(new FeatureEntry(feature.Context, feature.Name, feature.Details, feature.TimeSpent, steps, exceptionEntry));
 		}
 	}
 }

@@ -119,7 +119,7 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class LoginModule : Module<Login, LoginViewModel>
 	{
-		public LoginAdapter Adapter { get; }
+		private LoginAdapter Adapter { get; }
 
 		public LoginModule(LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher, FilterOption<LoginViewModel>[] filterOptions = null)
 			: base(adapter, sorter, searcher, filterOptions)
@@ -127,6 +127,11 @@ namespace Cchbc.ConsoleClient
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
 			this.Adapter = adapter;
+		}
+
+		public List<Login> GetAll()
+		{
+			return this.Adapter.GetAll();
 		}
 
 		public override ValidationResult[] ValidateProperties(LoginViewModel viewModel, Feature feature)
@@ -173,8 +178,6 @@ namespace Cchbc.ConsoleClient
 			feature.AddStep(nameof(CanChangePassword));
 			return PermissionResult.Allow;
 		}
-
-
 	}
 
 	public sealed class LoginsViewModel : ViewModel
@@ -238,11 +241,7 @@ namespace Cchbc.ConsoleClient
 			};
 			this.Module.OperationEnd += (sender, args) =>
 			{
-				this.Core.FeatureManager.Stop(args.Feature);
-			};
-			this.Module.OperationError += (sender, args) =>
-			{
-				this.Core.FeatureManager.LogException(args.Feature, args.Exception);
+				this.Core.FeatureManager.Stop(args.Feature, args.Exception);
 			};
 
 			this.Module.ItemInserted += ModuleOnItemInserted;
@@ -254,7 +253,7 @@ namespace Cchbc.ConsoleClient
 		{
 			var feature = Feature.StartNew(this.Context, nameof(LoadData));
 
-			var models = this.Module.Adapter.GetAll();
+			var models = this.Module.GetAll();
 			var viewModels = new LoginViewModel[models.Count];
 			var index = 0;
 			foreach (var model in models)
@@ -348,6 +347,7 @@ namespace Cchbc.ConsoleClient
 		{
 			var viewModel = this.Module.FindViewModel(copyViewModel.Model);
 
+			viewModel = null;
 			viewModel.Password = copyViewModel.Password;
 
 			this.Module.UpdateValidated(viewModel, args);
@@ -679,10 +679,10 @@ namespace Cchbc.ConsoleClient
 			//Console.WriteLine(buffer.ToString());
 			File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
 
-			//var prj = new ClrProject();
-			//prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
+			var prj = new ClrProject();
+			prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
 
-
+			return;
 
 
 
@@ -705,7 +705,7 @@ namespace Cchbc.ConsoleClient
 			{
 				cn.Open();
 
-				var core = Core.Current;
+				var core = new Core();
 
 				// Set logger
 				core.Logger = new ConsoleLogger();
@@ -718,12 +718,11 @@ namespace Cchbc.ConsoleClient
 				var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
 				core.QueryHelper = queryHelper;
 
-				var featureManager = new FeatureManager { InspectFeature = InspectFeature() };
+				var featureManager = new FeatureManager { InspectFeature = InspectFeature };
 				core.FeatureManager = featureManager;
 				var manager = new DbFeaturesManager(new DbFeaturesAdapter(queryHelper));
 				manager.CreateSchema();
-				core.FeatureManager.Initialize(core.Logger, manager);
-				core.FeatureManager.Load();
+				core.FeatureManager.Load(core.Logger, manager);
 				core.FeatureManager.StartDbWriters();
 
 				// Register helpers
@@ -732,7 +731,6 @@ namespace Cchbc.ConsoleClient
 				cache.AddHelper(new BrandHelper());
 				cache.AddHelper(new FlavorHelper());
 				cache.AddHelper(new ArticleHelper());
-
 
 				try
 				{
@@ -761,40 +759,6 @@ namespace Cchbc.ConsoleClient
 
 				featureManager.StopDbWriters();
 			}
-
-
-
-			//using (var featureManager = new FeatureManager(entries =>
-			//{
-			//	foreach (var entry in entries)
-			//	{
-			//		var context = entry.Context;
-			//		Console.WriteLine(context);
-			//		Console.WriteLine(entry.Name + " " + entry.TimeSpent.TotalMilliseconds);
-			//		foreach (var step in entry.Steps)
-			//		{
-			//			Console.WriteLine("\t" + step.Name + ":" + step.TimeSpent.TotalMilliseconds);
-			//		}
-			//		Console.WriteLine(@"---");
-			//	}
-			//}))
-			//{
-			//	using (var cn = new SQLiteConnection(connectionString))
-			//	{
-			//		cn.Open();
-
-			//		var sqlReadDataQueryHelper = new SqlReadDataQueryHelper(cn);
-			//		var sqlModifyDataQueryHelper = new SqlModifyDataQueryHelper(sqlReadDataQueryHelper, cn);
-			//		var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
-
-			//		var core = new Core(new ConsoleLogger(), featureManager, queryHelper);
-			//		var viewModel = new ArticlesViewModel(core);
-			//		viewModel.LoadDataAsync().Wait();
-			//		viewModel.LoadDataAsync().Wait();
-
-			//		Console.WriteLine(@"Done");
-			//	}
-			//}
 		}
 
 		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadQueryHelper queryHelper)
@@ -824,52 +788,54 @@ namespace Cchbc.ConsoleClient
 			return articleHelper;
 		}
 
-		private static Action<FeatureEntry> InspectFeature()
+		private static void InspectFeature(FeatureEntry f)
 		{
-			return f =>
+			var buffer = new StringBuilder();
+
+			var ctxName = f.Context + "(" + f.Name + ")";
+			if (f.ExceptionEntry != null)
 			{
-				var buffer = new StringBuilder();
+				ctxName = @"*** " + ctxName;
+			}
+			buffer.Append(ctxName.PadRight(25));
+			buffer.Append(' ');
+			buffer.Append(f.Details.PadRight(12));
+			buffer.Append(' ');
+			buffer.AppendLine(f.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture).PadRight(6));
 
-				buffer.Append(f.Context.PadRight(20));
-				buffer.Append(' ');
-				buffer.Append(f.Details.PadRight(12));
-				buffer.Append(' ');
-				buffer.AppendLine(f.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture).PadRight(6));
+			if (f.Steps.Any())
+			{
+				var totalMilliseconds = f.TimeSpent.TotalMilliseconds;
+				var remaingTime = totalMilliseconds - (f.Steps.Select(v => v.TimeSpent.TotalMilliseconds).Sum());
 
-				if (f.Steps.Any())
+				foreach (var s in f.Steps.Concat(new[] { new FeatureEntryStep(@"Other", TimeSpan.FromMilliseconds(remaingTime)) }))
 				{
-					var totalMilliseconds = f.TimeSpent.TotalMilliseconds;
-					var remaingTime = totalMilliseconds - (f.Steps.Select(v => v.TimeSpent.TotalMilliseconds).Sum());
+					buffer.Append('\t');
 
-					foreach (var s in f.Steps.Concat(new FeatureEntryStep[] { new FeatureEntryStep(@"Other", TimeSpan.FromMilliseconds(remaingTime)) }))
-					{
-						buffer.Append('\t');
+					var value = s.Name.Replace(@"Async", string.Empty);
+					value = Regex.Replace(value, @"[A-Z]", m => @" " + m.Value).TrimStart();
+					buffer.Append(value.PadRight(24));
+					buffer.Append(' ');
+					buffer.Append(s.Details.PadRight(4));
+					buffer.Append(' ');
+					var milliseconds = s.TimeSpent.TotalMilliseconds;
+					var tmp = (milliseconds / totalMilliseconds) * 100;
+					var graph = new string('-', (int)tmp);
 
-						var value = s.Name.Replace(@"Async", string.Empty);
-						value = Regex.Replace(value, @"[A-Z]", m => @" " + m.Value).TrimStart();
-						buffer.Append(value.PadRight(24));
-						buffer.Append(' ');
-						buffer.Append(s.Details.PadRight(4));
-						buffer.Append(' ');
-						var milliseconds = s.TimeSpent.TotalMilliseconds;
-						var tmp = (milliseconds / totalMilliseconds) * 100;
-						var graph = new string('-', (int)tmp);
-
-						buffer.Append(milliseconds.ToString(CultureInfo.InvariantCulture).PadRight(8));
-						buffer.Append(tmp.ToString(@"F2").PadLeft(5));
-						buffer.Append(@"% ");
-						buffer.AppendLine(graph);
-					}
+					buffer.Append(milliseconds.ToString(CultureInfo.InvariantCulture).PadRight(8));
+					buffer.Append(tmp.ToString(@"F2").PadLeft(5));
+					buffer.Append(@"% ");
+					buffer.AppendLine(graph);
 				}
+			}
 
 
-				buffer.AppendLine();
-				var output = buffer.ToString();
-				Debug.WriteLine(output);
-				Console.WriteLine(output);
+			buffer.AppendLine();
+			var output = buffer.ToString();
+			Debug.WriteLine(output);
+			Console.WriteLine(output);
 
-				File.AppendAllText(@"C:\temp\diagnostics.txt", output);
-			};
+			File.AppendAllText(@"C:\temp\diagnostics.txt", output);
 		}
 	}
 
@@ -930,6 +896,7 @@ namespace Cchbc.ConsoleClient
 		public bool IsInfoEnabled { get; }
 		public bool IsWarnEnabled { get; }
 		public bool IsErrorEnabled { get; }
+
 		public void Debug(string message)
 		{
 			Console.WriteLine(@"Debug:" + message);
@@ -951,25 +918,6 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class LogLevel
-	{
-		public static readonly LogLevel Trace = new LogLevel(0, @"Trace");
-		public static readonly LogLevel Info = new LogLevel(1, @"Info");
-		public static readonly LogLevel Warn = new LogLevel(2, @"Warn");
-		public static readonly LogLevel Error = new LogLevel(3, @"Error");
-
-		public int Id { get; private set; }
-		public string Name { get; private set; }
-
-		public LogLevel(int id, string name)
-		{
-			if (id < 0) throw new ArgumentNullException(nameof(name));
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			this.Id = id;
-			this.Name = name;
-		}
-	}
 
 
 

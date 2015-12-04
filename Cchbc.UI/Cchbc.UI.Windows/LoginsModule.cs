@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cchbc.Features;
 using Cchbc.Search;
@@ -7,16 +8,21 @@ using Cchbc.Validation;
 
 namespace Cchbc.UI
 {
-	public sealed class LoginModule : Module<Login, LoginViewModel>
+	public sealed class LoginsModule : Module<Login, LoginViewModel>
 	{
-		public LoginAdapter Adapter { get; }
+		private LoginAdapter Adapter { get; }
 
-		public LoginModule(LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher, FilterOption<LoginViewModel>[] filterOptions = null)
+		public LoginsModule(LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher, FilterOption<LoginViewModel>[] filterOptions = null)
 			: base(adapter, sorter, searcher, filterOptions)
 		{
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
 			this.Adapter = adapter;
+		}
+
+		public List<Login> GetAll()
+		{
+			return this.Adapter.GetAll();
 		}
 
 		public override ValidationResult[] ValidateProperties(LoginViewModel viewModel, Feature feature)

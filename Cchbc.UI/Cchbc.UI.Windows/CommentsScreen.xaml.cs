@@ -10,7 +10,7 @@ namespace Cchbc.UI
 {
 	public sealed partial class CommentsScreen
 	{
-		private readonly LoginsViewModel _viewModel = new LoginsViewModel(Core.Current);
+		private readonly LoginsViewModel _viewModel = new LoginsViewModel(new Core());
 
 		public CommentsScreen()
 		{

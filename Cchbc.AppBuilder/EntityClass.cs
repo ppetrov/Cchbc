@@ -69,9 +69,11 @@ namespace Cchbc.AppBuilder
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 
+			string template;
+
 			if (readOnly)
 			{
-				var template = @"public sealed class {1}ViewModel : ViewModel
+				template = @"public sealed class {1}ViewModel : ViewModel
 {{
 	private Core Core {{ get; }}
 	private FeatureManager FeatureManager => this.Core.FeatureManager;
@@ -188,13 +190,183 @@ namespace Cchbc.AppBuilder
 		}}
 	}}
 }}";
-				return string.Format(template, entity.Class.Name, entity.Table.Name);
+
+			}
+			else
+			{
+				template = @"public sealed class {1}ViewModel : ViewModel
+{{
+	private Core Core {{ get; }}
+	private FeatureManager FeatureManager => this.Core.FeatureManager;
+	private {1}Module Module {{ get; }}
+	private string Context {{ get; }} = nameof({1}ViewModel);
+
+	public ObservableCollection<{0}ViewModel> {1} {{ get; }} = new ObservableCollection<{0}ViewModel>();
+	public SortOption<{0}ViewModel>[] SortOptions => this.Module.Sorter.Options;
+	public SearchOption<{0}ViewModel>[] SearchOptions => this.Module.Searcher.Options;
+
+	private string _textSearch = string.Empty;
+	public string TextSearch
+	{{
+		get {{ return _textSearch; }}
+		set
+		{{
+			this.SetField(ref _textSearch, value);
+
+			var feature = Feature.StartNew(this.Context, nameof(SearchByText));
+			this.SearchByText();
+			this.FeatureManager.Stop(feature);
+		}}
+	}}
+
+	private SearchOption<{0}ViewModel> _searchOption;
+	public SearchOption<{0}ViewModel> SearchOption
+	{{
+		get {{ return _searchOption; }}
+		set
+		{{
+			this.SetField(ref _searchOption, value);
+			var feature = Feature.StartNew(this.Context, nameof(SearchByOption), value?.Name ?? string.Empty);
+			this.SearchByOption();
+			this.FeatureManager.Stop(feature);
+		}}
+	}}
+
+	private SortOption<{0}ViewModel> _sortOption;
+	public SortOption<{0}ViewModel> SortOption
+	{{
+		get {{ return _sortOption; }}
+		set
+		{{
+			this.SetField(ref _sortOption, value);
+			var feature = Feature.StartNew(this.Context, nameof(SortBy));
+			this.SortBy();
+			this.FeatureManager.Stop(feature);
+		}}
+	}}
+
+	public {1}ViewModel(Core core)
+	{{
+		if (core == null) throw new ArgumentNullException(nameof(core));
+
+		this.Core = core;
+		this.Module = new {1}Module(new {0}Adapter(), new Sorter<{0}ViewModel>(new[]
+		{{
+			new SortOption<{0}ViewModel>(string.Empty, (x, y) => 0)
+		}}),
+		new Searcher<{0}ViewModel>((v, s) => false));
+
+		this.Module.OperationStart += (sender, args) =>
+		{{
+			this.Core.FeatureManager.Start(args.Feature);
+		}};
+		this.Module.OperationEnd += (sender, args) =>
+		{{
+			this.Core.FeatureManager.Stop(args.Feature);
+		}};
+		this.Module.OperationError += (sender, args) =>
+		{{
+			this.Core.FeatureManager.Stop(args.Feature, args.Exception);
+		}};
+
+		this.Module.ItemInserted += ModuleOnItemInserted;
+		this.Module.ItemUpdated += ModuleOnItemUpdated;
+		this.Module.ItemDeleted += ModuleOnItemDeleted;
+	}}
+
+	public void LoadData()
+	{{
+		var feature = Feature.StartNew(this.Context, nameof(LoadData));
+
+		var models = this.Module.GetAll();
+		var viewModels = new {0}ViewModel[models.Count];
+		var index = 0;
+		foreach (var model in models)
+		{{
+			viewModels[index++] = new {0}ViewModel(model);
+		}}
+		this.Display{1}(viewModels, feature);
+
+		this.FeatureManager.Stop(feature);
+	}}
+
+	public Task AddAsync({0}ViewModel viewModel, ModalDialog dialog)
+	{{
+		if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+		if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+
+		return this.Module.InsertAsync(viewModel, dialog, new Feature(this.Context, nameof(AddAsync), string.Empty));
+	}}
+
+	public Task UpdateAsync({0}ViewModel viewModel, ModalDialog dialog)
+	{{
+		if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+		if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+
+		return this.Module.UpdateAsync(viewModel, dialog, new Feature(this.Context, nameof(UpdateAsync), string.Empty));
+	}}
+
+	public Task RemoveAsync({0}ViewModel viewModel, ModalDialog dialog)
+	{{
+		if (dialog == null) throw new ArgumentNullException(nameof(dialog));
+		if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+
+		return this.Module.DeleteAsync(viewModel, dialog, new Feature(this.Context, nameof(RemoveAsync), string.Empty));
+	}}
+
+	private void ModuleOnItemInserted(object sender, ObjectEventArgs<{0}ViewModel> args)
+	{{
+		this.Module.Insert(this.{1}, args.ViewModel, this.TextSearch, this.SearchOption);
+	}}
+
+	private void ModuleOnItemUpdated(object sender, ObjectEventArgs<{0}ViewModel> args)
+	{{
+		this.Module.Update(this.{1}, args.ViewModel, this.TextSearch, this.SearchOption);
+	}}
+
+	private void ModuleOnItemDeleted(object sender, ObjectEventArgs<{0}ViewModel> args)
+	{{
+		this.Module.Delete(this.{1}, args.ViewModel);
+	}}
+
+	private void Display{1}({0}ViewModel[] viewModels, Feature feature)
+	{{
+		feature.AddStep(nameof(Display{1}));
+
+		this.Module.SetupViewModels(viewModels);
+		this.ApplySearch();
+	}}
+
+	private void SearchByText() => this.ApplySearch();
+
+	private void SearchByOption() => this.ApplySearch();
+
+	private void ApplySearch()
+	{{
+		var viewModels = this.Module.Search(this.TextSearch, this.SearchOption);
+
+		this.{1}.Clear();
+		foreach (var viewModel in viewModels)
+		{{
+			this.{1}.Add(viewModel);
+		}}
+	}}
+
+	private void SortBy()
+	{{
+		var index = 0;
+		foreach (var viewModel in this.Module.Sort(this.{1}, this.SortOption))
+		{{
+			this.{1}[index++] = viewModel;
+		}}
+	}}
+}}";
 			}
 
-			throw new NotImplementedException(@"Create ViewModel (Table) for Modifiable table");
+			return string.Format(template, entity.Class.Name, entity.Table.Name);
 		}
 
-		public static string GenerateClassModule(Entity entity, bool readOnly)
+		public static string GenerateClassModule(Entity entity, bool readOnly, bool hasColumnToInverseTable)
 		{
 			if (readOnly)
 			{
@@ -236,11 +408,12 @@ namespace Cchbc.AppBuilder
 
 				return buffer.ToString();
 			}
-			else
-			{
-				var template = @"public sealed class {1}Module : Module<{0}, {0}ViewModel>
+
+
+
+			var template = @"public sealed class {1}Module : Module<{0}, {0}ViewModel>
 {{
-	public {0}Adapter Adapter {{ get; }}
+	private {0}Adapter Adapter {{ get; }}
 
 	public {1}Module({0}Adapter adapter, Sorter<{0}ViewModel> sorter, Searcher<{0}ViewModel> searcher, FilterOption<{0}ViewModel>[] filterOptions = null)
 		: base(adapter, sorter, searcher, filterOptions)
@@ -249,21 +422,15 @@ namespace Cchbc.AppBuilder
 
 		this.Adapter = adapter;
 	}}
-
+{2}
 	public override ValidationResult[] ValidateProperties({0}ViewModel viewModel, Feature feature)
 	{{
 		if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 		if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 		feature.AddStep(nameof(ValidateProperties));
-		try
-		{{
-			return new[] {{ ValidationResult.Success }};
-		}}
-		finally
-		{{
-			feature.EndStep();
-		}}
+
+		return new[] {{ ValidationResult.Success }};
 	}}
 
 	public override Task<PermissionResult> CanInsertAsync({0}ViewModel viewModel, Feature feature)
@@ -272,14 +439,8 @@ namespace Cchbc.AppBuilder
 		if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 		feature.AddStep(nameof(CanInsertAsync));
-		try
-		{{
-			return Task.FromResult(PermissionResult.Deny(string.Empty));
-		}}
-		finally
-		{{
-			feature.EndStep();
-		}}
+
+		return PermissionResult.Allow;
 	}}
 
 	public override Task<PermissionResult> CanUpdateAsync({0}ViewModel viewModel, Feature feature)
@@ -288,14 +449,8 @@ namespace Cchbc.AppBuilder
 		if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 		feature.AddStep(nameof(CanUpdateAsync));
-		try
-		{{
-			return Task.FromResult(PermissionResult.Deny(string.Empty));
-		}}
-		finally
-		{{
-			feature.EndStep();
-		}}
+
+		return PermissionResult.Allow;
 	}}
 
 	public override Task<PermissionResult> CanDeleteAsync({0}ViewModel viewModel, Feature feature)
@@ -304,19 +459,21 @@ namespace Cchbc.AppBuilder
 		if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 		feature.AddStep(nameof(CanDeleteAsync));
-		try
-		{{
-			return Task.FromResult(PermissionResult.Deny(string.Empty));
-		}}
-		finally
-		{{
-			feature.EndStep();
-		}}
+
+		return PermissionResult.Allow;
 	}}
 }}";
-
-				return string.Format(template, entity.Class.Name, entity.Table.Name);
+			var getAllMethod = string.Empty;
+			if (!hasColumnToInverseTable)
+			{
+				getAllMethod = $@"
+	public List<{entity.Class.Name}> GetAll()
+	{{
+		return this.Adapter.GetAll();
+	}}
+";
 			}
+			return string.Format(template, entity.Class.Name, entity.Table.Name, getAllMethod);
 		}
 
 		public static void AppendClassDefinition(StringBuilder buffer, string className, string baseClass, string baseClassGnericType)
