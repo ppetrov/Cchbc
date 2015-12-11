@@ -401,11 +401,11 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class SqlReadQueryHelper : ReadQueryHelper
+	public sealed class SqlReadQueryExecutor : ReadQueryExecutor
 	{
 		private readonly SQLiteConnection _connection;
 
-		public SqlReadQueryHelper(SQLiteConnection connection)
+		public SqlReadQueryExecutor(SQLiteConnection connection)
 		{
 			if (connection == null) throw new ArgumentNullException(nameof(connection));
 
@@ -444,6 +444,7 @@ namespace Cchbc.ConsoleClient
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 			if (values == null) throw new ArgumentNullException(nameof(values));
+			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
 			values.Clear();
 
@@ -498,12 +499,12 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class SqlModifyQueryHelper : ModifyQueryHelper
+	public sealed class SqlModifyQueryExecutor : ModifyQueryExecutor
 	{
 		private readonly SQLiteConnection _connection;
 
-		public SqlModifyQueryHelper(ReadQueryHelper readQueryHelper, SQLiteConnection connection)
-			: base(readQueryHelper)
+		public SqlModifyQueryExecutor(ReadQueryExecutor readQueryExecutor, SQLiteConnection connection)
+			: base(readQueryExecutor)
 		{
 			if (connection == null) throw new ArgumentNullException(nameof(connection));
 
@@ -558,6 +559,25 @@ namespace Cchbc.ConsoleClient
 	{
 		static void Main(string[] args)
 		{
+			//GenerateIncludes();
+			FixAdapterClasses();
+			return;
+			//CalendarScreen.Name:Calendar
+			var input = @"CalendarScreen.Name:Calendar";
+			var contextSeparator = '.';
+			var keyValueSeparator = ':';
+
+			var contextSeparatorIndex = input.IndexOf(contextSeparator) + 1;
+			var keyValueSeparatorIndex = input.IndexOf(keyValueSeparator, contextSeparatorIndex);
+
+			var context = input.Substring(0, contextSeparatorIndex - 1);
+			var key = input.Substring(contextSeparatorIndex, keyValueSeparatorIndex - contextSeparatorIndex);
+			var value = input.Substring(keyValueSeparatorIndex + 1);
+
+			Console.WriteLine("|" + context + "|");
+			Console.WriteLine("|" + key + "|");
+			Console.WriteLine("|" + value + "|");
+			return;
 
 
 			var outlets = DbTable.Create(@"Outlets", new[]
@@ -711,12 +731,12 @@ namespace Cchbc.ConsoleClient
 				core.Logger = new ConsoleLogger();
 
 				// Create Read query helper
-				var sqlReadDataQueryHelper = new SqlReadQueryHelper(cn);
+				var sqlReadDataQueryHelper = new SqlReadQueryExecutor(cn);
 				// Create Modify query helper
-				var sqlModifyDataQueryHelper = new SqlModifyQueryHelper(sqlReadDataQueryHelper, cn);
+				var sqlModifyDataQueryHelper = new SqlModifyQueryExecutor(sqlReadDataQueryHelper, cn);
 				// Create General query helper
-				var queryHelper = new QueryHelper(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
-				core.QueryHelper = queryHelper;
+				var queryHelper = new QueryExecutor(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
+				core.QueryExecutor = queryHelper;
 
 				var featureManager = new FeatureManager { InspectFeature = InspectFeature };
 				core.FeatureManager = featureManager;
@@ -761,7 +781,85 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadQueryHelper queryHelper)
+		private static void FixAdapterClasses()
+		{
+			var winrtUsingFlag = @"#if NETFX_CORE
+using System.SQLite;
+#else
+using System.Data;
+#endif";
+
+			var sqliteUsingFlag = @"#if SQLITE
+using System.SQLite;
+#else
+using System.Data;
+#endif";
+
+			winrtUsingFlag = @"NETFX_CORE";
+
+			var sourceFiles = Directory.GetFiles(@"C:\Cchbc\PhoenixClient\Phoenix SFA SAP\SFA 5.5\SFA.BusinessLogic", @"*.cs",
+				SearchOption.AllDirectories);
+			foreach (var file in sourceFiles)
+			{
+				var contents = File.ReadAllText(file);
+				if (contents.IndexOf(winrtUsingFlag, StringComparison.Ordinal) >= 0)
+				{
+					Console.WriteLine(file);
+					//File.WriteAllText(file, contents.Replace(winrtUsingFlag, sqliteUsingFlag));
+				}
+			}
+
+			//throw new NotImplementedException();
+		}
+
+		private static void GenerateIncludes()
+		{
+			var basePath = @"..\..\..\Phoenix SFA SAP\SFA 5.5\SFA.BusinessLogic\";
+
+			var buffer = new StringBuilder();
+
+			var lines = File.ReadAllLines(@"C:\Cchbc\PhoenixClient\Phoenix SFA SAP\SFA 5.5\SFA.BusinessLogic\SFA.BusinessLogic.csproj");
+			foreach (var line in lines)
+			{
+				var value = line.Trim();
+				if (value.StartsWith(@"<Compile Include=") && value.EndsWith(@"/>"))
+				{
+					//<Compile Include="ApplicationParameters\ClientParameterProvider.cs" />
+					var start = value.IndexOf('"') + 1;
+					var end = value.IndexOf('"', start);
+					var path = value.Substring(start, end - start);
+					//Console.WriteLine(path);
+
+					//<Compile Include="..\..\..\Phoenix SFA SAP\SFA 5.5\SFA.BusinessLogic\ApplicationParameters\ClientParameterProvider.cs">
+					//  <Link>ApplicationParameters\ClientParameterProvider.cs</Link>
+					//</Compile>
+
+					buffer.Append(@"<Compile Include=");
+					buffer.Append('"');
+					buffer.Append(basePath);
+					buffer.Append(path);
+					buffer.Append('"');
+					buffer.Append('>');
+					buffer.AppendLine();
+
+					buffer.Append('\t');
+					buffer.Append(@"<Link>");
+					buffer.Append(path);
+					buffer.Append(@"</Link>");
+					buffer.AppendLine();
+
+					buffer.AppendLine(@"</Compile>");
+
+					//Console.WriteLine(value);
+				}
+			}
+
+			var tnp = buffer.ToString();
+			File.WriteAllText(@"C:\temp\includes.txt", tnp);
+			//Console.WriteLine(tnp);
+		}
+
+		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadQueryExecutor queryExecutor)
 		{
 			var step = feature.AddStep(nameof(LoadBrandsAsync));
 			var brandHelper = new BrandHelper();
@@ -770,7 +868,7 @@ namespace Cchbc.ConsoleClient
 			return brandHelper;
 		}
 
-		private async Task<FlavorHelper> LoadFlavorsAsync(Feature feature, ReadQueryHelper queryHelper)
+		private async Task<FlavorHelper> LoadFlavorsAsync(Feature feature, ReadQueryExecutor queryExecutor)
 		{
 			var step = feature.AddStep(nameof(LoadFlavorsAsync));
 			var flavorHelper = new FlavorHelper();
@@ -779,7 +877,7 @@ namespace Cchbc.ConsoleClient
 			return flavorHelper;
 		}
 
-		private async Task<ArticleHelper> LoadArticlesAsync(Feature feature, ReadQueryHelper queryHelper, BrandHelper brandHelper, FlavorHelper flavorHelper)
+		private async Task<ArticleHelper> LoadArticlesAsync(Feature feature, ReadQueryExecutor queryExecutor, BrandHelper brandHelper, FlavorHelper flavorHelper)
 		{
 			var step = feature.AddStep(nameof(LoadArticlesAsync));
 			var articleHelper = new ArticleHelper();

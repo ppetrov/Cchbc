@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cchbc.Helpers;
-using Cchbc.Objects;
 
 namespace Cchbc
 {
@@ -9,7 +8,7 @@ namespace Cchbc
 	{
 		private readonly Dictionary<string, object> _helpers = new Dictionary<string, object>();
 
-		public void AddHelper<T>(Helper<T> helper) where T : IDbObject
+		public void AddHelper<T>(Helper<T> helper)
 		{
 			if (helper == null) throw new ArgumentNullException(nameof(helper));
 

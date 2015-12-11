@@ -247,13 +247,13 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderHeaderAdapter : IModifiableAdapter<OrderHeader>
 	{
-		public QueryHelper QueryHelper { get; }
+		public QueryExecutor QueryExecutor { get; }
 
-		public OrderHeaderAdapter(QueryHelper queryHelper)
+		public OrderHeaderAdapter(QueryExecutor queryExecutor)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 
-			this.QueryHelper = queryHelper;
+			this.QueryExecutor = queryExecutor;
 		}
 
 		public Task<OrderHeader> GetByIdAsync(Activity activity, Dictionary<long, OrderType> orderTypes, Dictionary<long, Vendor> vendors, Dictionary<long, Wholesaler> wholesalers)
@@ -382,7 +382,7 @@ namespace Cchbc.App.OrderModule
 			var orderNoteSearcher =
 				new Searcher<OrderNoteViewModel>((vi, s) => vi.Type.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0 ||
 														   vi.Contents.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-			this.OrderNoteModule = new OrderNoteModule(new OrderNoteAdapter(this.Core.QueryHelper), orderNoteSorter, orderNoteSearcher);
+			this.OrderNoteModule = new OrderNoteModule(new OrderNoteAdapter(this.Core.QueryExecutor), orderNoteSorter, orderNoteSearcher);
 
 			var sorter = new Sorter<AssortmentViewModel>(new[]
 			{
@@ -473,7 +473,7 @@ namespace Cchbc.App.OrderModule
 		private async Task LoadOrderHeader()
 		{
 			var cache = this.Core.DataCache;
-			var orderHeader = await new OrderHeaderAdapter(this.Core.QueryHelper).GetByIdAsync(this.Activity,
+			var orderHeader = await new OrderHeaderAdapter(this.Core.QueryExecutor).GetByIdAsync(this.Activity,
 				cache.GetHelper<OrderType>().Items,
 				cache.GetHelper<Vendor>().Items,
 				cache.GetHelper<Wholesaler>().Items);
@@ -533,7 +533,7 @@ namespace Cchbc.App.OrderModule
 
 		private async Task LoadOrderNotes()
 		{
-			var adapter = new OrderNoteAdapter(this.Core.QueryHelper);
+			var adapter = new OrderNoteAdapter(this.Core.QueryExecutor);
 			var orderNotes = await adapter.GetByOutletAsync(this.Order.OrderHeader, this.Core.DataCache.GetHelper<OrderNoteType>().Items);
 			var orderNotesViewModels = new OrderNoteViewModel[orderNotes.Count];
 			for (var i = 0; i < orderNotes.Count; i++)
@@ -628,13 +628,13 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderNoteAdapter : IModifiableAdapter<OrderNote>
 	{
-		public QueryHelper QueryHelper { get; }
+		public QueryExecutor QueryExecutor { get; }
 
-		public OrderNoteAdapter(QueryHelper queryHelper)
+		public OrderNoteAdapter(QueryExecutor queryExecutor)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 
-			this.QueryHelper = queryHelper;
+			this.QueryExecutor = queryExecutor;
 		}
 
 		public Task<List<OrderNote>> GetByOutletAsync(OrderHeader orderHeader, Dictionary<long, OrderNoteType> types)

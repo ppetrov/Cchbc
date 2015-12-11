@@ -34,15 +34,16 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Core.cs" />
     <Compile Include="DataCache.cs" />
-    <Compile Include="Data\ModifyQueryHelper.cs" />
+    <Compile Include="Data\ModifyQueryExecutor.cs" />
     <Compile Include="Data\IFieldDataReader.cs" />
     <Compile Include="Data\IModifiableAdapter.cs" />
     <Compile Include="Data\Query.cs" />
-    <Compile Include="Data\QueryHelper.cs" />
+    <Compile Include="Data\QueryExecutor.cs" />
     <Compile Include="Data\QueryParameter.cs" />
-    <Compile Include="Data\ReadQueryHelper.cs" />
+    <Compile Include="Data\ReadQueryExecutor.cs" />
     <Compile Include="Features\Db\DbFeature.cs" />
     <Compile Include="Features\Db\DbContext.cs" />
     <Compile Include="Features\Db\DbFeatureEntry.cs" />

@@ -7,13 +7,13 @@ namespace Cchbc.App.ArticlesModule.Adapters
 {
 	public sealed class FlavorAdapter : IReadOnlyAdapter<Flavor>
 	{
-		private readonly ReadQueryHelper _queryHelper;
+		private readonly ReadQueryExecutor _queryExecutor;
 
-		public FlavorAdapter(ReadQueryHelper queryHelper)
+		public FlavorAdapter(ReadQueryExecutor queryExecutor)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 
-			_queryHelper = queryHelper;
+			_queryExecutor = queryExecutor;
 		}
 
 		public void Fill(Dictionary<long, Flavor> items, Func<Flavor, long> selector)
@@ -21,7 +21,7 @@ namespace Cchbc.App.ArticlesModule.Adapters
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			_queryHelper.Fill(new Query<Flavor>(@"SELECT ID, NAME FROM FLAVORS", r =>
+			_queryExecutor.Fill(new Query<Flavor>(@"SELECT ID, NAME FROM FLAVORS", r =>
 			{
 				var id = r.GetInt64(0);
 				var name = string.Empty;

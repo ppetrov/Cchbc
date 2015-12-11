@@ -44,13 +44,13 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class OutletAdapter : IReadOnlyAdapter<Outlet>
 	{
-		private QueryHelper QueryHelper { get; }
+		private QueryExecutor QueryExecutor { get; }
 
-		public OutletAdapter(QueryHelper queryHelper)
+		public OutletAdapter(QueryExecutor queryExecutor)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 
-			this.QueryHelper = queryHelper;
+			this.QueryExecutor = queryExecutor;
 		}
 
 		public void Fill(Dictionary<long, Outlet> items, Func<Outlet, long> selector)
@@ -60,7 +60,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"SELECT Id, Name FROM Outlets";
 
-			this.QueryHelper.Fill(new Query<Outlet>(query, this.OutletCreator), items, selector);
+			this.QueryExecutor.Fill(new Query<Outlet>(query, this.OutletCreator), items, selector);
 		}
 
 		private Outlet OutletCreator(IFieldDataReader r)
@@ -97,17 +97,17 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class VisitAdapter : IModifiableAdapter<Visit>
 	{
-		private QueryHelper QueryHelper { get; }
+		private QueryExecutor QueryExecutor { get; }
 		private Dictionary<long, Outlet> Outlets { get; }
 		private Dictionary<long, ActivityType> ActivityTypes { get; }
 
-		public VisitAdapter(QueryHelper queryHelper, Dictionary<long, Outlet> outlets, Dictionary<long, ActivityType> activityTypes)
+		public VisitAdapter(QueryExecutor queryExecutor, Dictionary<long, Outlet> outlets, Dictionary<long, ActivityType> activityTypes)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 			if (outlets == null) throw new ArgumentNullException(nameof(outlets));
 			if (activityTypes == null) throw new ArgumentNullException(nameof(activityTypes));
 
-			this.QueryHelper = queryHelper;
+			this.QueryExecutor = queryExecutor;
 			this.Outlets = outlets;
 			this.ActivityTypes = activityTypes;
 		}
@@ -117,7 +117,7 @@ namespace Cchbc.ConsoleClient
 			var query = @"SELECT v.Id, v.OutletId, v.Date, a.Id, a.Date, a.ActivityTypeId FROM Visits v INNER JOIN Activities a ON v.Id = a.VisitId";
 
 			var visits = new Dictionary<long, Visit>();
-			this.QueryHelper.Fill(query, visits, this.VisitCreator);
+			this.QueryExecutor.Fill(query, visits, this.VisitCreator);
 			return visits.Values.ToList();
 		}
 
@@ -133,9 +133,9 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"INSERT INTO Visits (OutletId, Date) VALUES (@pOutletId, @pDate)";
 
-			this.QueryHelper.Execute(query, sqlParams);
+			this.QueryExecutor.Execute(query, sqlParams);
 
-			item.Id = this.QueryHelper.GetNewId();
+			item.Id = this.QueryExecutor.GetNewId();
 		}
 
 		public void Update(Visit item)
@@ -151,7 +151,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"UPDATE Visits SET OutletId = @pOutletId, Date = @pDate WHERE Id = @pId";
 
-			this.QueryHelper.Execute(query, sqlParams);
+			this.QueryExecutor.Execute(query, sqlParams);
 		}
 
 		public void Delete(Visit item)
@@ -165,7 +165,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"DELETE FROM Visits WHERE Id = @pId";
 
-			this.QueryHelper.Execute(query, sqlParams);
+			this.QueryExecutor.Execute(query, sqlParams);
 		}
 
 		private void VisitCreator(IFieldDataReader r, Dictionary<long, Visit> visits)
@@ -225,13 +225,13 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ActivityTypeAdapter : IReadOnlyAdapter<ActivityType>
 	{
-		private QueryHelper QueryHelper { get; }
+		private QueryExecutor QueryExecutor { get; }
 
-		public ActivityTypeAdapter(QueryHelper queryHelper)
+		public ActivityTypeAdapter(QueryExecutor queryExecutor)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 
-			this.QueryHelper = queryHelper;
+			this.QueryExecutor = queryExecutor;
 		}
 
 		public void Fill(Dictionary<long, ActivityType> items, Func<ActivityType, long> selector)
@@ -241,7 +241,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"SELECT Id, Name FROM ActivityTypes";
 
-			this.QueryHelper.Fill(new Query<ActivityType>(query, this.ActivityTypeCreator), items, selector);
+			this.QueryExecutor.Fill(new Query<ActivityType>(query, this.ActivityTypeCreator), items, selector);
 		}
 
 		private ActivityType ActivityTypeCreator(IFieldDataReader r)
@@ -278,13 +278,13 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ActivityAdapter : IModifiableAdapter<Activity>
 	{
-		private QueryHelper QueryHelper { get; }
+		private QueryExecutor QueryExecutor { get; }
 
-		public ActivityAdapter(QueryHelper queryHelper)
+		public ActivityAdapter(QueryExecutor queryExecutor)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 
-			this.QueryHelper = queryHelper;
+			this.QueryExecutor = queryExecutor;
 		}
 
 		public void Insert(Activity item)
@@ -300,9 +300,9 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"INSERT INTO Activities (Date, ActivityTypeId, VisitId) VALUES (@pDate, @pActivityTypeId, @pVisitId)";
 
-			this.QueryHelper.Execute(query, sqlParams);
+			this.QueryExecutor.Execute(query, sqlParams);
 
-			item.Id = this.QueryHelper.GetNewId();
+			item.Id = this.QueryExecutor.GetNewId();
 		}
 
 		public void Update(Activity item)
@@ -319,7 +319,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"UPDATE Activities SET Date = @pDate, ActivityTypeId = @pActivityTypeId, VisitId = @pVisitId WHERE Id = @pId";
 
-			this.QueryHelper.Execute(query, sqlParams);
+			this.QueryExecutor.Execute(query, sqlParams);
 		}
 
 		public void Delete(Activity item)
@@ -333,7 +333,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"DELETE FROM Activities WHERE Id = @pId";
 
-			this.QueryHelper.Execute(query, sqlParams);
+			this.QueryExecutor.Execute(query, sqlParams);
 		}
 	}
 
@@ -353,13 +353,13 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class BrandAdapter : IReadOnlyAdapter<Brand>
 	{
-		private QueryHelper QueryHelper { get; }
+		private QueryExecutor QueryExecutor { get; }
 
-		public BrandAdapter(QueryHelper queryHelper)
+		public BrandAdapter(QueryExecutor queryExecutor)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 
-			this.QueryHelper = queryHelper;
+			this.QueryExecutor = queryExecutor;
 		}
 
 		public void Fill(Dictionary<long, Brand> items, Func<Brand, long> selector)
@@ -369,7 +369,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"SELECT Id, Name FROM Brands";
 
-			this.QueryHelper.Fill(new Query<Brand>(query, this.BrandCreator), items, selector);
+			this.QueryExecutor.Fill(new Query<Brand>(query, this.BrandCreator), items, selector);
 		}
 
 		private Brand BrandCreator(IFieldDataReader r)
@@ -401,13 +401,13 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class FlavorAdapter : IReadOnlyAdapter<Flavor>
 	{
-		private QueryHelper QueryHelper { get; }
+		private QueryExecutor QueryExecutor { get; }
 
-		public FlavorAdapter(QueryHelper queryHelper)
+		public FlavorAdapter(QueryExecutor queryExecutor)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 
-			this.QueryHelper = queryHelper;
+			this.QueryExecutor = queryExecutor;
 		}
 
 		public void Fill(Dictionary<long, Flavor> items, Func<Flavor, long> selector)
@@ -417,7 +417,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"SELECT Id, Name FROM Flavors";
 
-			this.QueryHelper.Fill(new Query<Flavor>(query, this.FlavorCreator), items, selector);
+			this.QueryExecutor.Fill(new Query<Flavor>(query, this.FlavorCreator), items, selector);
 		}
 
 		private Flavor FlavorCreator(IFieldDataReader r)
@@ -455,17 +455,17 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ArticleAdapter : IReadOnlyAdapter<Article>
 	{
-		private QueryHelper QueryHelper { get; }
+		private QueryExecutor QueryExecutor { get; }
 		private Dictionary<long, Brand> Brands { get; }
 		private Dictionary<long, Flavor> Flavors { get; }
 
-		public ArticleAdapter(QueryHelper queryHelper, Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
+		public ArticleAdapter(QueryExecutor queryExecutor, Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 			if (brands == null) throw new ArgumentNullException(nameof(brands));
 			if (flavors == null) throw new ArgumentNullException(nameof(flavors));
 
-			this.QueryHelper = queryHelper;
+			this.QueryExecutor = queryExecutor;
 			this.Brands = brands;
 			this.Flavors = flavors;
 		}
@@ -477,7 +477,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"SELECT Id, Name, BrandId, FlavorId FROM Articles";
 
-			this.QueryHelper.Fill(new Query<Article>(query, this.ArticleCreator), items, selector);
+			this.QueryExecutor.Fill(new Query<Article>(query, this.ArticleCreator), items, selector);
 		}
 
 		private Article ArticleCreator(IFieldDataReader r)
@@ -519,13 +519,13 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ActivityNoteTypeAdapter : IReadOnlyAdapter<ActivityNoteType>
 	{
-		private QueryHelper QueryHelper { get; }
+		private QueryExecutor QueryExecutor { get; }
 
-		public ActivityNoteTypeAdapter(QueryHelper queryHelper)
+		public ActivityNoteTypeAdapter(QueryExecutor queryExecutor)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 
-			this.QueryHelper = queryHelper;
+			this.QueryExecutor = queryExecutor;
 		}
 
 		public void Fill(Dictionary<long, ActivityNoteType> items, Func<ActivityNoteType, long> selector)
@@ -535,7 +535,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"SELECT Id, Name FROM ActivityNoteTypes";
 
-			this.QueryHelper.Fill(new Query<ActivityNoteType>(query, this.ActivityNoteTypeCreator), items, selector);
+			this.QueryExecutor.Fill(new Query<ActivityNoteType>(query, this.ActivityNoteTypeCreator), items, selector);
 		}
 
 		private ActivityNoteType ActivityNoteTypeCreator(IFieldDataReader r)
@@ -575,17 +575,17 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ActivityNoteAdapter : IModifiableAdapter<ActivityNote>
 	{
-		private QueryHelper QueryHelper { get; }
+		private QueryExecutor QueryExecutor { get; }
 		private Dictionary<long, ActivityNoteType> ActivityNoteTypes { get; }
 		private Dictionary<long, Activity> Activities { get; }
 
-		public ActivityNoteAdapter(QueryHelper queryHelper, Dictionary<long, ActivityNoteType> activityNoteTypes, Dictionary<long, Activity> activities)
+		public ActivityNoteAdapter(QueryExecutor queryExecutor, Dictionary<long, ActivityNoteType> activityNoteTypes, Dictionary<long, Activity> activities)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 			if (activityNoteTypes == null) throw new ArgumentNullException(nameof(activityNoteTypes));
 			if (activities == null) throw new ArgumentNullException(nameof(activities));
 
-			this.QueryHelper = queryHelper;
+			this.QueryExecutor = queryExecutor;
 			this.ActivityNoteTypes = activityNoteTypes;
 			this.Activities = activities;
 		}
@@ -594,7 +594,7 @@ namespace Cchbc.ConsoleClient
 		{
 			var query = @"SELECT Id, Contents, CreatedAt, ActivityNoteTypeId, ActivityId FROM ActivityNotes";
 
-			return this.QueryHelper.Execute(new Query<ActivityNote>(query, this.ActivityNoteCreator));
+			return this.QueryExecutor.Execute(new Query<ActivityNote>(query, this.ActivityNoteCreator));
 		}
 
 		public void Insert(ActivityNote item)
@@ -611,9 +611,9 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"INSERT INTO ActivityNotes (Contents, CreatedAt, ActivityNoteTypeId, ActivityId) VALUES (@pContents, @pCreatedAt, @pActivityNoteTypeId, @pActivityId)";
 
-			this.QueryHelper.Execute(query, sqlParams);
+			this.QueryExecutor.Execute(query, sqlParams);
 
-			item.Id = this.QueryHelper.GetNewId();
+			item.Id = this.QueryExecutor.GetNewId();
 		}
 
 		public void Update(ActivityNote item)
@@ -631,7 +631,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"UPDATE ActivityNotes SET Contents = @pContents, CreatedAt = @pCreatedAt, ActivityNoteTypeId = @pActivityNoteTypeId, ActivityId = @pActivityId WHERE Id = @pId";
 
-			this.QueryHelper.Execute(query, sqlParams);
+			this.QueryExecutor.Execute(query, sqlParams);
 		}
 
 		public void Delete(ActivityNote item)
@@ -645,7 +645,7 @@ namespace Cchbc.ConsoleClient
 
 			var query = @"DELETE FROM ActivityNotes WHERE Id = @pId";
 
-			this.QueryHelper.Execute(query, sqlParams);
+			this.QueryExecutor.Execute(query, sqlParams);
 		}
 
 		private ActivityNote ActivityNoteCreator(IFieldDataReader r)

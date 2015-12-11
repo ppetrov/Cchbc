@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Cchbc.Data
 {
-	public abstract class ReadQueryHelper
+	public abstract class ReadQueryExecutor
 	{
 		public abstract List<T> Execute<T>(Query<T> query);
 

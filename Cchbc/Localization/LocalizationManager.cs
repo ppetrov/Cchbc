@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Cchbc.Localization
 {
@@ -8,14 +7,36 @@ namespace Cchbc.Localization
 	{
 		private Dictionary<string, string> LocalizationKeys { get; } = new Dictionary<string, string>();
 
+		private Dictionary<string, Tuple<string, string>[]> Values { get; } = new Dictionary<string, Tuple<string, string>[]>();
+
 		// File: but uneditable !!!
 		// Can download the latest localization file or switch to another localization : french ???
 		// Db : bad we need to sync the entire db
 		// TODO : From file
 		// need an abstraction probably
-		public Task LoadAsync()
+		public void Load(IEnumerable<string> lines)
 		{
+			if (lines == null) throw new ArgumentNullException(nameof(lines));
+
 			this.LocalizationKeys.Clear();
+
+			// Ctx. Name: "Close Day"
+			foreach (var line in lines)
+			{
+				//CalendarScreen.Name:Calendar
+				var index = line.IndexOf('.');
+				//var name = 
+			}
+
+			Values.Add(@"CalendarScreen", new[]
+			{
+				Tuple.Create(@"Name", @"Calendar"),
+				Tuple.Create(@"CloseDay", @"Close Day")
+			});
+
+			//CalendarScreen.Name:Calendar
+			//CalendarScreen.CloseDay:Close Day
+			//CalendarScreen.CancelDay:Cancel Day
 
 			//using (var sr = new StreamReader(null))
 			//{
@@ -24,8 +45,6 @@ namespace Cchbc.Localization
 			//	//flavor:"Flavor"
 			//	//MsgConfirmDeleteLogin:"Are you sure you want to delete this login?"
 			//}
-
-			return null;
 		}
 
 		public string this[LocalizationKey key]

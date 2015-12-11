@@ -4,24 +4,24 @@ using Cchbc.Objects;
 
 namespace Cchbc.Data
 {
-	public abstract class ModifyQueryHelper
+	public abstract class ModifyQueryExecutor
 	{
 		public static readonly Query<long> SelectNewIdQuery = new Query<long>(@"SELECT LAST_INSERT_ROWID()", r => r.GetInt64(0));
 
-		private ReadQueryHelper ReadQueryHelper { get; }
+		private ReadQueryExecutor ReadQueryExecutor { get; }
 
-		protected ModifyQueryHelper(ReadQueryHelper readQueryHelper)
+		protected ModifyQueryExecutor(ReadQueryExecutor readQueryExecutor)
 		{
-			if (readQueryHelper == null) throw new ArgumentNullException(nameof(readQueryHelper));
+			if (readQueryExecutor == null) throw new ArgumentNullException(nameof(readQueryExecutor));
 
-			this.ReadQueryHelper = readQueryHelper;
+			this.ReadQueryExecutor = readQueryExecutor;
 		}
 
 		public List<T> Execute<T>(Query<T> query) where T : IDbObject
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 
-			return this.ReadQueryHelper.Execute(query);
+			return this.ReadQueryExecutor.Execute(query);
 		}
 
 		public void Fill<T>(Query<T> query, Dictionary<long, T> values, Func<T, long> selector) where T : IDbObject
@@ -30,7 +30,7 @@ namespace Cchbc.Data
 			if (values == null) throw new ArgumentNullException(nameof(values));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			this.ReadQueryHelper.Fill(query, values, selector);
+			this.ReadQueryExecutor.Fill(query, values, selector);
 		}
 
 		public abstract int Execute(string statement, QueryParameter[] parameters);

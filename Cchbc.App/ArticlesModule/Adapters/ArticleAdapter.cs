@@ -7,17 +7,17 @@ namespace Cchbc.App.ArticlesModule.Adapters
 {
 	public sealed class ArticleAdapter : IReadOnlyAdapter<Article>
 	{
-		private readonly ReadQueryHelper _queryHelper;
+		private readonly ReadQueryExecutor _queryExecutor;
 		private readonly Dictionary<long, Brand> _brands;
 		private readonly Dictionary<long, Flavor> _flavors;
 
-		public ArticleAdapter(ReadQueryHelper queryHelper, Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
+		public ArticleAdapter(ReadQueryExecutor queryExecutor, Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
 			if (brands == null) throw new ArgumentNullException(nameof(brands));
 			if (flavors == null) throw new ArgumentNullException(nameof(flavors));
 
-			_queryHelper = queryHelper;
+			_queryExecutor = queryExecutor;
 			_brands = brands;
 			_flavors = flavors;
 		}
@@ -26,7 +26,7 @@ namespace Cchbc.App.ArticlesModule.Adapters
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
-			_queryHelper.Fill(new Query<Article>(@"SELECT ID, NAME, BRAND_ID, FLAVOR_ID FROM ARTICLES", r =>
+			_queryExecutor.Fill(new Query<Article>(@"SELECT ID, NAME, BRAND_ID, FLAVOR_ID FROM ARTICLES", r =>
 			{
 				var id = r.GetInt64(0);
 				var name = string.Empty;
