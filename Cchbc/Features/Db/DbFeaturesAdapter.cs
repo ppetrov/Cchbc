@@ -57,8 +57,6 @@ namespace Cchbc.Features.Db
 
 		public void CreateSchema()
 		{
-			this.DropSchema();
-
 			this.QueryExecutor.Execute(@"
 CREATE TABLE[FEATURE_CONTEXTS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,

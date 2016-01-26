@@ -559,8 +559,8 @@ namespace Cchbc.ConsoleClient
 	{
 		static void Main(string[] args)
 		{
-			//GenerateIncludes();
-			FixAdapterClasses();
+			Floors();
+
 			return;
 			//CalendarScreen.Name:Calendar
 			var input = @"CalendarScreen.Name:Calendar";
@@ -780,6 +780,221 @@ namespace Cchbc.ConsoleClient
 				featureManager.StopDbWriters();
 			}
 		}
+
+		static HashSet<string> idents = new HashSet<string>();
+		static List<string> _links = new List<string>();
+
+		public sealed class BinaryGate
+		{
+			public bool Applied { get; set; }
+			public string Left { get; set; }
+			public string Right { get; set; }
+			public string Function { get; set; }
+			public string Result { get; set; }
+
+			public BinaryGate(string left, string right, string function, string result)
+			{
+				Left = left;
+				Right = right;
+				Function = function;
+				Result = result;
+			}
+
+			public SignalGage CreateSignal()
+			{
+				if (this.Function == @"LSHIFT")
+				{
+					var v = ushort.Parse(this.Left) << ushort.Parse(this.Right);
+					return new SignalGage(this.Result, v);
+				}
+				if (this.Function == @"RSHIFT")
+				{
+					var v = ushort.Parse(this.Left) >> ushort.Parse(this.Right);
+					return new SignalGage(this.Result, v);
+				}
+				if (this.Function == @"OR")
+				{
+					var v = ushort.Parse(this.Left) | ushort.Parse(this.Right);
+					return new SignalGage(this.Result, v);
+				}
+				if (this.Function == @"AND")
+				{
+					var v = ushort.Parse(this.Left) & ushort.Parse(this.Right);
+					return new SignalGage(this.Result, v);
+				}
+				throw new NotImplementedException();
+			}
+		}
+
+		public sealed class UnaryGage
+		{
+			public bool Applied { get; set; }
+			public string Input { get; set; }
+			public string Function { get; set; }
+			public string Result { get; set; }
+
+			public UnaryGage(string input, string function, string result)
+			{
+				Input = input;
+				Function = function;
+				Result = result;
+			}
+
+			public SignalGage CreateSignal()
+			{
+				if (this.Function == @"NOT")
+				{
+					ushort n = 0;
+					ushort.TryParse(this.Input, out n);
+
+					return new SignalGage(this.Result, 65535 - n);
+				}
+				return null;
+			}
+		}
+
+		public sealed class SignalGage
+		{
+			public string Input { get; }
+			public int Value { get; }
+
+			public SignalGage(string input, int value)
+			{
+				Input = input;
+				Value = value;
+			}
+		}
+
+		private static void Floors()
+		{
+			var n = 0;
+			foreach (var line in File.ReadAllLines(@"C:\temp\input.txt"))
+			{
+				var s = @"qjhvhtzxzqqjkmpb";
+				//s = @"uurcxstgmygtbstg";
+
+
+				s = line;
+
+
+				for (var i = 0; i < s.Length - 2; i++)
+				{
+					var a = s[i];
+					var c = s[i + 2];
+					if (a == c)
+					{
+						//n++;
+						Console.WriteLine(line);
+
+						var pairs = new Dictionary<string, int>();
+						for (var j = 0; j < s.Length; j += 2)
+						{
+							var x = s[j];
+							var y = s[j + 1];
+							var key = x + string.Empty + y;
+
+							int value;
+							if (!pairs.TryGetValue(key, out value))
+							{
+								pairs.Add(key, 1);
+							}
+							else
+							{
+								pairs[key] = value + 1;
+							}
+						}
+
+						break;
+					}
+				}
+
+				
+				
+			}
+
+			Console.WriteLine(n);
+
+		}
+
+		private static void ToggleSet(int[,] grid, int startX, int startY, int endX, int endY, int value)
+		{
+			for (var i = startX; i <= endX; i++)
+			{
+				for (var j = startY; j <= endY; j++)
+				{
+					grid[i, j] += value;
+					if (grid[i, j] < 0)
+					{
+						grid[i, j] = 0;
+					}
+				}
+			}
+		}
+
+		private static void ToggleInvert(bool[,] grid, int startX, int startY, int endX, int endY)
+		{
+			for (var i = startX; i <= endX; i++)
+			{
+				for (var j = startY; j <= endY; j++)
+				{
+					grid[i, j] = !grid[i, j];
+				}
+			}
+		}
+
+		private static void Toggle(int[,] grid, int startX, int startY, int endX, int endY, int value)
+		{
+			for (var i = startX; i < endX; i++)
+			{
+				for (var j = startY; j < endY; j++)
+				{
+					grid[i, j] += value;
+				}
+			}
+		}
+
+		public static IEnumerable<char> ReadString(IEnumerable<char> input)
+		{
+			var cnt = 1;
+			char? previous = null;
+
+			foreach (var s in input)
+			{
+				if (!previous.HasValue)
+				{
+					previous = s;
+					continue;
+				}
+				if (s != previous.Value)
+				{
+					yield return (char)(48 + cnt);
+					yield return previous.Value;
+
+					previous = s;
+					cnt = 1;
+					continue;
+				}
+				cnt++;
+			}
+
+			yield return (char)(48 + cnt);
+			yield return previous.Value;
+		}
+
+		private static int CountFlag(string value, string flag)
+		{
+			var count = 0;
+			var offset = 0;
+			var index = value.IndexOf(flag, offset, StringComparison.OrdinalIgnoreCase);
+			while (index >= 0)
+			{
+				count++;
+				offset = index + 1;
+				index = value.IndexOf(flag, offset, StringComparison.OrdinalIgnoreCase);
+			}
+			return count;
+		}
+
 
 		private static void FixAdapterClasses()
 		{

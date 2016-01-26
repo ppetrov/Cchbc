@@ -24,6 +24,11 @@ namespace Cchbc.Features.Db
 			this.Adapter.CreateSchema();
 		}
 
+		public void DropSchema()
+		{
+			this.Adapter.DropSchema();
+		}
+
 		public void Load()
 		{
 			this.LoadContexts();

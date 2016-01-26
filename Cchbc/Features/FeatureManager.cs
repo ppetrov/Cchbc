@@ -61,6 +61,10 @@ namespace Cchbc.Features
 
 		public void StopDbWriters()
 		{
+			// Check if we've already called this method
+			var local = _features;
+			if (local == null) return;
+
 			_features.CompleteAdding();
 			_exceptions.CompleteAdding();
 
