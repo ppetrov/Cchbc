@@ -5,63 +5,65 @@ namespace Cchbc.Localization
 {
 	public sealed class LocalizationManager
 	{
-		private Dictionary<string, string> LocalizationKeys { get; } = new Dictionary<string, string>();
+		private Dictionary<string, Dictionary<string, string>> ByContextValues { get; } = new Dictionary<string, Dictionary<string, string>>();
 
-		private Dictionary<string, Tuple<string, string>[]> Values { get; } = new Dictionary<string, Tuple<string, string>[]>();
-
-		// File: but uneditable !!!
-		// Can download the latest localization file or switch to another localization : french ???
-		// Db : bad we need to sync the entire db
-		// TODO : From file
-		// need an abstraction probably
 		public void Load(IEnumerable<string> lines)
 		{
 			if (lines == null) throw new ArgumentNullException(nameof(lines));
 
-			this.LocalizationKeys.Clear();
+			this.ByContextValues.Clear();
 
 			// Ctx. Name: "Close Day"
+			//CalendarScreen.Name:Calendar
 			foreach (var line in lines)
 			{
-				//CalendarScreen.Name:Calendar
 				var index = line.IndexOf('.');
-				//var name = 
+				if (index >= 0)
+				{
+					index++;
+					var separatorIndex = line.IndexOf(':', index) - index;
+					var context = line.Substring(0, index - 1);
+					var key = line.Substring(index, separatorIndex);
+					var message = line.Substring(context.Length + key.Length + 2);
+
+					this.Add(context, key, message);
+				}
 			}
-
-			Values.Add(@"CalendarScreen", new[]
-			{
-				Tuple.Create(@"Name", @"Calendar"),
-				Tuple.Create(@"CloseDay", @"Close Day")
-			});
-
-			//CalendarScreen.Name:Calendar
-			//CalendarScreen.CloseDay:Close Day
-			//CalendarScreen.CancelDay:Cancel Day
-
-			//using (var sr = new StreamReader(null))
-			//{
-			//	//name:"Name"
-			//	//brand:"Brand"
-			//	//flavor:"Flavor"
-			//	//MsgConfirmDeleteLogin:"Are you sure you want to delete this login?"
-			//}
 		}
 
-		public string this[LocalizationKey key]
+		public void Add(string context, string key, string message)
 		{
-			get
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (key == null) throw new ArgumentNullException(nameof(key));
+			if (message == null) throw new ArgumentNullException(nameof(message));
+
+			Dictionary<string, string> values;
+			if (!this.ByContextValues.TryGetValue(context, out values))
 			{
-				var result = string.Empty;
-				if (key != null)
-				{
-					var name = key.Name;
-					if (!this.LocalizationKeys.TryGetValue(name, out result))
-					{
-						result = name;
-					}
-				}
-				return result;
+				values = new Dictionary<string, string>();
+				this.ByContextValues.Add(context, values);
 			}
+			values.Add(key, message);
+		}
+
+		public Dictionary<string, string> GetByContext(string context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			Dictionary<string, string> values;
+			this.ByContextValues.TryGetValue(context, out values);
+
+			return values ?? new Dictionary<string, string>(0);
+		}
+
+		public string GetBy(Dictionary<string, string> context, string key)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (key == null) throw new ArgumentNullException(nameof(key));
+
+			string message;
+			context.TryGetValue(key, out message);
+			return message ?? @"N/A";
 		}
 	}
 }

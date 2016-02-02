@@ -8,15 +8,6 @@ namespace Cchbc.Features
 		public TimeSpan TimeSpent { get; }
 		public string Details { get; }
 
-		public FeatureEntryStep(string name, TimeSpan timeSpent)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			this.Name = name;
-			this.TimeSpent = timeSpent;
-			this.Details = string.Empty;
-		}
-
 		public FeatureEntryStep(string name, TimeSpan timeSpent, string details)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));

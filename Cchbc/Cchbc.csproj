@@ -44,6 +44,8 @@
     <Compile Include="Data\QueryExecutor.cs" />
     <Compile Include="Data\QueryParameter.cs" />
     <Compile Include="Data\ReadQueryExecutor.cs" />
+    <Compile Include="Dialog\DialogResult.cs" />
+    <Compile Include="Dialog\IModalDialog.cs" />
     <Compile Include="Features\Db\DbFeature.cs" />
     <Compile Include="Features\Db\DbContext.cs" />
     <Compile Include="Features\Db\DbFeatureEntry.cs" />
@@ -56,10 +58,9 @@
     <Compile Include="Features\FeatureEntryStep.cs" />
     <Compile Include="Features\FeatureManager.cs" />
     <Compile Include="Features\FeatureStep.cs" />
+    <Compile Include="Features\FeatureStepEventArgs.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="Features\FeatureEventArgs.cs" />
-    <Compile Include="Localization\LocalizationKey.cs" />
-    <Compile Include="Localization\LocalizationKeys.cs" />
     <Compile Include="Localization\LocalizationManager.cs" />
     <Compile Include="ReadOnlyModule.cs" />
     <Compile Include="Search\FilterOption.cs" />
@@ -67,7 +68,6 @@
     <Compile Include="Search\SearchOption.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="Data\IReadOnlyAdapter.cs" />
-    <Compile Include="Dialog\ModalDialog.cs" />
     <Compile Include="Dialog\DialogType.cs" />
     <Compile Include="Helpers\Helper.cs" />
     <Compile Include="Helpers\IHelper.cs" />

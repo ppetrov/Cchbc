@@ -10,26 +10,26 @@ namespace Cchbc.UI
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
-			throw new NotImplementedException();
+			//throw new NotImplementedException();
 		}
 
 		public void Update(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
-			throw new NotImplementedException();
+			
 		}
 
 		public void Delete(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
-			throw new NotImplementedException();
+			
 		}
 
 		public List<Login> GetAll()
 		{
-			throw new NotImplementedException();
+			return new List<Login>();
 		}
 	}
 }

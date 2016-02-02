@@ -14,6 +14,7 @@ namespace Cchbc.Features
 
 			this.Name = name;
 			this.Details = string.Empty;
+			this.TimeSpent = TimeSpan.Zero;
 		}
 	}
 }

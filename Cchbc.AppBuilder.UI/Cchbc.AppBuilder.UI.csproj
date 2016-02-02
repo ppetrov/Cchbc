@@ -139,7 +139,16 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\Cchbc.App\Cchbc.App.csproj">
+      <Project>{919DA720-C69F-4B94-AE62-7004F8CCB0B3}</Project>
+      <Name>Cchbc.App</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cchbc\Cchbc.csproj">
+      <Project>{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}</Project>
+      <Name>Cchbc</Name>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

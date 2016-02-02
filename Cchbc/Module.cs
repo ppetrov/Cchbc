@@ -105,7 +105,7 @@ namespace Cchbc
 
 		public abstract Task<PermissionResult> CanDeleteAsync(TViewModel viewModel, Feature feature);
 
-		public Task InsertAsync(TViewModel viewModel, ModalDialog dialog, Feature feature)
+		public Task InsertAsync(TViewModel viewModel, IModalDialog dialog, Feature feature)
 		{
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
@@ -114,7 +114,7 @@ namespace Cchbc
 			return ExecuteAsync(viewModel, dialog, feature, this.CanInsertAsync, this.InsertValidated);
 		}
 
-		public Task UpdateAsync(TViewModel viewModel, ModalDialog dialog, Feature feature)
+		public Task UpdateAsync(TViewModel viewModel, IModalDialog dialog, Feature feature)
 		{
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
@@ -123,7 +123,7 @@ namespace Cchbc
 			return ExecuteAsync(viewModel, dialog, feature, this.CanUpdateAsync, this.UpdateValidated);
 		}
 
-		public Task DeleteAsync(TViewModel viewModel, ModalDialog dialog, Feature feature)
+		public Task DeleteAsync(TViewModel viewModel, IModalDialog dialog, Feature feature)
 		{
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
@@ -132,21 +132,20 @@ namespace Cchbc
 			return ExecuteAsync(viewModel, dialog, feature, this.CanDeleteAsync, this.DeleteValidated);
 		}
 
-		public async Task ExecuteAsync(TViewModel viewModel, ModalDialog dialog, Feature feature, Func<TViewModel, Feature, Task<PermissionResult>> verifier, Action<TViewModel, FeatureEventArgs> performer)
+		public async Task ExecuteAsync(TViewModel viewModel, IModalDialog dialog, Feature feature, Func<TViewModel, Feature, Task<PermissionResult>> checker, Action<TViewModel, FeatureEventArgs> performer)
 		{
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
-			if (verifier == null) throw new ArgumentNullException(nameof(verifier));
+			if (checker == null) throw new ArgumentNullException(nameof(checker));
 			if (performer == null) throw new ArgumentNullException(nameof(performer));
 
 			var args = new FeatureEventArgs(feature);
-
-			this.OnOperationStart(args);
-
 			try
 			{
-				var permissionResult = await GetPermissionResultAsync(viewModel, feature, verifier);
+				this.OnOperationStart(args);
+
+				var permissionResult = await GetPermissionResultAsync(viewModel, feature, checker);
 				if (permissionResult != null)
 				{
 					switch (permissionResult.Status)
@@ -155,13 +154,14 @@ namespace Cchbc
 							performer(viewModel, args);
 							break;
 						case PermissionStatus.Confirm:
-							this.SetupDialog(dialog, args);
-							dialog.AcceptAction = () => performer(viewModel, args);
-							await dialog.ConfirmAsync(permissionResult.Message, feature);
+							var dialogResult = await dialog.ShowAsync(permissionResult.Message, feature, DialogType.AcceptDecline);
+							if (dialogResult == DialogResult.Accept)
+							{
+								performer(viewModel, args);
+							}
 							break;
 						case PermissionStatus.Deny:
-							this.SetupDialog(dialog, args);
-							await dialog.DisplayAsync(permissionResult.Message, feature);
+							await dialog.ShowAsync(permissionResult.Message, feature);
 							break;
 						default:
 							throw new ArgumentOutOfRangeException();
@@ -171,6 +171,9 @@ namespace Cchbc
 			catch (Exception ex)
 			{
 				this.OnOperationError(args.WithException(ex));
+			}
+			finally
+			{
 				this.OnOperationEnd(args);
 			}
 		}
@@ -283,93 +286,60 @@ namespace Cchbc
 
 		public void InsertValidated(TViewModel viewModel, FeatureEventArgs args)
 		{
-			var feature = args.Feature;
-			feature.AddStep(nameof(InsertValidated));
-			try
-			{
-				// Add the item to the db
-				this.Adapter.Insert(viewModel.Model);
+			args.Feature.AddStep(nameof(InsertValidated));
 
-				// Find the right index to insert the new element
-				var index = this.ViewModels.Count;
-				var option = this.Sorter.CurrentOption;
-				if (option != null)
+			// Add the item to the db
+			this.Adapter.Insert(viewModel.Model);
+
+			// Find the right index to insert the new element
+			var index = this.ViewModels.Count;
+			var option = this.Sorter.CurrentOption;
+			if (option != null)
+			{
+				index = 0;
+
+				var cmp = option.Comparison;
+				foreach (var current in this.ViewModels)
 				{
-					index = 0;
-
-					var cmp = option.Comparison;
-					foreach (var current in this.ViewModels)
+					var result = cmp(current, viewModel);
+					if (result > 0)
 					{
-						var result = cmp(current, viewModel);
-						if (result > 0)
-						{
-							break;
-						}
-						index++;
+						break;
 					}
+					index++;
 				}
+			}
 
-				// Insert the item into the list at the correct place
-				this.ViewModels.Insert(index, viewModel);
+			// Insert the item into the list at the correct place
+			this.ViewModels.Insert(index, viewModel);
 
-				// Fire the event
-				this.OnItemInserted(new ObjectEventArgs<TViewModel>(viewModel));
-			}
-			catch (Exception ex)
-			{
-				this.OnOperationError(args.WithException(ex));
-			}
-			finally
-			{
-				this.OnOperationEnd(args);
-			}
+			// Fire the event
+			this.OnItemInserted(new ObjectEventArgs<TViewModel>(viewModel));
 		}
 
 		public void UpdateValidated(TViewModel viewModel, FeatureEventArgs args)
 		{
-			var feature = args.Feature;
-			feature.AddStep(nameof(UpdateValidated));
-			try
-			{
-				// Update the item from the db
-				this.Adapter.Update(viewModel.Model);
+			args.Feature.AddStep(nameof(UpdateValidated));
 
-				// Fire the event
-				this.OnItemUpdated(new ObjectEventArgs<TViewModel>(viewModel));
-			}
-			catch (Exception ex)
-			{
-				this.OnOperationError(args.WithException(ex));
-			}
-			finally
-			{
-				this.OnOperationEnd(args);
-			}
+			// Update the item from the db
+			this.Adapter.Update(viewModel.Model);
+
+			// Fire the event
+			this.OnItemUpdated(new ObjectEventArgs<TViewModel>(viewModel));
 		}
 
 		public void DeleteValidated(TViewModel viewModel, FeatureEventArgs args)
 		{
-			var feature = args.Feature;
-			feature.AddStep(nameof(UpdateValidated));
-			try
-			{
-				// Delete the item from the db
-				this.Adapter.Delete(viewModel.Model);
+			args.Feature.AddStep(nameof(UpdateValidated));
 
-				// Delete the item into the list at the correct place
-				this.ViewModels.Remove(viewModel);
+			// Delete the item from the db
+			this.Adapter.Delete(viewModel.Model);
 
-				// Fire the event
-				this.OnItemDeleted(new ObjectEventArgs<TViewModel>(viewModel));
-			}
-			catch (Exception ex)
-			{
-				this.OnOperationError(args.WithException(ex));
-			}
-			finally
-			{
-				this.OnOperationEnd(args);
-			}
+			// Delete the item from the list
+			this.ViewModels.Remove(viewModel);
+
+			// Fire the event
+			this.OnItemDeleted(new ObjectEventArgs<TViewModel>(viewModel));
 		}
 
 		private int FindNewIndex(ObservableCollection<TViewModel> viewModels, TViewModel viewModel)
@@ -441,13 +411,6 @@ namespace Cchbc
 			}
 
 			return null;
-		}
-
-		private void SetupDialog(ModalDialog dialog, FeatureEventArgs args)
-		{
-			// On every action of the dialog fire End event for None feature - works like finally
-			dialog.AcceptAction =
-				dialog.CancelAction = dialog.DeclineAction = () => this.OnOperationEnd(args);
 		}
 	}
 }

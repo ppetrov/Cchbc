@@ -28,10 +28,24 @@ namespace Cchbc.UI
 			{
 				this.SetField(ref _textSearch, value);
 
-				var feature = Feature.StartNew(this.Context, nameof(SearchByText));
+				var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByText));
 				this.SearchByText();
 				this.FeatureManager.Stop(feature);
 			}
+		}
+
+		private bool _isWorking;
+		public bool IsWorking
+		{
+			get { return _isWorking; }
+			private set { this.SetField(ref _isWorking, value); }
+		}
+
+		private string _workProgress;
+		public string WorkProgress
+		{
+			get { return _workProgress; }
+			private set { this.SetField(ref _workProgress, value); }
 		}
 
 		private SearchOption<LoginViewModel> _searchOption;
@@ -41,9 +55,9 @@ namespace Cchbc.UI
 			set
 			{
 				this.SetField(ref _searchOption, value);
-				var feature = Feature.StartNew(this.Context, nameof(SearchByOption), value?.Name ?? string.Empty);
+				var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByOption));
 				this.SearchByOption();
-				this.FeatureManager.Stop(feature);
+				this.FeatureManager.Stop(feature, value?.Name ?? string.Empty);
 			}
 		}
 
@@ -54,7 +68,7 @@ namespace Cchbc.UI
 			set
 			{
 				this.SetField(ref _sortOption, value);
-				var feature = Feature.StartNew(this.Context, nameof(SortBy));
+				var feature = this.FeatureManager.StartNew(this.Context, nameof(SortBy));
 				this.SortBy();
 				this.FeatureManager.Stop(feature);
 			}
@@ -67,9 +81,8 @@ namespace Cchbc.UI
 			this.Core = core;
 			this.Module = new LoginsModule(new LoginAdapter(), new Sorter<LoginViewModel>(new[]
 			{
-			new SortOption<LoginViewModel>(string.Empty, (x, y) => 0)
-		}),
-			new Searcher<LoginViewModel>((v, s) => false));
+				new SortOption<LoginViewModel>(string.Empty, (x, y) => 0)
+			}), new Searcher<LoginViewModel>((v, s) => false));
 
 			this.Module.OperationStart += (sender, args) =>
 			{
@@ -81,7 +94,7 @@ namespace Cchbc.UI
 			};
 			this.Module.OperationError += (sender, args) =>
 			{
-				this.Core.FeatureManager.Stop(args.Feature, args.Exception);
+				this.Core.FeatureManager.LogException(args.Feature, args.Exception);
 			};
 
 			this.Module.ItemInserted += ModuleOnItemInserted;
@@ -91,7 +104,7 @@ namespace Cchbc.UI
 
 		public void LoadData()
 		{
-			var feature = Feature.StartNew(this.Context, nameof(LoadData));
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadData));
 
 			var models = this.Module.GetAll();
 			var viewModels = new LoginViewModel[models.Count];
@@ -102,31 +115,31 @@ namespace Cchbc.UI
 			}
 			this.DisplayLogins(viewModels, feature);
 
-			this.FeatureManager.Stop(feature);
+			this.FeatureManager.Stop(feature, models.Count.ToString());
 		}
 
-		public Task AddAsync(LoginViewModel viewModel, ModalDialog dialog)
+		public Task AddAsync(LoginViewModel viewModel, IModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.InsertAsync(viewModel, dialog, new Feature(this.Context, nameof(AddAsync), string.Empty));
+			return this.Module.InsertAsync(viewModel, dialog, this.AddProgressReport(new Feature(this.Context, nameof(AddAsync))));
 		}
 
-		public Task UpdateAsync(LoginViewModel viewModel, ModalDialog dialog)
+		public Task UpdateAsync(LoginViewModel viewModel, IModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.UpdateAsync(viewModel, dialog, new Feature(this.Context, nameof(UpdateAsync), string.Empty));
+			return this.Module.UpdateAsync(viewModel, dialog, this.AddProgressReport(new Feature(this.Context, nameof(UpdateAsync))));
 		}
 
-		public Task RemoveAsync(LoginViewModel viewModel, ModalDialog dialog)
+		public Task RemoveAsync(LoginViewModel viewModel, IModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.DeleteAsync(viewModel, dialog, new Feature(this.Context, nameof(RemoveAsync), string.Empty));
+			return this.Module.DeleteAsync(viewModel, dialog, this.AddProgressReport(new Feature(this.Context, nameof(RemoveAsync))));
 		}
 
 		private void ModuleOnItemInserted(object sender, ObjectEventArgs<LoginViewModel> args)
@@ -174,6 +187,15 @@ namespace Cchbc.UI
 			{
 				this.Logins[index++] = viewModel;
 			}
+		}
+
+		private Feature AddProgressReport(Feature feature)
+		{
+			feature.Started = _ => { this.IsWorking = true; };
+			feature.Stopped = _ => { this.IsWorking = false; };
+			feature.StepAdded = f => this.WorkProgress = f.Step.Name;
+
+			return feature;
 		}
 	}
 }

@@ -125,8 +125,8 @@
     </Compile>
     <Compile Include="LoginsViewModel.cs" />
     <Compile Include="LoginViewModel.cs" />
+    <Compile Include="ModalDialog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WinRtModalDialog.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

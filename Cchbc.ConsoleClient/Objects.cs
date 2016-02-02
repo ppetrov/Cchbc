@@ -715,7 +715,7 @@ namespace Cchbc.ConsoleClient
 			{
 				this.SetField(ref _textSearch, value);
 
-				var feature = Feature.StartNew(this.Context, nameof(SearchByText));
+				var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByText));
 				this.SearchByText();
 				this.FeatureManager.Stop(feature);
 			}
@@ -728,9 +728,9 @@ namespace Cchbc.ConsoleClient
 			set
 			{
 				this.SetField(ref _searchOption, value);
-				var feature = Feature.StartNew(this.Context, nameof(SearchByOption), value?.Name ?? string.Empty);
+				var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByOption));
 				this.SearchByOption();
-				this.FeatureManager.Stop(feature);
+				this.FeatureManager.Stop(feature, value?.Name ?? string.Empty);
 			}
 		}
 
@@ -741,7 +741,7 @@ namespace Cchbc.ConsoleClient
 			set
 			{
 				this.SetField(ref _sortOption, value);
-				var feature = Feature.StartNew(this.Context, nameof(SortBy));
+				var feature = this.FeatureManager.StartNew(this.Context, nameof(SortBy));
 				this.SortBy();
 				this.FeatureManager.Stop(feature);
 			}
@@ -766,7 +766,7 @@ namespace Cchbc.ConsoleClient
 
 		public void LoadData()
 		{
-			var feature = Feature.StartNew(this.Context, nameof(LoadData));
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadData));
 
 			var helper = this.Core.DataCache.GetHelper<Outlet>();
 			var viewModels = helper.Items.Values.Select(v => new OutletViewModel(v)).ToArray();

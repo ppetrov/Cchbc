@@ -61,10 +61,6 @@ namespace Cchbc.Features
 
 		public void StopDbWriters()
 		{
-			// Check if we've already called this method
-			var local = _features;
-			if (local == null) return;
-
 			_features.CompleteAdding();
 			_exceptions.CompleteAdding();
 
@@ -81,33 +77,28 @@ namespace Cchbc.Features
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.StartMeasure();
+			feature.Start();
 		}
 
-		public void Stop(Feature feature, Exception exception = null)
+		public void Stop(Feature feature, string details = null)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			// Exceptions have higher priority and will be logged even for None features
-			ExceptionEntry exceptionEntry = null;
-			if (exception != null)
-			{
-				exceptionEntry = new ExceptionEntry(feature.Context, feature.Name, exception);
-				_exceptions.TryAdd(exceptionEntry);
-			}
-
-			// Ignore None(empty) features without exception
-			if (feature == Feature.None)
-			{
-				return;
-			}
-
-			this.Finish(feature, exceptionEntry);
+			this.Complete(feature, details);
 		}
 
-		private void Finish(Feature feature, ExceptionEntry exceptionEntry)
+		public void LogException(Feature feature, Exception exception)
 		{
-			feature.FinishMeasure();
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (exception == null) throw new ArgumentNullException(nameof(exception));
+
+			_exceptions.TryAdd(new ExceptionEntry(feature.Context, feature.Name, exception));
+		}
+
+		private void Complete(Feature feature, string details)
+		{
+			// Stop the feature
+			feature.Stop();
 
 			var steps = Enumerable.Empty<FeatureEntryStep>().ToArray();
 
@@ -118,11 +109,17 @@ namespace Cchbc.Features
 
 				for (var i = 0; i < steps.Length; i++)
 				{
-					steps[i] = new FeatureEntryStep(featureSteps[i].Name, featureSteps[i].TimeSpent, featureSteps[i].Details);
+					var s = featureSteps[i];
+					steps[i] = new FeatureEntryStep(s.Name, s.TimeSpent, s.Details);
 				}
 			}
 
-			_features.TryAdd(new FeatureEntry(feature.Context, feature.Name, feature.Details, feature.TimeSpent, steps, exceptionEntry));
+			_features.TryAdd(new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
+		}
+
+		public Feature StartNew(string context, string name)
+		{
+			return new Feature(context, name);
 		}
 	}
 }

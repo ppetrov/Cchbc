@@ -26,12 +26,11 @@ using Cchbc.Validation;
 
 namespace Cchbc.ConsoleClient
 {
-	public sealed class ConsoleDialog : ModalDialog
+	public sealed class ConsoleDialog : IModalDialog
 	{
-		public override Task ShowAsync(string message, DialogType? type = null)
+		public Task<DialogResult> ShowAsync(string message, Feature feature, DialogType? type = null)
 		{
-			return Task.FromResult(true);
-			//throw new NotImplementedException();
+			return Task.FromResult(DialogResult.Cancel);
 		}
 	}
 
@@ -241,7 +240,7 @@ namespace Cchbc.ConsoleClient
 			};
 			this.Module.OperationEnd += (sender, args) =>
 			{
-				this.Core.FeatureManager.Stop(args.Feature, args.Exception);
+				this.Core.FeatureManager.Stop(args.Feature);
 			};
 
 			this.Module.ItemInserted += ModuleOnItemInserted;
@@ -251,7 +250,7 @@ namespace Cchbc.ConsoleClient
 
 		public void LoadData()
 		{
-			var feature = Feature.StartNew(this.Context, nameof(LoadData));
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadData));
 
 			var models = this.Module.GetAll();
 			var viewModels = new LoginViewModel[models.Count];
@@ -265,23 +264,23 @@ namespace Cchbc.ConsoleClient
 			this.FeatureManager.Stop(feature);
 		}
 
-		public Task AddAsync(LoginViewModel viewModel, ModalDialog dialog)
+		public Task AddAsync(LoginViewModel viewModel, IModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.InsertAsync(viewModel, dialog, new Feature(this.Context, nameof(AddAsync), string.Empty));
+			return this.Module.InsertAsync(viewModel, dialog, new Feature(this.Context, nameof(AddAsync)));
 		}
 
-		public Task UpdateAsync(LoginViewModel viewModel, ModalDialog dialog)
+		public Task UpdateAsync(LoginViewModel viewModel, IModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.UpdateAsync(viewModel, dialog, new Feature(this.Context, nameof(UpdateAsync), string.Empty));
+			return this.Module.UpdateAsync(viewModel, dialog, new Feature(this.Context, nameof(UpdateAsync)));
 		}
 
-		public Task ChangePasswordAsync(LoginViewModel viewModel, ModalDialog dialog, string newPassword)
+		public Task ChangePasswordAsync(LoginViewModel viewModel, IModalDialog dialog, string newPassword)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (newPassword == null) throw new ArgumentNullException(nameof(newPassword));
@@ -289,15 +288,15 @@ namespace Cchbc.ConsoleClient
 
 			var copyViewModel = new LoginViewModel(viewModel.Model) { Password = newPassword };
 
-			return this.Module.ExecuteAsync(copyViewModel, dialog, new Feature(this.Context, nameof(ChangePasswordAsync), string.Empty), this.Module.CanChangePassword, this.ChangePasswordValidated);
+			return this.Module.ExecuteAsync(copyViewModel, dialog, new Feature(this.Context, nameof(ChangePasswordAsync)), this.Module.CanChangePassword, this.ChangePasswordValidated);
 		}
 
-		public Task RemoveAsync(LoginViewModel viewModel, ModalDialog dialog)
+		public Task RemoveAsync(LoginViewModel viewModel, IModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.DeleteAsync(viewModel, dialog, new Feature(this.Context, nameof(RemoveAsync), string.Empty));
+			return this.Module.DeleteAsync(viewModel, dialog, new Feature(this.Context, nameof(RemoveAsync)));
 		}
 
 		private void ModuleOnItemInserted(object sender, ObjectEventArgs<LoginViewModel> args)
@@ -347,7 +346,6 @@ namespace Cchbc.ConsoleClient
 		{
 			var viewModel = this.Module.FindViewModel(copyViewModel.Model);
 
-			viewModel = null;
 			viewModel.Password = copyViewModel.Password;
 
 			this.Module.UpdateValidated(viewModel, args);
@@ -559,7 +557,15 @@ namespace Cchbc.ConsoleClient
 	{
 		static void Main(string[] args)
 		{
-			Floors();
+			var n = @"ctx.name:msg";
+			var idx = n.IndexOf('.') + 1;
+			var sidx = n.IndexOf(':', (idx)) - idx;
+			var ctx = n.Substring(0, idx - 1);
+			var name = n.Substring(idx, sidx);
+			var msg = n.Substring(ctx.Length + name.Length + 2);
+			Console.WriteLine("|" + ctx + "|");
+			Console.WriteLine("|" + name + "|");
+			Console.WriteLine("|" + msg + "|");
 
 			return;
 			//CalendarScreen.Name:Calendar
@@ -908,8 +914,8 @@ namespace Cchbc.ConsoleClient
 					}
 				}
 
-				
-				
+
+
 			}
 
 			Console.WriteLine(n);
@@ -1121,7 +1127,7 @@ using System.Data;
 				var totalMilliseconds = f.TimeSpent.TotalMilliseconds;
 				var remaingTime = totalMilliseconds - (f.Steps.Select(v => v.TimeSpent.TotalMilliseconds).Sum());
 
-				foreach (var s in f.Steps.Concat(new[] { new FeatureEntryStep(@"Other", TimeSpan.FromMilliseconds(remaingTime)) }))
+				foreach (var s in f.Steps.Concat(new[] { new FeatureEntryStep(@"Other", TimeSpan.FromMilliseconds(remaingTime), string.Empty) }))
 				{
 					buffer.Append('\t');
 
