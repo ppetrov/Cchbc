@@ -11,8 +11,10 @@ namespace Cchbc.Data
 
 		public QueryExecutor(ReadQueryExecutor readQueryExecutor, ModifyQueryExecutor modifyQueryExecutor)
 		{
+#if !DEBUG
 			if (readQueryExecutor == null) throw new ArgumentNullException(nameof(readQueryExecutor));
 			if (modifyQueryExecutor == null) throw new ArgumentNullException(nameof(modifyQueryExecutor));
+#endif
 
 			this.ReadQueryExecutor = readQueryExecutor;
 			this.ModifyQueryExecutor = modifyQueryExecutor;

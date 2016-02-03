@@ -13,8 +13,7 @@ namespace Cchbc.Localization
 
 			this.ByContextValues.Clear();
 
-			// Ctx. Name: "Close Day"
-			//CalendarScreen.Name:Calendar
+			//Context.Name:Message
 			foreach (var line in lines)
 			{
 				var index = line.IndexOf('.');

@@ -111,7 +111,7 @@ namespace Cchbc
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			return ExecuteAsync(viewModel, dialog, feature, this.CanInsertAsync, this.InsertValidated);
+			return ExecuteAsync(viewModel, dialog, feature, this.CanInsertAsync, this.InsertValidatedAsync);
 		}
 
 		public Task UpdateAsync(TViewModel viewModel, IModalDialog dialog, Feature feature)
@@ -120,7 +120,7 @@ namespace Cchbc
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			return ExecuteAsync(viewModel, dialog, feature, this.CanUpdateAsync, this.UpdateValidated);
+			return ExecuteAsync(viewModel, dialog, feature, this.CanUpdateAsync, this.UpdateValidatedAsync);
 		}
 
 		public Task DeleteAsync(TViewModel viewModel, IModalDialog dialog, Feature feature)
@@ -129,10 +129,10 @@ namespace Cchbc
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			return ExecuteAsync(viewModel, dialog, feature, this.CanDeleteAsync, this.DeleteValidated);
+			return ExecuteAsync(viewModel, dialog, feature, this.CanDeleteAsync, this.DeleteValidatedAsync);
 		}
 
-		public async Task ExecuteAsync(TViewModel viewModel, IModalDialog dialog, Feature feature, Func<TViewModel, Feature, Task<PermissionResult>> checker, Action<TViewModel, FeatureEventArgs> performer)
+		public async Task ExecuteAsync(TViewModel viewModel, IModalDialog dialog, Feature feature, Func<TViewModel, Feature, Task<PermissionResult>> checker, Func<TViewModel, FeatureEventArgs, Task> performer)
 		{
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
@@ -151,13 +151,13 @@ namespace Cchbc
 					switch (permissionResult.Status)
 					{
 						case PermissionStatus.Allow:
-							performer(viewModel, args);
+							await performer(viewModel, args);
 							break;
 						case PermissionStatus.Confirm:
 							var dialogResult = await dialog.ShowAsync(permissionResult.Message, feature, DialogType.AcceptDecline);
 							if (dialogResult == DialogResult.Accept)
 							{
-								performer(viewModel, args);
+								await performer(viewModel, args);
 							}
 							break;
 						case PermissionStatus.Deny:
@@ -284,12 +284,12 @@ namespace Cchbc
 			return this.Searcher.Search(GetFilteredViewModels(viewModels ?? this.ViewModels), textSearch, searchOption);
 		}
 
-		public void InsertValidated(TViewModel viewModel, FeatureEventArgs args)
+		public async Task InsertValidatedAsync(TViewModel viewModel, FeatureEventArgs args)
 		{
-			args.Feature.AddStep(nameof(InsertValidated));
+			args.Feature.AddStep(nameof(InsertValidatedAsync));
 
 			// Add the item to the db
-			this.Adapter.Insert(viewModel.Model);
+			await this.Adapter.InsertAsync(viewModel.Model);
 
 			// Find the right index to insert the new element
 			var index = this.ViewModels.Count;
@@ -317,23 +317,23 @@ namespace Cchbc
 			this.OnItemInserted(new ObjectEventArgs<TViewModel>(viewModel));
 		}
 
-		public void UpdateValidated(TViewModel viewModel, FeatureEventArgs args)
+		public async Task UpdateValidatedAsync(TViewModel viewModel, FeatureEventArgs args)
 		{
-			args.Feature.AddStep(nameof(UpdateValidated));
+			args.Feature.AddStep(nameof(UpdateValidatedAsync));
 
 			// Update the item from the db
-			this.Adapter.Update(viewModel.Model);
+			await this.Adapter.UpdateAsync(viewModel.Model);
 
 			// Fire the event
 			this.OnItemUpdated(new ObjectEventArgs<TViewModel>(viewModel));
 		}
 
-		public void DeleteValidated(TViewModel viewModel, FeatureEventArgs args)
+		public async Task DeleteValidatedAsync(TViewModel viewModel, FeatureEventArgs args)
 		{
-			args.Feature.AddStep(nameof(UpdateValidated));
+			args.Feature.AddStep(nameof(UpdateValidatedAsync));
 
 			// Delete the item from the db
-			this.Adapter.Delete(viewModel.Model);
+			await this.Adapter.DeleteAsync(viewModel.Model);
 
 			// Delete the item from the list
 			this.ViewModels.Remove(viewModel);

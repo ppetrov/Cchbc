@@ -16,8 +16,11 @@ namespace Cchbc.Features
 
 		private FeatureEventArgs(Feature feature, Exception exception)
 		{
-			Feature = feature;
-			Exception = exception;
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (exception == null) throw new ArgumentNullException(nameof(exception));
+
+			this.Feature = feature;
+			this.Exception = exception;
 		}
 
 		public FeatureEventArgs WithException(Exception exception)

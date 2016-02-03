@@ -5,8 +5,6 @@ namespace Cchbc.Features.Db
 {
 	public sealed class DbFeaturesManager
 	{
-		private static readonly object SyncLock = new object();
-
 		private DbFeaturesAdapter Adapter { get; }
 		private Dictionary<string, DbContext> Contexts { get; } = new Dictionary<string, DbContext>(StringComparer.OrdinalIgnoreCase);
 		private Dictionary<string, DbFeatureStep> Steps { get; } = new Dictionary<string, DbFeatureStep>(StringComparer.OrdinalIgnoreCase);
@@ -36,28 +34,23 @@ namespace Cchbc.Features.Db
 			this.LoadFeatures();
 		}
 
-		public void Save(FeatureEntry featureEntry)
+		public void Save(DbEntry entry)
 		{
-			if (featureEntry == null) throw new ArgumentNullException(nameof(featureEntry));
+			if (entry == null) throw new ArgumentNullException(nameof(entry));
 
-			lock (SyncLock)
+			var context = this.SaveContext(entry.Context);
+			var feature = this.SaveFeature(context, entry.Name);
+
+			var fe = entry as FeatureEntry;
+			if (fe != null)
 			{
-				var context = this.SaveContext(featureEntry.Context);
-				var feature = this.SaveFeature(context, featureEntry.Name);
-				var dbFeatureEntry = this.Adapter.InsertFeatureEntry(feature, featureEntry);
-				this.SaveSteps(dbFeatureEntry, featureEntry.Steps);
+				var dbFeatureEntry = this.Adapter.InsertFeatureEntry(feature, fe);
+				this.SaveSteps(dbFeatureEntry, fe.Steps);
 			}
-		}
-
-		public void Save(ExceptionEntry exceptionEntry)
-		{
-			if (exceptionEntry == null) throw new ArgumentNullException(nameof(exceptionEntry));
-
-			lock (SyncLock)
+			var ee = entry as ExceptionEntry;
+			if (ee != null)
 			{
-				var context = this.SaveContext(exceptionEntry.Context);
-				var feature = this.SaveFeature(context, exceptionEntry.Name);
-				this.Adapter.InsertExceptionEntry(feature, exceptionEntry);
+				this.Adapter.InsertExceptionEntry(feature, ee);
 			}
 		}
 

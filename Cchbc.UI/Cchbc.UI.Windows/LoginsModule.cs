@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Cchbc.Features;
 using Cchbc.Search;
@@ -31,7 +32,7 @@ namespace Cchbc.UI
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(ValidateProperties));
-			return new[] { ValidationResult.Success };
+			return Enumerable.Empty<ValidationResult>().ToArray();
 		}
 
 		public override Task<PermissionResult> CanInsertAsync(LoginViewModel viewModel, Feature feature)
@@ -40,7 +41,9 @@ namespace Cchbc.UI
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(CanInsertAsync));
-			return Task.FromResult(PermissionResult.Deny(string.Empty));
+			//return PermissionResult.Allow;
+			return Task.FromResult(PermissionResult.Confirm(@"Add one more admin ?"));
+			//return Task.FromResult(PermissionResult.Deny(string.Empty));
 		}
 
 		public override Task<PermissionResult> CanUpdateAsync(LoginViewModel viewModel, Feature feature)

@@ -2,11 +2,8 @@
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using Cchbc.App;
-using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
-using Cchbc.Features.Db;
 
 namespace Cchbc.UI
 {
@@ -19,8 +16,6 @@ namespace Cchbc.UI
 			this.InitializeComponent();
 
 			var core = new Core();
-			var ctx = nameof(CommentsScreen);
-			core.Logger = new DirectDebugLogger(ctx);
 			core.FeatureManager = new FeatureManager();
 			_viewModel = new LoginsViewModel(core);
 			this.DataContext = _viewModel;

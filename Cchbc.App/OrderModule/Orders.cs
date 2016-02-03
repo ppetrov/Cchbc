@@ -79,7 +79,7 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(addresses);
 		}
 
-		public void Insert(DeliveryAddress item)
+		public Task InsertAsync(DeliveryAddress item)
 		{
 			//public long Id { get; set; }
 			//public Outlet Outlet { get; }
@@ -89,12 +89,12 @@ namespace Cchbc.App.OrderModule
 			throw new NotImplementedException();
 		}
 
-		public void Update(DeliveryAddress item)
+		public Task UpdateAsync(DeliveryAddress item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Delete(DeliveryAddress item)
+		public Task DeleteAsync(DeliveryAddress item)
 		{
 			throw new NotImplementedException();
 		}
@@ -282,17 +282,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(oh);
 		}
 
-		public void Insert(OrderHeader item)
+		public Task InsertAsync(OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Update(OrderHeader item)
+		public Task UpdateAsync(OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Delete(OrderHeader item)
+		public Task DeleteAsync(OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
@@ -649,17 +649,17 @@ namespace Cchbc.App.OrderModule
 			//}));
 		}
 
-		public void Insert(OrderNote item)
+		public Task InsertAsync(OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Update(OrderNote item)
+		public Task UpdateAsync(OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Delete(OrderNote item)
+		public Task DeleteAsync(OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
@@ -720,17 +720,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(new List<OrderDetail>());
 		}
 
-		public void Insert(OrderDetail item)
+		public Task InsertAsync(OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Update(OrderDetail item)
+		public Task UpdateAsync(OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Delete(OrderDetail item)
+		public Task DeleteAsync(OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
@@ -768,17 +768,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(assortments);
 		}
 
-		public void Insert(Assortment item)
+		public Task InsertAsync(Assortment item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Update(Assortment item)
+		public Task UpdateAsync(Assortment item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Delete(Assortment item)
+		public Task DeleteAsync(Assortment item)
 		{
 			throw new NotImplementedException();
 		}

@@ -8,69 +8,39 @@ namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
-		private ILogger _logger;
-		private DbFeaturesManager _dbFeaturesManager;
-
 		private Task _featuresTask;
-		private Task _exceptionsTask;
-		private BlockingCollection<FeatureEntry> _features;
-		private BlockingCollection<ExceptionEntry> _exceptions;
+		private DbFeaturesManager DbFeaturesManager { get; }
+		private BlockingCollection<DbEntry> Entries { get; } = new BlockingCollection<DbEntry>();
 
-		public Action<FeatureEntry> InspectFeature { get; set; }
-
-		public void Load(ILogger logger, DbFeaturesManager dbFeaturesManager)
+		public FeatureManager(DbFeaturesManager dbFeaturesManager)
 		{
-			if (logger == null) throw new ArgumentNullException(nameof(logger));
 			if (dbFeaturesManager == null) throw new ArgumentNullException(nameof(dbFeaturesManager));
 
-			_logger = logger;
-			_dbFeaturesManager = dbFeaturesManager;
-
-			_dbFeaturesManager.Load();
+			this.DbFeaturesManager = dbFeaturesManager;
 		}
 
 		public void StartDbWriters()
 		{
-			_features = new BlockingCollection<FeatureEntry>();
-			_exceptions = new BlockingCollection<ExceptionEntry>();
+			this.DbFeaturesManager.Load();
 
 			_featuresTask = Task.Run(() =>
 			{
-				foreach (var entry in _features.GetConsumingEnumerable())
+				foreach (var entry in this.Entries.GetConsumingEnumerable())
 				{
 					try
 					{
-						this.InspectFeature?.Invoke(entry);
-						_dbFeaturesManager.Save(entry);
+						DbFeaturesManager.Save(entry);
 					}
-					catch (Exception ex) { _logger.Error(ex.ToString()); }
-				}
-			});
-			_exceptionsTask = Task.Run(() =>
-			{
-				foreach (var entry in _exceptions.GetConsumingEnumerable())
-				{
-					try
-					{
-						_dbFeaturesManager.Save(entry);
-					}
-					catch (Exception ex) { _logger.Error(ex.ToString()); }
+					catch { }
 				}
 			});
 		}
 
 		public void StopDbWriters()
 		{
-			_features.CompleteAdding();
-			_exceptions.CompleteAdding();
+			this.Entries.CompleteAdding();
 
 			_featuresTask.Wait();
-			_exceptionsTask.Wait();
-
-			_features = null;
-			_exceptions = null;
-			_featuresTask = null;
-			_exceptionsTask = null;
 		}
 
 		public void Start(Feature feature)
@@ -84,19 +54,6 @@ namespace Cchbc.Features
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			this.Complete(feature, details);
-		}
-
-		public void LogException(Feature feature, Exception exception)
-		{
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-			if (exception == null) throw new ArgumentNullException(nameof(exception));
-
-			_exceptions.TryAdd(new ExceptionEntry(feature.Context, feature.Name, exception));
-		}
-
-		private void Complete(Feature feature, string details)
-		{
 			// Stop the feature
 			feature.Stop();
 
@@ -114,12 +71,24 @@ namespace Cchbc.Features
 				}
 			}
 
-			_features.TryAdd(new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
+			this.Entries.TryAdd(new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
+		}
+
+		public void LogException(Feature feature, Exception exception)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (exception == null) throw new ArgumentNullException(nameof(exception));
+
+			this.Entries.TryAdd(new ExceptionEntry(feature.Context, feature.Name, exception));
 		}
 
 		public Feature StartNew(string context, string name)
 		{
-			return new Feature(context, name);
+			var feature = new Feature(context, name);
+
+			feature.Start();
+
+			return feature;
 		}
 	}
 }

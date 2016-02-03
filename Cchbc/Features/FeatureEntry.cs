@@ -2,26 +2,21 @@ using System;
 
 namespace Cchbc.Features
 {
-	public sealed class FeatureEntry
+	public sealed class FeatureEntry : DbEntry
 	{
-		public string Context { get; }
-		public string Name { get; }
 		public string Details { get; }
 		public TimeSpan TimeSpent { get; }
 		public FeatureEntryStep[] Steps { get; }
 
-		public FeatureEntry(string context, string name, string details, TimeSpan timeSpent, FeatureEntryStep[] entrySteps)
+		public FeatureEntry(string context, string name, string details, TimeSpan timeSpent, FeatureEntryStep[] steps)
+			: base(context, name)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (name == null) throw new ArgumentNullException(nameof(name));
 			if (details == null) throw new ArgumentNullException(nameof(details));
-			if (entrySteps == null) throw new ArgumentNullException(nameof(entrySteps));
+			if (steps == null) throw new ArgumentNullException(nameof(steps));
 
-			this.Context = context;
-			this.Name = name;
 			this.Details = details;
 			this.TimeSpent = timeSpent;
-			this.Steps = entrySteps;
+			this.Steps = steps;
 		}
 	}
 }

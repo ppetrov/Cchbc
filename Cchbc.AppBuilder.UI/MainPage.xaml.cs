@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.UI.Popups;
-using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Cchbc.App.AgendaModule;
 using Cchbc.Dialog;
@@ -11,26 +9,20 @@ using Cchbc.Features;
 
 namespace Cchbc.AppBuilder.UI
 {
-	/// <summary>
-	/// An empty page that can be used on its own or navigated to within a Frame.
-	/// </summary>
-	public sealed partial class MainPage : Page
+	public sealed partial class MainPage
 	{
+		public AgendaViewModel ViewModel { get; } = new AgendaViewModel();
 		public MainPage()
 		{
 			this.InitializeComponent();
 		}
 
-		private async void UIElement_OnTapped(object sender, TappedRoutedEventArgs e)
+		private async void DeleteItemTapped(object sender, TappedRoutedEventArgs e)
 		{
-			try
+			var result = await new ModalDialog().ShowAsync(@"Confirm delete", Feature.None, DialogType.AcceptDecline);
+			if (result == DialogResult.Accept)
 			{
-				var viewModel = new AgendaViewModel(new AgendaManager(new AgendaSettings(), new ModalDialog()), new FeatureManager());
-				await viewModel.DeleteAsync(new ActivityViewModel(new Activity()));
-			}
-			catch (Exception ex)
-			{
-				Debug.WriteLine(ex.ToString());
+				await this.ViewModel.DeleteAsync(null);
 			}
 		}
 	}

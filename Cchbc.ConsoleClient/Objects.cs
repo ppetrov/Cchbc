@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Features;
 using Cchbc.Objects;
@@ -121,7 +122,7 @@ namespace Cchbc.ConsoleClient
 			return visits.Values.ToList();
 		}
 
-		public void Insert(Visit item)
+		public Task InsertAsync(Visit item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -136,9 +137,11 @@ namespace Cchbc.ConsoleClient
 			this.QueryExecutor.Execute(query, sqlParams);
 
 			item.Id = this.QueryExecutor.GetNewId();
+
+			return Task.FromResult(true);
 		}
 
-		public void Update(Visit item)
+		public Task UpdateAsync(Visit item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -152,9 +155,11 @@ namespace Cchbc.ConsoleClient
 			var query = @"UPDATE Visits SET OutletId = @pOutletId, Date = @pDate WHERE Id = @pId";
 
 			this.QueryExecutor.Execute(query, sqlParams);
+
+			return Task.FromResult(true);
 		}
 
-		public void Delete(Visit item)
+		public Task DeleteAsync(Visit item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -166,6 +171,7 @@ namespace Cchbc.ConsoleClient
 			var query = @"DELETE FROM Visits WHERE Id = @pId";
 
 			this.QueryExecutor.Execute(query, sqlParams);
+			return Task.FromResult(true);
 		}
 
 		private void VisitCreator(IFieldDataReader r, Dictionary<long, Visit> visits)
@@ -287,7 +293,7 @@ namespace Cchbc.ConsoleClient
 			this.QueryExecutor = queryExecutor;
 		}
 
-		public void Insert(Activity item)
+		public Task InsertAsync(Activity item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -303,9 +309,11 @@ namespace Cchbc.ConsoleClient
 			this.QueryExecutor.Execute(query, sqlParams);
 
 			item.Id = this.QueryExecutor.GetNewId();
+
+			return Task.FromResult(true);
 		}
 
-		public void Update(Activity item)
+		public Task UpdateAsync(Activity item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -320,9 +328,11 @@ namespace Cchbc.ConsoleClient
 			var query = @"UPDATE Activities SET Date = @pDate, ActivityTypeId = @pActivityTypeId, VisitId = @pVisitId WHERE Id = @pId";
 
 			this.QueryExecutor.Execute(query, sqlParams);
+
+			return Task.FromResult(true);
 		}
 
-		public void Delete(Activity item)
+		public Task DeleteAsync(Activity item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -334,6 +344,7 @@ namespace Cchbc.ConsoleClient
 			var query = @"DELETE FROM Activities WHERE Id = @pId";
 
 			this.QueryExecutor.Execute(query, sqlParams);
+			return Task.FromResult(true);
 		}
 	}
 
@@ -597,7 +608,7 @@ namespace Cchbc.ConsoleClient
 			return this.QueryExecutor.Execute(new Query<ActivityNote>(query, this.ActivityNoteCreator));
 		}
 
-		public void Insert(ActivityNote item)
+		public Task InsertAsync(ActivityNote item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -614,9 +625,10 @@ namespace Cchbc.ConsoleClient
 			this.QueryExecutor.Execute(query, sqlParams);
 
 			item.Id = this.QueryExecutor.GetNewId();
+			return Task.FromResult(true);
 		}
 
-		public void Update(ActivityNote item)
+		public Task UpdateAsync(ActivityNote item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -632,9 +644,10 @@ namespace Cchbc.ConsoleClient
 			var query = @"UPDATE ActivityNotes SET Contents = @pContents, CreatedAt = @pCreatedAt, ActivityNoteTypeId = @pActivityNoteTypeId, ActivityId = @pActivityId WHERE Id = @pId";
 
 			this.QueryExecutor.Execute(query, sqlParams);
+			return Task.FromResult(true);
 		}
 
-		public void Delete(ActivityNote item)
+		public Task DeleteAsync(ActivityNote item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -646,6 +659,7 @@ namespace Cchbc.ConsoleClient
 			var query = @"DELETE FROM ActivityNotes WHERE Id = @pId";
 
 			this.QueryExecutor.Execute(query, sqlParams);
+			return Task.FromResult(true);
 		}
 
 		private ActivityNote ActivityNoteCreator(IFieldDataReader r)

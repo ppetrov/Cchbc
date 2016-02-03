@@ -88,25 +88,28 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class LoginAdapter : IModifiableAdapter<Login>
 	{
-		public void Insert(Login item)
+		public Task InsertAsync(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			//throw new NotImplementedException();
+			return Task.FromResult(true);
 		}
 
-		public void Update(Login item)
+		public Task UpdateAsync(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			//throw new NotImplementedException();
+			return Task.FromResult(true);
 		}
 
-		public void Delete(Login item)
+		public Task DeleteAsync(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			//throw new NotImplementedException();
+			return Task.FromResult(true);
 		}
 
 		public List<Login> GetAll()
@@ -236,11 +239,11 @@ namespace Cchbc.ConsoleClient
 
 			this.Module.OperationStart += (sender, args) =>
 			{
-				this.Core.FeatureManager.Start(args.Feature);
+				this.FeatureManager.Start(args.Feature);
 			};
 			this.Module.OperationEnd += (sender, args) =>
 			{
-				this.Core.FeatureManager.Stop(args.Feature);
+				this.FeatureManager.Stop(args.Feature);
 			};
 
 			this.Module.ItemInserted += ModuleOnItemInserted;
@@ -264,23 +267,40 @@ namespace Cchbc.ConsoleClient
 			this.FeatureManager.Stop(feature);
 		}
 
-		public Task AddAsync(LoginViewModel viewModel, IModalDialog dialog)
+		public async Task AddAsync(LoginViewModel viewModel, IModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.InsertAsync(viewModel, dialog, new Feature(this.Context, nameof(AddAsync)));
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(AddAsync));
+			try
+			{
+				await this.Module.InsertAsync(viewModel, dialog, feature);
+			}
+			catch (Exception ex)
+			{
+				this.FeatureManager.LogException(feature, ex);
+			}
 		}
 
-		public Task UpdateAsync(LoginViewModel viewModel, IModalDialog dialog)
+		public async Task UpdateAsync(LoginViewModel viewModel, IModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.UpdateAsync(viewModel, dialog, new Feature(this.Context, nameof(UpdateAsync)));
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(UpdateAsync));
+
+			try
+			{
+				await this.Module.UpdateAsync(viewModel, dialog, feature);
+			}
+			catch (Exception ex)
+			{
+				this.FeatureManager.LogException(feature, ex);
+			}
 		}
 
-		public Task ChangePasswordAsync(LoginViewModel viewModel, IModalDialog dialog, string newPassword)
+		public async Task ChangePasswordAsync(LoginViewModel viewModel, IModalDialog dialog, string newPassword)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (newPassword == null) throw new ArgumentNullException(nameof(newPassword));
@@ -288,15 +308,31 @@ namespace Cchbc.ConsoleClient
 
 			var copyViewModel = new LoginViewModel(viewModel.Model) { Password = newPassword };
 
-			return this.Module.ExecuteAsync(copyViewModel, dialog, new Feature(this.Context, nameof(ChangePasswordAsync)), this.Module.CanChangePassword, this.ChangePasswordValidated);
+			var feature = new Feature(this.Context, nameof(this.ChangePasswordAsync));
+			try
+			{
+				await this.Module.ExecuteAsync(copyViewModel, dialog, feature, this.Module.CanChangePassword, this.ChangePasswordValidatedAsync);
+			}
+			catch (Exception ex)
+			{
+				this.FeatureManager.LogException(feature, ex);
+			}
 		}
 
-		public Task RemoveAsync(LoginViewModel viewModel, IModalDialog dialog)
+		public async Task DeleteAsync(LoginViewModel viewModel, IModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.DeleteAsync(viewModel, dialog, new Feature(this.Context, nameof(RemoveAsync)));
+			var feature = new Feature(this.Context, nameof(DeleteAsync));
+			try
+			{
+				await this.Module.DeleteAsync(viewModel, dialog, feature);
+			}
+			catch (Exception ex)
+			{
+				this.FeatureManager.LogException(feature, ex);
+			}
 		}
 
 		private void ModuleOnItemInserted(object sender, ObjectEventArgs<LoginViewModel> args)
@@ -342,13 +378,13 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		private void ChangePasswordValidated(LoginViewModel copyViewModel, FeatureEventArgs args)
+		private async Task ChangePasswordValidatedAsync(LoginViewModel copyViewModel, FeatureEventArgs args)
 		{
 			var viewModel = this.Module.FindViewModel(copyViewModel.Model);
 
 			viewModel.Password = copyViewModel.Password;
 
-			this.Module.UpdateValidated(viewModel, args);
+			await this.Module.UpdateValidatedAsync(viewModel, args);
 		}
 	}
 
@@ -733,9 +769,6 @@ namespace Cchbc.ConsoleClient
 
 				var core = new Core();
 
-				// Set logger
-				core.Logger = new ConsoleLogger();
-
 				// Create Read query helper
 				var sqlReadDataQueryHelper = new SqlReadQueryExecutor(cn);
 				// Create Modify query helper
@@ -744,11 +777,10 @@ namespace Cchbc.ConsoleClient
 				var queryHelper = new QueryExecutor(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
 				core.QueryExecutor = queryHelper;
 
-				var featureManager = new FeatureManager { InspectFeature = InspectFeature };
-				core.FeatureManager = featureManager;
 				var manager = new DbFeaturesManager(new DbFeaturesAdapter(queryHelper));
+				var featureManager = new FeatureManager(manager);
+				core.FeatureManager = featureManager;
 				manager.CreateSchema();
-				core.FeatureManager.Load(core.Logger, manager);
 				core.FeatureManager.StartDbWriters();
 
 				// Register helpers
@@ -1112,10 +1144,6 @@ using System.Data;
 			var buffer = new StringBuilder();
 
 			var ctxName = f.Context + "(" + f.Name + ")";
-			if (f.ExceptionEntry != null)
-			{
-				ctxName = @"*** " + ctxName;
-			}
 			buffer.Append(ctxName.PadRight(25));
 			buffer.Append(' ');
 			buffer.Append(f.Details.PadRight(12));
@@ -1209,33 +1237,7 @@ using System.Data;
 	//	}
 	//}
 
-	public sealed class ConsoleLogger : ILogger
-	{
-		public bool IsDebugEnabled { get; }
-		public bool IsInfoEnabled { get; }
-		public bool IsWarnEnabled { get; }
-		public bool IsErrorEnabled { get; }
 
-		public void Debug(string message)
-		{
-			Console.WriteLine(@"Debug:" + message);
-		}
-
-		public void Info(string message)
-		{
-			Console.WriteLine(@"Info:" + message);
-		}
-
-		public void Warn(string message)
-		{
-			Console.WriteLine(@"Warn:" + message);
-		}
-
-		public void Error(string message)
-		{
-			Console.WriteLine(@"Error:" + message);
-		}
-	}
 
 
 
