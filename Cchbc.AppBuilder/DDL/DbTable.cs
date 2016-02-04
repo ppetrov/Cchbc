@@ -2,7 +2,6 @@ using System;
 
 namespace Cchbc.AppBuilder.DDL
 {
-	[Serializable]
 	public sealed class DbTable
 	{
 		public string Name { get; } = string.Empty;

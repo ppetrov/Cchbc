@@ -43,11 +43,12 @@ namespace Cchbc.AppBuilder
 
 		private static void CreateDirectory(string path)
 		{
-			if (Directory.Exists(path))
-			{
-				Directory.Delete(path, true);
-			}
-			Directory.CreateDirectory(path);
+			// TODO : !!!
+			//if (Directory.Exists(path))
+			//{
+			//	Directory.Delete(path, true);
+			//}
+			//Directory.CreateDirectory(path);
 		}
 
 		private static void SaveObjects(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
@@ -128,7 +129,7 @@ namespace Cchbc.AppBuilder
 				if (project.IsHidden(entity.Table))
 				{
 					continue;
-				}				
+				}
 				SaveClassViewModel(directoryPath, project, entity, namespaceName);
 
 				if (project.HasColumnToInverseTable(entity))
@@ -341,7 +342,8 @@ namespace Cchbc.AppBuilder
 
 		private static void SaveToFile(string directoryPath, string className, StringBuilder buffer)
 		{
-			File.WriteAllText(Path.Combine(directoryPath, className), buffer.ToString());
+			// TODO : !!!
+			//File.WriteAllText(Path.Combine(directoryPath, className), buffer.ToString());
 		}
 	}
 }

@@ -2,20 +2,15 @@
 
 namespace Cchbc.AppBuilder.DDL
 {
-	[Serializable]
 	public sealed class DbColumn
 	{
 		public static readonly string IdName = @"Id";
 
-		public string Name { get; } = string.Empty;
+		public string Name { get; }
 		public DbColumnType Type { get; }
 		public bool IsNullable { get; }
 		public bool IsPrimaryKey { get; }
 		public DbForeignKey DbForeignKey { get; }
-
-		public DbColumn()
-		{
-		}
 
 		public DbColumn(string name, DbColumnType type)
 		{

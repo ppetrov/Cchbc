@@ -99,6 +99,7 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ModalDialog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -143,6 +144,10 @@
     <ProjectReference Include="..\Cchbc.App\Cchbc.App.csproj">
       <Project>{919DA720-C69F-4B94-AE62-7004F8CCB0B3}</Project>
       <Name>Cchbc.App</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Cchbc.AppBuilder\Cchbc.AppBuilder.csproj">
+      <Project>{C925111E-12CE-4D75-93F8-348C5FD44EFD}</Project>
+      <Name>Cchbc.AppBuilder</Name>
     </ProjectReference>
     <ProjectReference Include="..\Cchbc\Cchbc.csproj">
       <Project>{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}</Project>

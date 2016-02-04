@@ -2,8 +2,10 @@
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
+using Cchbc.Features.Db;
 
 namespace Cchbc.UI
 {
@@ -16,7 +18,7 @@ namespace Cchbc.UI
 			this.InitializeComponent();
 
 			var core = new Core();
-			core.FeatureManager = new FeatureManager();
+			core.FeatureManager = new FeatureManager(new DbFeaturesManager(new DbFeaturesAdapter(new QueryExecutor(null, null))));
 			_viewModel = new LoginsViewModel(core);
 			this.DataContext = _viewModel;
 		}

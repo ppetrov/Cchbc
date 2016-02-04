@@ -388,11 +388,11 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class DelegateDataReader : IFieldDataReader
+	public sealed class SqlLiteDelegateDataReader : IFieldDataReader
 	{
 		private readonly DbDataReader _r;
 
-		public DelegateDataReader(DbDataReader r)
+		public SqlLiteDelegateDataReader(DbDataReader r)
 		{
 			if (r == null) throw new ArgumentNullException(nameof(r));
 
@@ -435,11 +435,11 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class SqlReadQueryExecutor : ReadQueryExecutor
+	public sealed class SqlLiteReadQueryExecutor : ReadQueryExecutor
 	{
 		private readonly SQLiteConnection _connection;
 
-		public SqlReadQueryExecutor(SQLiteConnection connection)
+		public SqlLiteReadQueryExecutor(SQLiteConnection connection)
 		{
 			if (connection == null) throw new ArgumentNullException(nameof(connection));
 
@@ -463,7 +463,7 @@ namespace Cchbc.ConsoleClient
 
 				using (var r = cmd.ExecuteReader())
 				{
-					var dr = new DelegateDataReader(r);
+					var dr = new SqlLiteDelegateDataReader(r);
 					while (dr.Read())
 					{
 						values.Add(query.Creator(dr));
@@ -493,7 +493,7 @@ namespace Cchbc.ConsoleClient
 
 				using (var r = cmd.ExecuteReader())
 				{
-					var dr = new DelegateDataReader(r);
+					var dr = new SqlLiteDelegateDataReader(r);
 					while (dr.Read())
 					{
 						var value = query.Creator(dr);
@@ -523,7 +523,7 @@ namespace Cchbc.ConsoleClient
 
 				using (var r = cmd.ExecuteReader())
 				{
-					var dr = new DelegateDataReader(r);
+					var dr = new SqlLiteDelegateDataReader(r);
 					while (dr.Read())
 					{
 						filler(dr, values);
@@ -533,11 +533,11 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class SqlModifyQueryExecutor : ModifyQueryExecutor
+	public sealed class SqlLiteModifyQueryExecutor : ModifyQueryExecutor
 	{
 		private readonly SQLiteConnection _connection;
 
-		public SqlModifyQueryExecutor(ReadQueryExecutor readQueryExecutor, SQLiteConnection connection)
+		public SqlLiteModifyQueryExecutor(ReadQueryExecutor readQueryExecutor, SQLiteConnection connection)
 			: base(readQueryExecutor)
 		{
 			if (connection == null) throw new ArgumentNullException(nameof(connection));
@@ -770,9 +770,9 @@ namespace Cchbc.ConsoleClient
 				var core = new Core();
 
 				// Create Read query helper
-				var sqlReadDataQueryHelper = new SqlReadQueryExecutor(cn);
+				var sqlReadDataQueryHelper = new SqlLiteReadQueryExecutor(cn);
 				// Create Modify query helper
-				var sqlModifyDataQueryHelper = new SqlModifyQueryExecutor(sqlReadDataQueryHelper, cn);
+				var sqlModifyDataQueryHelper = new SqlLiteModifyQueryExecutor(sqlReadDataQueryHelper, cn);
 				// Create General query helper
 				var queryHelper = new QueryExecutor(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
 				core.QueryExecutor = queryHelper;

@@ -4,36 +4,40 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="using:Cchbc.AppBuilder.UI"
+
     mc:Ignorable="d">
+    
+    <Page.Resources>
+        <Style x:Key="FullLineItemStyle" TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="RegularTextTextBlock" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FEFEFE"/>
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
+    </Page.Resources>
 
     <Grid Background="#181C1E">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"></ColumnDefinition>
-            <ColumnDefinition Width="5*"></ColumnDefinition>
-            <ColumnDefinition Width="5*"></ColumnDefinition>
+            <ColumnDefinition Width="10*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="2*"></RowDefinition>
-            <RowDefinition Height="5*"></RowDefinition>
-            <RowDefinition Height="5*"></RowDefinition>
-        </Grid.RowDefinitions>
-        
-        <Button Margin="10" Background="Orange" Tapped="DeleteItemTapped">
-            Delete
-        </Button>
 
         <!--Left Menu-->
-        <StackPanel Grid.Row="1" Grid.Column="0" Grid.RowSpan="2" Background="#1D3E3D" Margin="10" Orientation="Vertical">
+        <StackPanel Grid.Column="0" Background="#1D3E3D" Margin="5" Orientation="Vertical">
             <StackPanel Background="#12796D">
-                <TextBlock HorizontalAlignment="Center" Foreground="#FDFEFE" FontSize="24" FontFamily="Segoe UI" Margin="10">Menu</TextBlock>
+                <TextBlock HorizontalAlignment="Center" Style="{StaticResource RegularTextTextBlock}" FontSize="24" Margin="5" >Menu</TextBlock>
             </StackPanel>
             <StackPanel Opacity="0.5">
-                <ToggleButton Background="#1D4252" Foreground="#4CC2F6" FontFamily="Segoe UI" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch">Create Table</ToggleButton>
+                <ToggleButton Background="#1D4252" Foreground="#4CC2F6" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Margin="5">Create Table</ToggleButton>
             </StackPanel>
         </StackPanel>
 
         <!--Top Menu-->
-        <StackPanel Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Background="#1D3E3D" Margin="10" Orientation="Horizontal">
+        <StackPanel Grid.Row="0" Grid.Column="1" Background="#1D3E3D" Margin="5" Orientation="Horizontal">
             <!--<StackPanel Background="#12796D" >
                 <TextBlock HorizontalAlignment="Center" Foreground="#FDFEFE" FontSize="24" FontFamily="Segoe UI" Margin="10">Menu</TextBlock>
             </StackPanel>
@@ -43,57 +47,100 @@
         </StackPanel>
 
         <!--Content-->
-        <Grid Grid.Row="1" Grid.Column="1" Grid.RowSpan="2" Grid.ColumnSpan="2" Background="#1D3E3D" Margin="10">
-            <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
-                <TextBox Header="Name" Margin="5">
+        <Grid Grid.Column="1" Background="#1D3E3D" Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+
+            <!--Add column-->
+            <StackPanel Orientation="Vertical" Margin="5">
+                <TextBlock Text="Type" Style="{StaticResource RegularTextTextBlock}" Margin="5">
+                </TextBlock>
+
+                <!--Column Types-->
+                <StackPanel Orientation="Vertical">
+                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="1" Checked="ColumnTypeOnChecked" IsChecked="True" >
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="Assets/Icons/TypeInteger.png" Width="36" Height="36"></Image>
+                            <TextBlock Margin="5,0,0,0" Text="Integer" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="2" Checked="ColumnTypeOnChecked">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="Assets/Icons/TypeDecimal.png" Width="36" Height="36"></Image>
+                            <TextBlock Margin="5,0,0,0" Text="Decimal" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="3" Checked="ColumnTypeOnChecked">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="Assets/Icons/TypeText.png" Width="36" Height="36"></Image>
+                            <TextBlock Margin="5,0,0,0" Text="String" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="4" Checked="ColumnTypeOnChecked">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="Assets/Icons/TypeDate.png" Width="36" Height="36"></Image>
+                            <TextBlock Margin="5,0,0,0" Text="Date" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Margin="5" Foreground="#FDFEFE" Tag="5" Checked="ColumnTypeOnChecked">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="Assets/Icons/TypeBytes.png" Width="36" Height="36"></Image>
+                            <TextBlock Margin="5,0,0,0" Text="Bytes" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+
+                <TextBox Header="Name" Margin="5" Text="{x:Bind ViewModel.ColumnName, Mode=TwoWay}">
                     <TextBox.HeaderTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding}" FontSize="16" Foreground="#FDFEFE"></TextBlock>
+                            <TextBlock Text="{Binding}" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
                         </DataTemplate>
                     </TextBox.HeaderTemplate>
                 </TextBox>
-                <TextBlock Text="Type" FontSize="16" Foreground="#FDFEFE" Margin="5">
-                </TextBlock>
 
-                <StackPanel Orientation="Horizontal" Margin="5">
-                    <ToggleButton Width="100" Margin="5" Foreground="#FDFEFE">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock Text="Integer" HorizontalAlignment="Center"></TextBlock>
-                            <Image Source="Assets/Icons/TypeInteger.png" Width="48" Height="48"></Image>
-                        </StackPanel>
-                    </ToggleButton>
-                    <ToggleButton Width="100" Margin="5" Foreground="#FDFEFE">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock Text="Decimal" HorizontalAlignment="Center"></TextBlock>
-                            <Image Source="Assets/Icons/TypeDecimal.png" Width="48" Height="48"></Image>
-                        </StackPanel>
-                    </ToggleButton>
-                    <ToggleButton Width="100" Margin="5" Foreground="#FDFEFE">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock Text="String" HorizontalAlignment="Center"></TextBlock>
-                            <Image Source="Assets/Icons/TypeText.png" Width="48" Height="48"></Image>
-                        </StackPanel>
-                    </ToggleButton>
-                    <ToggleButton Width="100" Margin="5" Foreground="#FDFEFE">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock Text="Date" HorizontalAlignment="Center"></TextBlock>
-                            <Image Source="Assets/Icons/TypeDate.png" Width="48" Height="48"></Image>
-                        </StackPanel>
-                    </ToggleButton>
-                    <ToggleButton Width="100" Margin="5" Foreground="#FDFEFE">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock Text="Bytes" HorizontalAlignment="Center"></TextBlock>
-                            <Image Source="Assets/Icons/TypeBytes.png" Width="48" Height="48"></Image>
-                        </StackPanel>
-                    </ToggleButton>
-                </StackPanel>
+                <!--NULL-ability-->
+                <CheckBox IsChecked="{x:Bind ViewModel.ColumnAllowNull, Mode=TwoWay}" IsThreeState="False" Margin="5">Allow NULL</CheckBox>
 
-                <Button Width="100" Margin="5" Foreground="#FDFEFE" HorizontalAlignment="Right">
-                    <StackPanel Orientation="Vertical">
-                        <TextBlock Text="Add" HorizontalAlignment="Center"></TextBlock>
-                    </StackPanel>
-                </Button>
+                <Button Width="150" Foreground="#FDFEFE" HorizontalAlignment="Right" Margin="5" Command="{x:Bind ViewModel.AddColumnCommand}">Add Column</Button>
             </StackPanel>
+
+            <!--Columns-->
+            <StackPanel Grid.Row="0" Grid.Column="1" Margin="5" Orientation="Vertical">
+                <TextBlock Margin="5" Style="{StaticResource RegularTextTextBlock}">Columns</TextBlock>
+                <ListView Margin="5" 
+                          ItemContainerStyle="{StaticResource FullLineItemStyle}"
+                          ItemsSource="{x:Bind ViewModel.Columns}"
+                          SelectionMode="None">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="ui:DbColumnViewModel">
+                            <Grid>
+                                <TextBlock Style="{StaticResource RegularTextTextBlock}">
+                                    <Run Text="{x:Bind Name}"></Run>
+                                    <Run Text="{x:Bind Type}"></Run>
+                                    <Run Text="{x:Bind Nullability}"></Run>
+                                </TextBlock>
+                                <Button Command="{x:Bind DeleteCommand}" HorizontalAlignment="Right">
+                                    <SymbolIcon Symbol="Delete"></SymbolIcon>
+                                </Button>
+                                <!--Type-->
+                                <!--Name-->
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </StackPanel>
+
+            <!--DDL-->
+            <TextBox x:Name="EditDdl" AcceptsReturn="True" Header="DDL" Grid.Row="1" Grid.Column="0" Margin="5" IsReadOnly="True" Text="{x:Bind ViewModel.Ddl, Mode=OneWay}"></TextBox>
+
+            <!--.NET class-->
+            <TextBox x:Name="EditNetClass" AcceptsReturn="True" Header=".NET Class" Grid.Row="1" Grid.Column="1" Margin="5" IsReadOnly="True" Text="{x:Bind ViewModel.SourceCode, Mode=OneWay}"></TextBox>
         </Grid>
     </Grid>
 </Page>

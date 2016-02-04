@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using Cchbc.AppBuilder.Clr;
 using Cchbc.AppBuilder.DDL;
 
@@ -10,7 +8,7 @@ namespace Cchbc.AppBuilder
 {
 	public sealed class DbProject
 	{
-		[Serializable]
+
 		public sealed class Project
 		{
 			public DbSchema Schema { get; set; }
@@ -46,47 +44,6 @@ namespace Cchbc.AppBuilder
 			if (schema == null) throw new ArgumentNullException(nameof(schema));
 
 			this.Schema = schema;
-		}
-
-		public void Save(string path)
-		{
-			if (path == null) throw new ArgumentNullException(nameof(path));
-
-			var project = new Project(this.Schema, this.InverseTables, this.ModifiableTables, this.HiddenTables);
-
-			var formatter = new BinaryFormatter();
-			using (var fs = File.OpenWrite(path))
-			{
-				formatter.Serialize(fs, project);
-			}
-		}
-
-		public static DbProject Load(string path)
-		{
-			if (path == null) throw new ArgumentNullException(nameof(path));
-
-			var formatter = new BinaryFormatter();
-			using (var fs = File.OpenRead(path))
-			{
-				var project = (Project)formatter.Deserialize(fs);
-
-				var dbProject = new DbProject(project.Schema);
-
-				foreach (var pair in project.InverseTables)
-				{
-					dbProject.InverseTables.Add(pair.Key, pair.Value);
-				}
-				foreach (var pair in project.ModifiableTables)
-				{
-					dbProject.ModifiableTables.Add(pair.Key, pair.Value);
-				}
-				foreach (var pair in project.HiddenTables)
-				{
-					dbProject.HiddenTables.Add(pair.Key, pair.Value);
-				}
-
-				return dbProject;
-			}
 		}
 
 		public void MarkHidden(DbTable table)
@@ -227,7 +184,7 @@ namespace Cchbc.AppBuilder
 		public string CreateClassModule(Entity entity)
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
-			
+
 			return EntityClass.GenerateClassModule(entity, !this.IsModifiable(entity.Table), this.HasColumnToInverseTable(entity));
 		}
 

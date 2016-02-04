@@ -2,7 +2,6 @@
 
 namespace Cchbc.AppBuilder.DDL
 {
-	[Serializable]
 	public sealed class DbSchema
 	{
 		public string Name { get; } = string.Empty;

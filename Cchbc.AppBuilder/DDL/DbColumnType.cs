@@ -2,7 +2,6 @@
 
 namespace Cchbc.AppBuilder.DDL
 {
-	[Serializable]
 	public sealed class DbColumnType
 	{
 		public readonly static DbColumnType Integer = new DbColumnType(@"INTEGER");

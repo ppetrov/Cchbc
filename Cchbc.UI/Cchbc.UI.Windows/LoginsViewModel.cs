@@ -20,20 +20,6 @@ namespace Cchbc.UI
 		public SortOption<LoginViewModel>[] SortOptions => this.Module.Sorter.Options;
 		public SearchOption<LoginViewModel>[] SearchOptions => this.Module.Searcher.Options;
 
-		private string _textSearch = string.Empty;
-		public string TextSearch
-		{
-			get { return _textSearch; }
-			set
-			{
-				this.SetField(ref _textSearch, value);
-
-				var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByText));
-				this.SearchByText();
-				this.FeatureManager.Stop(feature);
-			}
-		}
-
 		private bool _isWorking;
 		public bool IsWorking
 		{
@@ -46,6 +32,20 @@ namespace Cchbc.UI
 		{
 			get { return _workProgress; }
 			private set { this.SetField(ref _workProgress, value); }
+		}
+
+		private string _textSearch = string.Empty;
+		public string TextSearch
+		{
+			get { return _textSearch; }
+			set
+			{
+				this.SetField(ref _textSearch, value);
+
+				var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByText));
+				this.SearchByText();
+				this.FeatureManager.Stop(feature);
+			}
 		}
 
 		private SearchOption<LoginViewModel> _searchOption;
