@@ -593,35 +593,6 @@ namespace Cchbc.ConsoleClient
 	{
 		static void Main(string[] args)
 		{
-			var n = @"ctx.name:msg";
-			var idx = n.IndexOf('.') + 1;
-			var sidx = n.IndexOf(':', (idx)) - idx;
-			var ctx = n.Substring(0, idx - 1);
-			var name = n.Substring(idx, sidx);
-			var msg = n.Substring(ctx.Length + name.Length + 2);
-			Console.WriteLine("|" + ctx + "|");
-			Console.WriteLine("|" + name + "|");
-			Console.WriteLine("|" + msg + "|");
-
-			return;
-			//CalendarScreen.Name:Calendar
-			var input = @"CalendarScreen.Name:Calendar";
-			var contextSeparator = '.';
-			var keyValueSeparator = ':';
-
-			var contextSeparatorIndex = input.IndexOf(contextSeparator) + 1;
-			var keyValueSeparatorIndex = input.IndexOf(keyValueSeparator, contextSeparatorIndex);
-
-			var context = input.Substring(0, contextSeparatorIndex - 1);
-			var key = input.Substring(contextSeparatorIndex, keyValueSeparatorIndex - contextSeparatorIndex);
-			var value = input.Substring(keyValueSeparatorIndex + 1);
-
-			Console.WriteLine("|" + context + "|");
-			Console.WriteLine("|" + key + "|");
-			Console.WriteLine("|" + value + "|");
-			return;
-
-
 			var outlets = DbTable.Create(@"Outlets", new[]
 			{
 				DbColumn.String(@"Name"),
@@ -667,7 +638,7 @@ namespace Cchbc.ConsoleClient
 				DbColumn.ForeignKey(activities),
 			});
 
-			var schema = new DbSchema(@"IfsaBuilder", new[]
+			var schema = new DbSchema(@"AppBuilder", new[]
 			{
 				outlets,
 				visits,
@@ -706,9 +677,9 @@ namespace Cchbc.ConsoleClient
 				//
 				// Classes
 				//
-				//var entityClass = project.CreateEntityClass(entity);
-				//buffer.AppendLine(entityClass);
-				//continue;
+				var entityClass = project.CreateEntityClass(entity);
+				buffer.AppendLine(entityClass);
+				continue;
 
 				if (!project.IsModifiable(entity.Table))
 				{
@@ -741,8 +712,8 @@ namespace Cchbc.ConsoleClient
 			//Console.WriteLine(buffer.ToString());
 			File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
 
-			var prj = new ClrProject();
-			prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
+			//var prj = new ClrProject();
+			//prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
 
 			return;
 

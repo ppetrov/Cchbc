@@ -4,13 +4,9 @@ namespace Cchbc.AppBuilder.DDL
 {
 	public sealed class DbTable
 	{
-		public string Name { get; } = string.Empty;
+		public string Name { get; }
 		public DbColumn[] Columns { get; }
-		public string ClassName { get; } = string.Empty;
-
-		public DbTable()
-		{
-		}
+		public string ClassName { get; }
 
 		public DbTable(string name, DbColumn[] columns, string className = null)
 		{

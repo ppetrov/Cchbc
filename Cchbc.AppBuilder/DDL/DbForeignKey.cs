@@ -6,10 +6,6 @@ namespace Cchbc.AppBuilder.DDL
 	{
 		public DbTable Table { get; }
 
-		public DbForeignKey()
-		{
-		}
-
 		public DbForeignKey(DbTable table)
 		{
 			if (table == null) throw new ArgumentNullException(nameof(table));

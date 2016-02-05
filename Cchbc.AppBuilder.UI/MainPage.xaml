@@ -7,96 +7,50 @@
     xmlns:ui="using:Cchbc.AppBuilder.UI"
 
     mc:Ignorable="d">
-    
+
     <Page.Resources>
+
+        <ui:DbTableViewModelConverter x:Name="DbTableViewModelConverter"></ui:DbTableViewModelConverter>
+        
         <Style x:Key="FullLineItemStyle" TargetType="ListViewItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <Style x:Key="RegularTextTextBlock" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#FEFEFE"/>
+            <Setter Property="Foreground" Value="#F7EC80"/>
             <Setter Property="FontSize" Value="16"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
     </Page.Resources>
 
-    <Grid Background="#181C1E">
+    <Grid Background="#ACABB0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"></ColumnDefinition>
             <ColumnDefinition Width="10*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
         <!--Left Menu-->
-        <StackPanel Grid.Column="0" Background="#1D3E3D" Margin="5" Orientation="Vertical">
-            <StackPanel Background="#12796D">
+        <StackPanel Grid.Column="0" Background="#2A2A32" Margin="15,15,0,15" Orientation="Vertical">
+            <StackPanel Background="#2A2A32">
                 <TextBlock HorizontalAlignment="Center" Style="{StaticResource RegularTextTextBlock}" FontSize="24" Margin="5" >Menu</TextBlock>
             </StackPanel>
-            <StackPanel Opacity="0.5">
-                <ToggleButton Background="#1D4252" Foreground="#4CC2F6" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Margin="5">Create Table</ToggleButton>
+            <StackPanel Opacity="1">
+                <ToggleButton Background="#8C80FF" Foreground="#FEFEFE" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Margin="5">Create Table</ToggleButton>
             </StackPanel>
-        </StackPanel>
-
-        <!--Top Menu-->
-        <StackPanel Grid.Row="0" Grid.Column="1" Background="#1D3E3D" Margin="5" Orientation="Horizontal">
-            <!--<StackPanel Background="#12796D" >
-                <TextBlock HorizontalAlignment="Center" Foreground="#FDFEFE" FontSize="24" FontFamily="Segoe UI" Margin="10">Menu</TextBlock>
-            </StackPanel>
-            <StackPanel Opacity="0.5">
-                <ToggleButton Background="#1D4252" Foreground="#4CC2F6" FontFamily="Segoe UI" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch">Create Table</ToggleButton>
-            </StackPanel>-->
         </StackPanel>
 
         <!--Content-->
-        <Grid Grid.Column="1" Background="#1D3E3D" Margin="5">
+        <Grid Grid.Column="1" Background="#414052" Margin="0,15,15,15">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"></RowDefinition>
-                <RowDefinition Height="*"></RowDefinition>
-            </Grid.RowDefinitions>
 
-            <!--Add column-->
-            <StackPanel Orientation="Vertical" Margin="5">
-                <TextBlock Text="Type" Style="{StaticResource RegularTextTextBlock}" Margin="5">
-                </TextBlock>
-
-                <!--Column Types-->
-                <StackPanel Orientation="Vertical">
-                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="1" Checked="ColumnTypeOnChecked" IsChecked="True" >
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="Assets/Icons/TypeInteger.png" Width="36" Height="36"></Image>
-                            <TextBlock Margin="5,0,0,0" Text="Integer" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="2" Checked="ColumnTypeOnChecked">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="Assets/Icons/TypeDecimal.png" Width="36" Height="36"></Image>
-                            <TextBlock Margin="5,0,0,0" Text="Decimal" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="3" Checked="ColumnTypeOnChecked">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="Assets/Icons/TypeText.png" Width="36" Height="36"></Image>
-                            <TextBlock Margin="5,0,0,0" Text="String" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="4" Checked="ColumnTypeOnChecked">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="Assets/Icons/TypeDate.png" Width="36" Height="36"></Image>
-                            <TextBlock Margin="5,0,0,0" Text="Date" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
-                        </StackPanel>
-                    </RadioButton>
-                    <RadioButton Margin="5" Foreground="#FDFEFE" Tag="5" Checked="ColumnTypeOnChecked">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="Assets/Icons/TypeBytes.png" Width="36" Height="36"></Image>
-                            <TextBlock Margin="5,0,0,0" Text="Bytes" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
-                        </StackPanel>
-                    </RadioButton>
-                </StackPanel>
-
-                <TextBox Header="Name" Margin="5" Text="{x:Bind ViewModel.ColumnName, Mode=TwoWay}">
+            <!--Add Column-->
+            <StackPanel Grid.Column="0" Orientation="Vertical" Margin="5">
+                <TextBox Header="Column Name" Margin="5" Text="{x:Bind ViewModel.ColumnName, Mode=TwoWay}">
                     <TextBox.HeaderTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding}" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
@@ -104,14 +58,61 @@
                     </TextBox.HeaderTemplate>
                 </TextBox>
 
-                <!--NULL-ability-->
-                <CheckBox IsChecked="{x:Bind ViewModel.ColumnAllowNull, Mode=TwoWay}" IsThreeState="False" Margin="5">Allow NULL</CheckBox>
+                <TextBlock Text="Type" Style="{StaticResource RegularTextTextBlock}" Margin="5">
+                </TextBlock>
 
-                <Button Width="150" Foreground="#FDFEFE" HorizontalAlignment="Right" Margin="5" Command="{x:Bind ViewModel.AddColumnCommand}">Add Column</Button>
+                <!--Column Types-->
+                <StackPanel Orientation="Vertical">
+                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="1" Checked="ColumnTypeOnChecked" IsChecked="True" IsEnabled="{x:Bind ViewModel.CanSelectType, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="Assets/Icons/TypeInteger.png" Width="36" Height="36"></Image>
+                            <TextBlock Margin="5,0,0,0" Text="Integer" HorizontalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="2" Checked="ColumnTypeOnChecked" IsEnabled="{x:Bind ViewModel.CanSelectType, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="Assets/Icons/TypeDecimal.png" Width="36" Height="36"></Image>
+                            <TextBlock Margin="5,0,0,0" Text="Decimal" HorizontalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="3" Checked="ColumnTypeOnChecked" IsEnabled="{x:Bind ViewModel.CanSelectType, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="Assets/Icons/TypeText.png" Width="36" Height="36"></Image>
+                            <TextBlock Margin="5,0,0,0" Text="String" HorizontalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Margin="5" Foreground="#FEFEFE" Tag="4" Checked="ColumnTypeOnChecked" IsEnabled="{x:Bind ViewModel.CanSelectType, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="Assets/Icons/TypeDate.png" Width="36" Height="36"></Image>
+                            <TextBlock Margin="5,0,0,0" Text="Date" HorizontalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Margin="5" Foreground="#FDFEFE" Tag="5" Checked="ColumnTypeOnChecked" IsEnabled="{x:Bind ViewModel.CanSelectType, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="Assets/Icons/TypeBytes.png" Width="36" Height="36"></Image>
+                            <TextBlock Margin="5,0,0,0" Text="Bytes" HorizontalAlignment="Center" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+                
+                <ComboBox HorizontalAlignment="Stretch" 
+                          ItemsSource="{x:Bind ViewModel.Tables}"
+                          SelectedItem="{x:Bind ViewModel.FkTable, Mode=TwoWay, Converter={StaticResource DbTableViewModelConverter}}"
+                          DisplayMemberPath="Name"
+                          Margin="5"></ComboBox>
+
+                <Button Foreground="#FDFEFE" HorizontalAlignment="Right" Margin="5" Command="{x:Bind ViewModel.AddColumnCommand}">Add Column</Button>
             </StackPanel>
 
-            <!--Columns-->
-            <StackPanel Grid.Row="0" Grid.Column="1" Margin="5" Orientation="Vertical">
+            <!--Add Table-->
+            <StackPanel Grid.Column="1" Orientation="Vertical" Margin="5">
+                <TextBox Header="Table Name" Margin="5" Text="{x:Bind ViewModel.TableName, Mode=TwoWay}">
+                    <TextBox.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" Style="{StaticResource RegularTextTextBlock}"></TextBlock>
+                        </DataTemplate>
+                    </TextBox.HeaderTemplate>
+                </TextBox>
                 <TextBlock Margin="5" Style="{StaticResource RegularTextTextBlock}">Columns</TextBlock>
                 <ListView Margin="5" 
                           ItemContainerStyle="{StaticResource FullLineItemStyle}"
@@ -125,22 +126,51 @@
                                     <Run Text="{x:Bind Type}"></Run>
                                     <Run Text="{x:Bind Nullability}"></Run>
                                 </TextBlock>
-                                <Button Command="{x:Bind DeleteCommand}" HorizontalAlignment="Right">
-                                    <SymbolIcon Symbol="Delete"></SymbolIcon>
-                                </Button>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Command="{x:Bind ToggleNullabilityCommand}" Margin="5" Background="Transparent">
+                                        <SymbolIcon Symbol="{x:Bind NullabilityIconSymbol}"></SymbolIcon>
+                                    </Button>
+                                    <Button Command="{x:Bind DeleteCommand}" Margin="5" Background="Transparent">
+                                        <SymbolIcon Symbol="Delete"></SymbolIcon>
+                                    </Button>
+                                </StackPanel>
+
                                 <!--Type-->
                                 <!--Name-->
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
+
+                <Button Foreground="#FDFEFE" HorizontalAlignment="Right" Margin="5" Command="{x:Bind ViewModel.AddTableCommand}">Add Table</Button>
             </StackPanel>
 
-            <!--DDL-->
-            <TextBox x:Name="EditDdl" AcceptsReturn="True" Header="DDL" Grid.Row="1" Grid.Column="0" Margin="5" IsReadOnly="True" Text="{x:Bind ViewModel.Ddl, Mode=OneWay}"></TextBox>
-
-            <!--.NET class-->
-            <TextBox x:Name="EditNetClass" AcceptsReturn="True" Header=".NET Class" Grid.Row="1" Grid.Column="1" Margin="5" IsReadOnly="True" Text="{x:Bind ViewModel.SourceCode, Mode=OneWay}"></TextBox>
+            <!--Tables-->
+            <StackPanel Grid.Column="2" Orientation="Vertical" Margin="5">
+                <TextBlock Margin="5" Style="{StaticResource RegularTextTextBlock}">Tables</TextBlock>
+                <ListView Margin="5" 
+                          ItemContainerStyle="{StaticResource FullLineItemStyle}"
+                          ItemsSource="{x:Bind ViewModel.Tables}"
+                          SelectionMode="None">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="ui:DbTableViewModel">
+                            <Grid>
+                                <TextBlock Style="{StaticResource RegularTextTextBlock}">
+                                    <Run Text="{x:Bind Name}"></Run>
+                                </TextBlock>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <!--<Button Command="{x:Bind ToggleNullabilityCommand}" Margin="5" Background="Transparent">
+                                        <SymbolIcon Symbol="{x:Bind NullabilityIconSymbol}"></SymbolIcon>
+                                    </Button>
+                                    <Button Command="{x:Bind DeleteCommand}" Margin="5" Background="Transparent">
+                                        <SymbolIcon Symbol="Delete"></SymbolIcon>
+                                    </Button>-->
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </StackPanel>
         </Grid>
     </Grid>
 </Page>

@@ -10,11 +10,7 @@ namespace Cchbc.AppBuilder.DDL
 		public readonly static DbColumnType DateTime = new DbColumnType(@"DATETIME");
 		public readonly static DbColumnType Bytes = new DbColumnType(@"BLOB");
 
-		public string Name { get; } = string.Empty;
-
-		public DbColumnType()
-		{
-		}
+		public string Name { get; }
 
 		public DbColumnType(string name)
 		{

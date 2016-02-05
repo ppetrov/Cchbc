@@ -8,32 +8,6 @@ namespace Cchbc.AppBuilder
 {
 	public sealed class DbProject
 	{
-
-		public sealed class Project
-		{
-			public DbSchema Schema { get; set; }
-			public Dictionary<string, DbTable> InverseTables { get; set; }
-			public Dictionary<string, DbTable> ModifiableTables { get; set; }
-			public Dictionary<string, DbTable> HiddenTables { get; set; }
-
-			public Project()
-			{
-			}
-
-			public Project(DbSchema schema, Dictionary<string, DbTable> inverseTables, Dictionary<string, DbTable> modifiableTables, Dictionary<string, DbTable> hiddenTables)
-			{
-				if (schema == null) throw new ArgumentNullException(nameof(schema));
-				if (inverseTables == null) throw new ArgumentNullException(nameof(inverseTables));
-				if (modifiableTables == null) throw new ArgumentNullException(nameof(modifiableTables));
-				if (hiddenTables == null) throw new ArgumentNullException(nameof(hiddenTables));
-
-				this.Schema = schema;
-				this.InverseTables = inverseTables;
-				this.ModifiableTables = modifiableTables;
-				this.HiddenTables = hiddenTables;
-			}
-		}
-
 		public DbSchema Schema { get; }
 		private Dictionary<string, DbTable> InverseTables { get; } = new Dictionary<string, DbTable>();
 		private Dictionary<string, DbTable> ModifiableTables { get; } = new Dictionary<string, DbTable>();
@@ -94,6 +68,16 @@ namespace Cchbc.AppBuilder
 			}
 
 			throw new ArgumentOutOfRangeException(nameof(table));
+		}
+
+		public Entity CreateEntity(DbTable table)
+		{
+			if (table == null) throw new ArgumentNullException(nameof(table));
+
+			DbTable inverseTable;
+			this.InverseTables.TryGetValue(table.Name, out inverseTable);
+
+			return new Entity(DbTableConverter.ConvertToClrClass(table, inverseTable), table, inverseTable);
 		}
 
 		public Entity[] CreateEntities()
@@ -209,14 +193,6 @@ namespace Cchbc.AppBuilder
 			}
 
 			return false;
-		}
-
-		private Entity CreateEntity(DbTable table)
-		{
-			DbTable inverseTable;
-			this.InverseTables.TryGetValue(table.Name, out inverseTable);
-
-			return new Entity(DbTableConverter.ConvertToClrClass(table, inverseTable), table, inverseTable);
 		}
 
 		private static Dictionary<ClrType, ClrProperty> GetDictionaryProperties(Entity entity)

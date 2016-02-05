@@ -4,12 +4,8 @@ namespace Cchbc.AppBuilder.DDL
 {
 	public sealed class DbSchema
 	{
-		public string Name { get; } = string.Empty;
+		public string Name { get; }
 		public DbTable[] Tables { get; }
-
-		public DbSchema()
-		{
-		}
 
 		public DbSchema(string name, DbTable[] tables)
 		{
