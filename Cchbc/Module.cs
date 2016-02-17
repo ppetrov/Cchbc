@@ -145,26 +145,32 @@ namespace Cchbc
 			{
 				this.OnOperationStart(args);
 
-				var permissionResult = await GetPermissionResultAsync(viewModel, feature, checker);
-				if (permissionResult != null)
+				// Validate properties
+				var validationResults = this.ValidateProperties(viewModel, feature);
+				if (validationResults.Length == 0)
 				{
-					switch (permissionResult.Status)
+					// Apply business logic
+					var permissionResult = await checker(viewModel, feature);
+					if (permissionResult != null)
 					{
-						case PermissionStatus.Allow:
-							await performer(viewModel, args);
-							break;
-						case PermissionStatus.Confirm:
-							var dialogResult = await dialog.ShowAsync(permissionResult.Message, feature, DialogType.AcceptDecline);
-							if (dialogResult == DialogResult.Accept)
-							{
+						switch (permissionResult.Status)
+						{
+							case PermissionStatus.Allow:
 								await performer(viewModel, args);
-							}
-							break;
-						case PermissionStatus.Deny:
-							await dialog.ShowAsync(permissionResult.Message, feature);
-							break;
-						default:
-							throw new ArgumentOutOfRangeException();
+								break;
+							case PermissionStatus.Confirm:
+								var dialogResult = await dialog.ShowAsync(permissionResult.Message, feature, DialogType.AcceptDecline);
+								if (dialogResult == DialogResult.Accept)
+								{
+									await performer(viewModel, args);
+								}
+								break;
+							case PermissionStatus.Deny:
+								await dialog.ShowAsync(permissionResult.Message, feature);
+								break;
+							default:
+								throw new ArgumentOutOfRangeException();
+						}
 					}
 				}
 			}
@@ -398,19 +404,6 @@ namespace Cchbc
 			}
 
 			return viewModels;
-		}
-
-		private async Task<PermissionResult> GetPermissionResultAsync(TViewModel viewModel, Feature feature, Func<TViewModel, Feature, Task<PermissionResult>> checker)
-		{
-			// Validate properties
-			var validationResults = this.ValidateProperties(viewModel, feature);
-			if (validationResults.Length == 0)
-			{
-				// Apply business logic
-				return await checker(viewModel, feature);
-			}
-
-			return null;
 		}
 	}
 }

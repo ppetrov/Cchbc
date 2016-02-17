@@ -8,14 +8,21 @@ namespace Cchbc
 	{
 		private readonly Dictionary<string, object> _helpers = new Dictionary<string, object>();
 
-		public void AddHelper<T>(Helper<T> helper)
+		public void Add<T>(Helper<T> helper)
 		{
 			if (helper == null) throw new ArgumentNullException(nameof(helper));
 
 			_helpers.Add(typeof(T).Name, helper);
 		}
 
-		public Helper<T> GetHelper<T>()
+		public void Remove<T>(Helper<T> helper)
+		{
+			if (helper == null) throw new ArgumentNullException(nameof(helper));
+
+			_helpers.Remove(typeof(T).Name);
+		}
+
+		public Helper<T> Get<T>()
 		{
 			object helper;
 			if (_helpers.TryGetValue(typeof(T).Name, out helper))

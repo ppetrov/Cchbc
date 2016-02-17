@@ -7,13 +7,13 @@ namespace Cchbc.App.ArticlesModule.Adapters
 {
 	public sealed class BrandAdapter : IReadOnlyAdapter<Brand>
 	{
-		private readonly ReadQueryExecutor _queryExecutor;
+		private readonly ReadQueryHelper _queryHelper;
 
-		public BrandAdapter(ReadQueryExecutor queryExecutor)
+		public BrandAdapter(ReadQueryHelper queryHelper)
 		{
-			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 
-			_queryExecutor = queryExecutor;
+			_queryHelper = queryHelper;
 		}
 
 		public void Fill(Dictionary<long, Brand> items, Func<Brand, long> selector)
@@ -21,7 +21,7 @@ namespace Cchbc.App.ArticlesModule.Adapters
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			_queryExecutor.Fill(new Query<Brand>(@"SELECT ID, NAME FROM BRANDS", r =>
+			_queryHelper.Fill(new Query<Brand>(@"SELECT ID, NAME FROM BRANDS", r =>
 			{
 				var id = r.GetInt64(0);
 				var name = string.Empty;

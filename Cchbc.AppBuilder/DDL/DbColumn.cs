@@ -6,20 +6,11 @@ namespace Cchbc.AppBuilder.DDL
 	{
 		public static readonly string IdName = @"Id";
 
-		public string Name { get; }
-		public DbColumnType Type { get; }
-		public bool IsNullable { get; }
-		public bool IsPrimaryKey { get; }
-		public DbForeignKey DbForeignKey { get; }
-
-		public DbColumn(string name, DbColumnType type)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
-			if (type == null) throw new ArgumentNullException(nameof(type));
-
-			this.Name = name;
-			this.Type = type;
-		}
+		public string Name { get; set; }
+		public DbColumnType Type { get; set; }
+		public bool IsNullable { get; set; }
+		public bool IsPrimaryKey { get; set; }
+		public DbForeignKey DbForeignKey { get; set; }
 
 		public DbColumn(string name, DbColumnType type, bool isNullable = false, bool isPrimaryKey = false, DbForeignKey dbForeignKey = null)
 		{

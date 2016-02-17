@@ -13,6 +13,9 @@ namespace Cchbc.AppBuilder
 		private static readonly string ViewModels = @"ViewModels";
 		private static readonly string Modules = @"Modules";
 
+		public Action<string> CreateDirectory { get; set; }
+		public Action<string, string> WriteAllText { get; set; }
+
 		public void Save(string directoryPath, DbProject project)
 		{
 			if (directoryPath == null) throw new ArgumentNullException(nameof(directoryPath));
@@ -26,11 +29,11 @@ namespace Cchbc.AppBuilder
 			var viewModelsPath = Path.Combine(directoryPath, ViewModels);
 
 			// Create directories
-			CreateDirectory(objectsPath);
-			CreateDirectory(adaptersPath);
-			CreateDirectory(helpersPath);
-			CreateDirectory(modulesPath);
-			CreateDirectory(viewModelsPath);
+			this.CreateDirectory(objectsPath);
+			this.CreateDirectory(adaptersPath);
+			this.CreateDirectory(helpersPath);
+			this.CreateDirectory(modulesPath);
+			this.CreateDirectory(viewModelsPath);
 
 			var namespaceName = project.Schema.Name;
 			var entities = project.CreateEntities();
@@ -41,17 +44,7 @@ namespace Cchbc.AppBuilder
 			SaveViewModels(viewModelsPath, project, entities, namespaceName);
 		}
 
-		private static void CreateDirectory(string path)
-		{
-			// TODO : !!!
-			//if (Directory.Exists(path))
-			//{
-			//	Directory.Delete(path, true);
-			//}
-			//Directory.CreateDirectory(path);
-		}
-
-		private static void SaveObjects(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
+		private void SaveObjects(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
 		{
 			foreach (var entity in entities)
 			{
@@ -66,7 +59,7 @@ namespace Cchbc.AppBuilder
 			}
 		}
 
-		private static void SaveAdapters(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
+		private void SaveAdapters(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
 		{
 			foreach (var entity in entities)
 			{
@@ -74,14 +67,14 @@ namespace Cchbc.AppBuilder
 				var sourceCode = project.CreateEntityAdapter(entity);
 
 				var buffer = new StringBuilder(sourceCode.Length);
-				AddUsingsForAdapters(buffer, entity, namespaceName);
+				AddUsingsForAdapters(buffer, entity, namespaceName, !project.IsModifiable(entity.Table));
 				AddNamespace(buffer, namespaceName, Adapters, sourceCode);
 
 				SaveToFile(directoryPath, className, buffer);
 			}
 		}
 
-		private static void SaveHelpers(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
+		private void SaveHelpers(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
 		{
 			foreach (var entity in entities)
 			{
@@ -102,7 +95,7 @@ namespace Cchbc.AppBuilder
 			}
 		}
 
-		private static void SaveModules(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
+		private void SaveModules(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
 		{
 			foreach (var entity in entities)
 			{
@@ -122,7 +115,7 @@ namespace Cchbc.AppBuilder
 			}
 		}
 
-		private static void SaveViewModels(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
+		private void SaveViewModels(string directoryPath, DbProject project, Entity[] entities, string namespaceName)
 		{
 			foreach (var entity in entities)
 			{
@@ -131,16 +124,11 @@ namespace Cchbc.AppBuilder
 					continue;
 				}
 				SaveClassViewModel(directoryPath, project, entity, namespaceName);
-
-				if (project.HasColumnToInverseTable(entity))
-				{
-					continue;
-				}
 				SaveTableViewModel(directoryPath, project, entity, namespaceName);
 			}
 		}
 
-		private static void SaveClassViewModel(string directoryPath, DbProject project, Entity entity, string namespaceName)
+		private void SaveClassViewModel(string directoryPath, DbProject project, Entity entity, string namespaceName)
 		{
 			var className = entity.Class.Name + @"ViewModel" + @".cs";
 			var sourceCode = project.CreateClassViewModel(entity);
@@ -152,7 +140,7 @@ namespace Cchbc.AppBuilder
 			SaveToFile(directoryPath, className, buffer);
 		}
 
-		private static void SaveTableViewModel(string directoryPath, DbProject project, Entity entity, string namespaceName)
+		private void SaveTableViewModel(string directoryPath, DbProject project, Entity entity, string namespaceName)
 		{
 			var className = entity.Table.Name + @"ViewModel" + @".cs";
 			var sourceCode = project.CreateTableViewModel(entity);
@@ -164,7 +152,7 @@ namespace Cchbc.AppBuilder
 			SaveToFile(directoryPath, className, buffer);
 		}
 
-		private static void AddUsingsForObjects(StringBuilder buffer, Entity entity, DbProject project)
+		private void AddUsingsForObjects(StringBuilder buffer, Entity entity, DbProject project)
 		{
 			var hasReferenceType = false;
 			foreach (var clrProperty in entity.Class.Properties)
@@ -199,13 +187,19 @@ namespace Cchbc.AppBuilder
 			}
 		}
 
-		private static void AddUsingsForAdapters(StringBuilder buffer, Entity entity, string namespaceName)
+		private void AddUsingsForAdapters(StringBuilder buffer, Entity entity, string namespaceName, bool readOnly)
 		{
 			// For ArgumentNullException class
 			buffer.AppendLine(@"using System;");
 
 			// For Dictionary<long, T> & List<T> classes
 			buffer.AppendLine(@"using System.Collections.Generic;");
+
+			if (!readOnly)
+			{
+				// For async methods => Task
+				buffer.AppendLine(@"using System.Threading.Tasks;");
+			}
 
 			if (entity.InverseTable != null)
 			{
@@ -224,7 +218,7 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
-		private static void AddUsingsForHelpers(StringBuilder buffer, string namespaceName)
+		private void AddUsingsForHelpers(StringBuilder buffer, string namespaceName)
 		{
 			// For the concrete T class
 			buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
@@ -233,7 +227,7 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
-		private static void AddUsingsForModules(string namespaceName, StringBuilder buffer, bool readOnly)
+		private void AddUsingsForModules(string namespaceName, StringBuilder buffer, bool readOnly)
 		{
 			if (readOnly)
 			{
@@ -250,6 +244,7 @@ namespace Cchbc.AppBuilder
 			{
 				buffer.AppendLine(@"using System;");
 				buffer.AppendLine(@"using System.Collections.Generic;");
+				buffer.AppendLine(@"using System.Linq;");
 				buffer.AppendLine(@"using System.Threading.Tasks;");
 				buffer.AppendLine(@"using Cchbc;");
 				buffer.AppendLine(@"using Cchbc.Features;");
@@ -267,7 +262,7 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
-		private static void AddUsingsForClassViewModels(string namespaceName, StringBuilder buffer)
+		private void AddUsingsForClassViewModels(string namespaceName, StringBuilder buffer)
 		{
 			// For the concrete T class
 			buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
@@ -276,7 +271,7 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
-		private static void AddUsingsForTableViewModels(string namespaceName, StringBuilder buffer, bool readOnly)
+		private void AddUsingsForTableViewModels(string namespaceName, StringBuilder buffer, bool readOnly)
 		{
 			if (readOnly)
 			{
@@ -312,7 +307,7 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
-		private static void AddNamespace(StringBuilder buffer, string namespaceName, string name, string sourceCode)
+		private void AddNamespace(StringBuilder buffer, string namespaceName, string name, string sourceCode)
 		{
 			buffer.Append(@"namespace");
 			buffer.Append(' ');
@@ -340,10 +335,9 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
-		private static void SaveToFile(string directoryPath, string className, StringBuilder buffer)
+		private void SaveToFile(string directoryPath, string className, StringBuilder buffer)
 		{
-			// TODO : !!!
-			//File.WriteAllText(Path.Combine(directoryPath, className), buffer.ToString());
+			WriteAllText(Path.Combine(directoryPath, className), buffer.ToString());
 		}
 	}
 }

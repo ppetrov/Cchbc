@@ -92,7 +92,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 		{
 			var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadData));
 
-			var articlesHelper = this.Core.DataCache.GetHelper<Article>();
+			var articlesHelper = this.Core.DataCache.Get<Article>();
 			var viewModels = articlesHelper.Items.Values.Select(v => new ArticleViewModel(v)).ToArray();
 			this.DisplayArticles(feature, viewModels);
 

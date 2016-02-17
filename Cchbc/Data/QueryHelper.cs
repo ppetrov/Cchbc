@@ -4,27 +4,16 @@ using System.Linq;
 
 namespace Cchbc.Data
 {
-	public sealed class QueryExecutor
+	public sealed class QueryHelper
 	{
-		public ReadQueryExecutor ReadQueryExecutor { get; }
-		public ModifyQueryExecutor ModifyQueryExecutor { get; }
-
-		public QueryExecutor(ReadQueryExecutor readQueryExecutor, ModifyQueryExecutor modifyQueryExecutor)
-		{
-#if !DEBUG
-			if (readQueryExecutor == null) throw new ArgumentNullException(nameof(readQueryExecutor));
-			if (modifyQueryExecutor == null) throw new ArgumentNullException(nameof(modifyQueryExecutor));
-#endif
-
-			this.ReadQueryExecutor = readQueryExecutor;
-			this.ModifyQueryExecutor = modifyQueryExecutor;
-		}
+		public ReadQueryHelper ReadQueryHelper { get; set; }
+		public ModifyQueryHelper ModifyQueryHelper { get; set; }
 
 		public int Execute(string statement)
 		{
 			if (statement == null) throw new ArgumentNullException(nameof(statement));
 
-			return this.ModifyQueryExecutor.Execute(statement, Enumerable.Empty<QueryParameter>().ToArray());
+			return this.ModifyQueryHelper.Execute(statement, Enumerable.Empty<QueryParameter>().ToArray());
 		}
 
 		public int Execute(string statement, QueryParameter[] parameters)
@@ -32,14 +21,14 @@ namespace Cchbc.Data
 			if (statement == null) throw new ArgumentNullException(nameof(statement));
 			if (parameters == null) throw new ArgumentNullException(nameof(parameters));
 
-			return this.ModifyQueryExecutor.Execute(statement, parameters);
+			return this.ModifyQueryHelper.Execute(statement, parameters);
 		}
 
 		public List<T> Execute<T>(Query<T> query)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 
-			return this.ReadQueryExecutor.Execute(query);
+			return this.ReadQueryHelper.Execute(query);
 		}
 
 		public void Fill<T>(Query<T> query, Dictionary<long, T> values, Func<T, long> selector)
@@ -48,7 +37,7 @@ namespace Cchbc.Data
 			if (values == null) throw new ArgumentNullException(nameof(values));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			this.ReadQueryExecutor.Fill(query, values, selector);
+			this.ReadQueryHelper.Fill(query, values, selector);
 		}
 
 		public void Fill<T>(string query, Dictionary<long, T> values, Action<IFieldDataReader, Dictionary<long, T>> filler, QueryParameter[] parameters = null)
@@ -57,12 +46,12 @@ namespace Cchbc.Data
 			if (values == null) throw new ArgumentNullException(nameof(values));
 			if (filler == null) throw new ArgumentNullException(nameof(filler));
 
-			this.ReadQueryExecutor.Fill(query, values, filler, parameters ?? Enumerable.Empty<QueryParameter>().ToArray());
+			this.ReadQueryHelper.Fill(query, values, filler, parameters ?? Enumerable.Empty<QueryParameter>().ToArray());
 		}
 
 		public long GetNewId()
 		{
-			return this.Execute(ModifyQueryExecutor.SelectNewIdQuery)[0];
+			return this.Execute(ModifyQueryHelper.SelectNewIdQuery)[0];
 		}
 	}
 }

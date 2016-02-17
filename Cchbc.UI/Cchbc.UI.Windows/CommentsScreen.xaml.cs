@@ -18,7 +18,6 @@ namespace Cchbc.UI
 			this.InitializeComponent();
 
 			var core = new Core();
-			core.FeatureManager = new FeatureManager(new DbFeaturesManager(new DbFeaturesAdapter(new QueryExecutor(null, null))));
 			_viewModel = new LoginsViewModel(core);
 			this.DataContext = _viewModel;
 		}
@@ -31,7 +30,7 @@ namespace Cchbc.UI
 			}
 			catch (Exception ex)
 			{
-				
+
 			}
 		}
 

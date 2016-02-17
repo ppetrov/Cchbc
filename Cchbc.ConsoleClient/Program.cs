@@ -5,9 +5,12 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Mime;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -226,12 +229,13 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		public LoginsViewModel(Core core)
+		public LoginsViewModel(Core core, LoginAdapter adapter)
 		{
 			if (core == null) throw new ArgumentNullException(nameof(core));
+			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
 			this.Core = core;
-			this.Module = new LoginModule(new LoginAdapter(), new Sorter<LoginViewModel>(new[]
+			this.Module = new LoginModule(adapter, new Sorter<LoginViewModel>(new[]
 			{
 				new SortOption<LoginViewModel>(string.Empty, (x, y) => 0)
 			}),
@@ -289,7 +293,6 @@ namespace Cchbc.ConsoleClient
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
 			var feature = this.FeatureManager.StartNew(this.Context, nameof(UpdateAsync));
-
 			try
 			{
 				await this.Module.UpdateAsync(viewModel, dialog, feature);
@@ -435,15 +438,15 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class SqlLiteReadQueryExecutor : ReadQueryExecutor
+	public sealed class SqlLiteReadQueryHelper : ReadQueryHelper
 	{
-		private readonly SQLiteConnection _connection;
+		private readonly string _cnString;
 
-		public SqlLiteReadQueryExecutor(SQLiteConnection connection)
+		public SqlLiteReadQueryHelper(string cnString)
 		{
-			if (connection == null) throw new ArgumentNullException(nameof(connection));
+			if (cnString == null) throw new ArgumentNullException(nameof(cnString));
 
-			_connection = connection;
+			_cnString = cnString;
 		}
 
 		public override List<T> Execute<T>(Query<T> query)
@@ -452,21 +455,25 @@ namespace Cchbc.ConsoleClient
 
 			var values = new List<T>();
 
-			using (var cmd = _connection.CreateCommand())
+			using (var cn = new SQLiteConnection(_cnString))
 			{
-				cmd.CommandText = query.Statement;
-				cmd.CommandType = CommandType.Text;
-				foreach (var p in query.Parameters)
+				cn.Open();
+				using (var cmd = cn.CreateCommand())
 				{
-					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
-				}
-
-				using (var r = cmd.ExecuteReader())
-				{
-					var dr = new SqlLiteDelegateDataReader(r);
-					while (dr.Read())
+					cmd.CommandText = query.Statement;
+					cmd.CommandType = CommandType.Text;
+					foreach (var p in query.Parameters)
 					{
-						values.Add(query.Creator(dr));
+						cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
+					}
+
+					using (var r = cmd.ExecuteReader())
+					{
+						var dr = new SqlLiteDelegateDataReader(r);
+						while (dr.Read())
+						{
+							values.Add(query.Creator(dr));
+						}
 					}
 				}
 			}
@@ -482,22 +489,26 @@ namespace Cchbc.ConsoleClient
 
 			values.Clear();
 
-			using (var cmd = _connection.CreateCommand())
+			using (var cn = new SQLiteConnection(_cnString))
 			{
-				cmd.CommandText = query.Statement;
-				cmd.CommandType = CommandType.Text;
-				foreach (var p in query.Parameters)
+				cn.Open();
+				using (var cmd = cn.CreateCommand())
 				{
-					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
-				}
-
-				using (var r = cmd.ExecuteReader())
-				{
-					var dr = new SqlLiteDelegateDataReader(r);
-					while (dr.Read())
+					cmd.CommandText = query.Statement;
+					cmd.CommandType = CommandType.Text;
+					foreach (var p in query.Parameters)
 					{
-						var value = query.Creator(dr);
-						values.Add(selector(value), value);
+						cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
+					}
+
+					using (var r = cmd.ExecuteReader())
+					{
+						var dr = new SqlLiteDelegateDataReader(r);
+						while (dr.Read())
+						{
+							var value = query.Creator(dr);
+							values.Add(selector(value), value);
+						}
 					}
 				}
 			}
@@ -512,50 +523,57 @@ namespace Cchbc.ConsoleClient
 
 			values.Clear();
 
-			using (var cmd = _connection.CreateCommand())
+			using (var cn = new SQLiteConnection(_cnString))
 			{
-				cmd.CommandText = query;
-				cmd.CommandType = CommandType.Text;
-				foreach (var p in parameters)
+				cn.Open();
+				using (var cmd = cn.CreateCommand())
 				{
-					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
-				}
-
-				using (var r = cmd.ExecuteReader())
-				{
-					var dr = new SqlLiteDelegateDataReader(r);
-					while (dr.Read())
+					cmd.CommandText = query;
+					cmd.CommandType = CommandType.Text;
+					foreach (var p in parameters)
 					{
-						filler(dr, values);
+						cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
+					}
+
+					using (var r = cmd.ExecuteReader())
+					{
+						var dr = new SqlLiteDelegateDataReader(r);
+						while (dr.Read())
+						{
+							filler(dr, values);
+						}
 					}
 				}
 			}
 		}
 	}
 
-	public sealed class SqlLiteModifyQueryExecutor : ModifyQueryExecutor
+	public sealed class SqlLiteModifyQueryHelper : ModifyQueryHelper
 	{
-		private readonly SQLiteConnection _connection;
+		private readonly string _cnString;
 
-		public SqlLiteModifyQueryExecutor(ReadQueryExecutor readQueryExecutor, SQLiteConnection connection)
-			: base(readQueryExecutor)
+		public SqlLiteModifyQueryHelper(string cnString)
 		{
-			if (connection == null) throw new ArgumentNullException(nameof(connection));
+			if (cnString == null) throw new ArgumentNullException(nameof(cnString));
 
-			_connection = connection;
+			_cnString = cnString;
 		}
 
 		public override int Execute(string statement, QueryParameter[] parameters)
 		{
-			using (var cmd = _connection.CreateCommand())
+			using (var cn = new SQLiteConnection(_cnString))
 			{
-				cmd.CommandText = statement;
-				cmd.CommandType = CommandType.Text;
-				foreach (var p in parameters)
+				cn.Open();
+				using (var cmd = cn.CreateCommand())
 				{
-					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
+					cmd.CommandText = statement;
+					cmd.CommandType = CommandType.Text;
+					foreach (var p in parameters)
+					{
+						cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
+					}
+					return cmd.ExecuteNonQuery();
 				}
-				return cmd.ExecuteNonQuery();
 			}
 		}
 	}
@@ -593,6 +611,45 @@ namespace Cchbc.ConsoleClient
 	{
 		static void Main(string[] args)
 		{
+			//// Blog, posts, comments, users
+
+			//var users = DbTable.Create(@"Users", new[]
+			//{
+			//	DbColumn.String(@"Name"),
+			//});
+
+			//var blogs = DbTable.Create(@"Blogs", new[]
+			//{
+			//	DbColumn.String(@"Name"),
+			//	DbColumn.String(@"Description"),
+			//	DbColumn.ForeignKey(users)
+			//});
+
+			//var posts = DbTable.Create(@"Posts", new[]
+			//{
+			//	DbColumn.String(@"Title"),
+			//	DbColumn.String(@"Contents"),
+			//	DbColumn.DateTime(@"CreationDate"),
+			//	DbColumn.ForeignKey(blogs),
+			//});
+
+			//var comments = DbTable.Create(@"Comments", new[]
+			//{
+			//	DbColumn.String(@"Contents"),
+			//	DbColumn.DateTime(@"CreationDate"),
+			//	DbColumn.ForeignKey(users),
+			//	DbColumn.ForeignKey(posts),
+			//});
+
+			//var schema = new DbSchema(@"WordPress", new[]
+			//{
+			//	users,
+			//	blogs,
+			//	posts,
+			//	comments,
+			//});
+
+
 			var outlets = DbTable.Create(@"Outlets", new[]
 			{
 				DbColumn.String(@"Name"),
@@ -638,7 +695,7 @@ namespace Cchbc.ConsoleClient
 				DbColumn.ForeignKey(activities),
 			});
 
-			var schema = new DbSchema(@"AppBuilder", new[]
+			var schema = new DbSchema(@"Phoenix", new[]
 			{
 				outlets,
 				visits,
@@ -650,6 +707,7 @@ namespace Cchbc.ConsoleClient
 				activityNoteTypes,
 				activityNotes
 			});
+
 
 			var project = new DbProject(schema);
 
@@ -669,6 +727,15 @@ namespace Cchbc.ConsoleClient
 			//project.Save(filePath);
 			//var copy = DbProject.Load(filePath);
 
+
+			//var project = new DbProject(schema);
+
+			//project.AttachInverseTable(posts);
+
+			//project.MarkModifiable(blogs);
+			//project.MarkModifiable(posts);
+			//project.MarkModifiable(comments);			
+
 			var buffer = new StringBuilder(1024 * 2);
 
 			var s = Stopwatch.StartNew();
@@ -679,14 +746,15 @@ namespace Cchbc.ConsoleClient
 				//
 				var entityClass = project.CreateEntityClass(entity);
 				buffer.AppendLine(entityClass);
-				continue;
+				buffer.AppendLine(EntityClass.GenerateClassViewModel(entity, !project.IsModifiable(entity.Table)));
+				buffer.AppendLine(project.CreateTableViewModel(entity));
+
 
 				if (!project.IsModifiable(entity.Table))
 				{
 					buffer.AppendLine(project.CreateTableViewModel(entity));
-
 				}
-				continue;
+				//continue;
 
 				//
 				// Read Only adapters
@@ -710,84 +778,100 @@ namespace Cchbc.ConsoleClient
 			Console.WriteLine(s.ElapsedMilliseconds);
 
 			//Console.WriteLine(buffer.ToString());
-			File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
+			//File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
+
+			var p = new ClrProject();
+			p.WriteAllText = File.WriteAllText;
+			p.CreateDirectory = path =>
+			{
+				if (Directory.Exists(path))
+				{
+					Directory.Delete(path, true);
+				}
+				Directory.CreateDirectory(path);
+			};
+			p.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\Phoenix", project);
 
 			//var prj = new ClrProject();
 			//prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
 
-			return;
+			//Console.WriteLine(DbScript.CreateTable(users));
+			//Console.WriteLine(DbScript.CreateTable(blogs));
+			//Console.WriteLine(DbScript.CreateTable(posts));
+			//Console.WriteLine(DbScript.CreateTable(comments));
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+			//return;
 
 
 			var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
+			var core = new Core();
+			core.FeatureManager.Init(new DbFeaturesManager(new DbFeaturesAdapter(new QueryHelper())));
 
-			using (var cn = new SQLiteConnection(connectionString))
+
+
+
+			// Register helpers
+			var cache = core.DataCache;
+			cache.Add(new BrandHelper());
+			cache.Add(new FlavorHelper());
+			cache.Add(new ArticleHelper());
+
+			try
 			{
-				cn.Open();
+				File.WriteAllText(@"C:\temp\diagnostics.txt", string.Empty);
 
-				var core = new Core();
+				var viewModel = new LoginsViewModel(core, new LoginAdapter());
+				viewModel.LoadData();
 
-				// Create Read query helper
-				var sqlReadDataQueryHelper = new SqlLiteReadQueryExecutor(cn);
-				// Create Modify query helper
-				var sqlModifyDataQueryHelper = new SqlLiteModifyQueryExecutor(sqlReadDataQueryHelper, cn);
-				// Create General query helper
-				var queryHelper = new QueryExecutor(sqlReadDataQueryHelper, sqlModifyDataQueryHelper);
-				core.QueryExecutor = queryHelper;
+				var v = new LoginViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
+				var dialog = new ConsoleDialog();
+				viewModel.AddAsync(v, dialog).Wait();
+				viewModel.AddAsync(v, dialog).Wait();
+				viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hack").Wait();
+				viewModel.AddAsync(v, dialog).Wait();
+				viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hackV2").Wait();
 
-				var manager = new DbFeaturesManager(new DbFeaturesAdapter(queryHelper));
-				var featureManager = new FeatureManager(manager);
-				core.FeatureManager = featureManager;
-				manager.CreateSchema();
-				core.FeatureManager.StartDbWriters();
-
-				// Register helpers
-				core.DataCache = new DataCache();
-				var cache = core.DataCache;
-				cache.AddHelper(new BrandHelper());
-				cache.AddHelper(new FlavorHelper());
-				cache.AddHelper(new ArticleHelper());
-
-				try
+				foreach (var login in viewModel.Logins)
 				{
-					File.WriteAllText(@"C:\temp\diagnostics.txt", string.Empty);
-
-					var viewModel = new LoginsViewModel(core);
-					viewModel.LoadData();
-
-					var v = new LoginViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
-					var dialog = new ConsoleDialog();
-					viewModel.AddAsync(v, dialog).Wait();
-					viewModel.AddAsync(v, dialog).Wait();
-					viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hack").Wait();
-					viewModel.AddAsync(v, dialog).Wait();
-					viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hackV2").Wait();
-
-					foreach (var login in viewModel.Logins)
-					{
-						Console.WriteLine(login.Name + " " + v.Password);
-					}
+					Console.WriteLine(login.Name + " " + v.Password);
 				}
-				catch (Exception e)
-				{
-					Console.WriteLine(e);
-				}
-
-				featureManager.StopDbWriters();
 			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e);
+			}
+			finally
+			{
+				core.FeatureManager.Flush();
+			}
+
+
+		}
+
+		private static void Display(int[,] m)
+		{
+			for (int i = 0; i < 2; i++)
+			{
+				for (int j = 0; j < 3; j++)
+				{
+					Console.Write(m[i, j]);
+				}
+				Console.WriteLine();
+			}
+			Console.WriteLine();
+		}
+
+		private static void DisplayNew(int[,] m)
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				for (int j = 0; j < 2; j++)
+				{
+					Console.Write(m[i, j]);
+				}
+				Console.WriteLine();
+			}
+			Console.WriteLine();
 		}
 
 		static HashSet<string> idents = new HashSet<string>();
@@ -1083,7 +1167,7 @@ using System.Data;
 			//Console.WriteLine(tnp);
 		}
 
-		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadQueryExecutor queryExecutor)
+		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadQueryHelper queryHelper)
 		{
 			var step = feature.AddStep(nameof(LoadBrandsAsync));
 			var brandHelper = new BrandHelper();
@@ -1092,7 +1176,7 @@ using System.Data;
 			return brandHelper;
 		}
 
-		private async Task<FlavorHelper> LoadFlavorsAsync(Feature feature, ReadQueryExecutor queryExecutor)
+		private async Task<FlavorHelper> LoadFlavorsAsync(Feature feature, ReadQueryHelper queryHelper)
 		{
 			var step = feature.AddStep(nameof(LoadFlavorsAsync));
 			var flavorHelper = new FlavorHelper();
@@ -1101,7 +1185,7 @@ using System.Data;
 			return flavorHelper;
 		}
 
-		private async Task<ArticleHelper> LoadArticlesAsync(Feature feature, ReadQueryExecutor queryExecutor, BrandHelper brandHelper, FlavorHelper flavorHelper)
+		private async Task<ArticleHelper> LoadArticlesAsync(Feature feature, ReadQueryHelper queryHelper, BrandHelper brandHelper, FlavorHelper flavorHelper)
 		{
 			var step = feature.AddStep(nameof(LoadArticlesAsync));
 			var articleHelper = new ArticleHelper();

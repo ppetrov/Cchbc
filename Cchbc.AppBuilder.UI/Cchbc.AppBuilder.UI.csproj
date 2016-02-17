@@ -111,13 +111,13 @@
   <ItemGroup>
     <Content Include="Assets\Icons\AddNew.png" />
     <Content Include="Assets\Icons\Delete.png" />
-    <Content Include="Assets\Icons\Link.png" />
     <Content Include="Assets\Icons\NotVisible.png" />
     <Content Include="Assets\Icons\PrimaryKey.png" />
     <Content Include="Assets\Icons\ReadOnly.png" />
-    <Content Include="Assets\Icons\TypeBytes.png" />
-    <Content Include="Assets\Icons\TypeDate.png" />
+    <Content Include="Assets\Icons\TypeBlob.png" />
+    <Content Include="Assets\Icons\TypeDateTime.png" />
     <Content Include="Assets\Icons\TypeDecimal.png" />
+    <Content Include="Assets\Icons\TypeForeignKey.png" />
     <Content Include="Assets\Icons\TypeInteger.png" />
     <Content Include="Assets\Icons\TypeText.png" />
     <Content Include="Assets\Icons\Visible.png" />

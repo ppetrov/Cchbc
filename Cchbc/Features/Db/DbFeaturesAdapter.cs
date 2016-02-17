@@ -46,30 +46,30 @@ namespace Cchbc.Features.Db
 			new QueryParameter(@"@DETAILS", string.Empty),
 		};
 
-		private QueryExecutor QueryExecutor { get; }
+		private QueryHelper QueryHelper { get; }
 
-		public DbFeaturesAdapter(QueryExecutor queryExecutor)
+		public DbFeaturesAdapter(QueryHelper queryHelper)
 		{
-			if (queryExecutor == null) throw new ArgumentNullException(nameof(queryExecutor));
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 
-			this.QueryExecutor = queryExecutor;
+			this.QueryHelper = queryHelper;
 		}
 
 		public void CreateSchema()
 		{
-			this.QueryExecutor.Execute(@"
+			this.QueryHelper.Execute(@"
 CREATE TABLE[FEATURE_CONTEXTS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	[Name] nvarchar(254) NOT NULL
 )");
 
-			this.QueryExecutor.Execute(@"
+			this.QueryHelper.Execute(@"
 CREATE TABLE[FEATURE_STEPS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	[Name] nvarchar(254) NOT NULL
 )");
 
-			this.QueryExecutor.Execute(@"
+			this.QueryHelper.Execute(@"
 CREATE TABLE [FEATURES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[Name] nvarchar(254) NOT NULL, 
@@ -79,7 +79,7 @@ CREATE TABLE [FEATURES] (
 		ON UPDATE CASCADE ON DELETE CASCADE
 )");
 
-			this.QueryExecutor.Execute(@"
+			this.QueryHelper.Execute(@"
 CREATE TABLE [FEATURE_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
@@ -91,7 +91,7 @@ CREATE TABLE [FEATURE_ENTRIES] (
 		ON UPDATE CASCADE ON DELETE CASCADE
 )");
 
-			this.QueryExecutor.Execute(@"
+			this.QueryHelper.Execute(@"
 CREATE TABLE [EXCEPTION_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[Message] nvarchar(254) NOT NULL, 
@@ -103,7 +103,7 @@ CREATE TABLE [EXCEPTION_ENTRIES] (
 		ON UPDATE CASCADE ON DELETE CASCADE
 )");
 
-			this.QueryExecutor.Execute(@"
+			this.QueryHelper.Execute(@"
 CREATE TABLE [FEATURE_ENTRY_STEPS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
@@ -123,29 +123,29 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 		{
 			try
 			{
-				this.QueryExecutor.Execute(@"DROP TABLE FEATURE_ENTRY_STEPS");
-				this.QueryExecutor.Execute(@"DROP TABLE EXCEPTION_ENTRIES");
-				this.QueryExecutor.Execute(@"DROP TABLE FEATURE_ENTRIES");
-				this.QueryExecutor.Execute(@"DROP TABLE FEATURES");
-				this.QueryExecutor.Execute(@"DROP TABLE FEATURE_STEPS");
-				this.QueryExecutor.Execute(@"DROP TABLE FEATURE_CONTEXTS");
+				this.QueryHelper.Execute(@"DROP TABLE FEATURE_ENTRY_STEPS");
+				this.QueryHelper.Execute(@"DROP TABLE EXCEPTION_ENTRIES");
+				this.QueryHelper.Execute(@"DROP TABLE FEATURE_ENTRIES");
+				this.QueryHelper.Execute(@"DROP TABLE FEATURES");
+				this.QueryHelper.Execute(@"DROP TABLE FEATURE_STEPS");
+				this.QueryHelper.Execute(@"DROP TABLE FEATURE_CONTEXTS");
 			}
 			catch { }
 		}
 
 		public List<DbContext> GetContexts()
 		{
-			return this.QueryExecutor.Execute(new Query<DbContext>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbFeatureContextCreator));
+			return this.QueryHelper.Execute(new Query<DbContext>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbFeatureContextCreator));
 		}
 
 		public List<DbFeatureStep> GetSteps()
 		{
-			return this.QueryExecutor.Execute(new Query<DbFeatureStep>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator));
+			return this.QueryHelper.Execute(new Query<DbFeatureStep>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator));
 		}
 
 		public List<DbFeature> GetFeatures()
 		{
-			return this.QueryExecutor.Execute(new Query<DbFeature>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureCreator));
+			return this.QueryHelper.Execute(new Query<DbFeature>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureCreator));
 		}
 
 		public DbContext InsertContext(string name)
@@ -156,10 +156,10 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			_insertContextSqlParams[0].Value = name;
 
 			// Insert the record
-			this.QueryExecutor.Execute(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)", _insertContextSqlParams);
+			this.QueryHelper.Execute(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)", _insertContextSqlParams);
 
 			// Get new Id back
-			return new DbContext(this.QueryExecutor.GetNewId(), name);
+			return new DbContext(this.QueryHelper.GetNewId(), name);
 		}
 
 		public DbFeature InsertFeature(DbContext context, string name)
@@ -172,10 +172,10 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			_insertFeatureSqlParams[1].Value = context.Id;
 
 			// Insert the record
-			this.QueryExecutor.Execute(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", _insertFeatureSqlParams);
+			this.QueryHelper.Execute(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", _insertFeatureSqlParams);
 
 			// Get new Id back
-			return new DbFeature(this.QueryExecutor.GetNewId(), name, context.Id);
+			return new DbFeature(this.QueryHelper.GetNewId(), name, context.Id);
 		}
 
 		public DbFeatureEntry InsertFeatureEntry(DbFeature feature, FeatureEntry featureEntry)
@@ -193,10 +193,10 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			_insertFeatureEntrySqlParams[3].Value = feature.Id;
 
 			// Insert the record
-			this.QueryExecutor.Execute(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATEDAT, @FEATURE)", _insertFeatureEntrySqlParams);
+			this.QueryHelper.Execute(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATEDAT, @FEATURE)", _insertFeatureEntrySqlParams);
 
 			// Get new Id back
-			return new DbFeatureEntry(this.QueryExecutor.GetNewId(), feature, details, timeSpent);
+			return new DbFeatureEntry(this.QueryHelper.GetNewId(), feature, details, timeSpent);
 		}
 
 		public DbFeatureStep InsertStep(string name)
@@ -207,10 +207,10 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			_insertStepSqlParams[0].Value = name;
 
 			// Insert the record
-			this.QueryExecutor.Execute(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)", _insertStepSqlParams);
+			this.QueryHelper.Execute(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)", _insertStepSqlParams);
 
 			// Get new Id back
-			return new DbFeatureStep(this.QueryExecutor.GetNewId(), name);
+			return new DbFeatureStep(this.QueryHelper.GetNewId(), name);
 		}
 
 		public void InsertExceptionEntry(DbFeature feature, ExceptionEntry exceptionEntry)
@@ -225,7 +225,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			_insertExcetionEntrySqlParams[3].Value = feature.Id;
 
 			// Insert the record
-			this.QueryExecutor.Execute(@"INSERT INTO EXCEPTION_ENTRIES(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE)", _insertExcetionEntrySqlParams);
+			this.QueryHelper.Execute(@"INSERT INTO EXCEPTION_ENTRIES(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE)", _insertExcetionEntrySqlParams);
 		}
 
 		public void InsertStepEntry(DbFeatureEntry featureEntry, DbFeatureStep step, FeatureEntryStep entryStep)
@@ -241,7 +241,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			_insertFeatureStepEntrySqlParams[3].Value = entryStep.Details;
 
 			// Insert the record
-			this.QueryExecutor.Execute(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", _insertFeatureStepEntrySqlParams);
+			this.QueryHelper.Execute(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", _insertFeatureStepEntrySqlParams);
 		}
 
 		private static DbFeature DbFeatureCreator(IFieldDataReader r)

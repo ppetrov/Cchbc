@@ -92,7 +92,7 @@ namespace Cchbc.AppBuilder
 		{{
 			this.SetField(ref _textSearch, value);
 
-			var feature = Feature.StartNew(this.Context, nameof(SearchByText));
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByText));
 			this.SearchByText();
 			this.FeatureManager.Stop(feature);
 		}}
@@ -105,9 +105,9 @@ namespace Cchbc.AppBuilder
 		set
 		{{
 			this.SetField(ref _searchOption, value);
-			var feature = Feature.StartNew(this.Context, nameof(SearchByOption), value?.Name ?? string.Empty);
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByText));
 			this.SearchByOption();
-			this.FeatureManager.Stop(feature);
+			this.FeatureManager.Stop(feature, value?.Name ?? string.Empty);
 		}}
 	}}
 
@@ -118,7 +118,7 @@ namespace Cchbc.AppBuilder
 		set
 		{{
 			this.SetField(ref _sortOption, value);
-			var feature = Feature.StartNew(this.Context, nameof(SortBy));
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(SortBy));
 			this.SortBy();
 			this.FeatureManager.Stop(feature);
 		}}
@@ -143,9 +143,9 @@ namespace Cchbc.AppBuilder
 
 	public void LoadData()
 	{{
-		var feature = Feature.StartNew(this.Context, nameof(LoadData));
+		var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadData));
 
-		var helper = this.Core.DataCache.GetHelper<{0}>();
+		var helper = this.Core.DataCache.Get<{0}>();
 		var models = helper.Items.Values;
 		var viewModels = new {0}ViewModel[models.Count];
 		var index = 0;
@@ -190,7 +190,6 @@ namespace Cchbc.AppBuilder
 		}}
 	}}
 }}";
-
 			}
 			else
 			{
@@ -213,7 +212,7 @@ namespace Cchbc.AppBuilder
 		{{
 			this.SetField(ref _textSearch, value);
 
-			var feature = Feature.StartNew(this.Context, nameof(SearchByText));
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByText));
 			this.SearchByText();
 			this.FeatureManager.Stop(feature);
 		}}
@@ -226,9 +225,9 @@ namespace Cchbc.AppBuilder
 		set
 		{{
 			this.SetField(ref _searchOption, value);
-			var feature = Feature.StartNew(this.Context, nameof(SearchByOption), value?.Name ?? string.Empty);
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByOption));
 			this.SearchByOption();
-			this.FeatureManager.Stop(feature);
+			this.FeatureManager.Stop(feature, value?.Name ?? string.Empty);
 		}}
 	}}
 
@@ -239,18 +238,19 @@ namespace Cchbc.AppBuilder
 		set
 		{{
 			this.SetField(ref _sortOption, value);
-			var feature = Feature.StartNew(this.Context, nameof(SortBy));
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(SortBy));
 			this.SortBy();
 			this.FeatureManager.Stop(feature);
 		}}
 	}}
 
-	public {1}ViewModel(Core core)
+	public {1}ViewModel(Core core, {0}Adapter adapter)
 	{{
 		if (core == null) throw new ArgumentNullException(nameof(core));
+		if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
 		this.Core = core;
-		this.Module = new {1}Module(new {0}Adapter(), new Sorter<{0}ViewModel>(new[]
+		this.Module = new {1}Module(adapter, new Sorter<{0}ViewModel>(new[]
 		{{
 			new SortOption<{0}ViewModel>(string.Empty, (x, y) => 0)
 		}}),
@@ -266,7 +266,7 @@ namespace Cchbc.AppBuilder
 		}};
 		this.Module.OperationError += (sender, args) =>
 		{{
-			this.Core.FeatureManager.Stop(args.Feature, args.Exception);
+			this.Core.FeatureManager.LogException(args.Feature, args.Exception);
 		}};
 
 		this.Module.ItemInserted += ModuleOnItemInserted;
@@ -276,7 +276,7 @@ namespace Cchbc.AppBuilder
 
 	public void LoadData()
 	{{
-		var feature = Feature.StartNew(this.Context, nameof(LoadData));
+		var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadData));
 
 		var models = this.Module.GetAll();
 		var viewModels = new {0}ViewModel[models.Count];
@@ -290,28 +290,52 @@ namespace Cchbc.AppBuilder
 		this.FeatureManager.Stop(feature);
 	}}
 
-	public Task AddAsync({0}ViewModel viewModel, ModalDialog dialog)
+	public async Task AddAsync({0}ViewModel viewModel, IModalDialog dialog)
 	{{
 		if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 		if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-		return this.Module.InsertAsync(viewModel, dialog, new Feature(this.Context, nameof(AddAsync), string.Empty));
+		var feature = this.FeatureManager.StartNew(this.Context, nameof(AddAsync));
+		try
+		{{
+			await this.Module.InsertAsync(viewModel, dialog, feature);
+		}}
+		catch (Exception ex)
+		{{
+			this.FeatureManager.LogException(feature, ex);
+		}}
 	}}
 
-	public Task UpdateAsync({0}ViewModel viewModel, ModalDialog dialog)
+	public async Task UpdateAsync({0}ViewModel viewModel, IModalDialog dialog)
 	{{
 		if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 		if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-		return this.Module.UpdateAsync(viewModel, dialog, new Feature(this.Context, nameof(UpdateAsync), string.Empty));
+		var feature = this.FeatureManager.StartNew(this.Context, nameof(UpdateAsync));
+		try
+		{{
+			await this.Module.UpdateAsync(viewModel, dialog, feature);
+		}}
+		catch (Exception ex)
+		{{
+			this.FeatureManager.LogException(feature, ex);
+		}}
 	}}
 
-	public Task RemoveAsync({0}ViewModel viewModel, ModalDialog dialog)
+	public async Task DeleteAsync({0}ViewModel viewModel, IModalDialog dialog)
 	{{
 		if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 		if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-		return this.Module.DeleteAsync(viewModel, dialog, new Feature(this.Context, nameof(RemoveAsync), string.Empty));
+		var feature = new Feature(this.Context, nameof(DeleteAsync));
+		try
+		{{
+			await this.Module.DeleteAsync(viewModel, dialog, feature);
+		}}
+		catch (Exception ex)
+		{{
+			this.FeatureManager.LogException(feature, ex);
+		}}
 	}}
 
 	private void ModuleOnItemInserted(object sender, ObjectEventArgs<{0}ViewModel> args)
@@ -366,7 +390,7 @@ namespace Cchbc.AppBuilder
 			return string.Format(template, entity.Class.Name, entity.Table.Name);
 		}
 
-		public static string GenerateClassModule(Entity entity, bool readOnly, bool hasColumnToInverseTable)
+		public static string GenerateClassModule(Entity entity, bool readOnly)
 		{
 			if (readOnly)
 			{
@@ -410,7 +434,6 @@ namespace Cchbc.AppBuilder
 			}
 
 
-
 			var template = @"public sealed class {1}Module : Module<{0}, {0}ViewModel>
 {{
 	private {0}Adapter Adapter {{ get; }}
@@ -422,7 +445,12 @@ namespace Cchbc.AppBuilder
 
 		this.Adapter = adapter;
 	}}
-{2}
+
+	public List<{0}> GetAll()
+	{{
+		return this.Adapter.GetAll();
+	}}
+
 	public override ValidationResult[] ValidateProperties({0}ViewModel viewModel, Feature feature)
 	{{
 		if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
@@ -430,7 +458,7 @@ namespace Cchbc.AppBuilder
 
 		feature.AddStep(nameof(ValidateProperties));
 
-		return new[] {{ ValidationResult.Success }};
+		return Enumerable.Empty<ValidationResult>().ToArray();
 	}}
 
 	public override Task<PermissionResult> CanInsertAsync({0}ViewModel viewModel, Feature feature)
@@ -463,17 +491,7 @@ namespace Cchbc.AppBuilder
 		return PermissionResult.Allow;
 	}}
 }}";
-			var getAllMethod = string.Empty;
-			if (!hasColumnToInverseTable)
-			{
-				getAllMethod = $@"
-	public List<{entity.Class.Name}> GetAll()
-	{{
-		return this.Adapter.GetAll();
-	}}
-";
-			}
-			return string.Format(template, entity.Class.Name, entity.Table.Name, getAllMethod);
+			return string.Format(template, entity.Class.Name, entity.Table.Name);
 		}
 
 		public static void AppendClassDefinition(StringBuilder buffer, string className, string baseClass, string baseClassGnericType)

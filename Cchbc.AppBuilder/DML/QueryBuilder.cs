@@ -78,7 +78,7 @@ namespace Cchbc.AppBuilder.DML
 			buffer.Append(' ');
 			buffer.Append(aPrefix);
 			buffer.Append(' ');
-			buffer.Append(@"INNER");
+			buffer.Append(@"LEFT");
 			buffer.Append(' ');
 			buffer.Append(@"JOIN");
 			buffer.Append(' ');

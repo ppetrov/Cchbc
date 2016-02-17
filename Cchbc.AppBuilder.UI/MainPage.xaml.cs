@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Windows.UI.Xaml;
@@ -21,29 +22,14 @@ namespace Cchbc.AppBuilder.UI
 			this.InitializeComponent();
 		}
 
-		private void ColumnTypeOnChecked(object sender, RoutedEventArgs e)
+		private void LvColumnTypesItemClick(object sender, ItemClickEventArgs e)
 		{
-			var value = ((sender as RadioButton).Tag) as string;
-			switch (value)
-			{
-				case @"1":
-					this.ViewModel.ColumnType = new DbColumnTypeViewModel(DbColumnType.Integer);
-					break;
-				case @"2":
-					this.ViewModel.ColumnType = new DbColumnTypeViewModel(DbColumnType.Decimal);
-					break;
-				case @"3":
-					this.ViewModel.ColumnType = new DbColumnTypeViewModel(DbColumnType.String);
-					break;
-				case @"4":
-					this.ViewModel.ColumnType = new DbColumnTypeViewModel(DbColumnType.DateTime);
-					break;
-				case @"5":
-					this.ViewModel.ColumnType = new DbColumnTypeViewModel(DbColumnType.Bytes);
-					break;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			this.ViewModel.Select(e.ClickedItem as DbColumnTypeViewModel);
+		}
+
+		private void LvTablesItemClick(object sender, ItemClickEventArgs e)
+		{
+			this.ViewModel.Select(e.ClickedItem as DbTableViewModel);
 		}
 	}
 
@@ -60,6 +46,19 @@ namespace Cchbc.AppBuilder.UI
 		}
 	}
 
+	public sealed class BooleanToVisibilityConverter : IValueConverter
+	{
+		public object Convert(object value, Type targetType, object parameter, string language)
+		{
+			return (value is bool && (bool)value) ? Visibility.Visible : Visibility.Collapsed;
+		}
+
+		public object ConvertBack(object value, Type targetType, object parameter, string language)
+		{
+			return value is Visibility && (Visibility)value == Visibility.Visible;
+		}
+	}
+
 	public sealed class DesignTableViewModel : ViewModel
 	{
 		private string _tableName = string.Empty;
@@ -69,53 +68,34 @@ namespace Cchbc.AppBuilder.UI
 			set { this.SetField(ref _tableName, value); }
 		}
 
-		private string _columnName = string.Empty;
-		public string ColumnName
+		private DbTableViewModel _selectedTable;
+		public DbTableViewModel SelectedTable
 		{
-			get { return _columnName; }
-			set { this.SetField(ref _columnName, value); }
-		}
-
-		private DbColumnTypeViewModel _columnType;
-		public DbColumnTypeViewModel ColumnType
-		{
-			get { return _columnType; }
+			get { return _selectedTable; }
 			set
 			{
-				this.SetField(ref _columnType, value);
-				this.CanSelectType = value != null;
+				this.SetField(ref _selectedTable, value);
+				this.Select(value);
 			}
 		}
 
-		private DbTableViewModel _fkTable;
-		public DbTableViewModel FkTable
-		{
-			get { return _fkTable; }
-			set
-			{
-				this.SetField(ref _fkTable, value);
-				this.CanSelectType = value == null;
-			}
-		}
-
-		private bool _canSelectType = true;
-		public bool CanSelectType
-		{
-			get { return _canSelectType; }
-			set { this.SetField(ref _canSelectType, value); }
-		}
-
-		public ICommand AddColumnCommand { get; }
 		public ICommand AddTableCommand { get; }
 
 		public ObservableCollection<DbColumnViewModel> Columns { get; } = new ObservableCollection<DbColumnViewModel>();
 		public ObservableCollection<DbTableViewModel> Tables { get; } = new ObservableCollection<DbTableViewModel>();
 
+		public ObservableCollection<DbColumnTypeViewModel> ColumnTypes { get; } = new ObservableCollection<DbColumnTypeViewModel>();
 
 		public DesignTableViewModel()
 		{
-			this.AddColumnCommand = new RelayCommand(this.AddColumn);
 			this.AddTableCommand = new RelayCommand(this.AddTable);
+
+			this.ColumnTypes.Add(new DbColumnTypeViewModel(DbColumnType.Integer, this));
+			this.ColumnTypes.Add(new DbColumnTypeViewModel(DbColumnType.Decimal, this));
+			this.ColumnTypes.Add(new DbColumnTypeViewModel(DbColumnType.String, this));
+			this.ColumnTypes.Add(new DbColumnTypeViewModel(DbColumnType.DateTime, this));
+			this.ColumnTypes.Add(new DbColumnTypeViewModel(DbColumnType.Bytes, this));
+			this.ColumnTypes.Add(new DbColumnTypeViewModel(new DbColumnType(@"ForeignKey"), this));
 		}
 
 		private void AddTable()
@@ -123,14 +103,13 @@ namespace Cchbc.AppBuilder.UI
 			if (string.IsNullOrWhiteSpace(this.TableName)) return;
 			if (this.Columns.Count == 0) return;
 
-			var columns = new DbColumn[this.Columns.Count];
-			for (var i = 0; i < this.Columns.Count; i++)
+			var columns = new List<DbColumn>(this.Columns.Count);
+			foreach (var c in this.Columns)
 			{
-				columns[i] = this.Columns[i].Model;
+				columns.Add(c.Model);
 			}
 			this.Tables.Add(new DbTableViewModel(new DbTable(this.TableName, columns)));
 
-			this.ClearColumnAdd();
 			this.ClearTableAdd();
 			this.Columns.Clear();
 		}
@@ -140,11 +119,10 @@ namespace Cchbc.AppBuilder.UI
 			this.TableName = string.Empty;
 		}
 
-		private void AddColumn()
+		public void CreateColumn(string name, DbColumnTypeViewModel columnTypeViewModel)
 		{
-			var canAddRegularColumn = !string.IsNullOrWhiteSpace(this.ColumnName) && this.ColumnType != null;
-			var canAddForeignKeyColumn = this.FkTable != null;
-			if (!canAddRegularColumn && !canAddForeignKeyColumn) return;
+			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (columnTypeViewModel == null) throw new ArgumentNullException(nameof(columnTypeViewModel));
 
 			// Automatically add primary key if it does't have
 			var hasPrimaryKey = false;
@@ -161,17 +139,8 @@ namespace Cchbc.AppBuilder.UI
 				this.Columns.Add(new DbColumnViewModel(DbColumn.PrimaryKey(), this));
 			}
 
-			var dbColumn = this.FkTable != null ? DbColumn.ForeignKey(this.FkTable.Model) : new DbColumn(this.ColumnName, this.ColumnType.Model);
-			this.Columns.Add(new DbColumnViewModel(dbColumn, this));
-
-			this.ClearColumnAdd();
-		}
-
-		private void ClearColumnAdd()
-		{
-			// Clear column name to allow the addtion of another column
-			this.ColumnName = string.Empty;
-			this.FkTable = null;
+			//this.FkTable != null ? DbColumn.ForeignKey(this.FkTable.Model) :
+			this.Columns.Add(new DbColumnViewModel(new DbColumn(char.ToUpperInvariant(name[0]) + name.Substring(1), columnTypeViewModel.Model), this));
 		}
 
 		public void Delete(DbColumnViewModel columnViewModel)
@@ -192,10 +161,10 @@ namespace Cchbc.AppBuilder.UI
 
 		private void DisplayDdl()
 		{
-			var cls = new DbColumn[this.Columns.Count];
-			for (var i = 0; i < this.Columns.Count; i++)
+			var cls = new List<DbColumn>();
+			foreach (var c in this.Columns)
 			{
-				cls[i] = this.Columns[i].Model;
+				cls.Add(c.Model);
 			}
 			var table = new DbTable(@"Unknown", cls);
 
@@ -204,12 +173,72 @@ namespace Cchbc.AppBuilder.UI
 			var entities = prj.CreateEntities();
 			var sourceCode = prj.CreateEntityClass(entities[0]);
 		}
+
+		public void Select(DbColumnTypeViewModel viewModel)
+		{
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+
+			foreach (var type in this.ColumnTypes)
+			{
+				if (type != viewModel)
+				{
+					type.IsSelected = false;
+				}
+			}
+
+			viewModel.IsSelected = !viewModel.IsSelected;
+		}
+
+		public void Select(DbTableViewModel viewModel)
+		{
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+
+			this.Columns.Clear();
+			foreach (var column in viewModel.Model.Columns)
+			{
+				this.Columns.Add(new DbColumnViewModel(column, this));
+			}
+		}
 	}
 
 	public sealed class DbColumnTypeViewModel : ViewModel<DbColumnType>
 	{
-		public DbColumnTypeViewModel(DbColumnType model) : base(model)
+		private DesignTableViewModel DesignTableViewModel { get; }
+
+		public string Name { get; }
+		private string _inputName = string.Empty;
+		public string InputName
 		{
+			get { return _inputName; }
+			set { this.SetField(ref _inputName, value); }
+		}
+		private bool _isSelected;
+		public bool IsSelected
+		{
+			get { return _isSelected; }
+			set { this.SetField(ref _isSelected, value); }
+		}
+		public string IconPath { get; }
+		public ICommand CreateCommand { get; }
+
+		public DbColumnTypeViewModel(DbColumnType model, DesignTableViewModel designTableViewModel) : base(model)
+		{
+			if (designTableViewModel == null) throw new ArgumentNullException(nameof(designTableViewModel));
+
+			this.DesignTableViewModel = designTableViewModel;
+			this.Name = model.Name;
+			this.IconPath = $@"Assets/Icons/Type{model.Name}.png";
+			this.CreateCommand = new RelayCommand(this.Create);
+		}
+
+		private void Create()
+		{
+			if (string.IsNullOrWhiteSpace(this.InputName)) return;
+
+			this.DesignTableViewModel.CreateColumn(this.InputName, this);
+
+			this.InputName = string.Empty;
+			this.IsSelected = false;
 		}
 	}
 

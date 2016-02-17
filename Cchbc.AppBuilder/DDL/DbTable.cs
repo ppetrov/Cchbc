@@ -1,21 +1,22 @@
 using System;
+using System.Collections.Generic;
 
 namespace Cchbc.AppBuilder.DDL
 {
 	public sealed class DbTable
 	{
 		public string Name { get; }
-		public DbColumn[] Columns { get; }
+		public List<DbColumn> Columns { get; }
 		public string ClassName { get; }
 
-		public DbTable(string name, DbColumn[] columns, string className = null)
+		public DbTable(string name, List<DbColumn> columns, string className = null)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 			if (columns == null) throw new ArgumentNullException(nameof(columns));
-			if (columns.Length == 0) throw new ArgumentOutOfRangeException(nameof(columns));
+			if (columns.Count == 0) throw new ArgumentOutOfRangeException(nameof(columns));
 
 			this.Name = name;
-			this.Columns = columns;
+			this.Columns = new List<DbColumn>(columns);
 			this.ClassName = className ?? name.Substring(0, name.Length - 1);
 		}
 
@@ -25,15 +26,24 @@ namespace Cchbc.AppBuilder.DDL
 			if (columns == null) throw new ArgumentNullException(nameof(columns));
 			if (columns.Length == 0) throw new ArgumentOutOfRangeException(nameof(columns));
 
-			var withPromaryKeyColumns = new DbColumn[columns.Length + 1];
+			var hasPrimaryKey = false;
+			foreach (var column in columns)
+			{
+				if (column.IsPrimaryKey)
+				{
+					hasPrimaryKey = true;
+					break;
+				}
+			}
 
-			// Add primary key
-			withPromaryKeyColumns[0] = DbColumn.PrimaryKey();
+			var tableColumns = new List<DbColumn>(columns.Length + 1);
+			if (!hasPrimaryKey)
+			{
+				tableColumns.Add(DbColumn.PrimaryKey());
+			}
+			tableColumns.AddRange(columns);
 
-			// Add other columns
-			Array.Copy(columns, 0, withPromaryKeyColumns, 1, columns.Length);
-
-			return new DbTable(name, withPromaryKeyColumns, className);
+			return new DbTable(name, tableColumns, className);
 		}
 	}
 }

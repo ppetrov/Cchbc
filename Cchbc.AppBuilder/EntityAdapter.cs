@@ -242,7 +242,7 @@ namespace Cchbc.AppBuilder
 				else
 				{
 					AppendVariableDeclaration(buffer, property.Name, property.Type, string.Empty, indentationLevel);
-					AppendCheckForDbNull(buffer, index, indentationLevel);
+					AppendCheckForValue(buffer, index, indentationLevel);
 					EntityClass.AppendOpenBrace(buffer, indentationLevel++);
 					AppendAssignValue(buffer, property.Name, string.Empty, property.Type, index, dictionaryProperties, indentationLevel);
 					EntityClass.AppendCloseBrace(buffer, --indentationLevel);
@@ -348,7 +348,7 @@ namespace Cchbc.AppBuilder
 					continue;
 				}
 				AppendVariableDeclaration(buffer, property.Name, property.Type, string.Empty, indentationLevel);
-				AppendCheckForDbNull(buffer, index, indentationLevel);
+				AppendCheckForValue(buffer, index, indentationLevel);
 				EntityClass.AppendOpenBrace(buffer, indentationLevel++);
 				AppendAssignValue(buffer, property.Name, string.Empty, property.Type, index, dictionaryProperties, indentationLevel);
 				EntityClass.AppendCloseBrace(buffer, --indentationLevel);
@@ -378,11 +378,19 @@ namespace Cchbc.AppBuilder
 
 			EntityClass.AppendCloseBrace(buffer, --indentationLevel);
 
-			var offset = entity.Table.Columns.Length;
+			var offset = entity.Table.Columns.Count;
 			var detailEntity = readerEntities[1];
 			var detailClass = detailEntity.Class;
 			var detailClassName = detailClass.Name;
 			var detailProperties = detailClass.Properties;
+
+			buffer.AppendLine();
+			EntityClass.AppendIndentation(buffer, indentationLevel);
+			buffer.AppendLine(@"// Ignore NULL entities caused by the LEFT JOIN");
+			AppendCheckForDbNull(buffer, offset, indentationLevel);
+			EntityClass.AppendIndentation(buffer, indentationLevel + 1);
+			buffer.AppendLine(@"return;");
+			buffer.AppendLine();
 
 			for (var i = 0; i < detailProperties.Length; i++)
 			{
@@ -394,7 +402,7 @@ namespace Cchbc.AppBuilder
 				}
 				var propertyName = property.Name;
 				AppendVariableDeclaration(buffer, propertyName, property.Type, detailClassName, indentationLevel);
-				AppendCheckForDbNull(buffer, index, indentationLevel);
+				AppendCheckForValue(buffer, index, indentationLevel);
 				EntityClass.AppendOpenBrace(buffer, indentationLevel++);
 				AppendAssignValue(buffer, propertyName, detailClassName, property.Type, index, dictionaryProperties, indentationLevel);
 				EntityClass.AppendCloseBrace(buffer, --indentationLevel);
@@ -622,9 +630,10 @@ namespace Cchbc.AppBuilder
 			EntityClass.AppendIndentation(buffer, level);
 			buffer.Append(@"public");
 			buffer.Append(' ');
-			buffer.Append(@"void");
+			buffer.Append(@"Task");
 			buffer.Append(' ');
 			buffer.Append(methodName);
+			buffer.Append(@"Async");
 			buffer.Append('(');
 			buffer.Append(className);
 			buffer.Append(' ');
@@ -651,7 +660,7 @@ namespace Cchbc.AppBuilder
 
 			EntityClass.AppendOpenBrace(buffer, level++);
 
-			for (var index = 0; index < entity.Table.Columns.Length; index++)
+			for (var index = 0; index < entity.Table.Columns.Count; index++)
 			{
 				var column = entity.Table.Columns[index];
 				if (!columnMatcher(column))
@@ -746,6 +755,12 @@ namespace Cchbc.AppBuilder
 				buffer.AppendLine();
 			}
 
+			EntityClass.AppendIndentation(buffer, level);
+			buffer.AppendLine();
+
+			EntityClass.AppendIndentation(buffer, level);
+			buffer.AppendLine(@"return Task.FromResult(true);");
+
 			EntityClass.AppendCloseBrace(buffer, --level);
 		}
 
@@ -805,14 +820,24 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 		}
 
+		private static void AppendCheckForValue(StringBuilder buffer, int index, int indentationLevel)
+		{
+			AppendReaderCheckValue(buffer, index, indentationLevel, @"!");
+		}
+
 		private static void AppendCheckForDbNull(StringBuilder buffer, int index, int indentationLevel)
+		{
+			AppendReaderCheckValue(buffer, index, indentationLevel, string.Empty);
+		}
+
+		private static void AppendReaderCheckValue(StringBuilder buffer, int index, int indentationLevel, string condition)
 		{
 			EntityClass.AppendIndentation(buffer, indentationLevel);
 
 			buffer.Append(@"if");
 			buffer.Append(' ');
 			buffer.Append('(');
-			buffer.Append('!');
+			buffer.Append(condition);
 			buffer.Append('r');
 			buffer.Append('.');
 			buffer.Append(@"IsDbNull");

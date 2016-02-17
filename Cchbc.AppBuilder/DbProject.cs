@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Cchbc.AppBuilder.Clr;
 using Cchbc.AppBuilder.DDL;
 
@@ -128,16 +127,6 @@ namespace Cchbc.AppBuilder
 					}
 				}
 			}
-			else
-			{
-				// We don't need a Get method. It will be generated on Inverse table side
-				var hasColumnToInverseTable = this.HasColumnToInverseTable(entity);
-				if (hasColumnToInverseTable)
-				{
-					entities = Enumerable.Empty<Entity>().ToArray();
-					dictionaryProperties.Clear();
-				}
-			}
 
 			return EntityAdapter.GenerateModifiable(entity, dictionaryProperties, entities);
 		}
@@ -169,30 +158,7 @@ namespace Cchbc.AppBuilder
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
 
-			return EntityClass.GenerateClassModule(entity, !this.IsModifiable(entity.Table), this.HasColumnToInverseTable(entity));
-		}
-
-		public bool HasColumnToInverseTable(Entity entity)
-		{
-			var entityTable = entity.Table;
-
-			foreach (var column in entityTable.Columns)
-			{
-				var foreignKey = column.DbForeignKey;
-				if (foreignKey != null)
-				{
-					// Check if the current table isn't an inveverse table for other entity
-					DbTable inverseTable;
-					this.InverseTables.TryGetValue(foreignKey.Table.Name, out inverseTable);
-
-					if (inverseTable == entityTable)
-					{
-						return true;
-					}
-				}
-			}
-
-			return false;
+			return EntityClass.GenerateClassModule(entity, !this.IsModifiable(entity.Table));
 		}
 
 		private static Dictionary<ClrType, ClrProperty> GetDictionaryProperties(Entity entity)

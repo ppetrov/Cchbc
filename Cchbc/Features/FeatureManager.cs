@@ -9,38 +9,43 @@ namespace Cchbc.Features
 	public sealed class FeatureManager
 	{
 		private Task _featuresTask;
-		private DbFeaturesManager DbFeaturesManager { get; }
-		private BlockingCollection<DbEntry> Entries { get; } = new BlockingCollection<DbEntry>();
+		private DbFeaturesManager _dbManager;
+		private BlockingCollection<DbEntry> _entries;
 
-		public FeatureManager(DbFeaturesManager dbFeaturesManager)
+		public void Init(DbFeaturesManager dbFeaturesManager)
 		{
 			if (dbFeaturesManager == null) throw new ArgumentNullException(nameof(dbFeaturesManager));
 
-			this.DbFeaturesManager = dbFeaturesManager;
-		}
+			if (_dbManager == null)
+			{
+				_dbManager = dbFeaturesManager;
+				_dbManager.Load();
+			}
 
-		public void StartDbWriters()
-		{
-			this.DbFeaturesManager.Load();
-
+			_entries = new BlockingCollection<DbEntry>();
 			_featuresTask = Task.Run(() =>
 			{
-				foreach (var entry in this.Entries.GetConsumingEnumerable())
+				foreach (var entry in this._entries.GetConsumingEnumerable())
 				{
 					try
 					{
-						DbFeaturesManager.Save(entry);
+						_dbManager.Save(entry);
 					}
 					catch { }
 				}
 			});
 		}
 
-		public void StopDbWriters()
+		public void Flush()
 		{
-			this.Entries.CompleteAdding();
+			if (_featuresTask == null) return;
+			
+			// Signal the end of adding entries
+			_entries.CompleteAdding();
 
+			// Wait for all the entries to be saved in the database
 			_featuresTask.Wait();
+			_featuresTask = null;
 		}
 
 		public void Start(Feature feature)
@@ -71,7 +76,7 @@ namespace Cchbc.Features
 				}
 			}
 
-			this.Entries.TryAdd(new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
+			this._entries.TryAdd(new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
 		}
 
 		public void LogException(Feature feature, Exception exception)
@@ -79,7 +84,7 @@ namespace Cchbc.Features
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			this.Entries.TryAdd(new ExceptionEntry(feature.Context, feature.Name, exception));
+			this._entries.TryAdd(new ExceptionEntry(feature.Context, feature.Name, exception));
 		}
 
 		public Feature StartNew(string context, string name)

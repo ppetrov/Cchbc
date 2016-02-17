@@ -17,7 +17,7 @@ namespace Cchbc.AppBuilder.DDL
 
 			var name = table.Name;
 			var columns = table.Columns;
-			var buffer = new StringBuilder(32 + name.Length + (64 * columns.Length));
+			var buffer = new StringBuilder(32 + name.Length + (64 * columns.Count));
 
 			// Table
 			buffer.Append(@"CREATE");
@@ -159,13 +159,11 @@ namespace Cchbc.AppBuilder.DDL
 
 		private static void AppendForeignKeyDefinition(StringBuilder buffer, DbForeignKey foreignKey)
 		{
-			var name = foreignKey.Table.Name;
-
 			buffer.Append(@"FOREIGN KEY");
 			buffer.Append(' ');
 			buffer.Append('(');
 			buffer.Append('[');
-			buffer.Append(name);
+			buffer.Append(foreignKey.Table.ClassName);
 			buffer.Append(DbColumn.IdName);
 			buffer.Append(']');
 			buffer.Append(')');
@@ -173,7 +171,7 @@ namespace Cchbc.AppBuilder.DDL
 			buffer.Append(@"REFERENCES");
 			buffer.Append(' ');
 			buffer.Append('[');
-			buffer.Append(name);
+			buffer.Append(foreignKey.Table.Name);
 			buffer.Append(']');
 			buffer.Append(' ');
 			buffer.Append('(');

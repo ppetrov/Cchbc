@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Cchbc.AppBuilder.Clr;
 using Cchbc.AppBuilder.DDL;
 
@@ -13,17 +14,16 @@ namespace Cchbc.AppBuilder
 			return new ClrClass(table.ClassName, GetProperties(table.Columns, inverseTable));
 		}
 
-		private static ClrProperty[] GetProperties(DbColumn[] columns, DbTable inverseTable = null)
+		private static ClrProperty[] GetProperties(IReadOnlyList<DbColumn> columns, DbTable inverseTable = null)
 		{
-			var totalColumns = columns.Length;
-			var totalProperties = totalColumns;
+			var totalProperties = columns.Count;
 			if (inverseTable != null)
 			{
 				totalProperties++;
 			}
 			var properties = new ClrProperty[totalProperties];
 
-			for (var i = 0; i < totalColumns; i++)
+			for (var i = 0; i < columns.Count; i++)
 			{
 				var column = columns[i];
 
