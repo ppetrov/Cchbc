@@ -34,24 +34,25 @@ namespace Cchbc.Features.Db
 			this.LoadFeatures();
 		}
 
-		public void Save(DbEntry entry)
+		public void Save(FeatureEntry entry)
 		{
 			if (entry == null) throw new ArgumentNullException(nameof(entry));
 
 			var context = this.SaveContext(entry.Context);
 			var feature = this.SaveFeature(context, entry.Name);
 
-			var fe = entry as FeatureEntry;
-			if (fe != null)
-			{
-				var dbFeatureEntry = this.Adapter.InsertFeatureEntry(feature, fe);
-				this.SaveSteps(dbFeatureEntry, fe.Steps);
-			}
-			var ee = entry as ExceptionEntry;
-			if (ee != null)
-			{
-				this.Adapter.InsertExceptionEntry(feature, ee);
-			}
+			var dbFeatureEntry = this.Adapter.InsertFeatureEntry(feature, entry);
+			this.SaveSteps(dbFeatureEntry, entry.Steps);
+		}
+
+		public void Save(ExceptionEntry entry)
+		{
+			if (entry == null) throw new ArgumentNullException(nameof(entry));
+
+			var context = this.SaveContext(entry.Context);
+			var feature = this.SaveFeature(context, entry.Name);
+
+			this.Adapter.InsertExceptionEntry(feature, entry);
 		}
 
 		private void LoadContexts()

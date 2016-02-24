@@ -1,16 +1,12 @@
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
-using System.Threading.Tasks;
 using Cchbc.Features.Db;
 
 namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
-		private Task _featuresTask;
 		private DbFeaturesManager _dbManager;
-		private BlockingCollection<DbEntry> _entries;
 
 		public void Init(DbFeaturesManager dbFeaturesManager)
 		{
@@ -21,31 +17,6 @@ namespace Cchbc.Features
 				_dbManager = dbFeaturesManager;
 				_dbManager.Load();
 			}
-
-			_entries = new BlockingCollection<DbEntry>();
-			_featuresTask = Task.Run(() =>
-			{
-				foreach (var entry in this._entries.GetConsumingEnumerable())
-				{
-					try
-					{
-						_dbManager.Save(entry);
-					}
-					catch { }
-				}
-			});
-		}
-
-		public void Flush()
-		{
-			if (_featuresTask == null) return;
-			
-			// Signal the end of adding entries
-			_entries.CompleteAdding();
-
-			// Wait for all the entries to be saved in the database
-			_featuresTask.Wait();
-			_featuresTask = null;
 		}
 
 		public void Start(Feature feature)
@@ -76,7 +47,7 @@ namespace Cchbc.Features
 				}
 			}
 
-			this._entries.TryAdd(new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
+			_dbManager.Save(new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
 		}
 
 		public void LogException(Feature feature, Exception exception)
@@ -84,7 +55,7 @@ namespace Cchbc.Features
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			this._entries.TryAdd(new ExceptionEntry(feature.Context, feature.Name, exception));
+			_dbManager.Save(new ExceptionEntry(feature.Context, feature.Name, exception));
 		}
 
 		public Feature StartNew(string context, string name)

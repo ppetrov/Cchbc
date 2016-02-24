@@ -9,63 +9,56 @@ using Cchbc.Features.Db;
 
 namespace Cchbc.UI
 {
+	public sealed class Context
+	{
+		public static Core Core { get; } = new Core();
+	}
+
 	public sealed partial class CommentsScreen
 	{
-		private readonly LoginsViewModel _viewModel;
+		public LoginsViewModel ViewModel { get; } = new LoginsViewModel(Context.Core, new LoginAdapter(Context.Core.QueryHelper));
 
 		public CommentsScreen()
 		{
 			this.InitializeComponent();
-
-			var core = new Core();
-			_viewModel = new LoginsViewModel(core);
-			this.DataContext = _viewModel;
+			this.DataContext = this.ViewModel;
 		}
 
-		private void CommentsScreen_OnLoaded(object sender, RoutedEventArgs e)
+		private void CommentsScreenOnLoaded(object sender, RoutedEventArgs e)
 		{
-			try
-			{
-				_viewModel.LoadData();
-			}
-			catch (Exception ex)
-			{
-
-			}
+			this.ViewModel.LoadData();
 		}
 
 		private async void AddLoginTapped(object sender, TappedRoutedEventArgs e)
 		{
-			var btn = sender as Button;
-			if (btn != null)
-			{
-				try
-				{
-					await _viewModel.AddAsync(new LoginViewModel(new Login(2, @"ZDoctor@", @"123456789", DateTime.Now, false)), new ModalDialog());
-				}
-				catch (Exception ex)
-				{
+			//var btn = sender as Button;
+			//if (btn == null) return;
+			//{
+			//	try
+			//	{
+			//		await this.ViewModel.AddAsync(new LoginViewModel(new Login(2, @"ZDoctor@", @"123456789", DateTime.Now, false)), new ModalDialog());
+			//	}
+			//	catch (Exception ex)
+			//	{
 
-				}
-			}
+			//	}
+			//}
 		}
 
 		private async void DeleteLoginTapped(object sender, TappedRoutedEventArgs e)
 		{
 			var btn = sender as Button;
-			if (btn != null)
-			{
-				var viewModel = btn.DataContext as LoginViewModel;
-				if (viewModel != null)
-				{
-					var dialog = new ModalDialog();
+			if (btn == null) return;
 
-					var r = await dialog.ShowAsync(@"Are you sure you want to delete this user?", Feature.None, DialogType.AcceptDecline);
-					if (r == DialogResult.Accept)
-					{
-						await _viewModel.RemoveAsync(viewModel, dialog);
-					}
-				}
+			var viewModel = btn.DataContext as LoginViewModel;
+			if (viewModel == null) return;
+
+			var dialog = new ModalDialog();
+			var message = @"Are you sure you want to delete this user?";
+			var dialogResult = await dialog.ShowAsync(message, Feature.None, DialogType.AcceptDecline);
+			if (dialogResult == DialogResult.Accept)
+			{
+				await this.ViewModel.DeleteAsync(viewModel, dialog);
 			}
 		}
 

@@ -7,6 +7,15 @@ namespace Cchbc.UI
 {
 	public sealed class LoginAdapter : IModifiableAdapter<Login>
 	{
+		public QueryHelper QueryHelper { get; }
+
+		public LoginAdapter(QueryHelper queryHelper)
+		{
+			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
+
+			this.QueryHelper = queryHelper;
+		}
+
 		public Task InsertAsync(Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));

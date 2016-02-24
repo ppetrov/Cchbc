@@ -391,6 +391,7 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
+
 	public sealed class SqlLiteDelegateDataReader : IFieldDataReader
 	{
 		private readonly DbDataReader _r;
@@ -840,12 +841,6 @@ namespace Cchbc.ConsoleClient
 			{
 				Console.WriteLine(e);
 			}
-			finally
-			{
-				core.FeatureManager.Flush();
-			}
-
-
 		}
 
 		private static void Display(int[,] m)

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using Cchbc.Common;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Objects;
@@ -11,14 +13,16 @@ namespace Cchbc.UI
 {
 	public sealed class LoginsViewModel : ViewModel
 	{
-		private Core Core { get; }
-		private FeatureManager FeatureManager => this.Core.FeatureManager;
+		private IModalDialog ModalDialog { get; }
+		private FeatureManager FeatureManager { get; }
 		private LoginsModule Module { get; }
 		private string Context { get; } = nameof(LoginsViewModel);
 
 		public ObservableCollection<LoginViewModel> Logins { get; } = new ObservableCollection<LoginViewModel>();
 		public SortOption<LoginViewModel>[] SortOptions => this.Module.Sorter.Options;
 		public SearchOption<LoginViewModel>[] SearchOptions => this.Module.Searcher.Options;
+
+		public ICommand AddCommand { get; }
 
 		private bool _isWorking;
 		public bool IsWorking
@@ -74,56 +78,96 @@ namespace Cchbc.UI
 			}
 		}
 
-		public LoginsViewModel(Core core)
+		public LoginsViewModel(Core core, LoginAdapter adapter)
 		{
 			if (core == null) throw new ArgumentNullException(nameof(core));
+			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
-			this.Core = core;
-			this.Module = new LoginsModule(new LoginAdapter(), new Sorter<LoginViewModel>(new[]
+			this.ModalDialog = core.ModalDialog;
+			this.FeatureManager = core.FeatureManager;
+			this.Module = new LoginsModule(adapter, new Sorter<LoginViewModel>(new[]
 			{
 				new SortOption<LoginViewModel>(string.Empty, (x, y) => 0)
 			}), new Searcher<LoginViewModel>((v, s) => false));
 
 			this.Module.OperationStart += (sender, args) =>
 			{
-				this.Core.FeatureManager.Start(args.Feature);
+				this.FeatureManager.Start(args.Feature);
 			};
 			this.Module.OperationEnd += (sender, args) =>
 			{
-				this.Core.FeatureManager.Stop(args.Feature);
+				this.FeatureManager.Stop(args.Feature);
 			};
 			this.Module.OperationError += (sender, args) =>
 			{
-				this.Core.FeatureManager.LogException(args.Feature, args.Exception);
+				this.FeatureManager.LogException(args.Feature, args.Exception);
 			};
 
 			this.Module.ItemInserted += ModuleOnItemInserted;
 			this.Module.ItemUpdated += ModuleOnItemUpdated;
 			this.Module.ItemDeleted += ModuleOnItemDeleted;
+
+			this.AddCommand = new RelayCommand(this.Add);
+		}
+
+		private string _name = string.Empty;
+		public string Name
+		{
+			get { return _name; }
+			set { this.SetField(ref _name, value); }
+		}
+
+		private string _password = string.Empty;
+		public string Password
+		{
+			get { return _password; }
+			set { this.SetField(ref _password, value); }
+		}
+
+		private bool _isSystem;
+		public bool IsSystem
+		{
+			get { return _isSystem; }
+			set { this.SetField(ref _isSystem, value); }
+		}
+
+		private async void Add()
+		{
+			var feature = new Feature(this.Context, nameof(this.Add));
+			try
+			{
+				var login = new Login(0, this.Name, this.Password, DateTime.Now, this.IsSystem);
+				var viewModel = new LoginViewModel(login);
+
+				await this.Module.InsertAsync(viewModel, this.ModalDialog, this.AddProgressDisplay(feature));
+			}
+			catch (Exception ex)
+			{
+				this.FeatureManager.LogException(feature, ex);
+			}
 		}
 
 		public void LoadData()
 		{
 			var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadData));
 
-			var models = this.Module.GetAll();
-			var viewModels = new LoginViewModel[models.Count];
-			var index = 0;
-			foreach (var model in models)
+			try
 			{
-				viewModels[index++] = new LoginViewModel(model);
+				var models = this.Module.GetAll();
+				var viewModels = new LoginViewModel[models.Count];
+				var index = 0;
+				foreach (var model in models)
+				{
+					viewModels[index++] = new LoginViewModel(model);
+				}
+				this.DisplayLogins(viewModels, feature);
+
+				this.FeatureManager.Stop(feature, models.Count.ToString());
 			}
-			this.DisplayLogins(viewModels, feature);
-
-			this.FeatureManager.Stop(feature, models.Count.ToString());
-		}
-
-		public Task AddAsync(LoginViewModel viewModel, IModalDialog dialog)
-		{
-			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-
-			return this.Module.InsertAsync(viewModel, dialog, this.AddProgressReport(new Feature(this.Context, nameof(AddAsync))));
+			catch (Exception ex)
+			{
+				this.FeatureManager.LogException(feature, ex);
+			}
 		}
 
 		public Task UpdateAsync(LoginViewModel viewModel, IModalDialog dialog)
@@ -131,15 +175,15 @@ namespace Cchbc.UI
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.UpdateAsync(viewModel, dialog, this.AddProgressReport(new Feature(this.Context, nameof(UpdateAsync))));
+			return this.Module.UpdateAsync(viewModel, dialog, this.AddProgressDisplay(new Feature(this.Context, nameof(UpdateAsync))));
 		}
 
-		public Task RemoveAsync(LoginViewModel viewModel, IModalDialog dialog)
+		public Task DeleteAsync(LoginViewModel viewModel, IModalDialog dialog)
 		{
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.DeleteAsync(viewModel, dialog, this.AddProgressReport(new Feature(this.Context, nameof(RemoveAsync))));
+			return this.Module.DeleteAsync(viewModel, dialog, this.AddProgressDisplay(new Feature(this.Context, nameof(DeleteAsync))));
 		}
 
 		private void ModuleOnItemInserted(object sender, ObjectEventArgs<LoginViewModel> args)
@@ -189,7 +233,7 @@ namespace Cchbc.UI
 			}
 		}
 
-		private Feature AddProgressReport(Feature feature)
+		private Feature AddProgressDisplay(Feature feature)
 		{
 			feature.Started = _ => { this.IsWorking = true; };
 			feature.Stopped = _ => { this.IsWorking = false; };

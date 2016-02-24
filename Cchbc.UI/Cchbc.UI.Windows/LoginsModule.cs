@@ -31,6 +31,12 @@ namespace Cchbc.UI
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
+			// Validate the model properties
+			var model = viewModel.Model;
+
+			//model.Name
+			//model.Password
+
 			feature.AddStep(nameof(ValidateProperties));
 			return Enumerable.Empty<ValidationResult>().ToArray();
 		}
@@ -41,9 +47,7 @@ namespace Cchbc.UI
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(CanInsertAsync));
-			//return PermissionResult.Allow;
 			return Task.FromResult(PermissionResult.Confirm(@"Add one more admin ?"));
-			//return Task.FromResult(PermissionResult.Deny(string.Empty));
 		}
 
 		public override Task<PermissionResult> CanUpdateAsync(LoginViewModel viewModel, Feature feature)
