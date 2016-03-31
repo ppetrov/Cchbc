@@ -187,3 +187,7 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
+/Cchbc.sln.iml
+/.idea/workspace.xml
+/.idea/vcs.xml
+/.idea/modules.xml
