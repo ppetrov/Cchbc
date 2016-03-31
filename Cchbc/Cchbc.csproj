@@ -34,16 +34,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Archive\ZipArchive.cs" />
+    <Compile Include="Archive\ZipData.cs" />
+    <Compile Include="Archive\ZipHeader.cs" />
     <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Core.cs" />
     <Compile Include="DataCache.cs" />
-    <Compile Include="Data\ModifyQueryHelper.cs" />
     <Compile Include="Data\IFieldDataReader.cs" />
     <Compile Include="Data\IModifiableAdapter.cs" />
+    <Compile Include="Data\ITransactionContextCreator.cs" />
     <Compile Include="Data\Query.cs" />
-    <Compile Include="Data\QueryHelper.cs" />
     <Compile Include="Data\QueryParameter.cs" />
-    <Compile Include="Data\ReadQueryHelper.cs" />
+    <Compile Include="Data\ITransactionContext.cs" />
     <Compile Include="Dialog\DialogResult.cs" />
     <Compile Include="Dialog\IModalDialog.cs" />
     <Compile Include="Features\DbEntry.cs" />

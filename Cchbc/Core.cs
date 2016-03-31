@@ -9,7 +9,7 @@ namespace Cchbc
 	public sealed class Core
 	{
 		public IModalDialog ModalDialog { get; set; }
-		public QueryHelper QueryHelper { get; } = new QueryHelper();
+		public ITransactionContextCreator ContextCreator { get; set; }
 		public DataCache DataCache { get; } = new DataCache();
 		public FeatureManager FeatureManager { get; } = new FeatureManager();
 		public LocalizationManager LocalizationManager { get; } = new LocalizationManager();

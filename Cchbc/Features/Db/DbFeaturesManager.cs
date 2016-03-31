@@ -1,91 +1,94 @@
 ﻿using System;
 using System.Collections.Generic;
+using Cchbc.Data;
 
 namespace Cchbc.Features.Db
 {
 	public sealed class DbFeaturesManager
 	{
-		private DbFeaturesAdapter Adapter { get; }
 		private Dictionary<string, DbContext> Contexts { get; } = new Dictionary<string, DbContext>(StringComparer.OrdinalIgnoreCase);
 		private Dictionary<string, DbFeatureStep> Steps { get; } = new Dictionary<string, DbFeatureStep>(StringComparer.OrdinalIgnoreCase);
 		private Dictionary<long, Dictionary<string, DbFeature>> Features { get; } = new Dictionary<long, Dictionary<string, DbFeature>>();
 
-		public DbFeaturesManager(DbFeaturesAdapter adapter)
+		public void CreateSchema(ITransactionContext context)
 		{
-			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
+			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			this.Adapter = adapter;
+			new DbFeaturesAdapter().CreateSchema(context);
 		}
 
-		public void CreateSchema()
+		public void DropSchema(ITransactionContext context)
 		{
-			this.Adapter.CreateSchema();
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			new DbFeaturesAdapter().DropSchema(context);
 		}
 
-		public void DropSchema()
+		public void Load(ITransactionContext context)
 		{
-			this.Adapter.DropSchema();
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			this.LoadContexts(context);
+			this.LoadSteps(context);
+			this.LoadFeatures(context);
 		}
 
-		public void Load()
+		public void Save(ITransactionContext transactionContext, FeatureEntry entry)
 		{
-			this.LoadContexts();
-			this.LoadSteps();
-			this.LoadFeatures();
-		}
-
-		public void Save(FeatureEntry entry)
-		{
+			if (transactionContext == null) throw new ArgumentNullException(nameof(transactionContext));
 			if (entry == null) throw new ArgumentNullException(nameof(entry));
 
-			var context = this.SaveContext(entry.Context);
-			var feature = this.SaveFeature(context, entry.Name);
+			var context = this.SaveContext(transactionContext, entry.Context);
+			var feature = this.SaveFeature(transactionContext, context, entry.Name);
 
-			var dbFeatureEntry = this.Adapter.InsertFeatureEntry(feature, entry);
-			this.SaveSteps(dbFeatureEntry, entry.Steps);
+			var adapter = new DbFeaturesAdapter();
+			var dbFeatureEntry = adapter.InsertFeatureEntry(transactionContext, feature, entry);
+			this.SaveSteps(transactionContext, dbFeatureEntry, entry.Steps);
 		}
 
-		public void Save(ExceptionEntry entry)
+		public void Save(ITransactionContext transactionContext, ExceptionEntry entry)
 		{
+			if (transactionContext == null) throw new ArgumentNullException(nameof(transactionContext));
 			if (entry == null) throw new ArgumentNullException(nameof(entry));
 
-			var context = this.SaveContext(entry.Context);
-			var feature = this.SaveFeature(context, entry.Name);
+			var context = this.SaveContext(transactionContext, entry.Context);
+			var feature = this.SaveFeature(transactionContext, context, entry.Name);
 
-			this.Adapter.InsertExceptionEntry(feature, entry);
+			var adapter = new DbFeaturesAdapter();
+			adapter.InsertExceptionEntry(transactionContext, feature, entry);
 		}
 
-		private void LoadContexts()
+		private void LoadContexts(ITransactionContext transactionContext)
 		{
 			// Clear contexts from old values
 			this.Contexts.Clear();
 
 			// Fetch & add new values
-			foreach (var context in this.Adapter.GetContexts())
+			foreach (var context in new DbFeaturesAdapter().GetContexts(transactionContext))
 			{
 				this.Contexts.Add(context.Name, context);
 			}
 		}
 
-		private void LoadSteps()
+		private void LoadSteps(ITransactionContext context)
 		{
 			// Clear steps from old values
 			this.Steps.Clear();
 
 			// Fetch & add new values
-			foreach (var step in this.Adapter.GetSteps())
+			foreach (var step in new DbFeaturesAdapter().GetSteps(context))
 			{
 				this.Steps.Add(step.Name, step);
 			}
 		}
 
-		private void LoadFeatures()
+		private void LoadFeatures(ITransactionContext context)
 		{
 			// Clear steps from old values
 			this.Features.Clear();
 
 			// Fetch & add new values
-			foreach (var feature in this.Adapter.GetFeatures())
+			foreach (var feature in new DbFeaturesAdapter().GetFeatures(context))
 			{
 				var contextId = feature.ContextId;
 
@@ -101,14 +104,14 @@ namespace Cchbc.Features.Db
 			}
 		}
 
-		private DbContext SaveContext(string name)
+		private DbContext SaveContext(ITransactionContext transactionContext, string name)
 		{
 			DbContext context;
 
 			if (!this.Contexts.TryGetValue(name, out context))
 			{
 				// Insert into database
-				context = this.Adapter.InsertContext(name);
+				context = new DbFeaturesAdapter().InsertContext(transactionContext, name);
 
 				// Insert the new context into the collection
 				this.Contexts.Add(name, context);
@@ -117,7 +120,7 @@ namespace Cchbc.Features.Db
 			return context;
 		}
 
-		private DbFeature SaveFeature(DbContext context, string name)
+		private DbFeature SaveFeature(ITransactionContext transactionContext, DbContext context, string name)
 		{
 			var contextId = context.Id;
 
@@ -133,7 +136,7 @@ namespace Cchbc.Features.Db
 			if (feature == null)
 			{
 				// Insert into database
-				feature = this.Adapter.InsertFeature(context, name);
+				feature = new DbFeaturesAdapter().InsertFeature(transactionContext, context, name);
 
 				// Insert the new feature into the collection
 				if (!this.Features.TryGetValue(contextId, out features))
@@ -146,8 +149,10 @@ namespace Cchbc.Features.Db
 			return feature;
 		}
 
-		private void SaveSteps(DbFeatureEntry featureEntry, FeatureEntryStep[] entrySteps)
+		private void SaveSteps(ITransactionContext context, DbFeatureEntry featureEntry, FeatureEntryStep[] entrySteps)
 		{
+			var adapter = new DbFeaturesAdapter();
+
 			foreach (var step in entrySteps)
 			{
 				var name = step.Name;
@@ -156,7 +161,7 @@ namespace Cchbc.Features.Db
 				if (!this.Steps.TryGetValue(name, out current))
 				{
 					// Inser step
-					current = this.Adapter.InsertStep(name);
+					current = adapter.InsertStep(context, name);
 					this.Steps.Add(name, current);
 				}
 			}
@@ -164,7 +169,7 @@ namespace Cchbc.Features.Db
 			// Inser step entries
 			foreach (var step in entrySteps)
 			{
-				this.Adapter.InsertStepEntry(featureEntry, this.Steps[step.Name], step);
+				adapter.InsertStepEntry(context, featureEntry, this.Steps[step.Name], step);
 			}
 		}
 	}

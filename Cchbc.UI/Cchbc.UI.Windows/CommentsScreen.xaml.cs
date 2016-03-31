@@ -9,24 +9,21 @@ using Cchbc.Features.Db;
 
 namespace Cchbc.UI
 {
-	public sealed class Context
-	{
-		public static Core Core { get; } = new Core();
-	}
+	
 
 	public sealed partial class CommentsScreen
 	{
-		public LoginsViewModel ViewModel { get; } = new LoginsViewModel(Context.Core, new LoginAdapter(Context.Core.QueryHelper));
+		//public LoginsViewModel ViewModel { get; } = new LoginsViewModel(Context.Core, new LoginAdapter(Context.Core.QueryHelper));
 
 		public CommentsScreen()
 		{
 			this.InitializeComponent();
-			this.DataContext = this.ViewModel;
+			//this.DataContext = this.ViewModel;
 		}
 
 		private void CommentsScreenOnLoaded(object sender, RoutedEventArgs e)
 		{
-			this.ViewModel.LoadData();
+			//this.ViewModel.LoadData();
 		}
 
 		private async void AddLoginTapped(object sender, TappedRoutedEventArgs e)
@@ -47,37 +44,37 @@ namespace Cchbc.UI
 
 		private async void DeleteLoginTapped(object sender, TappedRoutedEventArgs e)
 		{
-			var btn = sender as Button;
-			if (btn == null) return;
+			//var btn = sender as Button;
+			//if (btn == null) return;
 
-			var viewModel = btn.DataContext as LoginViewModel;
-			if (viewModel == null) return;
+			//var viewModel = btn.DataContext as LoginViewModel;
+			//if (viewModel == null) return;
 
-			var dialog = new ModalDialog();
-			var message = @"Are you sure you want to delete this user?";
-			var dialogResult = await dialog.ShowAsync(message, Feature.None, DialogType.AcceptDecline);
-			if (dialogResult == DialogResult.Accept)
-			{
-				await this.ViewModel.DeleteAsync(viewModel, dialog);
-			}
+			//var dialog = new ModalDialog();
+			//var message = @"Are you sure you want to delete this user?";
+			//var dialogResult = await dialog.ShowAsync(message, Feature.None, DialogType.AcceptDecline);
+			//if (dialogResult == DialogResult.Accept)
+			//{
+			//	await this.ViewModel.DeleteAsync(viewModel, dialog);
+			//}
 		}
 
 		private async void PromoteLoginTapped(object sender, TappedRoutedEventArgs e)
 		{
-			var btn = sender as Button;
-			if (btn != null)
-			{
-				var viewModel = btn.DataContext as LoginViewModel;
-				if (viewModel != null)
-				{
-					var dialog = new ModalDialog();
-					var r = await dialog.ShowAsync(@"Are you sure you want to promote this user?", Feature.None, DialogType.AcceptDecline);
-					if (r == DialogResult.Accept)
-					{
-						//await _viewModel.PromoteUserAsync(viewModel, dialog);
-					}
-				}
-			}
+			//var btn = sender as Button;
+			//if (btn != null)
+			//{
+			//	var viewModel = btn.DataContext as LoginViewModel;
+			//	if (viewModel != null)
+			//	{
+			//		var dialog = new ModalDialog();
+			//		var r = await dialog.ShowAsync(@"Are you sure you want to promote this user?", Feature.None, DialogType.AcceptDecline);
+			//		if (r == DialogResult.Accept)
+			//		{
+			//			//await _viewModel.PromoteUserAsync(viewModel, dialog);
+			//		}
+			//	}
+			//}
 		}
 
 		private void UIElement_OnTapped3(object sender, TappedRoutedEventArgs e)

@@ -1,21 +1,25 @@
 using System;
 using System.Linq;
+using Cchbc.Data;
 using Cchbc.Features.Db;
 
 namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
-		private DbFeaturesManager _dbManager;
+		public DbFeaturesManager DbManager { get; } = new DbFeaturesManager();
 
-		public void Init(DbFeaturesManager dbFeaturesManager)
+		private ITransactionContextCreator ContextCreator { get; set; }
+
+		public void Load(ITransactionContextCreator contextCreator)
 		{
-			if (dbFeaturesManager == null) throw new ArgumentNullException(nameof(dbFeaturesManager));
+			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
 
-			if (_dbManager == null)
+			this.ContextCreator = contextCreator;
+
+			using (var context = this.ContextCreator.Create())
 			{
-				_dbManager = dbFeaturesManager;
-				_dbManager.Load();
+				this.DbManager.Load(context);
 			}
 		}
 
@@ -47,7 +51,10 @@ namespace Cchbc.Features
 				}
 			}
 
-			_dbManager.Save(new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
+			using (var context = this.ContextCreator.Create())
+			{
+				this.DbManager.Save(context, new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
+			}
 		}
 
 		public void LogException(Feature feature, Exception exception)
@@ -55,7 +62,10 @@ namespace Cchbc.Features
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			_dbManager.Save(new ExceptionEntry(feature.Context, feature.Name, exception));
+			using (var context = this.ContextCreator.Create())
+			{
+				this.DbManager.Save(context, new ExceptionEntry(feature.Context, feature.Name, exception));
+			}
 		}
 
 		public Feature StartNew(string context, string name)

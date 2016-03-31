@@ -1,28 +1,24 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using System.Windows.Input;
-using Cchbc.Common;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
 
-namespace Cchbc.UI
+namespace Cchbc.AppBuilder.UI.ViewModels
 {
 	public sealed class LoginsViewModel : ViewModel
 	{
 		private IModalDialog ModalDialog { get; }
-		private FeatureManager FeatureManager { get; }
-		private LoginsModule Module { get; }
+		private FeatureManager FeatureManager { get; }		
 		private string Context { get; } = nameof(LoginsViewModel);
 
+		public LoginsModule Module { get; }
 		public ObservableCollection<LoginViewModel> Logins { get; } = new ObservableCollection<LoginViewModel>();
 		public SortOption<LoginViewModel>[] SortOptions => this.Module.Sorter.Options;
 		public SearchOption<LoginViewModel>[] SearchOptions => this.Module.Searcher.Options;
-
-		public ICommand AddCommand { get; }
 
 		private bool _isWorking;
 		public bool IsWorking
@@ -85,7 +81,7 @@ namespace Cchbc.UI
 
 			this.ModalDialog = core.ModalDialog;
 			this.FeatureManager = core.FeatureManager;
-			this.Module = new LoginsModule(adapter, new Sorter<LoginViewModel>(new[]
+			this.Module = new LoginsModule(core.ContextCreator, adapter, new Sorter<LoginViewModel>(new[]
 			{
 				new SortOption<LoginViewModel>(string.Empty, (x, y) => 0)
 			}), new Searcher<LoginViewModel>((v, s) => false));
@@ -106,37 +102,15 @@ namespace Cchbc.UI
 			this.Module.ItemInserted += ModuleOnItemInserted;
 			this.Module.ItemUpdated += ModuleOnItemUpdated;
 			this.Module.ItemDeleted += ModuleOnItemDeleted;
-
-			this.AddCommand = new RelayCommand(this.Add);
 		}
 
-		private string _name = string.Empty;
-		public string Name
+		public async void Add(Login login)
 		{
-			get { return _name; }
-			set { this.SetField(ref _name, value); }
-		}
+			if (login == null) throw new ArgumentNullException(nameof(login));
 
-		private string _password = string.Empty;
-		public string Password
-		{
-			get { return _password; }
-			set { this.SetField(ref _password, value); }
-		}
-
-		private bool _isSystem;
-		public bool IsSystem
-		{
-			get { return _isSystem; }
-			set { this.SetField(ref _isSystem, value); }
-		}
-
-		private async void Add()
-		{
 			var feature = new Feature(this.Context, nameof(this.Add));
 			try
 			{
-				var login = new Login(0, this.Name, this.Password, DateTime.Now, this.IsSystem);
 				var viewModel = new LoginViewModel(login);
 
 				await this.Module.InsertAsync(viewModel, this.ModalDialog, this.AddProgressDisplay(feature));
@@ -147,13 +121,12 @@ namespace Cchbc.UI
 			}
 		}
 
-		public void LoadData()
+		public async Task LoadDataAsync()
 		{
-			var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadData));
-
+			var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadDataAsync));
 			try
 			{
-				var models = this.Module.GetAll();
+				var models = await this.Module.GetAllAsync();
 				var viewModels = new LoginViewModel[models.Count];
 				var index = 0;
 				foreach (var model in models)

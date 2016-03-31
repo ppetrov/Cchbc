@@ -7,26 +7,23 @@ namespace Cchbc.App.ArticlesModule.Adapters
 {
 	public sealed class ArticleAdapter : IReadOnlyAdapter<Article>
 	{
-		private readonly ReadQueryHelper _queryHelper;
 		private readonly Dictionary<long, Brand> _brands;
 		private readonly Dictionary<long, Flavor> _flavors;
 
-		public ArticleAdapter(ReadQueryHelper queryHelper, Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
+		public ArticleAdapter(Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 			if (brands == null) throw new ArgumentNullException(nameof(brands));
 			if (flavors == null) throw new ArgumentNullException(nameof(flavors));
 
-			_queryHelper = queryHelper;
 			_brands = brands;
 			_flavors = flavors;
 		}
 
-		public void Fill(Dictionary<long, Article> items, Func<Article, long> selector)
+		public void Fill(ITransactionContext context, Dictionary<long, Article> items, Func<Article, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
-			_queryHelper.Fill(new Query<Article>(@"SELECT ID, NAME, BRAND_ID, FLAVOR_ID FROM ARTICLES", r =>
+			context.Fill(items, selector, new Query<Article>(@"SELECT ID, NAME, BRAND_ID, FLAVOR_ID FROM ARTICLES", r =>
 			{
 				var id = r.GetInt64(0);
 				var name = string.Empty;
@@ -45,7 +42,7 @@ namespace Cchbc.App.ArticlesModule.Adapters
 					flavor = _flavors[r.GetInt64(3)];
 				}
 				return new Article(id, name, brand, flavor);
-			}), items, selector);
+			}));
 		}
 	}
 }

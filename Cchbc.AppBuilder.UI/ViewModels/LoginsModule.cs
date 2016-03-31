@@ -1,44 +1,73 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using Cchbc.Data;
 using Cchbc.Features;
 using Cchbc.Search;
 using Cchbc.Sort;
 using Cchbc.Validation;
 
-namespace Cchbc.UI
+namespace Cchbc.AppBuilder.UI.ViewModels
 {
 	public sealed class LoginsModule : Module<Login, LoginViewModel>
 	{
 		private LoginAdapter Adapter { get; }
 
-		public LoginsModule(LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher, FilterOption<LoginViewModel>[] filterOptions = null)
-			: base(adapter, sorter, searcher, filterOptions)
+		public LoginsModule(ITransactionContextCreator contextCreator, LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher,
+			FilterOption<LoginViewModel>[] filterOptions = null)
+			: base(contextCreator, adapter, sorter, searcher, filterOptions)
 		{
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
 			this.Adapter = adapter;
 		}
 
-		public List<Login> GetAll()
+		public Task<List<Login>> GetAllAsync()
 		{
-			return this.Adapter.GetAll();
+			return this.Adapter.GetAllAsync();
 		}
 
-		public override ValidationResult[] ValidateProperties(LoginViewModel viewModel, Feature feature)
+		public bool IsAvailable(LoginViewModel viewModel)
+		{
+			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
+
+			var name = (viewModel.Name ?? string.Empty).Trim();
+			foreach (var model in this.ViewModels)
+			{
+				if (model.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		public override IEnumerable<ValidationResult> ValidateProperties(LoginViewModel viewModel, Feature feature)
 		{
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			// Validate the model properties
-			var model = viewModel.Model;
-
-			//model.Name
-			//model.Password
-
 			feature.AddStep(nameof(ValidateProperties));
-			return Enumerable.Empty<ValidationResult>().ToArray();
+
+			var model = viewModel.Model;
+			var name = (model.Name ?? string.Empty).Trim();
+			if (name == string.Empty)
+			{
+				yield return new ValidationResult(@"Name is required.", nameof(Login.Name));
+			}
+			var password = model.Password ?? string.Empty;
+			if (password == string.Empty)
+			{
+				yield return new ValidationResult(@"Password is required.", nameof(Login.Password));
+			}
+			else
+			{
+				if (password.Length < 8)
+				{
+					yield return new ValidationResult(@"Password is too short.", nameof(Login.Password));
+				}
+			}
 		}
 
 		public override Task<PermissionResult> CanInsertAsync(LoginViewModel viewModel, Feature feature)
@@ -47,7 +76,13 @@ namespace Cchbc.UI
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			feature.AddStep(nameof(CanInsertAsync));
-			return Task.FromResult(PermissionResult.Confirm(@"Add one more admin ?"));
+
+			if (!this.IsAvailable(viewModel))
+			{
+				return Task.FromResult(PermissionResult.Deny(@"Login with the same username already exists"));
+			}
+
+			return PermissionResult.Allow;
 		}
 
 		public override Task<PermissionResult> CanUpdateAsync(LoginViewModel viewModel, Feature feature)

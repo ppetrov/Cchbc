@@ -29,7 +29,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderTypeAdapter : IReadOnlyAdapter<OrderType>
 	{
-		public void Fill(Dictionary<long, OrderType> items, Func<OrderType, long> selector)
+		public void Fill(ITransactionContext context, Dictionary<long, OrderType> items, Func<OrderType, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
@@ -79,7 +79,7 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(addresses);
 		}
 
-		public Task InsertAsync(DeliveryAddress item)
+		public Task InsertAsync(ITransactionContext context, DeliveryAddress item)
 		{
 			//public long Id { get; set; }
 			//public Outlet Outlet { get; }
@@ -89,12 +89,12 @@ namespace Cchbc.App.OrderModule
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(DeliveryAddress item)
+		public Task UpdateAsync(ITransactionContext context, DeliveryAddress item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(DeliveryAddress item)
+		public Task DeleteAsync(ITransactionContext context, DeliveryAddress item)
 		{
 			throw new NotImplementedException();
 		}
@@ -102,13 +102,13 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class DeliveryAddressModule : Module<DeliveryAddress, DeliveryAddressViewModel>
 	{
-		public DeliveryAddressModule(IModifiableAdapter<DeliveryAddress> adapter,
+		public DeliveryAddressModule(ITransactionContextCreator contextCreator, IModifiableAdapter<DeliveryAddress> adapter,
 			Sorter<DeliveryAddressViewModel> sorter,
-			Searcher<DeliveryAddressViewModel> searcher, FilterOption<DeliveryAddressViewModel>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
+			Searcher<DeliveryAddressViewModel> searcher, FilterOption<DeliveryAddressViewModel>[] filterOptions = null) : base(contextCreator, adapter, sorter, searcher, filterOptions)
 		{
 		}
 
-		public override ValidationResult[] ValidateProperties(DeliveryAddressViewModel viewModel, Feature feature)
+		public override IEnumerable<ValidationResult> ValidateProperties(DeliveryAddressViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}
@@ -168,7 +168,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class VendorAdapter : IReadOnlyAdapter<Vendor>
 	{
-		public void Fill(Dictionary<long, Vendor> items, Func<Vendor, long> selector)
+		public void Fill(ITransactionContext context, Dictionary<long, Vendor> items, Func<Vendor, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
@@ -211,7 +211,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class WholesalerAdapter : IReadOnlyAdapter<Wholesaler>
 	{
-		public void Fill(Dictionary<long, Wholesaler> items, Func<Wholesaler, long> selector)
+		public void Fill(ITransactionContext context, Dictionary<long, Wholesaler> items, Func<Wholesaler, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
@@ -247,16 +247,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderHeaderAdapter : IModifiableAdapter<OrderHeader>
 	{
-		public QueryHelper QueryHelper { get; }
-
-		public OrderHeaderAdapter(QueryHelper queryHelper)
-		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public Task<OrderHeader> GetByIdAsync(Activity activity, Dictionary<long, OrderType> orderTypes, Dictionary<long, Vendor> vendors, Dictionary<long, Wholesaler> wholesalers)
+		public Task<OrderHeader> GetByIdAsync(ITransactionContextCreator contextCreator, Activity activity, Dictionary<long, OrderType> orderTypes, Dictionary<long, Vendor> vendors, Dictionary<long, Wholesaler> wholesalers)
 		{
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 			if (orderTypes == null) throw new ArgumentNullException(nameof(orderTypes));
@@ -282,17 +273,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(oh);
 		}
 
-		public Task InsertAsync(OrderHeader item)
+		public Task InsertAsync(ITransactionContext context, OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(OrderHeader item)
+		public Task UpdateAsync(ITransactionContext context, OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(OrderHeader item)
+		public Task DeleteAsync(ITransactionContext context, OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
@@ -329,6 +320,14 @@ namespace Cchbc.App.OrderModule
 	{
 		public OrderHeader OrderHeader { get; set; }
 		public List<OrderDetail> Details { get; } = new List<OrderDetail>();
+	}
+
+	public sealed class ContextCreator : ITransactionContextCreator
+	{
+		public ITransactionContext Create()
+		{
+			throw new NotImplementedException();
+		}
 	}
 
 	public sealed class OrderManager
@@ -372,7 +371,7 @@ namespace Cchbc.App.OrderModule
 				new SearchOption<DeliveryAddressViewModel>(@"All", v=> true),
 				new SearchOption<DeliveryAddressViewModel>(@"Primary", v=> v.Model.IsPrimary),
 			}, (vi, s) => vi.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-			this.DeliveryAddressModule = new DeliveryAddressModule(new DeliveryAddressAdapter(), deliveryAddressSorter, deliveryAddressSearcher);
+			this.DeliveryAddressModule = new DeliveryAddressModule(core.ContextCreator, new DeliveryAddressAdapter(), deliveryAddressSorter, deliveryAddressSearcher);
 
 
 			var orderNoteSorter = new Sorter<OrderNoteViewModel>(new[]
@@ -382,7 +381,7 @@ namespace Cchbc.App.OrderModule
 			var orderNoteSearcher =
 				new Searcher<OrderNoteViewModel>((vi, s) => vi.Type.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0 ||
 														   vi.Contents.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-			this.OrderNoteModule = new OrderNoteModule(new OrderNoteAdapter(this.Core.QueryHelper), orderNoteSorter, orderNoteSearcher);
+			this.OrderNoteModule = new OrderNoteModule(core.ContextCreator, new OrderNoteAdapter(), orderNoteSorter, orderNoteSearcher);
 
 			var sorter = new Sorter<AssortmentViewModel>(new[]
 			{
@@ -395,7 +394,7 @@ namespace Cchbc.App.OrderModule
 			},
 				(vi, s) => vi.Number.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0 ||
 						   vi.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-			this.AssortmentModule = new AssortmentModule(new AssortmentAdapter(), sorter, searcher);
+			this.AssortmentModule = new AssortmentModule(core.ContextCreator, new AssortmentAdapter(), sorter, searcher);
 		}
 
 		public async Task LoadDataAsync()
@@ -473,7 +472,7 @@ namespace Cchbc.App.OrderModule
 		private async Task LoadOrderHeader()
 		{
 			var cache = this.Core.DataCache;
-			var orderHeader = await new OrderHeaderAdapter(this.Core.QueryHelper).GetByIdAsync(this.Activity,
+			var orderHeader = await new OrderHeaderAdapter().GetByIdAsync(this.Core.ContextCreator, this.Activity,
 				cache.Get<OrderType>().Items,
 				cache.Get<Vendor>().Items,
 				cache.Get<Wholesaler>().Items);
@@ -533,8 +532,8 @@ namespace Cchbc.App.OrderModule
 
 		private async Task LoadOrderNotes()
 		{
-			var adapter = new OrderNoteAdapter(this.Core.QueryHelper);
-			var orderNotes = await adapter.GetByOutletAsync(this.Order.OrderHeader, this.Core.DataCache.Get<OrderNoteType>().Items);
+			var adapter = new OrderNoteAdapter();
+			var orderNotes = await adapter.GetByOutletAsync(this.Core.ContextCreator, this.Order.OrderHeader, this.Core.DataCache.Get<OrderNoteType>().Items);
 			var orderNotesViewModels = new OrderNoteViewModel[orderNotes.Count];
 			for (var i = 0; i < orderNotes.Count; i++)
 			{
@@ -596,7 +595,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderNoteTypeAdapter : IReadOnlyAdapter<OrderNoteType>
 	{
-		public void Fill(Dictionary<long, OrderNoteType> items, Func<OrderNoteType, long> selector)
+		public void Fill(ITransactionContext context, Dictionary<long, OrderNoteType> items, Func<OrderNoteType, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
@@ -628,16 +627,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderNoteAdapter : IModifiableAdapter<OrderNote>
 	{
-		public QueryHelper QueryHelper { get; }
-
-		public OrderNoteAdapter(QueryHelper queryHelper)
-		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public Task<List<OrderNote>> GetByOutletAsync(OrderHeader orderHeader, Dictionary<long, OrderNoteType> types)
+		public Task<List<OrderNote>> GetByOutletAsync(ITransactionContextCreator contextCreator, OrderHeader orderHeader, Dictionary<long, OrderNoteType> types)
 		{
 			if (orderHeader == null) throw new ArgumentNullException(nameof(orderHeader));
 			if (types == null) throw new ArgumentNullException(nameof(types));
@@ -649,17 +639,17 @@ namespace Cchbc.App.OrderModule
 			//}));
 		}
 
-		public Task InsertAsync(OrderNote item)
+		public Task InsertAsync(ITransactionContext context, OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(OrderNote item)
+		public Task UpdateAsync(ITransactionContext context, OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(OrderNote item)
+		public Task DeleteAsync(ITransactionContext context, OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
@@ -667,11 +657,14 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderNoteModule : Module<OrderNote, OrderNoteViewModel>
 	{
-		public OrderNoteModule(IModifiableAdapter<OrderNote> adapter, Sorter<OrderNoteViewModel> sorter, Searcher<OrderNoteViewModel> searcher, FilterOption<OrderNoteViewModel>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
+		public OrderNoteModule(ITransactionContextCreator contextCreator, IModifiableAdapter<OrderNote> adapter,
+			Sorter<OrderNoteViewModel> sorter,
+			Searcher<OrderNoteViewModel> searcher,
+			FilterOption<OrderNoteViewModel>[] filterOptions = null) : base(contextCreator, adapter, sorter, searcher, filterOptions)
 		{
 		}
 
-		public override ValidationResult[] ValidateProperties(OrderNoteViewModel viewModel, Feature feature)
+		public override IEnumerable<ValidationResult> ValidateProperties(OrderNoteViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}
@@ -720,17 +713,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(new List<OrderDetail>());
 		}
 
-		public Task InsertAsync(OrderDetail item)
+		public Task InsertAsync(ITransactionContext context, OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(OrderDetail item)
+		public Task UpdateAsync(ITransactionContext context, OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(OrderDetail item)
+		public Task DeleteAsync(ITransactionContext context, OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
@@ -768,17 +761,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(assortments);
 		}
 
-		public Task InsertAsync(Assortment item)
+		public Task InsertAsync(ITransactionContext context, Assortment item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(Assortment item)
+		public Task UpdateAsync(ITransactionContext context, Assortment item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(Assortment item)
+		public Task DeleteAsync(ITransactionContext context, Assortment item)
 		{
 			throw new NotImplementedException();
 		}
@@ -786,11 +779,14 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class AssortmentModule : Module<Assortment, AssortmentViewModel>
 	{
-		public AssortmentModule(IModifiableAdapter<Assortment> adapter, Sorter<AssortmentViewModel> sorter, Searcher<AssortmentViewModel> searcher, FilterOption<AssortmentViewModel>[] filterOptions = null) : base(adapter, sorter, searcher, filterOptions)
+		public AssortmentModule(ITransactionContextCreator contextCreator, IModifiableAdapter<Assortment> adapter,
+			Sorter<AssortmentViewModel> sorter,
+			Searcher<AssortmentViewModel> searcher,
+			FilterOption<AssortmentViewModel>[] filterOptions = null) : base(contextCreator, adapter, sorter, searcher, filterOptions)
 		{
 		}
 
-		public override ValidationResult[] ValidateProperties(AssortmentViewModel viewModel, Feature feature)
+		public override IEnumerable<ValidationResult> ValidateProperties(AssortmentViewModel viewModel, Feature feature)
 		{
 			throw new NotImplementedException();
 		}

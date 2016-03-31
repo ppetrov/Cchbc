@@ -8,6 +8,6 @@ namespace Cchbc.Helpers
 	{
 		Dictionary<long, T> Items { get; }
 
-		void Load(IReadOnlyAdapter<T> adapter, Func<T, long> selector);
+		void Load(ITransactionContext context, IReadOnlyAdapter<T> adapter, Func<T, long> selector);
 	}
 }

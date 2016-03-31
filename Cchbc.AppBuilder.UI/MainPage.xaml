@@ -35,6 +35,7 @@
 
         <!--Add Column-->
         <StackPanel Grid.Column="0" Orientation="Vertical" Margin="5">
+
             <!--Column Types-->
             <ListView Header="Column Types" 
                       ItemContainerStyle="{StaticResource FullLineItemStyle}"                      

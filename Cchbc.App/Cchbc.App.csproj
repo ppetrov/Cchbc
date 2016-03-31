@@ -41,7 +41,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AgendaModule\Agenda.cs" />
     <Compile Include="ArticlesModule\ArticlesReadOnlyModule.cs" />
     <Compile Include="ArticlesModule\Adapters\ArticleAdapter.cs" />
     <Compile Include="ArticlesModule\Adapters\BrandAdapter.cs" />

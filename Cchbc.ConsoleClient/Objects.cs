@@ -45,23 +45,14 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class OutletAdapter : IReadOnlyAdapter<Outlet>
 	{
-		private QueryHelper QueryHelper { get; }
-
-		public OutletAdapter(QueryHelper queryHelper)
-		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public void Fill(Dictionary<long, Outlet> items, Func<Outlet, long> selector)
+		public void Fill(ITransactionContext context, Dictionary<long, Outlet> items, Func<Outlet, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
 			var query = @"SELECT Id, Name FROM Outlets";
 
-			this.QueryHelper.Fill(new Query<Outlet>(query, this.OutletCreator), items, selector);
+			context.Fill(items, selector, new Query<Outlet>(query, this.OutletCreator));
 		}
 
 		private Outlet OutletCreator(IFieldDataReader r)
@@ -98,79 +89,74 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class VisitAdapter : IModifiableAdapter<Visit>
 	{
-		private QueryHelper QueryHelper { get; }
 		private Dictionary<long, Outlet> Outlets { get; }
 		private Dictionary<long, ActivityType> ActivityTypes { get; }
 
-		public VisitAdapter(QueryHelper queryHelper, Dictionary<long, Outlet> outlets, Dictionary<long, ActivityType> activityTypes)
+		public VisitAdapter(Dictionary<long, Outlet> outlets, Dictionary<long, ActivityType> activityTypes)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 			if (outlets == null) throw new ArgumentNullException(nameof(outlets));
 			if (activityTypes == null) throw new ArgumentNullException(nameof(activityTypes));
 
-			this.QueryHelper = queryHelper;
 			this.Outlets = outlets;
 			this.ActivityTypes = activityTypes;
 		}
 
-		public List<Visit> GetAll()
+		public List<Visit> GetAll(ITransactionContext context)
 		{
-			var query = @"SELECT v.Id, v.OutletId, v.Date, a.Id, a.Date, a.ActivityTypeId FROM Visits v INNER JOIN Activities a ON v.Id = a.VisitId";
-
 			var visits = new Dictionary<long, Visit>();
-			this.QueryHelper.Fill(query, visits, this.VisitCreator);
+
+			var query = new Query(@"SELECT v.Id, v.OutletId, v.Date, a.Id, a.Date, a.ActivityTypeId FROM Visits v INNER JOIN Activities a ON v.Id = a.VisitId");
+			context.Fill(visits, this.VisitCreator, query);
+
 			return visits.Values.ToList();
 		}
 
-		public Task InsertAsync(Visit item)
+		public Task InsertAsync(ITransactionContext context, Visit item)
 		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			var sqlParams = new[]
 			{
-			new QueryParameter(@"@pOutletId", item.Outlet.Id),
-			new QueryParameter(@"@pDate", item.Date),
-		};
+				new QueryParameter(@"@pOutletId", item.Outlet.Id),
+				new QueryParameter(@"@pDate", item.Date),
+			};
 
-			var query = @"INSERT INTO Visits (OutletId, Date) VALUES (@pOutletId, @pDate)";
-
-			this.QueryHelper.Execute(query, sqlParams);
-
-			item.Id = this.QueryHelper.GetNewId();
+			context.Execute(new Query(@"INSERT INTO Visits (OutletId, Date) VALUES (@pOutletId, @pDate)"), sqlParams);
+			item.Id = context.GetNewId();
 
 			return Task.FromResult(true);
 		}
 
-		public Task UpdateAsync(Visit item)
+		public Task UpdateAsync(ITransactionContext context, Visit item)
 		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			var sqlParams = new[]
 			{
-			new QueryParameter(@"@pId", item.Id),
-			new QueryParameter(@"@pOutletId", item.Outlet.Id),
-			new QueryParameter(@"@pDate", item.Date),
-		};
+				new QueryParameter(@"@pId", item.Id),
+				new QueryParameter(@"@pOutletId", item.Outlet.Id),
+				new QueryParameter(@"@pDate", item.Date),
+			};
 
-			var query = @"UPDATE Visits SET OutletId = @pOutletId, Date = @pDate WHERE Id = @pId";
-
-			this.QueryHelper.Execute(query, sqlParams);
+			context.Execute(new Query(@"UPDATE Visits SET OutletId = @pOutletId, Date = @pDate WHERE Id = @pId"), sqlParams);
 
 			return Task.FromResult(true);
 		}
 
-		public Task DeleteAsync(Visit item)
+		public Task DeleteAsync(ITransactionContext context, Visit item)
 		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			var sqlParams = new[]
 			{
-			new QueryParameter(@"@pId", item.Id),
-		};
+				new QueryParameter(@"@pId", item.Id),
+			};
 
-			var query = @"DELETE FROM Visits WHERE Id = @pId";
+			context.Execute(new Query(@"DELETE FROM Visits WHERE Id = @pId"), sqlParams);
 
-			this.QueryHelper.Execute(query, sqlParams);
 			return Task.FromResult(true);
 		}
 
@@ -231,23 +217,14 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ActivityTypeAdapter : IReadOnlyAdapter<ActivityType>
 	{
-		private QueryHelper QueryHelper { get; }
-
-		public ActivityTypeAdapter(QueryHelper queryHelper)
-		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public void Fill(Dictionary<long, ActivityType> items, Func<ActivityType, long> selector)
+		public void Fill(ITransactionContext context, Dictionary<long, ActivityType> items, Func<ActivityType, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
 			var query = @"SELECT Id, Name FROM ActivityTypes";
 
-			this.QueryHelper.Fill(new Query<ActivityType>(query, this.ActivityTypeCreator), items, selector);
+			context.Fill(items, selector, new Query<ActivityType>(query, this.ActivityTypeCreator));
 		}
 
 		private ActivityType ActivityTypeCreator(IFieldDataReader r)
@@ -284,66 +261,51 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ActivityAdapter : IModifiableAdapter<Activity>
 	{
-		private QueryHelper QueryHelper { get; }
-
-		public ActivityAdapter(QueryHelper queryHelper)
-		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public Task InsertAsync(Activity item)
+		public Task InsertAsync(ITransactionContext context, Activity item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			var sqlParams = new[]
 			{
-			new QueryParameter(@"@pDate", item.Date),
-			new QueryParameter(@"@pActivityTypeId", item.ActivityType.Id),
-			new QueryParameter(@"@pVisitId", item.Visit.Id),
-		};
+				new QueryParameter(@"@pDate", item.Date),
+				new QueryParameter(@"@pActivityTypeId", item.ActivityType.Id),
+				new QueryParameter(@"@pVisitId", item.Visit.Id),
+			};
 
-			var query = @"INSERT INTO Activities (Date, ActivityTypeId, VisitId) VALUES (@pDate, @pActivityTypeId, @pVisitId)";
-
-			this.QueryHelper.Execute(query, sqlParams);
-
-			item.Id = this.QueryHelper.GetNewId();
+			context.Execute(new Query(@"INSERT INTO Activities (Date, ActivityTypeId, VisitId) VALUES (@pDate, @pActivityTypeId, @pVisitId)"), sqlParams);
+			item.Id = context.GetNewId();
 
 			return Task.FromResult(true);
 		}
 
-		public Task UpdateAsync(Activity item)
+		public Task UpdateAsync(ITransactionContext context, Activity item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			var sqlParams = new[]
 			{
-			new QueryParameter(@"@pId", item.Id),
-			new QueryParameter(@"@pDate", item.Date),
-			new QueryParameter(@"@pActivityTypeId", item.ActivityType.Id),
-			new QueryParameter(@"@pVisitId", item.Visit.Id),
-		};
+				new QueryParameter(@"@pId", item.Id),
+				new QueryParameter(@"@pDate", item.Date),
+				new QueryParameter(@"@pActivityTypeId", item.ActivityType.Id),
+				new QueryParameter(@"@pVisitId", item.Visit.Id),
+			};
 
-			var query = @"UPDATE Activities SET Date = @pDate, ActivityTypeId = @pActivityTypeId, VisitId = @pVisitId WHERE Id = @pId";
-
-			this.QueryHelper.Execute(query, sqlParams);
+			context.Execute(new Query(@"UPDATE Activities SET Date = @pDate, ActivityTypeId = @pActivityTypeId, VisitId = @pVisitId WHERE Id = @pId"), sqlParams);
 
 			return Task.FromResult(true);
 		}
 
-		public Task DeleteAsync(Activity item)
+		public Task DeleteAsync(ITransactionContext context, Activity item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			var sqlParams = new[]
 			{
-			new QueryParameter(@"@pId", item.Id),
-		};
+				new QueryParameter(@"@pId", item.Id),
+			};
 
-			var query = @"DELETE FROM Activities WHERE Id = @pId";
+			context.Execute(new Query(@"DELETE FROM Activities WHERE Id = @pId"), sqlParams);
 
-			this.QueryHelper.Execute(query, sqlParams);
 			return Task.FromResult(true);
 		}
 	}
@@ -364,23 +326,15 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class BrandAdapter : IReadOnlyAdapter<Brand>
 	{
-		private QueryHelper QueryHelper { get; }
-
-		public BrandAdapter(QueryHelper queryHelper)
+		public void Fill(ITransactionContext context, Dictionary<long, Brand> items, Func<Brand, long> selector)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public void Fill(Dictionary<long, Brand> items, Func<Brand, long> selector)
-		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
 			var query = @"SELECT Id, Name FROM Brands";
 
-			this.QueryHelper.Fill(new Query<Brand>(query, this.BrandCreator), items, selector);
+			context.Fill(items, selector, new Query<Brand>(query, this.BrandCreator));
 		}
 
 		private Brand BrandCreator(IFieldDataReader r)
@@ -412,23 +366,14 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class FlavorAdapter : IReadOnlyAdapter<Flavor>
 	{
-		private QueryHelper QueryHelper { get; }
-
-		public FlavorAdapter(QueryHelper queryHelper)
-		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public void Fill(Dictionary<long, Flavor> items, Func<Flavor, long> selector)
+		public void Fill(ITransactionContext context, Dictionary<long, Flavor> items, Func<Flavor, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
 			var query = @"SELECT Id, Name FROM Flavors";
 
-			this.QueryHelper.Fill(new Query<Flavor>(query, this.FlavorCreator), items, selector);
+			context.Fill(items, selector, new Query<Flavor>(query, this.FlavorCreator));
 		}
 
 		private Flavor FlavorCreator(IFieldDataReader r)
@@ -466,29 +411,27 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ArticleAdapter : IReadOnlyAdapter<Article>
 	{
-		private QueryHelper QueryHelper { get; }
 		private Dictionary<long, Brand> Brands { get; }
 		private Dictionary<long, Flavor> Flavors { get; }
 
-		public ArticleAdapter(QueryHelper queryHelper, Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
+		public ArticleAdapter(Dictionary<long, Brand> brands, Dictionary<long, Flavor> flavors)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 			if (brands == null) throw new ArgumentNullException(nameof(brands));
 			if (flavors == null) throw new ArgumentNullException(nameof(flavors));
 
-			this.QueryHelper = queryHelper;
 			this.Brands = brands;
 			this.Flavors = flavors;
 		}
 
-		public void Fill(Dictionary<long, Article> items, Func<Article, long> selector)
+		public void Fill(ITransactionContext context, Dictionary<long, Article> items, Func<Article, long> selector)
 		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
 			var query = @"SELECT Id, Name, BrandId, FlavorId FROM Articles";
 
-			this.QueryHelper.Fill(new Query<Article>(query, this.ArticleCreator), items, selector);
+			context.Fill(items, selector, new Query<Article>(query, this.ArticleCreator));
 		}
 
 		private Article ArticleCreator(IFieldDataReader r)
@@ -530,23 +473,15 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ActivityNoteTypeAdapter : IReadOnlyAdapter<ActivityNoteType>
 	{
-		private QueryHelper QueryHelper { get; }
-
-		public ActivityNoteTypeAdapter(QueryHelper queryHelper)
+		public void Fill(ITransactionContext context, Dictionary<long, ActivityNoteType> items, Func<ActivityNoteType, long> selector)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public void Fill(Dictionary<long, ActivityNoteType> items, Func<ActivityNoteType, long> selector)
-		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
 			var query = @"SELECT Id, Name FROM ActivityNoteTypes";
 
-			this.QueryHelper.Fill(new Query<ActivityNoteType>(query, this.ActivityNoteTypeCreator), items, selector);
+			context.Fill(items, selector, new Query<ActivityNoteType>(query, this.ActivityNoteTypeCreator));
 		}
 
 		private ActivityNoteType ActivityNoteTypeCreator(IFieldDataReader r)
@@ -586,79 +521,70 @@ namespace Cchbc.ConsoleClient
 
 	public sealed class ActivityNoteAdapter : IModifiableAdapter<ActivityNote>
 	{
-		private QueryHelper QueryHelper { get; }
 		private Dictionary<long, ActivityNoteType> ActivityNoteTypes { get; }
 		private Dictionary<long, Activity> Activities { get; }
 
-		public ActivityNoteAdapter(QueryHelper queryHelper, Dictionary<long, ActivityNoteType> activityNoteTypes, Dictionary<long, Activity> activities)
+		public ActivityNoteAdapter(Dictionary<long, ActivityNoteType> activityNoteTypes, Dictionary<long, Activity> activities)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
 			if (activityNoteTypes == null) throw new ArgumentNullException(nameof(activityNoteTypes));
 			if (activities == null) throw new ArgumentNullException(nameof(activities));
 
-			this.QueryHelper = queryHelper;
 			this.ActivityNoteTypes = activityNoteTypes;
 			this.Activities = activities;
 		}
 
-		public List<ActivityNote> GetAll()
+		public List<ActivityNote> GetAll(ITransactionContext context)
 		{
 			var query = @"SELECT Id, Contents, CreatedAt, ActivityNoteTypeId, ActivityId FROM ActivityNotes";
 
-			return this.QueryHelper.Execute(new Query<ActivityNote>(query, this.ActivityNoteCreator));
+			return context.Execute(new Query<ActivityNote>(query, this.ActivityNoteCreator));
 		}
 
-		public Task InsertAsync(ActivityNote item)
+		public Task InsertAsync(ITransactionContext context, ActivityNote item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			var sqlParams = new[]
 			{
-			new QueryParameter(@"@pContents", item.Contents),
-			new QueryParameter(@"@pCreatedAt", item.CreatedAt),
-			new QueryParameter(@"@pActivityNoteTypeId", item.ActivityNoteType.Id),
-			new QueryParameter(@"@pActivityId", item.Activity.Id),
-		};
+				new QueryParameter(@"@pContents", item.Contents),
+				new QueryParameter(@"@pCreatedAt", item.CreatedAt),
+				new QueryParameter(@"@pActivityNoteTypeId", item.ActivityNoteType.Id),
+				new QueryParameter(@"@pActivityId", item.Activity.Id),
+			};
 
-			var query = @"INSERT INTO ActivityNotes (Contents, CreatedAt, ActivityNoteTypeId, ActivityId) VALUES (@pContents, @pCreatedAt, @pActivityNoteTypeId, @pActivityId)";
+			context.Execute(new Query(@"INSERT INTO ActivityNotes (Contents, CreatedAt, ActivityNoteTypeId, ActivityId) VALUES (@pContents, @pCreatedAt, @pActivityNoteTypeId, @pActivityId)"), sqlParams);
 
-			this.QueryHelper.Execute(query, sqlParams);
-
-			item.Id = this.QueryHelper.GetNewId();
+			item.Id = context.GetNewId();
 			return Task.FromResult(true);
 		}
 
-		public Task UpdateAsync(ActivityNote item)
+		public Task UpdateAsync(ITransactionContext context, ActivityNote item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			var sqlParams = new[]
 			{
-			new QueryParameter(@"@pId", item.Id),
-			new QueryParameter(@"@pContents", item.Contents),
-			new QueryParameter(@"@pCreatedAt", item.CreatedAt),
-			new QueryParameter(@"@pActivityNoteTypeId", item.ActivityNoteType.Id),
-			new QueryParameter(@"@pActivityId", item.Activity.Id),
-		};
+				new QueryParameter(@"@pId", item.Id),
+				new QueryParameter(@"@pContents", item.Contents),
+				new QueryParameter(@"@pCreatedAt", item.CreatedAt),
+				new QueryParameter(@"@pActivityNoteTypeId", item.ActivityNoteType.Id),
+				new QueryParameter(@"@pActivityId", item.Activity.Id),
+			};
 
-			var query = @"UPDATE ActivityNotes SET Contents = @pContents, CreatedAt = @pCreatedAt, ActivityNoteTypeId = @pActivityNoteTypeId, ActivityId = @pActivityId WHERE Id = @pId";
-
-			this.QueryHelper.Execute(query, sqlParams);
+			context.Execute(new Query(@"UPDATE ActivityNotes SET Contents = @pContents, CreatedAt = @pCreatedAt, ActivityNoteTypeId = @pActivityNoteTypeId, ActivityId = @pActivityId WHERE Id = @pId"), sqlParams);
 			return Task.FromResult(true);
 		}
 
-		public Task DeleteAsync(ActivityNote item)
+		public Task DeleteAsync(ITransactionContext context, ActivityNote item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			var sqlParams = new[]
 			{
-			new QueryParameter(@"@pId", item.Id),
-		};
+				new QueryParameter(@"@pId", item.Id),
+			};
 
-			var query = @"DELETE FROM ActivityNotes WHERE Id = @pId";
-
-			this.QueryHelper.Execute(query, sqlParams);
+			context.Execute(new Query(@"DELETE FROM ActivityNotes WHERE Id = @pId"), sqlParams);
 			return Task.FromResult(true);
 		}
 

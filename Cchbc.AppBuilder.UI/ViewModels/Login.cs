@@ -1,13 +1,13 @@
 ﻿using System;
 using Cchbc.Objects;
 
-namespace Cchbc.UI
+namespace Cchbc.AppBuilder.UI.ViewModels
 {
 	public sealed class Login : IDbObject
 	{
 		public long Id { get; set; }
 		public string Name { get; }
-		public string Password { get; }
+		public string Password { get; set; }
 		public DateTime CreatedAt { get; }
 		public bool IsSystem { get; set; }
 

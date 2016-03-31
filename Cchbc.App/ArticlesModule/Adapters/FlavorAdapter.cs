@@ -7,21 +7,13 @@ namespace Cchbc.App.ArticlesModule.Adapters
 {
 	public sealed class FlavorAdapter : IReadOnlyAdapter<Flavor>
 	{
-		private readonly ReadQueryHelper _queryHelper;
-
-		public FlavorAdapter(ReadQueryHelper queryHelper)
+		public void Fill(ITransactionContext context, Dictionary<long, Flavor> items, Func<Flavor, long> selector)
 		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			_queryHelper = queryHelper;
-		}
-
-		public void Fill(Dictionary<long, Flavor> items, Func<Flavor, long> selector)
-		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-			_queryHelper.Fill(new Query<Flavor>(@"SELECT ID, NAME FROM FLAVORS", r =>
+			context.Fill(items, selector, new Query<Flavor>(@"SELECT ID, NAME FROM FLAVORS", r =>
 			{
 				var id = r.GetInt64(0);
 				var name = string.Empty;
@@ -30,7 +22,7 @@ namespace Cchbc.App.ArticlesModule.Adapters
 					name = r.GetString(1);
 				}
 				return new Flavor(id, name);
-			}), items, selector);
+			}));
 		}
 	}
 }

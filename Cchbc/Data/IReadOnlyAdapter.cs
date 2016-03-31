@@ -5,6 +5,6 @@ namespace Cchbc.Data
 {
 	public interface IReadOnlyAdapter<T>
 	{
-		void Fill(Dictionary<long, T> items, Func<T, long> selector);
+		void Fill(ITransactionContext context, Dictionary<long, T> items, Func<T, long> selector);
 	}
 }

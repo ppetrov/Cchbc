@@ -9,14 +9,17 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Mime;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
+using Cchbc.Archive;
 using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
@@ -36,361 +39,6 @@ namespace Cchbc.ConsoleClient
 			return Task.FromResult(DialogResult.Cancel);
 		}
 	}
-
-	public sealed class Login : IDbObject
-	{
-		public long Id { get; set; }
-		public string Name { get; }
-		public string Password { get; }
-		public DateTime CreatedAt { get; }
-		public bool IsSystem { get; set; }
-
-		public Login(long id, string name, string password, DateTime createdAt, bool isSystem)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
-			if (password == null) throw new ArgumentNullException(nameof(password));
-
-			this.Id = id;
-			this.Name = name;
-			this.Password = password;
-			this.CreatedAt = createdAt;
-			this.IsSystem = isSystem;
-		}
-	}
-
-	public sealed class LoginViewModel : ViewModel<Login>
-	{
-		public string Name { get; }
-
-		private string _password = string.Empty;
-		public string Password
-		{
-			get { return _password; }
-			set { this.SetField(ref _password, value); }
-		}
-
-		public string CreatedAt { get; }
-
-		private bool _isSystem;
-		public bool IsSystem
-		{
-			get { return _isSystem; }
-			set { this.SetField(ref _isSystem, value); }
-		}
-
-		public LoginViewModel(Login login) : base(login)
-		{
-			if (login == null) throw new ArgumentNullException(nameof(login));
-
-			this.Name = login.Name;
-			this.Password = login.Password;
-			this.CreatedAt = login.CreatedAt.ToString(@"f");
-			this.IsSystem = login.IsSystem;
-		}
-	}
-
-	public sealed class LoginAdapter : IModifiableAdapter<Login>
-	{
-		public Task InsertAsync(Login item)
-		{
-			if (item == null) throw new ArgumentNullException(nameof(item));
-
-			//throw new NotImplementedException();
-			return Task.FromResult(true);
-		}
-
-		public Task UpdateAsync(Login item)
-		{
-			if (item == null) throw new ArgumentNullException(nameof(item));
-
-			//throw new NotImplementedException();
-			return Task.FromResult(true);
-		}
-
-		public Task DeleteAsync(Login item)
-		{
-			if (item == null) throw new ArgumentNullException(nameof(item));
-
-			//throw new NotImplementedException();
-			return Task.FromResult(true);
-		}
-
-		public List<Login> GetAll()
-		{
-			//throw new NotImplementedException();
-			return new List<Login>();
-		}
-	}
-
-	public sealed class LoginModule : Module<Login, LoginViewModel>
-	{
-		private LoginAdapter Adapter { get; }
-
-		public LoginModule(LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher, FilterOption<LoginViewModel>[] filterOptions = null)
-			: base(adapter, sorter, searcher, filterOptions)
-		{
-			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
-
-			this.Adapter = adapter;
-		}
-
-		public List<Login> GetAll()
-		{
-			return this.Adapter.GetAll();
-		}
-
-		public override ValidationResult[] ValidateProperties(LoginViewModel viewModel, Feature feature)
-		{
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			feature.AddStep(nameof(ValidateProperties));
-			return Enumerable.Empty<ValidationResult>().ToArray();
-		}
-
-		public override Task<PermissionResult> CanInsertAsync(LoginViewModel viewModel, Feature feature)
-		{
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			feature.AddStep(nameof(CanInsertAsync));
-			return PermissionResult.Allow;
-		}
-
-		public override Task<PermissionResult> CanUpdateAsync(LoginViewModel viewModel, Feature feature)
-		{
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			feature.AddStep(nameof(CanUpdateAsync));
-			return PermissionResult.Allow;
-		}
-
-		public override Task<PermissionResult> CanDeleteAsync(LoginViewModel viewModel, Feature feature)
-		{
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			feature.AddStep(nameof(CanDeleteAsync));
-			return PermissionResult.Allow;
-		}
-
-		public Task<PermissionResult> CanChangePassword(LoginViewModel viewModel, Feature feature)
-		{
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			feature.AddStep(nameof(CanChangePassword));
-			return PermissionResult.Allow;
-		}
-	}
-
-	public sealed class LoginsViewModel : ViewModel
-	{
-		private Core Core { get; }
-		private FeatureManager FeatureManager => this.Core.FeatureManager;
-		private LoginModule Module { get; }
-		private string Context { get; } = nameof(LoginsViewModel);
-
-		public ObservableCollection<LoginViewModel> Logins { get; } = new ObservableCollection<LoginViewModel>();
-		public SortOption<LoginViewModel>[] SortOptions => this.Module.Sorter.Options;
-		public SearchOption<LoginViewModel>[] SearchOptions => this.Module.Searcher.Options;
-
-		private string _textSearch = string.Empty;
-		public string TextSearch
-		{
-			get { return _textSearch; }
-			set
-			{
-				this.SetField(ref _textSearch, value);
-				this.ApplySearch();
-			}
-		}
-
-		private SearchOption<LoginViewModel> _searchOption;
-		public SearchOption<LoginViewModel> SearchOption
-		{
-			get { return _searchOption; }
-			set
-			{
-				this.SetField(ref _searchOption, value);
-				this.ApplySearch();
-			}
-		}
-
-		private SortOption<LoginViewModel> _sortOption;
-		public SortOption<LoginViewModel> SortOption
-		{
-			get { return _sortOption; }
-			set
-			{
-				this.SetField(ref _sortOption, value);
-				this.ApplySort();
-			}
-		}
-
-		public LoginsViewModel(Core core, LoginAdapter adapter)
-		{
-			if (core == null) throw new ArgumentNullException(nameof(core));
-			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
-
-			this.Core = core;
-			this.Module = new LoginModule(adapter, new Sorter<LoginViewModel>(new[]
-			{
-				new SortOption<LoginViewModel>(string.Empty, (x, y) => 0)
-			}),
-			new Searcher<LoginViewModel>((v, s) => false));
-
-			this.Module.OperationStart += (sender, args) =>
-			{
-				this.FeatureManager.Start(args.Feature);
-			};
-			this.Module.OperationEnd += (sender, args) =>
-			{
-				this.FeatureManager.Stop(args.Feature);
-			};
-
-			this.Module.ItemInserted += ModuleOnItemInserted;
-			this.Module.ItemUpdated += ModuleOnItemUpdated;
-			this.Module.ItemDeleted += ModuleOnItemDeleted;
-		}
-
-		public void LoadData()
-		{
-			var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadData));
-
-			var models = this.Module.GetAll();
-			var viewModels = new LoginViewModel[models.Count];
-			var index = 0;
-			foreach (var model in models)
-			{
-				viewModels[index++] = new LoginViewModel(model);
-			}
-			this.DisplayLogins(viewModels, feature);
-
-			this.FeatureManager.Stop(feature);
-		}
-
-		public async Task AddAsync(LoginViewModel viewModel, IModalDialog dialog)
-		{
-			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-
-			var feature = this.FeatureManager.StartNew(this.Context, nameof(AddAsync));
-			try
-			{
-				await this.Module.InsertAsync(viewModel, dialog, feature);
-			}
-			catch (Exception ex)
-			{
-				this.FeatureManager.LogException(feature, ex);
-			}
-		}
-
-		public async Task UpdateAsync(LoginViewModel viewModel, IModalDialog dialog)
-		{
-			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-
-			var feature = this.FeatureManager.StartNew(this.Context, nameof(UpdateAsync));
-			try
-			{
-				await this.Module.UpdateAsync(viewModel, dialog, feature);
-			}
-			catch (Exception ex)
-			{
-				this.FeatureManager.LogException(feature, ex);
-			}
-		}
-
-		public async Task ChangePasswordAsync(LoginViewModel viewModel, IModalDialog dialog, string newPassword)
-		{
-			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-			if (newPassword == null) throw new ArgumentNullException(nameof(newPassword));
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-
-			var copyViewModel = new LoginViewModel(viewModel.Model) { Password = newPassword };
-
-			var feature = new Feature(this.Context, nameof(this.ChangePasswordAsync));
-			try
-			{
-				await this.Module.ExecuteAsync(copyViewModel, dialog, feature, this.Module.CanChangePassword, this.ChangePasswordValidatedAsync);
-			}
-			catch (Exception ex)
-			{
-				this.FeatureManager.LogException(feature, ex);
-			}
-		}
-
-		public async Task DeleteAsync(LoginViewModel viewModel, IModalDialog dialog)
-		{
-			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-
-			var feature = new Feature(this.Context, nameof(DeleteAsync));
-			try
-			{
-				await this.Module.DeleteAsync(viewModel, dialog, feature);
-			}
-			catch (Exception ex)
-			{
-				this.FeatureManager.LogException(feature, ex);
-			}
-		}
-
-		private void ModuleOnItemInserted(object sender, ObjectEventArgs<LoginViewModel> args)
-		{
-			this.Module.Insert(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
-		}
-
-		private void ModuleOnItemUpdated(object sender, ObjectEventArgs<LoginViewModel> args)
-		{
-			this.Module.Update(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
-		}
-
-		private void ModuleOnItemDeleted(object sender, ObjectEventArgs<LoginViewModel> args)
-		{
-			this.Module.Delete(this.Logins, args.ViewModel);
-		}
-
-		private void DisplayLogins(LoginViewModel[] viewModels, Feature feature)
-		{
-			feature.AddStep(nameof(DisplayLogins));
-
-			this.Module.SetupViewModels(viewModels);
-			this.ApplySearch();
-		}
-
-		private void ApplySearch()
-		{
-			var viewModels = this.Module.Search(this.TextSearch, this.SearchOption);
-
-			this.Logins.Clear();
-			foreach (var viewModel in viewModels)
-			{
-				this.Logins.Add(viewModel);
-			}
-		}
-
-		private void ApplySort()
-		{
-			var index = 0;
-			foreach (var viewModel in this.Module.Sort(this.Logins, this.SortOption))
-			{
-				this.Logins[index++] = viewModel;
-			}
-		}
-
-		private async Task ChangePasswordValidatedAsync(LoginViewModel copyViewModel, FeatureEventArgs args)
-		{
-			var viewModel = this.Module.FindViewModel(copyViewModel.Model);
-
-			viewModel.Password = copyViewModel.Password;
-
-			await this.Module.UpdateValidatedAsync(viewModel, args);
-		}
-	}
-
 
 	public sealed class SqlLiteDelegateDataReader : IFieldDataReader
 	{
@@ -439,145 +87,154 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class SqlLiteReadQueryHelper : ReadQueryHelper
+	public sealed class ContextCreator : ITransactionContextCreator
 	{
 		private readonly string _cnString;
 
-		public SqlLiteReadQueryHelper(string cnString)
+		public ContextCreator(string cnString)
 		{
 			if (cnString == null) throw new ArgumentNullException(nameof(cnString));
 
 			_cnString = cnString;
 		}
 
-		public override List<T> Execute<T>(Query<T> query)
+		public ITransactionContext Create()
 		{
-			if (query == null) throw new ArgumentNullException(nameof(query));
-
-			var values = new List<T>();
-
-			using (var cn = new SQLiteConnection(_cnString))
-			{
-				cn.Open();
-				using (var cmd = cn.CreateCommand())
-				{
-					cmd.CommandText = query.Statement;
-					cmd.CommandType = CommandType.Text;
-					foreach (var p in query.Parameters)
-					{
-						cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
-					}
-
-					using (var r = cmd.ExecuteReader())
-					{
-						var dr = new SqlLiteDelegateDataReader(r);
-						while (dr.Read())
-						{
-							values.Add(query.Creator(dr));
-						}
-					}
-				}
-			}
-
-			return values;
-		}
-
-		public override void Fill<T>(Query<T> query, Dictionary<long, T> values, Func<T, long> selector)
-		{
-			if (query == null) throw new ArgumentNullException(nameof(query));
-			if (values == null) throw new ArgumentNullException(nameof(values));
-			if (selector == null) throw new ArgumentNullException(nameof(selector));
-
-			values.Clear();
-
-			using (var cn = new SQLiteConnection(_cnString))
-			{
-				cn.Open();
-				using (var cmd = cn.CreateCommand())
-				{
-					cmd.CommandText = query.Statement;
-					cmd.CommandType = CommandType.Text;
-					foreach (var p in query.Parameters)
-					{
-						cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
-					}
-
-					using (var r = cmd.ExecuteReader())
-					{
-						var dr = new SqlLiteDelegateDataReader(r);
-						while (dr.Read())
-						{
-							var value = query.Creator(dr);
-							values.Add(selector(value), value);
-						}
-					}
-				}
-			}
-		}
-
-		public override void Fill<T>(string query, Dictionary<long, T> values, Action<IFieldDataReader, Dictionary<long, T>> filler, QueryParameter[] parameters)
-		{
-			if (query == null) throw new ArgumentNullException(nameof(query));
-			if (values == null) throw new ArgumentNullException(nameof(values));
-			if (filler == null) throw new ArgumentNullException(nameof(filler));
-			if (parameters == null) throw new ArgumentNullException(nameof(parameters));
-
-			values.Clear();
-
-			using (var cn = new SQLiteConnection(_cnString))
-			{
-				cn.Open();
-				using (var cmd = cn.CreateCommand())
-				{
-					cmd.CommandText = query;
-					cmd.CommandType = CommandType.Text;
-					foreach (var p in parameters)
-					{
-						cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
-					}
-
-					using (var r = cmd.ExecuteReader())
-					{
-						var dr = new SqlLiteDelegateDataReader(r);
-						while (dr.Read())
-						{
-							filler(dr, values);
-						}
-					}
-				}
-			}
+			return new TransactionContext(_cnString);
 		}
 	}
 
-	public sealed class SqlLiteModifyQueryHelper : ModifyQueryHelper
+	public sealed class TransactionContext : ITransactionContext
 	{
-		private readonly string _cnString;
+		private readonly SQLiteConnection _cn;
+		private SQLiteTransaction _tr;
 
-		public SqlLiteModifyQueryHelper(string cnString)
+		public TransactionContext(string cnString)
 		{
 			if (cnString == null) throw new ArgumentNullException(nameof(cnString));
 
-			_cnString = cnString;
+			// Create connection
+			_cn = new SQLiteConnection(cnString);
+
+			// Open connection
+			_cn.Open();
+
+			// Begin transaction
+			_tr = _cn.BeginTransaction();
 		}
 
-		public override int Execute(string statement, QueryParameter[] parameters)
+		public int Execute(Query query, QueryParameter[] parameters = null)
 		{
-			using (var cn = new SQLiteConnection(_cnString))
+			if (query == null) throw new ArgumentNullException(nameof(query));
+
+			using (var cmd = _cn.CreateCommand())
 			{
-				cn.Open();
-				using (var cmd = cn.CreateCommand())
+				cmd.Transaction = _tr;
+				cmd.CommandText = query.Statement;
+				cmd.CommandType = CommandType.Text;
+
+				foreach (var p in parameters)
 				{
-					cmd.CommandText = statement;
-					cmd.CommandType = CommandType.Text;
-					foreach (var p in parameters)
+					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
+				}
+
+				return cmd.ExecuteNonQuery();
+			}
+		}
+
+		public List<T> Execute<T>(Query<T> query, QueryParameter[] parameters = null)
+		{
+			if (query == null) throw new ArgumentNullException(nameof(query));
+
+			var items = new List<T>();
+
+			using (var cmd = _cn.CreateCommand())
+			{
+				cmd.Transaction = _tr;
+				cmd.CommandText = query.Statement;
+				cmd.CommandType = CommandType.Text;
+
+				using (var r = cmd.ExecuteReader())
+				{
+					var dr = new SqlLiteDelegateDataReader(r);
+					while (dr.Read())
 					{
-						cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
+						items.Add(query.Creator(dr));
 					}
-					return cmd.ExecuteNonQuery();
+				}
+			}
+
+			return items;
+		}
+
+		public void Fill<T>(Dictionary<long, T> items, Func<T, long> selector, Query<T> query)
+		{
+			using (var cmd = _cn.CreateCommand())
+			{
+				cmd.Transaction = _tr;
+				cmd.CommandText = query.Statement;
+				cmd.CommandType = CommandType.Text;
+
+				using (var r = cmd.ExecuteReader())
+				{
+					var dr = new SqlLiteDelegateDataReader(r);
+					while (dr.Read())
+					{
+						var value = query.Creator(dr);
+						items.Add(selector(value), value);
+					}
 				}
 			}
 		}
+
+		public void Fill<T>(Dictionary<long, T> items, Action<IFieldDataReader, Dictionary<long, T>> filler, Query query, QueryParameter[] parameters = null)
+		{
+			using (var cmd = _cn.CreateCommand())
+			{
+				cmd.Transaction = _tr;
+				cmd.CommandText = query.Statement;
+				cmd.CommandType = CommandType.Text;
+
+				using (var r = cmd.ExecuteReader())
+				{
+					var dr = new SqlLiteDelegateDataReader(r);
+					while (dr.Read())
+					{
+						filler(dr, items);
+					}
+				}
+			}
+		}
+
+		public long GetNewId()
+		{
+			return this.Execute(Query.SelectNewIdQuery)[0];
+		}
+
+		public void Complete()
+		{
+			_tr?.Commit();
+			_tr?.Dispose();
+			_tr = null;
+		}
+
+		public void Dispose()
+		{
+			try
+			{
+				_tr?.Rollback();
+				_tr?.Dispose();
+			}
+			finally
+			{
+				_cn.Dispose();
+			}
+		}
 	}
+
+
+
+
 
 
 
@@ -610,9 +267,90 @@ namespace Cchbc.ConsoleClient
 
 	public class Program
 	{
+		public abstract class ViewModel<T> where T : class
+		{
+			public T Model { get; }
+
+			protected ViewModel(T model)
+			{
+				if (model == null) throw new ArgumentNullException(nameof(model));
+
+				this.Model = model;
+			}
+		}
+
+
 		static void Main(string[] args)
 		{
-			//// Blog, posts, comments, users
+			var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
+			var creator = new ContextCreator(connectionString);
+
+			using (var ctx = creator.Create())
+			{
+				var fm = new FeatureManager();
+				try
+				{
+					fm.DbManager.CreateSchema(ctx);
+				}
+				catch(Exception e)
+				{
+					Console.WriteLine(e);
+				}
+				fm.DbManager.Load(ctx);
+
+
+				
+
+				//var bds = new Dictionary<long, Brand>();
+
+				//var brandAdapter = new BrandAdapter();
+				//brandAdapter.Fill(ctx, bds, b => b.Id);
+
+				//foreach (var brand in bds.Values)
+				//{
+				//	Console.WriteLine(brand.Id + ": " + brand.Name);
+				//}
+			}
+
+			return;
+
+			//var archive = new ZipArchive();
+
+			//foreach (var file in Directory.GetFiles(@"C:\Logs", @"*.*", SearchOption.AllDirectories))
+			//{
+			//	Console.WriteLine("Compressing file " + file);
+			//	using (var fs = File.OpenRead(file))
+			//	{
+			//		archive.AddFileAsync(file, fs, CancellationToken.None).Wait();
+			//	}
+			//}
+
+			//Console.WriteLine(@"Save the file");
+			//using (var fs = File.OpenWrite(@"C:\temp\archive.dat"))
+			//{
+			//	archive.SaveAsync(fs, CancellationToken.None).Wait();
+			//}
+
+
+			//using (var fs = File.OpenRead(@"C:\temp\archive.dat"))
+			//{
+			//	archive.LoadAsync(fs, CancellationToken.None).Wait();
+			//}
+
+
+			//Console.WriteLine("Completed");
+
+			//return;
+
+
+
+
+
+
+
+
+
+
 
 			//var users = DbTable.Create(@"Users", new[]
 			//{
@@ -804,9 +542,9 @@ namespace Cchbc.ConsoleClient
 			//return;
 
 
-			var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
+
 			var core = new Core();
-			core.FeatureManager.Init(new DbFeaturesManager(new DbFeaturesAdapter(new QueryHelper())));
+			//core.FeatureManager.Init(new DbFeaturesManager(new DbFeaturesAdapter(new QueryHelper())));
 
 
 
@@ -821,27 +559,56 @@ namespace Cchbc.ConsoleClient
 			{
 				File.WriteAllText(@"C:\temp\diagnostics.txt", string.Empty);
 
-				var viewModel = new LoginsViewModel(core, new LoginAdapter());
-				viewModel.LoadData();
+				//var viewModel = new LoginsViewModel(core, new LoginAdapter());
+				//viewModel.LoadData();
 
-				var v = new LoginViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
-				var dialog = new ConsoleDialog();
-				viewModel.AddAsync(v, dialog).Wait();
-				viewModel.AddAsync(v, dialog).Wait();
-				viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hack").Wait();
-				viewModel.AddAsync(v, dialog).Wait();
-				viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hackV2").Wait();
+				//var v = new LoginViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
+				//var dialog = new ConsoleDialog();
+				//viewModel.AddAsync(v, dialog).Wait();
+				//viewModel.AddAsync(v, dialog).Wait();
+				//viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hack").Wait();
+				//viewModel.AddAsync(v, dialog).Wait();
+				//viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hackV2").Wait();
 
-				foreach (var login in viewModel.Logins)
-				{
-					Console.WriteLine(login.Name + " " + v.Password);
-				}
+				//foreach (var login in viewModel.Logins)
+				//{
+				//	Console.WriteLine(login.Name + " " + v.Password);
+				//}
 			}
 			catch (Exception e)
 			{
 				Console.WriteLine(e);
 			}
 		}
+
+		private static void ExtractArchive(byte[] data, string cTempTmp)
+		{
+			using (var ms = new MemoryStream(data))
+			{
+				using (var zip = new GZipStream(ms, CompressionMode.Decompress, true))
+				{
+					var buffer = new byte[8 * 1024];
+
+					//// Add the header buffer to zip buffer
+					//var bytes = Encoding.Unicode.GetBytes(header.ToString());
+					//zip.Write(bytes, 0, bytes.Length);
+
+					//// Reset the position of the data stream
+					//data.Position = 0;
+
+					//// Copy the data buffer to zip buffer
+					//while ((readBytes = data.Read(buffer, 0, buffer.Length)) != 0)
+					//{
+					//	zip.Write(buffer, 0, readBytes);
+					//}
+				}
+			}
+
+		}
+
+
+
+
 
 		private static void Display(int[,] m)
 		{
@@ -1162,7 +929,7 @@ using System.Data;
 			//Console.WriteLine(tnp);
 		}
 
-		private async Task<BrandHelper> LoadBrandsAsync(Feature feature, ReadQueryHelper queryHelper)
+		private async Task<BrandHelper> LoadBrandsAsync(Feature feature)
 		{
 			var step = feature.AddStep(nameof(LoadBrandsAsync));
 			var brandHelper = new BrandHelper();
@@ -1171,7 +938,7 @@ using System.Data;
 			return brandHelper;
 		}
 
-		private async Task<FlavorHelper> LoadFlavorsAsync(Feature feature, ReadQueryHelper queryHelper)
+		private async Task<FlavorHelper> LoadFlavorsAsync(Feature feature)
 		{
 			var step = feature.AddStep(nameof(LoadFlavorsAsync));
 			var flavorHelper = new FlavorHelper();
@@ -1180,7 +947,7 @@ using System.Data;
 			return flavorHelper;
 		}
 
-		private async Task<ArticleHelper> LoadArticlesAsync(Feature feature, ReadQueryHelper queryHelper, BrandHelper brandHelper, FlavorHelper flavorHelper)
+		private async Task<ArticleHelper> LoadArticlesAsync(Feature feature, BrandHelper brandHelper, FlavorHelper flavorHelper)
 		{
 			var step = feature.AddStep(nameof(LoadArticlesAsync));
 			var articleHelper = new ArticleHelper();

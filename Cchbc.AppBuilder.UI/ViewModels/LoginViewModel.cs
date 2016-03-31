@@ -1,19 +1,21 @@
 ﻿using Cchbc.Objects;
 
-namespace Cchbc.UI
+namespace Cchbc.AppBuilder.UI.ViewModels
 {
 	public sealed class LoginViewModel : ViewModel<Login>
 	{
 		public string Name => this.Model.Name;
+		public string CreatedAt => this.Model.CreatedAt.ToString(@"f");
 
-		private string _password = string.Empty;
 		public string Password
 		{
-			get { return _password; }
-			set { this.SetField(ref _password, value); }
+			get { return this.Model.Password; }
+			set
+			{
+				this.Model.Password = value;
+				this.OnPropertyChanged();
+			}
 		}
-
-		public string CreatedAt => this.Model.CreatedAt.ToString(@"f");
 
 		public bool IsSystem
 		{

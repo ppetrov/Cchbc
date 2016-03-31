@@ -3,20 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cchbc.Data;
 
-namespace Cchbc.UI
+namespace Cchbc.AppBuilder.UI.ViewModels
 {
 	public sealed class LoginAdapter : IModifiableAdapter<Login>
 	{
-		public QueryHelper QueryHelper { get; }
-
-		public LoginAdapter(QueryHelper queryHelper)
-		{
-			if (queryHelper == null) throw new ArgumentNullException(nameof(queryHelper));
-
-			this.QueryHelper = queryHelper;
-		}
-
-		public Task InsertAsync(Login item)
+		public Task InsertAsync(ITransactionContext context, Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -24,23 +15,23 @@ namespace Cchbc.UI
 			return Task.FromResult(true);
 		}
 
-		public Task UpdateAsync(Login item)
+		public Task UpdateAsync(ITransactionContext context, Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			return Task.FromResult(true);
 		}
 
-		public Task DeleteAsync(Login item)
+		public Task DeleteAsync(ITransactionContext context, Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			return Task.FromResult(true);
 		}
 
-		public List<Login> GetAll()
+		public Task<List<Login>> GetAllAsync()
 		{
-			return new List<Login>();
+			return Task.FromResult(new List<Login>());
 		}
 	}
 }

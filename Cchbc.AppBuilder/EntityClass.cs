@@ -451,14 +451,14 @@ namespace Cchbc.AppBuilder
 		return this.Adapter.GetAll();
 	}}
 
-	public override ValidationResult[] ValidateProperties({0}ViewModel viewModel, Feature feature)
+	public override IEnumerable<ValidationResult> ValidateProperties({0}ViewModel viewModel, Feature feature)
 	{{
 		if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 		if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 		feature.AddStep(nameof(ValidateProperties));
 
-		return Enumerable.Empty<ValidationResult>().ToArray();
+		return Enumerable.Empty<ValidationResult>();
 	}}
 
 	public override Task<PermissionResult> CanInsertAsync({0}ViewModel viewModel, Feature feature)

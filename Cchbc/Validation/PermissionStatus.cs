@@ -1,6 +1,6 @@
 ﻿namespace Cchbc.Validation
 {
-	public enum PermissionStatus
+	public enum PermissionType
 	{
 		Allow,
 		Confirm,

@@ -45,7 +45,7 @@ namespace Cchbc.Localization
 			values.Add(key, message);
 		}
 
-		public Dictionary<string, string> GetByContext(string context)
+		public IReadOnlyDictionary<string, string> GetByContext(string context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -55,7 +55,7 @@ namespace Cchbc.Localization
 			return values ?? new Dictionary<string, string>(0);
 		}
 
-		public string GetBy(Dictionary<string, string> context, string key)
+		public string GetBy(IReadOnlyDictionary<string, string> context, string key)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (key == null) throw new ArgumentNullException(nameof(key));
