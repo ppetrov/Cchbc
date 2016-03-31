@@ -158,7 +158,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			InsertContextSqlParams[0].Value = name;
 
 			// Insert the record
-			context.Execute(new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)"), InsertContextSqlParams);
+			context.Execute(new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)", InsertContextSqlParams));
 
 			// Get new Id back
 			return new DbContext(context.GetNewId(), name);
@@ -175,7 +175,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			InsertFeatureSqlParams[1].Value = context.Id;
 
 			// Insert the record
-			transactionContext.Execute(new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)"), InsertFeatureSqlParams);
+			transactionContext.Execute(new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", InsertFeatureSqlParams));
 
 			// Get new Id back
 			return new DbFeature(transactionContext.GetNewId(), name, context.Id);
@@ -197,7 +197,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			InsertFeatureEntrySqlParams[3].Value = feature.Id;
 
 			// Insert the record
-			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATEDAT, @FEATURE)"), InsertFeatureEntrySqlParams);
+			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATEDAT, @FEATURE)", InsertFeatureEntrySqlParams));
 
 			// Get new Id back
 			return new DbFeatureEntry(context.GetNewId(), feature, details, timeSpent);
@@ -212,7 +212,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			InsertStepSqlParams[0].Value = name;
 
 			// Insert the record
-			context.Execute(new Query(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)"), InsertStepSqlParams);
+			context.Execute(new Query(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)", InsertStepSqlParams));
 
 			// Get new Id back
 			return new DbFeatureStep(context.GetNewId(), name);
@@ -231,7 +231,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			InsertExcetionEntrySqlParams[3].Value = feature.Id;
 
 			// Insert the record
-			context.Execute(new Query(@"INSERT INTO EXCEPTION_ENTRIES(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE)"), InsertExcetionEntrySqlParams);
+			context.Execute(new Query(@"INSERT INTO EXCEPTION_ENTRIES(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE)", InsertExcetionEntrySqlParams));
 		}
 
 		public void InsertStepEntry(ITransactionContext context, DbFeatureEntry featureEntry, DbFeatureStep step, FeatureEntryStep entryStep)
@@ -247,7 +247,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			InsertFeatureStepEntrySqlParams[3].Value = entryStep.Details;
 
 			// Insert the record
-			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)"), InsertFeatureStepEntrySqlParams);
+			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", InsertFeatureStepEntrySqlParams));
 		}
 
 		private static DbFeature DbFeatureCreator(IFieldDataReader r)

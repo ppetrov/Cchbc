@@ -5,9 +5,9 @@ namespace Cchbc.Data
 {
 	public interface ITransactionContext : IDisposable
 	{
-		int Execute(Query query, QueryParameter[] parameters = null);
+		int Execute(Query query);
 
-		List<T> Execute<T>(Query<T> query, QueryParameter[] parameters = null);
+		List<T> Execute<T>(Query<T> query);
 
 		void Fill<T>(Dictionary<long, T> items, Func<T, long> selector, Query<T> query);
 

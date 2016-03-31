@@ -123,7 +123,7 @@ namespace Cchbc.ConsoleClient
 			_tr = _cn.BeginTransaction();
 		}
 
-		public int Execute(Query query, QueryParameter[] parameters = null)
+		public int Execute(Query query)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 
@@ -133,7 +133,7 @@ namespace Cchbc.ConsoleClient
 				cmd.CommandText = query.Statement;
 				cmd.CommandType = CommandType.Text;
 
-				foreach (var p in parameters)
+				foreach (var p in query.Parameters)
 				{
 					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
 				}
@@ -142,7 +142,7 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		public List<T> Execute<T>(Query<T> query, QueryParameter[] parameters = null)
+		public List<T> Execute<T>(Query<T> query)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 

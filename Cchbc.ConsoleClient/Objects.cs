@@ -122,7 +122,7 @@ namespace Cchbc.ConsoleClient
 				new QueryParameter(@"@pDate", item.Date),
 			};
 
-			context.Execute(new Query(@"INSERT INTO Visits (OutletId, Date) VALUES (@pOutletId, @pDate)"), sqlParams);
+			context.Execute(new Query(@"INSERT INTO Visits (OutletId, Date) VALUES (@pOutletId, @pDate)", sqlParams));
 			item.Id = context.GetNewId();
 
 			return Task.FromResult(true);
@@ -140,7 +140,7 @@ namespace Cchbc.ConsoleClient
 				new QueryParameter(@"@pDate", item.Date),
 			};
 
-			context.Execute(new Query(@"UPDATE Visits SET OutletId = @pOutletId, Date = @pDate WHERE Id = @pId"), sqlParams);
+			context.Execute(new Query(@"UPDATE Visits SET OutletId = @pOutletId, Date = @pDate WHERE Id = @pId", sqlParams));
 
 			return Task.FromResult(true);
 		}
@@ -155,7 +155,7 @@ namespace Cchbc.ConsoleClient
 				new QueryParameter(@"@pId", item.Id),
 			};
 
-			context.Execute(new Query(@"DELETE FROM Visits WHERE Id = @pId"), sqlParams);
+			context.Execute(new Query(@"DELETE FROM Visits WHERE Id = @pId", sqlParams));
 
 			return Task.FromResult(true);
 		}
@@ -272,7 +272,7 @@ namespace Cchbc.ConsoleClient
 				new QueryParameter(@"@pVisitId", item.Visit.Id),
 			};
 
-			context.Execute(new Query(@"INSERT INTO Activities (Date, ActivityTypeId, VisitId) VALUES (@pDate, @pActivityTypeId, @pVisitId)"), sqlParams);
+			context.Execute(new Query(@"INSERT INTO Activities (Date, ActivityTypeId, VisitId) VALUES (@pDate, @pActivityTypeId, @pVisitId)", sqlParams));
 			item.Id = context.GetNewId();
 
 			return Task.FromResult(true);
@@ -290,7 +290,7 @@ namespace Cchbc.ConsoleClient
 				new QueryParameter(@"@pVisitId", item.Visit.Id),
 			};
 
-			context.Execute(new Query(@"UPDATE Activities SET Date = @pDate, ActivityTypeId = @pActivityTypeId, VisitId = @pVisitId WHERE Id = @pId"), sqlParams);
+			context.Execute(new Query(@"UPDATE Activities SET Date = @pDate, ActivityTypeId = @pActivityTypeId, VisitId = @pVisitId WHERE Id = @pId", sqlParams));
 
 			return Task.FromResult(true);
 		}
@@ -304,7 +304,7 @@ namespace Cchbc.ConsoleClient
 				new QueryParameter(@"@pId", item.Id),
 			};
 
-			context.Execute(new Query(@"DELETE FROM Activities WHERE Id = @pId"), sqlParams);
+			context.Execute(new Query(@"DELETE FROM Activities WHERE Id = @pId", sqlParams));
 
 			return Task.FromResult(true);
 		}
@@ -552,7 +552,7 @@ namespace Cchbc.ConsoleClient
 				new QueryParameter(@"@pActivityId", item.Activity.Id),
 			};
 
-			context.Execute(new Query(@"INSERT INTO ActivityNotes (Contents, CreatedAt, ActivityNoteTypeId, ActivityId) VALUES (@pContents, @pCreatedAt, @pActivityNoteTypeId, @pActivityId)"), sqlParams);
+			context.Execute(new Query(@"INSERT INTO ActivityNotes (Contents, CreatedAt, ActivityNoteTypeId, ActivityId) VALUES (@pContents, @pCreatedAt, @pActivityNoteTypeId, @pActivityId)", sqlParams));
 
 			item.Id = context.GetNewId();
 			return Task.FromResult(true);
@@ -571,7 +571,7 @@ namespace Cchbc.ConsoleClient
 				new QueryParameter(@"@pActivityId", item.Activity.Id),
 			};
 
-			context.Execute(new Query(@"UPDATE ActivityNotes SET Contents = @pContents, CreatedAt = @pCreatedAt, ActivityNoteTypeId = @pActivityNoteTypeId, ActivityId = @pActivityId WHERE Id = @pId"), sqlParams);
+			context.Execute(new Query(@"UPDATE ActivityNotes SET Contents = @pContents, CreatedAt = @pCreatedAt, ActivityNoteTypeId = @pActivityNoteTypeId, ActivityId = @pActivityId WHERE Id = @pId", sqlParams));
 			return Task.FromResult(true);
 		}
 
@@ -584,7 +584,7 @@ namespace Cchbc.ConsoleClient
 				new QueryParameter(@"@pId", item.Id),
 			};
 
-			context.Execute(new Query(@"DELETE FROM ActivityNotes WHERE Id = @pId"), sqlParams);
+			context.Execute(new Query(@"DELETE FROM ActivityNotes WHERE Id = @pId", sqlParams));
 			return Task.FromResult(true);
 		}
 
