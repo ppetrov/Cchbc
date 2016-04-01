@@ -7,9 +7,23 @@ namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
-		public DbFeaturesManager DbManager { get; } = new DbFeaturesManager();
+		private DbFeaturesManager DbManager { get; } = new DbFeaturesManager();
 
 		private ITransactionContextCreator ContextCreator { get; set; }
+
+		public void CreateSchema(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			this.DbManager.CreateSchema(context);
+		}
+
+		public void DropSchema(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			this.DbManager.DropSchema(context);
+		}
 
 		public void Load(ITransactionContextCreator contextCreator)
 		{
@@ -20,6 +34,8 @@ namespace Cchbc.Features
 			using (var context = this.ContextCreator.Create())
 			{
 				this.DbManager.Load(context);
+
+				context.Complete();
 			}
 		}
 
@@ -54,6 +70,8 @@ namespace Cchbc.Features
 			using (var context = this.ContextCreator.Create())
 			{
 				this.DbManager.Save(context, new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
+
+				context.Complete();
 			}
 		}
 
@@ -65,6 +83,8 @@ namespace Cchbc.Features
 			using (var context = this.ContextCreator.Create())
 			{
 				this.DbManager.Save(context, new ExceptionEntry(feature.Context, feature.Name, exception));
+
+				context.Complete();
 			}
 		}
 
