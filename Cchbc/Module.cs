@@ -55,8 +55,9 @@ namespace Cchbc
 			ItemDeleted?.Invoke(this, e);
 		}
 
-		private ITransactionContextCreator ContextCreator { get; }
 		private IModifiableAdapter<T> Adapter { get; }
+
+		public ITransactionContextCreator ContextCreator { get; }
 		public Sorter<TViewModel> Sorter { get; }
 		public Searcher<TViewModel> Searcher { get; }
 		public FilterOption<TViewModel>[] FilterOptions { get; set; }

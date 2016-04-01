@@ -633,10 +633,6 @@ namespace Cchbc.App.OrderModule
 			if (types == null) throw new ArgumentNullException(nameof(types));
 
 			return Task.FromResult(new List<OrderNote>());
-			//return this.QueryHelper.ExecuteAsync(new Query<OrderNote>(@"SELECT * FROM ORDER_NOTES", r =>
-			//{
-			//	return new OrderNote(-1, types[0], string.Empty);
-			//}));
 		}
 
 		public Task InsertAsync(ITransactionContext context, OrderNote item)

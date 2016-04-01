@@ -44,9 +44,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Adapters.cs" />
+    <Compile Include="ContextCreator.cs" />
     <Compile Include="Objects.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SqlLiteDelegateDataReader.cs" />
+    <Compile Include="TransactionContext.cs" />
     <Compile Include="WordPress.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,17 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Data;
-using System.Data.Common;
-using System.Data.SQLite;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net.Mime;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -20,14 +13,8 @@ using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
-using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
-using Cchbc.Features.Db;
-using Cchbc.Objects;
-using Cchbc.Search;
-using Cchbc.Sort;
-using Cchbc.Validation;
 
 
 namespace Cchbc.ConsoleClient
@@ -39,230 +26,6 @@ namespace Cchbc.ConsoleClient
 			return Task.FromResult(DialogResult.Cancel);
 		}
 	}
-
-	public sealed class SqlLiteDelegateDataReader : IFieldDataReader
-	{
-		private readonly DbDataReader _r;
-
-		public SqlLiteDelegateDataReader(DbDataReader r)
-		{
-			if (r == null) throw new ArgumentNullException(nameof(r));
-
-			_r = r;
-		}
-
-		public bool IsDbNull(int i)
-		{
-			return _r.IsDBNull(i);
-		}
-
-		public int GetInt32(int i)
-		{
-			return _r.GetInt32(i);
-		}
-
-		public long GetInt64(int i)
-		{
-			return _r.GetInt64(i);
-		}
-
-		public decimal GetDecimal(int i)
-		{
-			return _r.GetDecimal(i);
-		}
-
-		public string GetString(int i)
-		{
-			return _r.GetString(i);
-		}
-
-		public DateTime GetDateTime(int i)
-		{
-			return _r.GetDateTime(i);
-		}
-
-		public bool Read()
-		{
-			return _r.Read();
-		}
-	}
-
-	public sealed class ContextCreator : ITransactionContextCreator
-	{
-		private readonly string _cnString;
-
-		public ContextCreator(string cnString)
-		{
-			if (cnString == null) throw new ArgumentNullException(nameof(cnString));
-
-			_cnString = cnString;
-		}
-
-		public ITransactionContext Create()
-		{
-			return new TransactionContext(_cnString);
-		}
-	}
-
-	public sealed class TransactionContext : ITransactionContext
-	{
-		private readonly SQLiteConnection _cn;
-		private SQLiteTransaction _tr;
-
-		public TransactionContext(string cnString)
-		{
-			if (cnString == null) throw new ArgumentNullException(nameof(cnString));
-
-			// Create connection
-			_cn = new SQLiteConnection(cnString);
-
-			// Open connection
-			_cn.Open();
-
-			// Begin transaction
-			_tr = _cn.BeginTransaction();
-		}
-
-		public int Execute(Query query)
-		{
-			if (query == null) throw new ArgumentNullException(nameof(query));
-
-			using (var cmd = _cn.CreateCommand())
-			{
-				cmd.Transaction = _tr;
-				cmd.CommandText = query.Statement;
-				cmd.CommandType = CommandType.Text;
-
-				foreach (var p in query.Parameters)
-				{
-					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
-				}
-
-				return cmd.ExecuteNonQuery();
-			}
-		}
-
-		public List<T> Execute<T>(Query<T> query)
-		{
-			if (query == null) throw new ArgumentNullException(nameof(query));
-
-			var items = new List<T>();
-
-			using (var cmd = _cn.CreateCommand())
-			{
-				cmd.Transaction = _tr;
-				cmd.CommandText = query.Statement;
-				cmd.CommandType = CommandType.Text;
-
-				using (var r = cmd.ExecuteReader())
-				{
-					var dr = new SqlLiteDelegateDataReader(r);
-					while (dr.Read())
-					{
-						items.Add(query.Creator(dr));
-					}
-				}
-			}
-
-			return items;
-		}
-
-		public void Fill<T>(Dictionary<long, T> items, Func<T, long> selector, Query<T> query)
-		{
-			using (var cmd = _cn.CreateCommand())
-			{
-				cmd.Transaction = _tr;
-				cmd.CommandText = query.Statement;
-				cmd.CommandType = CommandType.Text;
-
-				using (var r = cmd.ExecuteReader())
-				{
-					var dr = new SqlLiteDelegateDataReader(r);
-					while (dr.Read())
-					{
-						var value = query.Creator(dr);
-						items.Add(selector(value), value);
-					}
-				}
-			}
-		}
-
-		public void Fill<T>(Dictionary<long, T> items, Action<IFieldDataReader, Dictionary<long, T>> filler, Query query, QueryParameter[] parameters = null)
-		{
-			using (var cmd = _cn.CreateCommand())
-			{
-				cmd.Transaction = _tr;
-				cmd.CommandText = query.Statement;
-				cmd.CommandType = CommandType.Text;
-
-				using (var r = cmd.ExecuteReader())
-				{
-					var dr = new SqlLiteDelegateDataReader(r);
-					while (dr.Read())
-					{
-						filler(dr, items);
-					}
-				}
-			}
-		}
-
-		public long GetNewId()
-		{
-			return this.Execute(Query.SelectNewIdQuery)[0];
-		}
-
-		public void Complete()
-		{
-			_tr?.Commit();
-			_tr?.Dispose();
-			_tr = null;
-		}
-
-		public void Dispose()
-		{
-			try
-			{
-				_tr?.Rollback();
-				_tr?.Dispose();
-			}
-			finally
-			{
-				_cn.Dispose();
-			}
-		}
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 	public class Program
@@ -282,74 +45,7 @@ namespace Cchbc.ConsoleClient
 
 		static void Main(string[] args)
 		{
-			var connectionString = @"Data Source=C:\Users\codem\Desktop\cchbc.sqlite;Version=3;";
-			var creator = new ContextCreator(connectionString);
-
-			using (var ctx = creator.Create())
-			{
-				var fm = new FeatureManager();
-				try
-				{
-					fm.DbManager.CreateSchema(ctx);
-				}
-				catch(Exception e)
-				{
-					Console.WriteLine(e);
-				}
-				fm.DbManager.Load(ctx);
-
-
-				
-
-				//var bds = new Dictionary<long, Brand>();
-
-				//var brandAdapter = new BrandAdapter();
-				//brandAdapter.Fill(ctx, bds, b => b.Id);
-
-				//foreach (var brand in bds.Values)
-				//{
-				//	Console.WriteLine(brand.Id + ": " + brand.Name);
-				//}
-			}
-
-			return;
-
-			//var archive = new ZipArchive();
-
-			//foreach (var file in Directory.GetFiles(@"C:\Logs", @"*.*", SearchOption.AllDirectories))
-			//{
-			//	Console.WriteLine("Compressing file " + file);
-			//	using (var fs = File.OpenRead(file))
-			//	{
-			//		archive.AddFileAsync(file, fs, CancellationToken.None).Wait();
-			//	}
-			//}
-
-			//Console.WriteLine(@"Save the file");
-			//using (var fs = File.OpenWrite(@"C:\temp\archive.dat"))
-			//{
-			//	archive.SaveAsync(fs, CancellationToken.None).Wait();
-			//}
-
-
-			//using (var fs = File.OpenRead(@"C:\temp\archive.dat"))
-			//{
-			//	archive.LoadAsync(fs, CancellationToken.None).Wait();
-			//}
-
-
-			//Console.WriteLine("Completed");
-
-			//return;
-
-
-
-
-
-
-
-
-
+			//Zip();
 
 
 			//var users = DbTable.Create(@"Users", new[]
@@ -544,7 +240,7 @@ namespace Cchbc.ConsoleClient
 
 
 			var core = new Core();
-			//core.FeatureManager.Init(new DbFeaturesManager(new DbFeaturesAdapter(new QueryHelper())));
+			
 
 
 
@@ -581,6 +277,35 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
+		private static void Zip()
+		{
+			var archive = new ZipArchive();
+
+			foreach (var file in Directory.GetFiles(@"C:\Logs", @"*.*", SearchOption.AllDirectories))
+			{
+				Console.WriteLine("Compressing file " + file);
+				using (var fs = File.OpenRead(file))
+				{
+					archive.AddFileAsync(file, fs, CancellationToken.None).Wait();
+				}
+			}
+
+			Console.WriteLine(@"Save the file");
+			using (var fs = File.OpenWrite(@"C:\temp\archive.dat"))
+			{
+				archive.SaveAsync(fs, CancellationToken.None).Wait();
+			}
+
+
+			using (var fs = File.OpenRead(@"C:\temp\archive.dat"))
+			{
+				archive.LoadAsync(fs, CancellationToken.None).Wait();
+			}
+
+
+			Console.WriteLine("Completed");
+		}
+
 		private static void ExtractArchive(byte[] data, string cTempTmp)
 		{
 			using (var ms = new MemoryStream(data))
@@ -606,10 +331,6 @@ namespace Cchbc.ConsoleClient
 
 		}
 
-
-
-
-
 		private static void Display(int[,] m)
 		{
 			for (int i = 0; i < 2; i++)
@@ -634,90 +355,6 @@ namespace Cchbc.ConsoleClient
 				Console.WriteLine();
 			}
 			Console.WriteLine();
-		}
-
-		static HashSet<string> idents = new HashSet<string>();
-		static List<string> _links = new List<string>();
-
-		public sealed class BinaryGate
-		{
-			public bool Applied { get; set; }
-			public string Left { get; set; }
-			public string Right { get; set; }
-			public string Function { get; set; }
-			public string Result { get; set; }
-
-			public BinaryGate(string left, string right, string function, string result)
-			{
-				Left = left;
-				Right = right;
-				Function = function;
-				Result = result;
-			}
-
-			public SignalGage CreateSignal()
-			{
-				if (this.Function == @"LSHIFT")
-				{
-					var v = ushort.Parse(this.Left) << ushort.Parse(this.Right);
-					return new SignalGage(this.Result, v);
-				}
-				if (this.Function == @"RSHIFT")
-				{
-					var v = ushort.Parse(this.Left) >> ushort.Parse(this.Right);
-					return new SignalGage(this.Result, v);
-				}
-				if (this.Function == @"OR")
-				{
-					var v = ushort.Parse(this.Left) | ushort.Parse(this.Right);
-					return new SignalGage(this.Result, v);
-				}
-				if (this.Function == @"AND")
-				{
-					var v = ushort.Parse(this.Left) & ushort.Parse(this.Right);
-					return new SignalGage(this.Result, v);
-				}
-				throw new NotImplementedException();
-			}
-		}
-
-		public sealed class UnaryGage
-		{
-			public bool Applied { get; set; }
-			public string Input { get; set; }
-			public string Function { get; set; }
-			public string Result { get; set; }
-
-			public UnaryGage(string input, string function, string result)
-			{
-				Input = input;
-				Function = function;
-				Result = result;
-			}
-
-			public SignalGage CreateSignal()
-			{
-				if (this.Function == @"NOT")
-				{
-					ushort n = 0;
-					ushort.TryParse(this.Input, out n);
-
-					return new SignalGage(this.Result, 65535 - n);
-				}
-				return null;
-			}
-		}
-
-		public sealed class SignalGage
-		{
-			public string Input { get; }
-			public int Value { get; }
-
-			public SignalGage(string input, int value)
-			{
-				Input = input;
-				Value = value;
-			}
 		}
 
 		private static void Floors()
@@ -850,7 +487,6 @@ namespace Cchbc.ConsoleClient
 			return count;
 		}
 
-
 		private static void FixAdapterClasses()
 		{
 			var winrtUsingFlag = @"#if NETFX_CORE
@@ -933,7 +569,6 @@ using System.Data;
 		{
 			var step = feature.AddStep(nameof(LoadBrandsAsync));
 			var brandHelper = new BrandHelper();
-			//await brandHelper.LoadAsync(new BrandAdapter(queryHelper), v => v.Id);
 			step.Details = brandHelper.Items.Count.ToString();
 			return brandHelper;
 		}
@@ -942,7 +577,6 @@ using System.Data;
 		{
 			var step = feature.AddStep(nameof(LoadFlavorsAsync));
 			var flavorHelper = new FlavorHelper();
-			//await flavorHelper.LoadAsync(new FlavorAdapter(queryHelper), v => v.Id);
 			step.Details = flavorHelper.Items.Count.ToString();
 			return flavorHelper;
 		}
@@ -951,7 +585,6 @@ using System.Data;
 		{
 			var step = feature.AddStep(nameof(LoadArticlesAsync));
 			var articleHelper = new ArticleHelper();
-			//await articleHelper.LoadAsync(new ArticleAdapter(queryHelper, brandHelper.Items, flavorHelper.Items));
 			step.Details = articleHelper.Items.Count.ToString();
 			return articleHelper;
 		}

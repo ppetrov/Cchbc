@@ -250,7 +250,7 @@ namespace Cchbc.AppBuilder
 		if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
 		this.Core = core;
-		this.Module = new {1}Module(adapter, new Sorter<{0}ViewModel>(new[]
+		this.Module = new {1}Module(core.ContextCreator, adapter, new Sorter<{0}ViewModel>(new[]
 		{{
 			new SortOption<{0}ViewModel>(string.Empty, (x, y) => 0)
 		}}),
@@ -438,8 +438,8 @@ namespace Cchbc.AppBuilder
 {{
 	private {0}Adapter Adapter {{ get; }}
 
-	public {1}Module({0}Adapter adapter, Sorter<{0}ViewModel> sorter, Searcher<{0}ViewModel> searcher, FilterOption<{0}ViewModel>[] filterOptions = null)
-		: base(adapter, sorter, searcher, filterOptions)
+	public {1}Module(ITransactionContextCreator contextCreator, {0}Adapter adapter, Sorter<{0}ViewModel> sorter, Searcher<{0}ViewModel> searcher, FilterOption<{0}ViewModel>[] filterOptions = null)
+		: base(contextCreator, adapter, sorter, searcher, filterOptions)
 	{{
 		if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
@@ -448,7 +448,10 @@ namespace Cchbc.AppBuilder
 
 	public List<{0}> GetAll()
 	{{
-		return this.Adapter.GetAll();
+		using (var ctx = this.ContextCreator.Create())
+		{{
+			return this.Adapter.GetAll(ctx);
+		}}
 	}}
 
 	public override IEnumerable<ValidationResult> ValidateProperties({0}ViewModel viewModel, Feature feature)
@@ -661,9 +664,6 @@ namespace Cchbc.AppBuilder
 
 		private static void AppendAssignPropertiesToParameters(StringBuilder buffer, ClrProperty[] properties, int indentationLevel)
 		{
-			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-			if (properties == null) throw new ArgumentNullException(nameof(properties));
-
 			foreach (var property in properties)
 			{
 				AppendIndentation(buffer, indentationLevel);
@@ -683,9 +683,6 @@ namespace Cchbc.AppBuilder
 
 		private static void AppendParametersWithType(StringBuilder buffer, ClrProperty[] properties)
 		{
-			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-			if (properties == null) throw new ArgumentNullException(nameof(properties));
-
 			for (var i = 0; i < properties.Length; i++)
 			{
 				if (i > 0)

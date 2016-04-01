@@ -9,8 +9,6 @@ namespace Cchbc.AppBuilder
 {
 	public static class EntityAdapter
 	{
-		private static readonly ClrProperty QueryHelperProperty = new ClrProperty(@"QueryHelper", new ClrType(@"QueryHelper", true, false));
-
 		public static string GenerateReadOnly(Entity entity, Dictionary<ClrType, ClrProperty> dictionaryProperties)
 		{
 			if (entity == null) throw new ArgumentNullException(nameof(entity));
@@ -28,10 +26,13 @@ namespace Cchbc.AppBuilder
 			EntityClass.AppendOpenBrace(buffer, indentationLevel++);
 
 			EntityClass.AppendClassProperties(buffer, adapterProperties, indentationLevel, true, false);
-			buffer.AppendLine();
 
-			EntityClass.AppendClassConstructor(buffer, adapterClassName, adapterProperties, indentationLevel);
-			buffer.AppendLine();
+			if (adapterProperties.Length > 0)
+			{
+				buffer.AppendLine();
+				EntityClass.AppendClassConstructor(buffer, adapterClassName, adapterProperties, indentationLevel);
+				buffer.AppendLine();
+			}
 
 			AppendFillMethod(buffer, entity, indentationLevel);
 			buffer.AppendLine();
@@ -101,11 +102,9 @@ namespace Cchbc.AppBuilder
 
 		private static ClrProperty[] GetClassProperties(Dictionary<ClrType, ClrProperty> dictionaryProperties)
 		{
-			var classProperties = new ClrProperty[dictionaryProperties.Count + 1];
+			var classProperties = new ClrProperty[dictionaryProperties.Count];
 
-			classProperties[0] = QueryHelperProperty;
-
-			var i = 1;
+			var i = 0;
 			foreach (var classProperty in dictionaryProperties.Values)
 			{
 				classProperties[i++] = classProperty;
@@ -119,6 +118,7 @@ namespace Cchbc.AppBuilder
 			var className = entity.Class.Name;
 			const string dictionaryName = @"items";
 			const string funcName = @"selector";
+			const string contextName = @"context";
 
 			EntityClass.AppendIndentation(buffer, indentationLevel);
 			buffer.Append(@"public");
@@ -127,6 +127,11 @@ namespace Cchbc.AppBuilder
 			buffer.Append(' ');
 			buffer.Append(@"Fill");
 			buffer.Append('(');
+			buffer.Append(@"ITransactionContext");
+			buffer.Append(' ');
+			buffer.Append(contextName);
+			buffer.Append(',');
+			buffer.Append(' ');
 			buffer.Append(@"Dictionary");
 			buffer.Append('<');
 			buffer.Append(@"long");
@@ -151,6 +156,7 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 
 			EntityClass.AppendOpenBrace(buffer, indentationLevel++);
+			EntityClass.AppendArgumentNullCheck(buffer, contextName, indentationLevel);
 			EntityClass.AppendArgumentNullCheck(buffer, dictionaryName, indentationLevel);
 			EntityClass.AppendArgumentNullCheck(buffer, funcName, indentationLevel);
 
@@ -173,12 +179,16 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 
 			EntityClass.AppendIndentation(buffer, indentationLevel);
-			buffer.Append(@"this");
-			buffer.Append('.');
-			buffer.Append(@"QueryHelper");
+			buffer.Append(contextName);
 			buffer.Append('.');
 			buffer.Append(@"Fill");
 			buffer.Append('(');
+			buffer.Append(dictionaryName);
+			buffer.Append(',');
+			buffer.Append(' ');
+			buffer.Append(funcName);
+			buffer.Append(',');
+			buffer.Append(' ');
 			buffer.Append(@"new");
 			buffer.Append(' ');
 			buffer.Append(@"Query");
@@ -194,12 +204,6 @@ namespace Cchbc.AppBuilder
 			buffer.Append(className);
 			buffer.Append(@"Creator");
 			buffer.Append(')');
-			buffer.Append(',');
-			buffer.Append(' ');
-			buffer.Append(dictionaryName);
-			buffer.Append(',');
-			buffer.Append(' ');
-			buffer.Append(funcName);
 			buffer.Append(')');
 			buffer.Append(';');
 			buffer.AppendLine();
@@ -476,6 +480,7 @@ namespace Cchbc.AppBuilder
 		private static void AppendGetAllMethod(StringBuilder buffer, Entity entity, Entity[] readerEntities, int indentationLevel)
 		{
 			var className = entity.Class.Name;
+			var contextName = @"context";
 
 			EntityClass.AppendIndentation(buffer, indentationLevel);
 
@@ -488,10 +493,16 @@ namespace Cchbc.AppBuilder
 			buffer.Append(' ');
 			buffer.Append(@"GetAll");
 			buffer.Append('(');
+
+			buffer.Append(@"ITransactionContext");
+			buffer.Append(' ');
+			buffer.Append(contextName);
 			buffer.Append(')');
 			buffer.AppendLine();
 
 			EntityClass.AppendOpenBrace(buffer, indentationLevel++);
+			EntityClass.AppendArgumentNullCheck(buffer, contextName, indentationLevel);
+			buffer.AppendLine();
 
 			EntityClass.AppendIndentation(buffer, indentationLevel);
 			buffer.Append(@"var");
@@ -521,9 +532,7 @@ namespace Cchbc.AppBuilder
 				EntityClass.AppendIndentation(buffer, indentationLevel);
 				buffer.Append(@"return");
 				buffer.Append(' ');
-				buffer.Append(@"this");
-				buffer.Append('.');
-				buffer.Append(@"QueryHelper");
+				buffer.Append(contextName);
 				buffer.Append('.');
 				buffer.Append(@"Execute");
 				buffer.Append('(');
@@ -570,15 +579,10 @@ namespace Cchbc.AppBuilder
 				buffer.AppendLine();
 
 				EntityClass.AppendIndentation(buffer, indentationLevel);
-				buffer.Append(@"this");
-				buffer.Append('.');
-				buffer.Append(@"QueryHelper");
+				buffer.Append(contextName);
 				buffer.Append('.');
 				buffer.Append(@"Fill");
 				buffer.Append('(');
-				buffer.Append(@"query");
-				buffer.Append(',');
-				buffer.Append(' ');
 				BufferHelper.AppendLowerFirst(buffer, entity.Table.Name);
 				buffer.Append(',');
 				buffer.Append(' ');
@@ -586,6 +590,16 @@ namespace Cchbc.AppBuilder
 				buffer.Append('.');
 				buffer.Append(className);
 				buffer.Append(@"Creator");
+				buffer.Append(',');
+				buffer.Append(' ');
+
+				buffer.Append(@"new");
+				buffer.Append(' ');
+				buffer.Append(@"Query");
+				buffer.Append('(');
+				buffer.Append(@"query");
+				buffer.Append(')');
+
 				buffer.Append(')');
 				buffer.Append(';');
 				buffer.AppendLine();
@@ -625,6 +639,7 @@ namespace Cchbc.AppBuilder
 		private static void AppendMethod(StringBuilder buffer, Entity entity, string methodName, Action<StringBuilder, DbTable> queryAppender, Func<DbColumn, bool> columnMatcher, bool getNewId)
 		{
 			var className = entity.Class.Name;
+			var contextName = @"context";
 
 			var level = 1;
 			EntityClass.AppendIndentation(buffer, level);
@@ -635,6 +650,11 @@ namespace Cchbc.AppBuilder
 			buffer.Append(methodName);
 			buffer.Append(@"Async");
 			buffer.Append('(');
+			buffer.Append(@"ITransactionContext");
+			buffer.Append(' ');
+			buffer.Append(contextName);
+			buffer.Append(' ');
+			buffer.Append(',');
 			buffer.Append(className);
 			buffer.Append(' ');
 			buffer.Append(@"item");
@@ -642,6 +662,7 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 
 			EntityClass.AppendOpenBrace(buffer, level++);
+			EntityClass.AppendArgumentNullCheck(buffer, contextName, level);
 			EntityClass.AppendArgumentNullCheck(buffer, @"item", level);
 
 			buffer.AppendLine();
@@ -720,16 +741,19 @@ namespace Cchbc.AppBuilder
 			buffer.AppendLine();
 
 			EntityClass.AppendIndentation(buffer, level);
-			buffer.Append(@"this");
-			buffer.Append('.');
-			buffer.Append(@"QueryHelper");
+			buffer.Append(contextName);
 			buffer.Append('.');
 			buffer.Append(@"Execute");
+			buffer.Append('(');
+			buffer.Append(@"new");
+			buffer.Append(' ');
+			buffer.Append(@"Query");
 			buffer.Append('(');
 			buffer.Append(@"query");
 			buffer.Append(',');
 			buffer.Append(' ');
 			buffer.Append(@"sqlParams");
+			buffer.Append(')');
 			buffer.Append(')');
 			buffer.Append(';');
 			buffer.AppendLine();
@@ -744,9 +768,7 @@ namespace Cchbc.AppBuilder
 				buffer.Append(' ');
 				buffer.Append('=');
 				buffer.Append(' ');
-				buffer.Append(@"this");
-				buffer.Append('.');
-				buffer.Append(@"QueryHelper");
+				buffer.Append(contextName);
 				buffer.Append('.');
 				buffer.Append(@"GetNewId");
 				buffer.Append('(');
@@ -909,8 +931,6 @@ namespace Cchbc.AppBuilder
 
 		private static string GetReaderMethod(ClrType type)
 		{
-			if (type == null) throw new ArgumentNullException(nameof(type));
-
 			if (type == ClrType.Long) return @"GetInt64";
 			if (type == ClrType.String) return @"GetString";
 			if (type == ClrType.Decimal) return @"GetDecimal";
@@ -922,8 +942,6 @@ namespace Cchbc.AppBuilder
 
 		private static string GetDefaultValue(ClrType type)
 		{
-			if (type == null) throw new ArgumentNullException(nameof(type));
-
 			if (type == ClrType.Long) return @"0L";
 			if (type == ClrType.String) return @"string.Empty";
 			if (type == ClrType.Decimal) return @"0M";

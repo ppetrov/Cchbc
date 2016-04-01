@@ -207,7 +207,7 @@ namespace Cchbc.AppBuilder
 				buffer.AppendLine(@"using System.Linq;");
 			}
 
-			// For QueryHelper class
+			// For ITransactionContext class
 			buffer.AppendLine(@"using Cchbc.Data;");
 
 			// For the concrete T class
@@ -237,6 +237,7 @@ namespace Cchbc.AppBuilder
 				buffer.AppendFormat(@"using {0}.ViewModels;", namespaceName);
 				buffer.AppendLine();
 				buffer.AppendLine(@"using Cchbc;");
+				buffer.AppendLine(@"using Cchbc.Data;");
 				buffer.AppendLine(@"using Cchbc.Search;");
 				buffer.AppendLine(@"using Cchbc.Sort;");
 			}
@@ -247,6 +248,7 @@ namespace Cchbc.AppBuilder
 				buffer.AppendLine(@"using System.Linq;");
 				buffer.AppendLine(@"using System.Threading.Tasks;");
 				buffer.AppendLine(@"using Cchbc;");
+				buffer.AppendLine(@"using Cchbc.Data;");
 				buffer.AppendLine(@"using Cchbc.Features;");
 				buffer.AppendLine(@"using Cchbc.Search;");
 				buffer.AppendLine(@"using Cchbc.Sort;");

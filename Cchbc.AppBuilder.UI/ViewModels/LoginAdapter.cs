@@ -28,8 +28,8 @@ namespace Cchbc.AppBuilder.UI.ViewModels
 
 			return Task.FromResult(true);
 		}
-
-		public Task<List<Login>> GetAllAsync()
+		
+		public Task<List<Login>> GetAllAsync(ITransactionContext context)
 		{
 			return Task.FromResult(new List<Login>());
 		}
