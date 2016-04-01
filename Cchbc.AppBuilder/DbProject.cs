@@ -8,6 +8,7 @@ namespace Cchbc.AppBuilder
 	public sealed class DbProject
 	{
 		public DbSchema Schema { get; }
+
 		private Dictionary<string, DbTable> InverseTables { get; } = new Dictionary<string, DbTable>();
 		private Dictionary<string, DbTable> ModifiableTables { get; } = new Dictionary<string, DbTable>();
 		private Dictionary<string, DbTable> HiddenTables { get; } = new Dictionary<string, DbTable>();

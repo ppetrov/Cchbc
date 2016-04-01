@@ -45,46 +45,102 @@ namespace Cchbc.ConsoleClient
 
 		static void Main(string[] args)
 		{
-			//Zip();
+			//GenerateProject(PhoenixModel(), @"C:\temp\IfsaBuilder\IfsaBuilder\Phoenix");
+
+			GenerateProject(WordpressModel(), @"C:\temp\IfsaBuilder\IfsaBuilder\Wordpress");
+
+			//var prj = new ClrProject();
+			//prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
+
+			//Console.WriteLine(DbScript.CreateTable(users));
+			//Console.WriteLine(DbScript.CreateTable(blogs));
+			//Console.WriteLine(DbScript.CreateTable(posts));
+			//Console.WriteLine(DbScript.CreateTable(comments));
+
+			return;
 
 
-			//var users = DbTable.Create(@"Users", new[]
-			//{
-			//	DbColumn.String(@"Name"),
-			//});
 
-			//var blogs = DbTable.Create(@"Blogs", new[]
-			//{
-			//	DbColumn.String(@"Name"),
-			//	DbColumn.String(@"Description"),
-			//	DbColumn.ForeignKey(users)
-			//});
-
-			//var posts = DbTable.Create(@"Posts", new[]
-			//{
-			//	DbColumn.String(@"Title"),
-			//	DbColumn.String(@"Contents"),
-			//	DbColumn.DateTime(@"CreationDate"),
-			//	DbColumn.ForeignKey(blogs),
-			//});
-
-			//var comments = DbTable.Create(@"Comments", new[]
-			//{
-			//	DbColumn.String(@"Contents"),
-			//	DbColumn.DateTime(@"CreationDate"),
-			//	DbColumn.ForeignKey(users),
-			//	DbColumn.ForeignKey(posts),
-			//});
-
-			//var schema = new DbSchema(@"WordPress", new[]
-			//{
-			//	users,
-			//	blogs,
-			//	posts,
-			//	comments,
-			//});
+			var core = new Core();
 
 
+
+
+
+			// Register helpers
+			var cache = core.DataCache;
+			cache.Add(new BrandHelper());
+			cache.Add(new FlavorHelper());
+			cache.Add(new ArticleHelper());
+
+			try
+			{
+				File.WriteAllText(@"C:\temp\diagnostics.txt", string.Empty);
+
+				//var viewModel = new LoginsViewModel(core, new LoginAdapter());
+				//viewModel.LoadData();
+
+				//var v = new LoginViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
+				//var dialog = new ConsoleDialog();
+				//viewModel.AddAsync(v, dialog).Wait();
+				//viewModel.AddAsync(v, dialog).Wait();
+				//viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hack").Wait();
+				//viewModel.AddAsync(v, dialog).Wait();
+				//viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hackV2").Wait();
+
+				//foreach (var login in viewModel.Logins)
+				//{
+				//	Console.WriteLine(login.Name + " " + v.Password);
+				//}
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e);
+			}
+		}
+
+		private static void GenerateProject(DbProject project, string directoryPath)
+		{
+			var buffer = new StringBuilder(1024 * 80);
+
+			foreach (var entity in project.CreateEntities())
+			{
+				// Classes
+				var entityClass = project.CreateEntityClass(entity);
+				buffer.AppendLine(entityClass);
+				buffer.AppendLine(EntityClass.GenerateClassViewModel(entity, !project.IsModifiable(entity.Table)));
+				buffer.AppendLine(project.CreateTableViewModel(entity));
+
+				if (!project.IsModifiable(entity.Table))
+				{
+					buffer.AppendLine(project.CreateTableViewModel(entity));
+				}
+
+				// Read Only adapters
+				var adapter = !project.IsModifiable(entity.Table)
+					? project.CreateEntityAdapter(entity)
+					: project.CreateEntityAdapter(entity);
+				buffer.AppendLine(adapter);
+			}
+
+			var clrProject = new ClrProject();
+			clrProject.WriteAllText = File.WriteAllText;
+			clrProject.CreateDirectory = path =>
+			{
+				if (Directory.Exists(path))
+				{
+					Directory.Delete(path, true);
+				}
+				Directory.CreateDirectory(path);
+			};
+			clrProject.Save(directoryPath, project);
+
+			var tmp = DbScript.CreateTables(project.Schema.Tables);
+			Console.WriteLine(tmp);
+		}
+
+		private static DbProject PhoenixModel()
+		{
 			var outlets = DbTable.Create(@"Outlets", new[]
 			{
 				DbColumn.String(@"Name"),
@@ -143,7 +199,6 @@ namespace Cchbc.ConsoleClient
 				activityNotes
 			});
 
-
 			var project = new DbProject(schema);
 
 			// Mark tables as Modifiable, all tables are ReadOnly by default
@@ -157,124 +212,54 @@ namespace Cchbc.ConsoleClient
 			// Hidden tables
 			project.MarkHidden(brands);
 			project.MarkHidden(flavors);
+			return project;
+		}
 
-			//var filePath = @"c:\temp\ifsa.ctx";
-			//project.Save(filePath);
-			//var copy = DbProject.Load(filePath);
-
-
-			//var project = new DbProject(schema);
-
-			//project.AttachInverseTable(posts);
-
-			//project.MarkModifiable(blogs);
-			//project.MarkModifiable(posts);
-			//project.MarkModifiable(comments);			
-
-			var buffer = new StringBuilder(1024 * 2);
-
-			var s = Stopwatch.StartNew();
-			foreach (var entity in project.CreateEntities())
+		private static DbProject WordpressModel()
+		{
+			var users = DbTable.Create(@"Users", new[]
 			{
-				//
-				// Classes
-				//
-				var entityClass = project.CreateEntityClass(entity);
-				buffer.AppendLine(entityClass);
-				buffer.AppendLine(EntityClass.GenerateClassViewModel(entity, !project.IsModifiable(entity.Table)));
-				buffer.AppendLine(project.CreateTableViewModel(entity));
+				DbColumn.String(@"Name"),
+			});
 
-
-				if (!project.IsModifiable(entity.Table))
-				{
-					buffer.AppendLine(project.CreateTableViewModel(entity));
-				}
-				//continue;
-
-				//
-				// Read Only adapters
-				if (!project.IsModifiable(entity.Table))
-				{
-					var adapter = project.CreateEntityAdapter(entity);
-					buffer.AppendLine(adapter);
-				}
-				//continue;
-
-				//
-				// Modifiable adapters
-				//
-				if (project.IsModifiable(entity.Table))
-				{
-					var adapter = project.CreateEntityAdapter(entity);
-					buffer.AppendLine(adapter);
-				}
-			}
-			s.Stop();
-			Console.WriteLine(s.ElapsedMilliseconds);
-
-			//Console.WriteLine(buffer.ToString());
-			//File.WriteAllText(@"C:\temp\code.txt", buffer.ToString());
-
-			var p = new ClrProject();
-			p.WriteAllText = File.WriteAllText;
-			p.CreateDirectory = path =>
+			var blogs = DbTable.Create(@"Blogs", new[]
 			{
-				if (Directory.Exists(path))
-				{
-					Directory.Delete(path, true);
-				}
-				Directory.CreateDirectory(path);
-			};
-			p.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\Phoenix", project);
+				DbColumn.String(@"Name"),
+				DbColumn.String(@"Description"),
+				DbColumn.ForeignKey(users)
+			});
 
-			//var prj = new ClrProject();
-			//prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
-
-			//Console.WriteLine(DbScript.CreateTable(users));
-			//Console.WriteLine(DbScript.CreateTable(blogs));
-			//Console.WriteLine(DbScript.CreateTable(posts));
-			//Console.WriteLine(DbScript.CreateTable(comments));
-
-			//return;
-
-
-
-			var core = new Core();
-			
-
-
-
-
-			// Register helpers
-			var cache = core.DataCache;
-			cache.Add(new BrandHelper());
-			cache.Add(new FlavorHelper());
-			cache.Add(new ArticleHelper());
-
-			try
+			var posts = DbTable.Create(@"Posts", new[]
 			{
-				File.WriteAllText(@"C:\temp\diagnostics.txt", string.Empty);
+				DbColumn.String(@"Title"),
+				DbColumn.String(@"Contents"),
+				DbColumn.DateTime(@"CreationDate"),
+				DbColumn.ForeignKey(blogs),
+			});
 
-				//var viewModel = new LoginsViewModel(core, new LoginAdapter());
-				//viewModel.LoadData();
-
-				//var v = new LoginViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
-				//var dialog = new ConsoleDialog();
-				//viewModel.AddAsync(v, dialog).Wait();
-				//viewModel.AddAsync(v, dialog).Wait();
-				//viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hack").Wait();
-				//viewModel.AddAsync(v, dialog).Wait();
-				//viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hackV2").Wait();
-
-				//foreach (var login in viewModel.Logins)
-				//{
-				//	Console.WriteLine(login.Name + " " + v.Password);
-				//}
-			}
-			catch (Exception e)
+			var comments = DbTable.Create(@"Comments", new[]
 			{
-				Console.WriteLine(e);
-			}
+				DbColumn.String(@"Contents"),
+				DbColumn.DateTime(@"CreationDate"),
+				DbColumn.ForeignKey(users),
+				DbColumn.ForeignKey(posts),
+			});
+
+			var schema = new DbSchema(@"WordPress", new[]
+			{
+				users,
+				blogs,
+				posts,
+				comments,
+			});
+			var project = new DbProject(schema);
+
+			project.AttachInverseTable(posts);
+
+			project.MarkModifiable(blogs);
+			project.MarkModifiable(posts);
+			project.MarkModifiable(comments);
+			return project;
 		}
 
 		private static void Zip()

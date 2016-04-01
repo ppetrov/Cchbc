@@ -2,7 +2,6 @@
 using System.IO;
 using System.Text;
 
-
 namespace Cchbc.AppBuilder
 {
 	public sealed class ClrProject

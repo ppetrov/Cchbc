@@ -305,6 +305,8 @@ namespace Cchbc
 			using (var context = this.ContextCreator.Create())
 			{
 				await this.Adapter.InsertAsync(context, viewModel.Model);
+
+				context.Complete();
 			}
 
 			// Find the right index to insert the new element
@@ -344,6 +346,8 @@ namespace Cchbc
 			using (var context = this.ContextCreator.Create())
 			{
 				await this.Adapter.UpdateAsync(context, viewModel.Model);
+
+				context.Complete();
 			}
 
 			// Fire the event
@@ -361,6 +365,8 @@ namespace Cchbc
 			using (var context = this.ContextCreator.Create())
 			{
 				await this.Adapter.DeleteAsync(context, viewModel.Model);
+
+				context.Complete();
 			}
 
 			// Delete the item from the list
