@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cchbc.Data;
+using LoginModule.Objects;
 
-namespace Cchbc.AppBuilder.UI.ViewModels
+namespace LoginModule.Adapter
 {
 	public sealed class LoginAdapter : IModifiableAdapter<Login>
 	{
@@ -11,7 +12,6 @@ namespace Cchbc.AppBuilder.UI.ViewModels
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
-			//throw new NotImplementedException();
 			return Task.FromResult(true);
 		}
 

@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Cchbc;
 using Cchbc.Data;
 using Cchbc.Features;
 using Cchbc.Search;
 using Cchbc.Sort;
 using Cchbc.Validation;
+using LoginModule.Adapter;
+using LoginModule.Objects;
+using LoginModule.ViewModels;
 
-namespace Cchbc.AppBuilder.UI.ViewModels
+namespace LoginModule
 {
 	public sealed class LoginsModule : Module<Login, LoginViewModel>
 	{
@@ -24,7 +28,10 @@ namespace Cchbc.AppBuilder.UI.ViewModels
 
 		public Task<List<Login>> GetAllAsync()
 		{
-			return this.Adapter.GetAllAsync();
+			using (var context = this.ContextCreator.Create())
+			{
+				return this.Adapter.GetAllAsync(context);
+			}
 		}
 
 		public bool IsAvailable(LoginViewModel viewModel)

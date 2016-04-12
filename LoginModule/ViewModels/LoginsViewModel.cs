@@ -1,13 +1,16 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using Cchbc;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
+using LoginModule.Adapter;
+using LoginModule.Objects;
 
-namespace Cchbc.AppBuilder.UI.ViewModels
+namespace LoginModule.ViewModels
 {
 	public sealed class LoginsViewModel : ViewModel
 	{
@@ -104,11 +107,11 @@ namespace Cchbc.AppBuilder.UI.ViewModels
 			this.Module.ItemDeleted += ModuleOnItemDeleted;
 		}
 
-		public async void Add(Login login)
+		public async Task InsertAsync(Login login)
 		{
 			if (login == null) throw new ArgumentNullException(nameof(login));
 
-			var feature = new Feature(this.Context, nameof(this.Add));
+			var feature = new Feature(this.Context, nameof(this.InsertAsync));
 			try
 			{
 				var viewModel = new LoginViewModel(login);

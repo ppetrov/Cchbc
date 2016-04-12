@@ -1,6 +1,7 @@
 ﻿using Cchbc.Objects;
+using LoginModule.Objects;
 
-namespace Cchbc.AppBuilder.UI.ViewModels
+namespace LoginModule.ViewModels
 {
 	public sealed class LoginViewModel : ViewModel<Login>
 	{

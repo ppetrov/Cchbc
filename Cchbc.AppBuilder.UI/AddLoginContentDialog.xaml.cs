@@ -1,8 +1,10 @@
 ﻿using System;
-using Cchbc.AppBuilder.UI.ViewModels;
+using System.Threading.Tasks;
 using Cchbc.Common;
 using Cchbc.Features;
 using Cchbc.Objects;
+using LoginModule.Objects;
+using LoginModule.ViewModels;
 
 namespace Cchbc.AppBuilder.UI
 {
@@ -10,7 +12,7 @@ namespace Cchbc.AppBuilder.UI
 	{
 		public AddLoginViewModel ViewModel { get; }
 
-		public AddLoginContentDialog(LoginsViewModel viewModel, Action<Login> acceptAction, Action<Login> cancelAction)
+		public AddLoginContentDialog(LoginsViewModel viewModel, Func<Login, Task> acceptAction, Action<Login> cancelAction)
 		{
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (acceptAction == null) throw new ArgumentNullException(nameof(acceptAction));
@@ -20,11 +22,10 @@ namespace Cchbc.AppBuilder.UI
 
 			this.DataContext = this;
 
-			this.ViewModel = new AddLoginViewModel(viewModel,
-				_ =>
+			this.ViewModel = new AddLoginViewModel(viewModel, async _ =>
 			{
 				this.Hide();
-				acceptAction(_);
+				await acceptAction(_);
 			}, _ =>
 			{
 				this.Hide();

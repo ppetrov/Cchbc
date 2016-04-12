@@ -2,7 +2,9 @@
 using System.Diagnostics;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Input;
-using Cchbc.AppBuilder.UI.ViewModels;
+using LoginModule;
+using LoginModule.Adapter;
+using LoginModule.ViewModels;
 
 namespace Cchbc.AppBuilder.UI
 {
@@ -29,7 +31,7 @@ namespace Cchbc.AppBuilder.UI
 
 		private async void AddLoginTapped(object sender, TappedRoutedEventArgs e)
 		{
-			var dialog = new AddLoginContentDialog(this.ViewModel, this.ViewModel.Add, _ => { });
+			var dialog = new AddLoginContentDialog(this.ViewModel, this.ViewModel.InsertAsync, _ => { });
 			await dialog.ShowAsync();
 		}
 	}

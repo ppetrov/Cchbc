@@ -1,7 +1,7 @@
 ﻿using System;
 using Cchbc.Objects;
 
-namespace Cchbc.AppBuilder.UI.ViewModels
+namespace LoginModule.Objects
 {
 	public sealed class Login : IDbObject
 	{

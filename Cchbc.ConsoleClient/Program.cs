@@ -15,6 +15,9 @@ using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
 using Cchbc.Dialog;
 using Cchbc.Features;
+using LoginModule.Adapter;
+using LoginModule.Objects;
+using LoginModule.ViewModels;
 
 
 namespace Cchbc.ConsoleClient
@@ -26,7 +29,6 @@ namespace Cchbc.ConsoleClient
 			return Task.FromResult(DialogResult.Cancel);
 		}
 	}
-
 
 	public class Program
 	{
@@ -45,23 +47,46 @@ namespace Cchbc.ConsoleClient
 
 		static void Main(string[] args)
 		{
+			var ps = new List<Person>
+			{
+				new Person(@"Teo", DateTime.Today.AddYears(-1)),
+				new Person(@"Niki", DateTime.Today.AddYears(-35)),
+				new Person(@"Pepo", DateTime.Today.AddYears(-33)),
+				new Person(@"Deni", DateTime.Today.AddYears(-4)),
+			};
+			ps.Sort((x, y) => -x.BDate.CompareTo(y.BDate));
+
+			foreach (var person in ps)
+			{
+				Console.WriteLine(person.Name );
+			}
+			return;
 			//GenerateProject(PhoenixModel(), @"C:\temp\IfsaBuilder\IfsaBuilder\Phoenix");
 
-			GenerateProject(WordpressModel(), @"C:\temp\IfsaBuilder\IfsaBuilder\Wordpress");
+			//GenerateProject(WordpressModel(), @"C:\temp\IfsaBuilder\IfsaBuilder\Wordpress");
 
 			//var prj = new ClrProject();
 			//prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
 
-			//Console.WriteLine(DbScript.CreateTable(users));
-			//Console.WriteLine(DbScript.CreateTable(blogs));
-			//Console.WriteLine(DbScript.CreateTable(posts));
-			//Console.WriteLine(DbScript.CreateTable(comments));
+			var core = new Core();
+			core.ContextCreator = new TransactionContextCreator(string.Empty);
+			core.ModalDialog = new ConsoleDialog();
+			var viewModel = new LoginsViewModel(core, new LoginAdapter());
+			try
+			{
+				viewModel.InsertAsync(new Login(1, @"PPetrov", @"Password", DateTime.Now, false)).Wait();
+
+				Console.WriteLine(@"Done");
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex);
+			}
 
 			return;
 
 
 
-			var core = new Core();
 
 
 
