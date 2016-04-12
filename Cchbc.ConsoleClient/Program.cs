@@ -13,8 +13,10 @@ using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
+using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
+using Cchbc.Features.Db;
 using LoginModule.Adapter;
 using LoginModule.Objects;
 using LoginModule.ViewModels;
@@ -32,35 +34,64 @@ namespace Cchbc.ConsoleClient
 
 	public class Program
 	{
-		public abstract class ViewModel<T> where T : class
-		{
-			public T Model { get; }
-
-			protected ViewModel(T model)
-			{
-				if (model == null) throw new ArgumentNullException(nameof(model));
-
-				this.Model = model;
-			}
-		}
-
-
 		static void Main(string[] args)
 		{
-			var ps = new List<Person>
-			{
-				new Person(@"Teo", DateTime.Today.AddYears(-1)),
-				new Person(@"Niki", DateTime.Today.AddYears(-35)),
-				new Person(@"Pepo", DateTime.Today.AddYears(-33)),
-				new Person(@"Deni", DateTime.Today.AddYears(-4)),
-			};
-			ps.Sort((x, y) => -x.BDate.CompareTo(y.BDate));
+			var agendaFeature = new Feature(@"Agenda", @"Load");
+			var outletsFeature = new Feature(@"Outlets", @"Load");
 
-			foreach (var person in ps)
+			var aFeatures = new[] { agendaFeature };
+			var bFeatures = new[] { outletsFeature };
+
+			var clientManager = new DbFeatureClientManager();
+			using (var clientContext = new TransactionContextCreator(@"Data Source = C:\Users\codem\Desktop\cchbc.sqlite; Version = 3;").Create())
 			{
-				Console.WriteLine(person.Name );
+				clientManager.Load(clientContext);
+				clientContext.Complete();
+
+				foreach (var ctx in clientManager.Contexts.Values)
+				{
+					Console.WriteLine(ctx.Id + " " + ctx.Name);
+				}
+			}
+
+			try
+			{
+				var serverManager = new DbFeatureServerManager();
+				using (var serverContext = new TransactionContextCreator(@"Data Source = C:\Users\codem\Desktop\server.sqlite; Version = 3;").Create())
+				{
+					serverManager.Load(serverContext);
+
+					var a = new Dictionary<string, DbContext>();
+					a.Add(@"Agenda", new DbContext(1, @"Agenda"));
+
+					var b = new Dictionary<string, DbFeatureStep>();
+					b.Add(@"Sort", new DbFeatureStep(1, @"Sort"));
+
+					serverManager.Merge(serverContext, a);
+					serverManager.Merge(serverContext, b);
+					serverManager.Merge(serverContext, clientManager.Features);
+
+					serverContext.Complete();
+
+					foreach (var ctx in serverManager.Contexts.Values)
+					{
+						Console.WriteLine(ctx.Id + " " + ctx.Name);
+					}
+
+					foreach (var ctx in serverManager.Steps.Values)
+					{
+						Console.WriteLine(ctx.Id + " " + ctx.Name);
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e);
 			}
 			return;
+
+
+
 			//GenerateProject(PhoenixModel(), @"C:\temp\IfsaBuilder\IfsaBuilder\Phoenix");
 
 			//GenerateProject(WordpressModel(), @"C:\temp\IfsaBuilder\IfsaBuilder\Wordpress");

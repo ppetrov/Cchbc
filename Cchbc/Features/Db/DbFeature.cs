@@ -7,15 +7,16 @@ namespace Cchbc.Features.Db
 	{
 		public long Id { get; set; }
 		public string Name { get; }
-		public long ContextId { get; }
+		public DbContext Context { get; }
 
-		public DbFeature(long id, string name, long contextId)
+		public DbFeature(long id, string name, DbContext context)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			this.Id = id;
 			this.Name = name;
-			this.ContextId = contextId;
+			this.Context = context;
 		}
 	}
 }

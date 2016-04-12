@@ -7,7 +7,7 @@ namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
-		private DbFeaturesManager DbManager { get; } = new DbFeaturesManager();
+		private DbFeatureClientManager DbClientManager { get; } = new DbFeatureClientManager();
 
 		private ITransactionContextCreator ContextCreator { get; set; }
 
@@ -15,14 +15,14 @@ namespace Cchbc.Features
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			this.DbManager.CreateSchema(context);
+			this.DbClientManager.CreateSchema(context);
 		}
 
 		public void DropSchema(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			this.DbManager.DropSchema(context);
+			this.DbClientManager.DropSchema(context);
 		}
 
 		public void Load(ITransactionContextCreator contextCreator)
@@ -33,7 +33,7 @@ namespace Cchbc.Features
 
 			using (var context = this.ContextCreator.Create())
 			{
-				this.DbManager.Load(context);
+				this.DbClientManager.Load(context);
 
 				context.Complete();
 			}
@@ -69,7 +69,7 @@ namespace Cchbc.Features
 
 			using (var context = this.ContextCreator.Create())
 			{
-				this.DbManager.Save(context, new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
+				this.DbClientManager.Save(context, new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
 
 				context.Complete();
 			}
@@ -82,7 +82,7 @@ namespace Cchbc.Features
 
 			using (var context = this.ContextCreator.Create())
 			{
-				this.DbManager.Save(context, new ExceptionEntry(feature.Context, feature.Name, exception));
+				this.DbClientManager.Save(context, new ExceptionEntry(feature.Context, feature.Name, exception));
 
 				context.Complete();
 			}
@@ -96,5 +96,10 @@ namespace Cchbc.Features
 
 			return feature;
 		}
+	}
+
+	public sealed class ServerFeatureManager
+	{
+		private DbFeatureClientManager DbClientManager { get; } = new DbFeatureClientManager();
 	}
 }
