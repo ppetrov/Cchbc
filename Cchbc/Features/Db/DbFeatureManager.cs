@@ -4,6 +4,23 @@ using Cchbc.Data;
 
 namespace Cchbc.Features.Db
 {
+	public sealed class FeatureEntryRow
+	{
+		public long Id;
+		public decimal TimeSpent;
+		public string Details;
+		public DateTime CreatedAt;
+		public long FeatureId;
+	}
+
+	public sealed class FeatureEntryStepRow
+	{
+		public decimal TimeSpent;
+		public string Details;
+		public long FeatureEntryId;
+		public long FeatureStepId;
+	}
+
 	public abstract class DbFeatureManager
 	{
 		public Dictionary<string, DbContext> Contexts { get; } = new Dictionary<string, DbContext>(StringComparer.OrdinalIgnoreCase);

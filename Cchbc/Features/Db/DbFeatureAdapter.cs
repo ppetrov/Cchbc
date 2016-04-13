@@ -116,14 +116,14 @@ CREATE TABLE [FEATURES] (
 			return context.GetNewId();
 		}
 
-		public static long InsertFeature(ITransactionContext context, string name, long dbContextId)
+		public static long InsertFeature(ITransactionContext context, string name, long contextId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			// Set parameters values
 			InsertFeatureSqlParams[0].Value = name;
-			InsertFeatureSqlParams[1].Value = dbContextId;
+			InsertFeatureSqlParams[1].Value = contextId;
 
 			// Insert the record
 			context.Execute(new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", InsertFeatureSqlParams));

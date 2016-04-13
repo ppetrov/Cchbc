@@ -15,14 +15,14 @@ namespace Cchbc.Features
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			this.DbClientManager.CreateSchema(context);
+			DbFeatureClientManager.CreateSchema(context);
 		}
 
 		public void DropSchema(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			this.DbClientManager.DropSchema(context);
+			DbFeatureClientManager.DropSchema(context);
 		}
 
 		public void Load(ITransactionContextCreator contextCreator)

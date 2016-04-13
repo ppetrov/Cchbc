@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cchbc.Data;
 
 namespace Cchbc.Features.Db
@@ -9,24 +10,50 @@ namespace Cchbc.Features.Db
 		private Dictionary<long, DbContext> Client2ServerContexts { get; } = new Dictionary<long, DbContext>();
 		private Dictionary<long, DbFeatureStep> Client2ServerSteps { get; } = new Dictionary<long, DbFeatureStep>();
 
-		
-
-		public void SaveClientData(ITransactionContext context, string userName, object data)
+		public void SaveClientData(ITransactionContext context, string userName, DbFeatureClientManager client, List<FeatureEntryRow> featureRows, List<FeatureEntryStepRow> steps)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (userName == null) throw new ArgumentNullException(nameof(userName));
+			if (client == null) throw new ArgumentNullException(nameof(client));
 
 			var user = UserHelper.GetOrCreateUser(context, userName);
 
-			// TODO : !!!
-			// what data should be ???
+			Merge(context, client.Contexts);
+			Merge(context, client.Steps);
+			var mappedFeaturesIds = Merge(context, client.Features);
+
+			var map = steps.GroupBy(v => v.FeatureEntryId).ToDictionary(v => v.Key, v => v.ToList());
+
+			foreach (var row in featureRows)
+			{
+				var oldFeatureId = row.FeatureId;
+				var newFeatureId = mappedFeaturesIds[oldFeatureId];
+
+				row.FeatureId = newFeatureId;
+
+				var featureEntryId = DbFeatureServerAdapter.Insert(context, user, row);
+
+				List<FeatureEntryStepRow> local;
+				if (map.TryGetValue(oldFeatureId, out local))
+				{
+					foreach (var stepRow in local)
+					{
+						var oldStepId = stepRow.FeatureStepId;
+						var newStepId = this.Client2ServerSteps[oldStepId].Id;
+
+						stepRow.FeatureStepId = newStepId;
+
+						DbFeatureServerAdapter.Insert(context, featureEntryId, stepRow);
+					}
+				}
+			}
 		}
 
-		
 
 
 
-		public void MergeContexts(ITransactionContext context, Dictionary<string, DbContext> clientContexts)
+
+		private void Merge(ITransactionContext context, Dictionary<string, DbContext> clientContexts)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (clientContexts == null) throw new ArgumentNullException(nameof(clientContexts));
@@ -42,7 +69,7 @@ namespace Cchbc.Features.Db
 			}
 		}
 
-		public void MergeSteps(ITransactionContext context, Dictionary<string, DbFeatureStep> clientSteps)
+		private void Merge(ITransactionContext context, Dictionary<string, DbFeatureStep> clientSteps)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (clientSteps == null) throw new ArgumentNullException(nameof(clientSteps));
@@ -58,10 +85,12 @@ namespace Cchbc.Features.Db
 			}
 		}
 
-		public void MergeFeatures(ITransactionContext context, Dictionary<long, Dictionary<string, DbFeature>> clientFeatures)
+		private Dictionary<long, long> Merge(ITransactionContext context, Dictionary<long, Dictionary<string, DbFeature>> clientFeatures)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (clientFeatures == null) throw new ArgumentNullException(nameof(clientFeatures));
+
+			var mappedIds = new Dictionary<long, long>();
 
 			var newFeatures = new List<DbFeature>();
 
@@ -80,15 +109,22 @@ namespace Cchbc.Features.Db
 				// Get the new features
 				foreach (var feature in clientContext.Value)
 				{
+					DbFeature value;
+
 					var name = feature.Key;
-					if (!serverFeatures.ContainsKey(name))
+					if (!serverFeatures.TryGetValue(name, out value))
 					{
-						newFeatures.Add(new DbFeature(-1, name, serverContext));
+						newFeatures.Add(new DbFeature(feature.Value.Id, name, serverContext));
 					}
+					else
+					{
+
+					}
+
 				}
 			}
 
-			this.Insert(context, newFeatures);
+			return this.Insert(context, newFeatures);
 		}
 
 		private List<DbContext> GetNewContexts(Dictionary<string, DbContext> contexts)
@@ -145,14 +181,19 @@ namespace Cchbc.Features.Db
 			}
 		}
 
-		private void Insert(ITransactionContext context, List<DbFeature> features)
+		private Dictionary<long, long> Insert(ITransactionContext context, List<DbFeature> features)
 		{
+			var mappedIds = new Dictionary<long, long>(features.Count);
+
 			foreach (var dbFeature in features)
 			{
 				var dbContextId = dbFeature.Context.Id;
 
+				var oldFeatureId = dbFeature.Id;
 				var newFeatureId = DbFeatureAdapter.InsertFeature(context, dbFeature.Name, dbContextId);
 				dbFeature.Id = newFeatureId;
+
+				mappedIds.Add(oldFeatureId, newFeatureId);
 
 				Dictionary<string, DbFeature> byContext;
 				if (!this.Features.TryGetValue(dbContextId, out byContext))
@@ -163,6 +204,8 @@ namespace Cchbc.Features.Db
 
 				byContext.Add(dbFeature.Name, dbFeature);
 			}
+
+			return mappedIds;
 		}
 	}
 
@@ -196,7 +239,8 @@ namespace Cchbc.Features.Db
 
 			return new DbFeatureUser(DbFeatureServerAdapter.InsertUser(context, userName), userName);
 		}
-
-		
 	}
+
+
+	
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cchbc.Data;
 
 namespace Cchbc.Features.Db
@@ -39,7 +40,7 @@ namespace Cchbc.Features.Db
 CREATE TABLE [FEATURE_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
-	[Details] nvarchar(254) NULL, 
+	[Details] nvarchar(254) NOT NULL, 
 	[CreatedAt] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Id])
@@ -140,5 +141,45 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			// Insert the record
 			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", InsertFeatureStepEntrySqlParams));
 		}
+
+		public static List<FeatureEntryRow> GetFeatureEntries(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			return context.Execute(new Query<FeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID FROM FEATURE_ENTRIES", FeatureEntryRowCreator));
+		}
+
+		public static List<FeatureEntryStepRow> GetFeatureEntrySteps(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			return context.Execute(new Query<FeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_ENTRY_STEPS", FeatureEntryStepRowCreator));
+		}
+
+		private static FeatureEntryRow FeatureEntryRowCreator(IFieldDataReader r)
+		{
+			var row = new FeatureEntryRow();
+
+			row.Id = r.GetInt64(0);
+			row.TimeSpent = r.GetDecimal(1);
+			row.Details = r.GetString(2);
+			row.CreatedAt = r.GetDateTime(3);
+			row.FeatureId = r.GetInt64(4);
+
+			return row;
+		}
+
+		private static FeatureEntryStepRow FeatureEntryStepRowCreator(IFieldDataReader r)
+		{
+			var row = new FeatureEntryStepRow();
+
+			row.TimeSpent = r.GetDecimal(0);
+			row.Details = r.GetString(1);
+			row.FeatureEntryId = r.GetInt64(2);
+			row.FeatureStepId = r.GetInt64(3);
+
+			return row;
+		}
+
 	}
 }

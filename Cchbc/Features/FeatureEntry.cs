@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Cchbc.Features
 {
@@ -6,9 +7,9 @@ namespace Cchbc.Features
 	{
 		public string Details { get; }
 		public TimeSpan TimeSpent { get; }
-		public FeatureEntryStep[] Steps { get; }
+		public ICollection<FeatureEntryStep> Steps { get; }
 
-		public FeatureEntry(string context, string name, string details, TimeSpan timeSpent, FeatureEntryStep[] steps)
+		public FeatureEntry(string context, string name, string details, TimeSpan timeSpent, ICollection<FeatureEntryStep> steps)
 			: base(context, name)
 		{
 			if (details == null) throw new ArgumentNullException(nameof(details));

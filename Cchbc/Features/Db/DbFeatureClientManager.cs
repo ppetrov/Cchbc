@@ -6,18 +6,32 @@ namespace Cchbc.Features.Db
 {
 	public sealed class DbFeatureClientManager : DbFeatureManager
 	{
-		public void CreateSchema(ITransactionContext context)
+		public static void CreateSchema(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			DbFeatureClientAdapter.CreateSchema(context);
 		}
 
-		public void DropSchema(ITransactionContext context)
+		public static void DropSchema(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			DbFeatureClientAdapter.DropSchema(context);
+		}
+
+		public List<FeatureEntryRow> GetFeatureEntries(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			return DbFeatureClientAdapter.GetFeatureEntries(context);
+		}
+
+		public List<FeatureEntryStepRow> GetFeatureEntrySteps(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			return DbFeatureClientAdapter.GetFeatureEntrySteps(context);
 		}
 
 		public void Save(ITransactionContext transactionContext, FeatureEntry entry)
@@ -91,9 +105,9 @@ namespace Cchbc.Features.Db
 			return feature;
 		}
 
-		private void SaveSteps(ITransactionContext context, DbFeatureEntry featureEntry, FeatureEntryStep[] entrySteps)
+		private void SaveSteps(ITransactionContext context, DbFeatureEntry featureEntry, ICollection<FeatureEntryStep> entrySteps)
 		{
-			if (entrySteps.Length == 0) return;
+			if (entrySteps.Count == 0) return;
 
 			foreach (var step in entrySteps)
 			{

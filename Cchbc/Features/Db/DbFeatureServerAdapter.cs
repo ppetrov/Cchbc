@@ -14,13 +14,13 @@ namespace Cchbc.Features.Db
 			new QueryParameter(@"@USER", 0L),
 		};
 
-		private static readonly QueryParameter[] InsertExcetionEntrySqlParams =
-		{
-			new QueryParameter(@"@MESSAGE", string.Empty),
-			new QueryParameter(@"@STACKTRACE", string.Empty),
-			new QueryParameter(@"@CREATEDAT", DateTime.MinValue),
-			new QueryParameter(@"@FEATURE", 0L),
-		};
+		//private static readonly QueryParameter[] InsertExcetionEntrySqlParams =
+		//{
+		//	new QueryParameter(@"@MESSAGE", string.Empty),
+		//	new QueryParameter(@"@STACKTRACE", string.Empty),
+		//	new QueryParameter(@"@CREATEDAT", DateTime.MinValue),
+		//	new QueryParameter(@"@FEATURE", 0L),
+		//};
 
 		private static readonly QueryParameter[] InsertFeatureStepEntrySqlParams =
 		{
@@ -128,21 +128,21 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return new DbFeatureEntry(context.GetNewId(), feature, details, timeSpent);
 		}
 
-		public static void InsertExceptionEntry(ITransactionContext context, DbFeature feature, FeatureException featureException)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-			if (featureException == null) throw new ArgumentNullException(nameof(featureException));
+		//public static void InsertExceptionEntry(ITransactionContext context, DbFeature feature, FeatureException featureException)
+		//{
+		//	if (context == null) throw new ArgumentNullException(nameof(context));
+		//	if (feature == null) throw new ArgumentNullException(nameof(feature));
+		//	if (featureException == null) throw new ArgumentNullException(nameof(featureException));
 
-			// Set parameters values
-			InsertExcetionEntrySqlParams[0].Value = featureException.Exception.Message;
-			InsertExcetionEntrySqlParams[1].Value = featureException.Exception.StackTrace;
-			InsertExcetionEntrySqlParams[2].Value = DateTime.Now;
-			InsertExcetionEntrySqlParams[3].Value = feature.Id;
+		//	// Set parameters values
+		//	InsertExcetionEntrySqlParams[0].Value = featureException.Exception.Message;
+		//	InsertExcetionEntrySqlParams[1].Value = featureException.Exception.StackTrace;
+		//	InsertExcetionEntrySqlParams[2].Value = DateTime.Now;
+		//	InsertExcetionEntrySqlParams[3].Value = feature.Id;
 
-			// Insert the record
-			context.Execute(new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE)", InsertExcetionEntrySqlParams));
-		}
+		//	// Insert the record
+		//	context.Execute(new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE)", InsertExcetionEntrySqlParams));
+		//}
 
 		public static void InsertStepEntry(ITransactionContext context, DbFeatureEntry featureEntry, DbFeatureStep step, FeatureEntryStep entryStep)
 		{
@@ -184,12 +184,40 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			InsertUserSqlParams[0].Value = name;
 
 			// select the record
-			var ids = context.Execute(new Query<long>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", r => r.GetInt64(0)));
+			var ids = context.Execute(new Query<long>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", r => r.GetInt64(0), InsertUserSqlParams));
 			if (ids.Count > 0)
 			{
 				return ids[0];
 			}
 			return null;
+		}
+
+		public static long Insert(ITransactionContext context, DbFeatureUser user, FeatureEntryRow row)
+		{
+			// Set parameters values
+			InsertFeatureEntrySqlParams[0].Value = row.TimeSpent;
+			InsertFeatureEntrySqlParams[1].Value = row.Details;
+			InsertFeatureEntrySqlParams[2].Value = DateTime.Now;
+			InsertFeatureEntrySqlParams[3].Value = row.FeatureId;
+			InsertFeatureEntrySqlParams[4].Value = user.Id;
+
+			// Insert the record
+			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID, USER_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATEDAT, @FEATURE, @USER)", InsertFeatureEntrySqlParams));
+
+			// Get new Id back
+			return context.GetNewId();
+		}
+
+		public static void Insert(ITransactionContext context, long featureEntryId, FeatureEntryStepRow row)
+		{
+			// Set parameters values
+			InsertFeatureStepEntrySqlParams[0].Value = featureEntryId;
+			InsertFeatureStepEntrySqlParams[1].Value = row.FeatureStepId;
+			InsertFeatureStepEntrySqlParams[2].Value = row.TimeSpent;
+			InsertFeatureStepEntrySqlParams[3].Value = row.Details;
+
+			// Insert the record
+			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", InsertFeatureStepEntrySqlParams));
 		}
 	}
 }

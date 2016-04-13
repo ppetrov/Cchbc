@@ -36,46 +36,56 @@ namespace Cchbc.ConsoleClient
 	{
 		static void Main(string[] args)
 		{
-			var clientManager = new DbFeatureClientManager();
-			//using (var clientContext = new TransactionContextCreator(@"Data Source = C:\Users\codem\Desktop\cchbc.sqlite; Version = 3;").Create())
-			//{
-			//	clientManager.Load(clientContext);
-			//	clientContext.Complete();
+			var serverDb = @"Data Source = C:\Users\codem\Desktop\iandonov.sqlite; Version = 3;";
+			var clientDb = @"Data Source = C:\Users\codem\Desktop\ppetrov.sqlite; Version = 3;";
 
-			//	foreach (var ctx in clientManager.Contexts.Values)
-			//	{
-			//		Console.WriteLine(ctx.Id + " " + ctx.Name);
-			//	}
-			//}
-
+			var si = clientDb.LastIndexOf('\\') + 1;
+			var ei = clientDb.IndexOf('.', si);
+			var userName = clientDb.Substring(si, ei - si);
 			try
 			{
-				var serverManager = new DbFeatureServerManager();
+				//DropSchema(serverDb);
+				//CreateSchema(serverDb);
 
-				using (var serverContext = new TransactionContextCreator(@"Data Source = C:\Users\codem\Desktop\server.sqlite; Version = 3;").Create())
-				{
-					try
-					{
-						DbFeatureServerAdapter.DropSchema(serverContext);
-						serverContext.Complete();
-					}
-					catch (Exception e)
-					{
-					}
-				}
-				using (var serverContext = new TransactionContextCreator(@"Data Source = C:\Users\codem\Desktop\server.sqlite; Version = 3;").Create())
-				{
-					DbFeatureServerAdapter.CreateSchema(serverContext);
-					serverContext.Complete();
-					Console.WriteLine(@"Done");
-				}
 
-				using (var serverContext = new TransactionContextCreator(@"Data Source = C:\Users\codem\Desktop\server.sqlite; Version = 3;").Create())
+				
+				using (var s = new TransactionContextCreator(serverDb).Create())
 				{
-					//var me = DbFeatureServerManager.InsertUser(serverContext, @"PPetrov");
-					serverContext.Complete();
-					Console.WriteLine(@"Done");
+					using (var c = new TransactionContextCreator(clientDb).Create())
+					{
+						var w = Stopwatch.StartNew();
+						var r = new DbReplication();
+						r.Replicate(s, c);
+
+						c.Complete();
+						s.Complete();
+						w.Stop();
+						Console.WriteLine(w.ElapsedMilliseconds);
+					}
 				}
+				
+
+
+				//var client = GetClient(clientDb);
+
+				//using (var serverContext = new TransactionContextCreator(serverDb).Create())
+				//{
+				//	var server = new DbFeatureServerManager();
+				//	server.Load(serverContext);
+
+				//	List<FeatureEntryRow> rows;
+				//	List<FeatureEntryStepRow> rows2;
+				//	using (var context = new TransactionContextCreator(clientDb).Create())
+				//	{
+				//		rows = client.GetFeatureEntries(context);
+				//		rows2 = client.GetFeatureEntrySteps(context);
+				//	}
+
+				//	server.SaveClientData(serverContext, userName, client, rows, rows2);
+				//	serverContext.Complete();
+
+				//	Console.WriteLine(@"Done");
+				//}
 			}
 			catch (Exception e)
 			{
@@ -145,6 +155,66 @@ namespace Cchbc.ConsoleClient
 			catch (Exception e)
 			{
 				Console.WriteLine(e);
+			}
+		}
+
+		private static DbFeatureClientManager GetClient(string clientDb)
+		{
+			var client = new DbFeatureClientManager();
+
+			using (var context = new TransactionContextCreator(clientDb).Create())
+			{
+				client.Load(context);
+
+				foreach (var row in DbFeatureClientAdapter.GetFeatureEntries(context))
+				{
+					Console.WriteLine(row);
+				}
+
+				Console.WriteLine();
+
+				foreach (var row in DbFeatureClientAdapter.GetFeatureEntrySteps(context))
+				{
+					Console.WriteLine(row);
+				}
+
+				Console.WriteLine();
+
+				foreach (var row in client.GetFeatureEntries(context))
+				{
+					Console.WriteLine(row);
+				}
+
+				context.Complete();
+			}
+
+			return client;
+		}
+
+		private static void CreateSchema(string serverDb)
+		{
+			using (var serverContext = new TransactionContextCreator(serverDb).Create())
+			{
+				DbFeatureServerAdapter.CreateSchema(serverContext);
+				serverContext.Complete();
+
+				Console.WriteLine(@"Create schema");
+			}
+		}
+
+		private static void DropSchema(string serverDb)
+		{
+			using (var serverContext = new TransactionContextCreator(serverDb).Create())
+			{
+				try
+				{
+					DbFeatureServerAdapter.DropSchema(serverContext);
+					serverContext.Complete();
+				}
+				catch
+				{
+				}
+				Console.WriteLine(@"Drop schema");
 			}
 		}
 
