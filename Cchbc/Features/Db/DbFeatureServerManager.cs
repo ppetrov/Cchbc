@@ -1,16 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Cchbc.Data;
 
 namespace Cchbc.Features.Db
 {
 	public sealed class DbFeatureServerManager : DbFeatureManager
 	{
-		private Dictionary<long, DbContext> ContextMappings { get; } = new Dictionary<long, DbContext>();
-		private Dictionary<long, long> StepsMappings { get; } = new Dictionary<long, long>();
+		private Dictionary<long, DbContext> Client2ServerContexts { get; } = new Dictionary<long, DbContext>();
+		private Dictionary<long, DbFeatureStep> Client2ServerSteps { get; } = new Dictionary<long, DbFeatureStep>();
 
-		public void Merge(ITransactionContext context, Dictionary<string, DbContext> clientContexts)
+		
+
+		public void SaveClientData(ITransactionContext context, string userName, object data)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (userName == null) throw new ArgumentNullException(nameof(userName));
+
+			var user = UserHelper.GetOrCreateUser(context, userName);
+
+			// TODO : !!!
+			// what data should be ???
+		}
+
+		
+
+
+
+		public void MergeContexts(ITransactionContext context, Dictionary<string, DbContext> clientContexts)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (clientContexts == null) throw new ArgumentNullException(nameof(clientContexts));
@@ -19,14 +35,14 @@ namespace Cchbc.Features.Db
 			this.Insert(context, this.GetNewContexts(clientContexts));
 
 			// Map client to server contexts
-			this.ContextMappings.Clear();
-			foreach (var c in clientContexts.Values)
+			this.Client2ServerContexts.Clear();
+			foreach (var dbContext in clientContexts.Values)
 			{
-				this.ContextMappings.Add(c.Id, this.Contexts[c.Name]);
+				this.Client2ServerContexts.Add(dbContext.Id, this.Contexts[dbContext.Name]);
 			}
 		}
 
-		public void Merge(ITransactionContext context, Dictionary<string, DbFeatureStep> clientSteps)
+		public void MergeSteps(ITransactionContext context, Dictionary<string, DbFeatureStep> clientSteps)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (clientSteps == null) throw new ArgumentNullException(nameof(clientSteps));
@@ -35,35 +51,39 @@ namespace Cchbc.Features.Db
 			this.Insert(context, this.GetNewSteps(clientSteps));
 
 			// Map client to server steps
-			this.StepsMappings.Clear();
-			foreach (var s in clientSteps.Values)
+			this.Client2ServerSteps.Clear();
+			foreach (var step in clientSteps.Values)
 			{
-				this.StepsMappings.Add(s.Id, this.Steps[s.Name].Id);
+				this.Client2ServerSteps.Add(step.Id, this.Steps[step.Name]);
 			}
 		}
 
-		public void Merge(ITransactionContext context, Dictionary<long, Dictionary<string, DbFeature>> clientFeatures)
+		public void MergeFeatures(ITransactionContext context, Dictionary<long, Dictionary<string, DbFeature>> clientFeatures)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (clientFeatures == null) throw new ArgumentNullException(nameof(clientFeatures));
 
 			var newFeatures = new List<DbFeature>();
 
-			foreach (var byContext in clientFeatures)
+			foreach (var clientContext in clientFeatures)
 			{
-				var dbContext = this.ContextMappings[byContext.Key];
+				var clientContextId = clientContext.Key;
 
-				Dictionary<string, DbFeature> contextFeatures;
-				this.Features.TryGetValue(dbContext.Id, out contextFeatures);
-				contextFeatures = contextFeatures ?? new Dictionary<string, DbFeature>(0, StringComparer.OrdinalIgnoreCase);
+				// Map client 2 server context
+				var serverContext = this.Client2ServerContexts[clientContextId];
 
-				foreach (var feature in byContext.Value)
+				// Get the server features via serverContext
+				Dictionary<string, DbFeature> serverFeatures;
+				this.Features.TryGetValue(serverContext.Id, out serverFeatures);
+				serverFeatures = serverFeatures ?? new Dictionary<string, DbFeature>(0, StringComparer.OrdinalIgnoreCase);
+
+				// Get the new features
+				foreach (var feature in clientContext.Value)
 				{
-					// Check exists
-					if (!contextFeatures.ContainsKey(feature.Key))
+					var name = feature.Key;
+					if (!serverFeatures.ContainsKey(name))
 					{
-						Debug.Assert(feature.Key == feature.Value.Name);
-						newFeatures.Add(new DbFeature(-1, feature.Key, dbContext));
+						newFeatures.Add(new DbFeature(-1, name, serverContext));
 					}
 				}
 			}
@@ -144,5 +164,39 @@ namespace Cchbc.Features.Db
 				byContext.Add(dbFeature.Name, dbFeature);
 			}
 		}
+	}
+
+	public static class UserHelper
+	{
+		public static DbFeatureUser GetOrCreateUser(ITransactionContext context, string userName)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (userName == null) throw new ArgumentNullException(nameof(userName));
+
+			return GetUser(context, userName) ?? CreateUser(context, userName);
+		}
+
+		private static DbFeatureUser GetUser(ITransactionContext context, string userName)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (userName == null) throw new ArgumentNullException(nameof(userName));
+
+			var userId = DbFeatureServerAdapter.GetUser(context, userName);
+			if (userId.HasValue)
+			{
+				return new DbFeatureUser(userId.Value, userName);
+			}
+			return null;
+		}
+
+		private static DbFeatureUser CreateUser(ITransactionContext context, string userName)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (userName == null) throw new ArgumentNullException(nameof(userName));
+
+			return new DbFeatureUser(DbFeatureServerAdapter.InsertUser(context, userName), userName);
+		}
+
+		
 	}
 }

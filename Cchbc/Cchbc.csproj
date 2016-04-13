@@ -59,7 +59,8 @@
     <Compile Include="Features\Db\DbFeatureStep.cs" />
     <Compile Include="Features\Db\DbFeatureServerAdapter.cs" />
     <Compile Include="Features\Db\DbFeatureServerManager.cs" />
-    <Compile Include="Features\ExceptionEntry.cs" />
+    <Compile Include="Features\Db\DbFeatureUser.cs" />
+    <Compile Include="Features\FeatureException.cs" />
     <Compile Include="Features\Feature.cs" />
     <Compile Include="Features\FeatureEntry.cs" />
     <Compile Include="Features\FeatureEntryStep.cs" />

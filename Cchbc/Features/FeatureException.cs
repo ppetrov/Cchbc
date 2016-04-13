@@ -2,11 +2,11 @@ using System;
 
 namespace Cchbc.Features
 {
-	public sealed class ExceptionEntry : DbEntry
+	public sealed class FeatureException : DbEntry
 	{
 		public Exception Exception { get; }
 
-		public ExceptionEntry(string context, string name, Exception exception) :
+		public FeatureException(string context, string name, Exception exception) :
 			base(context, name)
 		{
 			if (exception == null) throw new ArgumentNullException(nameof(exception));

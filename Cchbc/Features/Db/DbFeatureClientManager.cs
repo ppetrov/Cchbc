@@ -32,7 +32,7 @@ namespace Cchbc.Features.Db
 			this.SaveSteps(transactionContext, dbFeatureEntry, entry.Steps);
 		}
 
-		public void Save(ITransactionContext transactionContext, ExceptionEntry entry)
+		public void Save(ITransactionContext transactionContext, FeatureException entry)
 		{
 			if (transactionContext == null) throw new ArgumentNullException(nameof(transactionContext));
 			if (entry == null) throw new ArgumentNullException(nameof(entry));

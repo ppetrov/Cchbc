@@ -36,52 +36,45 @@ namespace Cchbc.ConsoleClient
 	{
 		static void Main(string[] args)
 		{
-			var agendaFeature = new Feature(@"Agenda", @"Load");
-			var outletsFeature = new Feature(@"Outlets", @"Load");
-
-			var aFeatures = new[] { agendaFeature };
-			var bFeatures = new[] { outletsFeature };
-
 			var clientManager = new DbFeatureClientManager();
-			using (var clientContext = new TransactionContextCreator(@"Data Source = C:\Users\codem\Desktop\cchbc.sqlite; Version = 3;").Create())
-			{
-				clientManager.Load(clientContext);
-				clientContext.Complete();
+			//using (var clientContext = new TransactionContextCreator(@"Data Source = C:\Users\codem\Desktop\cchbc.sqlite; Version = 3;").Create())
+			//{
+			//	clientManager.Load(clientContext);
+			//	clientContext.Complete();
 
-				foreach (var ctx in clientManager.Contexts.Values)
-				{
-					Console.WriteLine(ctx.Id + " " + ctx.Name);
-				}
-			}
+			//	foreach (var ctx in clientManager.Contexts.Values)
+			//	{
+			//		Console.WriteLine(ctx.Id + " " + ctx.Name);
+			//	}
+			//}
 
 			try
 			{
 				var serverManager = new DbFeatureServerManager();
+
 				using (var serverContext = new TransactionContextCreator(@"Data Source = C:\Users\codem\Desktop\server.sqlite; Version = 3;").Create())
 				{
-					serverManager.Load(serverContext);
-
-					var a = new Dictionary<string, DbContext>();
-					a.Add(@"Agenda", new DbContext(1, @"Agenda"));
-
-					var b = new Dictionary<string, DbFeatureStep>();
-					b.Add(@"Sort", new DbFeatureStep(1, @"Sort"));
-
-					serverManager.Merge(serverContext, a);
-					serverManager.Merge(serverContext, b);
-					serverManager.Merge(serverContext, clientManager.Features);
-
+					try
+					{
+						DbFeatureServerAdapter.DropSchema(serverContext);
+						serverContext.Complete();
+					}
+					catch (Exception e)
+					{
+					}
+				}
+				using (var serverContext = new TransactionContextCreator(@"Data Source = C:\Users\codem\Desktop\server.sqlite; Version = 3;").Create())
+				{
+					DbFeatureServerAdapter.CreateSchema(serverContext);
 					serverContext.Complete();
+					Console.WriteLine(@"Done");
+				}
 
-					foreach (var ctx in serverManager.Contexts.Values)
-					{
-						Console.WriteLine(ctx.Id + " " + ctx.Name);
-					}
-
-					foreach (var ctx in serverManager.Steps.Values)
-					{
-						Console.WriteLine(ctx.Id + " " + ctx.Name);
-					}
+				using (var serverContext = new TransactionContextCreator(@"Data Source = C:\Users\codem\Desktop\server.sqlite; Version = 3;").Create())
+				{
+					//var me = DbFeatureServerManager.InsertUser(serverContext, @"PPetrov");
+					serverContext.Complete();
+					Console.WriteLine(@"Done");
 				}
 			}
 			catch (Exception e)

@@ -82,7 +82,7 @@ namespace Cchbc.Features
 
 			using (var context = this.ContextCreator.Create())
 			{
-				this.DbClientManager.Save(context, new ExceptionEntry(feature.Context, feature.Name, exception));
+				this.DbClientManager.Save(context, new FeatureException(feature.Context, feature.Name, exception));
 
 				context.Complete();
 			}
@@ -96,10 +96,5 @@ namespace Cchbc.Features
 
 			return feature;
 		}
-	}
-
-	public sealed class ServerFeatureManager
-	{
-		private DbFeatureClientManager DbClientManager { get; } = new DbFeatureClientManager();
 	}
 }

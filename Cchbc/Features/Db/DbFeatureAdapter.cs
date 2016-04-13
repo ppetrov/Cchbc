@@ -22,6 +22,33 @@ namespace Cchbc.Features.Db
 			new QueryParameter(@"@CONTEXT", 0L),
 		};
 
+		public static void CreateSchema(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			context.Execute(new Query(@"
+CREATE TABLE[FEATURE_CONTEXTS] (
+	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	[Name] nvarchar(254) NOT NULL
+)"));
+
+			context.Execute(new Query(@"
+CREATE TABLE[FEATURE_STEPS] (
+	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	[Name] nvarchar(254) NOT NULL
+)"));
+
+			context.Execute(new Query(@"
+CREATE TABLE [FEATURES] (
+	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	[Name] nvarchar(254) NOT NULL, 
+	[Context_Id] integer NOT NULL, 
+	FOREIGN KEY ([Context_Id])
+		REFERENCES [FEATURE_CONTEXTS] ([Id])
+		ON UPDATE CASCADE ON DELETE CASCADE
+)"));
+		}
+
 		public static List<DbContext> GetContexts(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
