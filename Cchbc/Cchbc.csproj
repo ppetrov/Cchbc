@@ -59,8 +59,6 @@
     <Compile Include="Features\Db\Objects\DbFeatureUserRow.cs" />
     <Compile Include="Features\FeatureException.cs" />
     <Compile Include="Features\Feature.cs" />
-    <Compile Include="Features\FeatureEntry.cs" />
-    <Compile Include="Features\FeatureEntryStep.cs" />
     <Compile Include="Features\FeatureManager.cs" />
     <Compile Include="Features\FeatureStep.cs" />
     <Compile Include="Features\FeatureStepEventArgs.cs" />

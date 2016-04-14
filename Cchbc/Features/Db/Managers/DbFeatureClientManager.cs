@@ -35,15 +35,16 @@ namespace Cchbc.Features.Db.Managers
 			this.LoadFeatures(context);
 		}
 
-		public void Save(ITransactionContext transactionContext, FeatureEntry entry)
+		public void Save(ITransactionContext transactionContext, Feature entry, string details)
 		{
 			if (transactionContext == null) throw new ArgumentNullException(nameof(transactionContext));
 			if (entry == null) throw new ArgumentNullException(nameof(entry));
+			if (details == null) throw new ArgumentNullException(nameof(details));
 
 			var context = this.SaveContext(transactionContext, entry.Context);
 			var feature = this.SaveFeature(transactionContext, context, entry.Name);
 
-			var dbFeatureEntry = DbFeatureAdapter.InsertFeatureEntry(transactionContext, feature.Id, entry);
+			var dbFeatureEntry = DbFeatureAdapter.InsertFeatureEntry(transactionContext, feature.Id, entry, details);
 			this.SaveSteps(transactionContext, dbFeatureEntry, entry.Steps);
 		}
 
@@ -106,7 +107,7 @@ namespace Cchbc.Features.Db.Managers
 			return feature;
 		}
 
-		private void SaveSteps(ITransactionContext context, DbFeatureEntryRow featureEntryRow, ICollection<FeatureEntryStep> entrySteps)
+		private void SaveSteps(ITransactionContext context, DbFeatureEntryRow featureEntryRow, ICollection<FeatureStep> entrySteps)
 		{
 			if (entrySteps.Count == 0) return;
 

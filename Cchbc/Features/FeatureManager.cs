@@ -1,7 +1,5 @@
 using System;
-using System.Linq;
 using Cchbc.Data;
-using Cchbc.Features.Db;
 using Cchbc.Features.Db.Managers;
 
 namespace Cchbc.Features
@@ -54,23 +52,9 @@ namespace Cchbc.Features
 			// Stop the feature
 			feature.Stop();
 
-			var steps = Enumerable.Empty<FeatureEntryStep>().ToArray();
-
-			var featureSteps = feature.Steps;
-			if (featureSteps.Count > 0)
-			{
-				steps = new FeatureEntryStep[featureSteps.Count];
-
-				for (var i = 0; i < steps.Length; i++)
-				{
-					var s = featureSteps[i];
-					steps[i] = new FeatureEntryStep(s.Name, s.TimeSpent, s.Details);
-				}
-			}
-
 			using (var context = this.ContextCreator.Create())
 			{
-				this.DbClientClientManager.Save(context, new FeatureEntry(feature.Context, feature.Name, details ?? string.Empty, feature.TimeSpent, steps));
+				this.DbClientClientManager.Save(context, feature, details ?? string.Empty);
 
 				context.Complete();
 			}

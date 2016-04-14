@@ -659,50 +659,50 @@ using System.Data;
 			return articleHelper;
 		}
 
-		private static void InspectFeature(FeatureEntry f)
+		private static void InspectFeature(Feature f)
 		{
-			var buffer = new StringBuilder();
+			//var buffer = new StringBuilder();
 
-			var ctxName = f.Context + "(" + f.Name + ")";
-			buffer.Append(ctxName.PadRight(25));
-			buffer.Append(' ');
-			buffer.Append(f.Details.PadRight(12));
-			buffer.Append(' ');
-			buffer.AppendLine(f.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture).PadRight(6));
+			//var ctxName = f.Context + "(" + f.Name + ")";
+			//buffer.Append(ctxName.PadRight(25));
+			//buffer.Append(' ');
+			//buffer.Append(f.Details.PadRight(12));
+			//buffer.Append(' ');
+			//buffer.AppendLine(f.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture).PadRight(6));
 
-			if (f.Steps.Any())
-			{
-				var totalMilliseconds = f.TimeSpent.TotalMilliseconds;
-				var remaingTime = totalMilliseconds - (f.Steps.Select(v => v.TimeSpent.TotalMilliseconds).Sum());
+			//if (f.Steps.Any())
+			//{
+			//	var totalMilliseconds = f.TimeSpent.TotalMilliseconds;
+			//	var remaingTime = totalMilliseconds - (f.Steps.Select(v => v.TimeSpent.TotalMilliseconds).Sum());
 
-				foreach (var s in f.Steps.Concat(new[] { new FeatureEntryStep(@"Other", TimeSpan.FromMilliseconds(remaingTime), string.Empty) }))
-				{
-					buffer.Append('\t');
+			//	foreach (var s in f.Steps.Concat(new[] { new FeatureEntryStep(@"Other", TimeSpan.FromMilliseconds(remaingTime), string.Empty) }))
+			//	{
+			//		buffer.Append('\t');
 
-					var value = s.Name.Replace(@"Async", string.Empty);
-					value = Regex.Replace(value, @"[A-Z]", m => @" " + m.Value).TrimStart();
-					buffer.Append(value.PadRight(24));
-					buffer.Append(' ');
-					buffer.Append(s.Details.PadRight(4));
-					buffer.Append(' ');
-					var milliseconds = s.TimeSpent.TotalMilliseconds;
-					var tmp = (milliseconds / totalMilliseconds) * 100;
-					var graph = new string('-', (int)tmp);
+			//		var value = s.Name.Replace(@"Async", string.Empty);
+			//		value = Regex.Replace(value, @"[A-Z]", m => @" " + m.Value).TrimStart();
+			//		buffer.Append(value.PadRight(24));
+			//		buffer.Append(' ');
+			//		buffer.Append(s.Details.PadRight(4));
+			//		buffer.Append(' ');
+			//		var milliseconds = s.TimeSpent.TotalMilliseconds;
+			//		var tmp = (milliseconds / totalMilliseconds) * 100;
+			//		var graph = new string('-', (int)tmp);
 
-					buffer.Append(milliseconds.ToString(CultureInfo.InvariantCulture).PadRight(8));
-					buffer.Append(tmp.ToString(@"F2").PadLeft(5));
-					buffer.Append(@"% ");
-					buffer.AppendLine(graph);
-				}
-			}
+			//		buffer.Append(milliseconds.ToString(CultureInfo.InvariantCulture).PadRight(8));
+			//		buffer.Append(tmp.ToString(@"F2").PadLeft(5));
+			//		buffer.Append(@"% ");
+			//		buffer.AppendLine(graph);
+			//	}
+			//}
 
 
-			buffer.AppendLine();
-			var output = buffer.ToString();
-			Debug.WriteLine(output);
-			Console.WriteLine(output);
+			//buffer.AppendLine();
+			//var output = buffer.ToString();
+			//Debug.WriteLine(output);
+			//Console.WriteLine(output);
 
-			File.AppendAllText(@"C:\temp\diagnostics.txt", output);
+			//File.AppendAllText(@"C:\temp\diagnostics.txt", output);
 		}
 	}
 

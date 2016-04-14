@@ -298,13 +298,13 @@ CREATE TABLE [FEATURES] (
 )"));
 		}
 
-		public static DbFeatureEntryRow InsertFeatureEntry(ITransactionContext context, long featureId, FeatureEntry featureEntry)
+		public static DbFeatureEntryRow InsertFeatureEntry(ITransactionContext context, long featureId, Feature feature, string details)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (featureEntry == null) throw new ArgumentNullException(nameof(featureEntry));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (details == null) throw new ArgumentNullException(nameof(details));
 
-			var timeSpent = Convert.ToDecimal(featureEntry.TimeSpent.TotalMilliseconds);
-			var details = featureEntry.Details;
+			var timeSpent = Convert.ToDecimal(feature.TimeSpent.TotalMilliseconds);
 			var dateTime = DateTime.Now;
 
 			// Set parameters values
@@ -335,7 +335,7 @@ CREATE TABLE [FEATURES] (
 			context.Execute(new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE)", InsertExcetionEntrySqlParams));
 		}
 
-		public static void InsertStepEntry(ITransactionContext context, DbFeatureEntryRow featureEntryRow, DbFeatureStepRow stepRow, FeatureEntryStep entryStep)
+		public static void InsertStepEntry(ITransactionContext context, DbFeatureEntryRow featureEntryRow, DbFeatureStepRow stepRow, FeatureStep entryStep)
 		{
 			if (featureEntryRow == null) throw new ArgumentNullException(nameof(featureEntryRow));
 			if (stepRow == null) throw new ArgumentNullException(nameof(stepRow));
