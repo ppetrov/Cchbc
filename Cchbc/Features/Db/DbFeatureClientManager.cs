@@ -7,7 +7,7 @@ namespace Cchbc.Features.Db
 	public sealed class DbFeatureClientManager
 	{
 		public Dictionary<string, DbContextRow> Contexts { get; } = new Dictionary<string, DbContextRow>(StringComparer.OrdinalIgnoreCase);
-		public Dictionary<string, DbFeatureStep> Steps { get; } = new Dictionary<string, DbFeatureStep>(StringComparer.OrdinalIgnoreCase);
+		public Dictionary<string, DbFeatureStepRow> Steps { get; } = new Dictionary<string, DbFeatureStepRow>(StringComparer.OrdinalIgnoreCase);
 		public Dictionary<long, Dictionary<string, DbFeatureRow>> Features { get; } = new Dictionary<long, Dictionary<string, DbFeatureRow>>();
 
 		public static void CreateSchema(ITransactionContext context)
@@ -112,13 +112,13 @@ namespace Cchbc.Features.Db
 			{
 				var name = step.Name;
 
-				DbFeatureStep current;
+				DbFeatureStepRow current;
 				if (!this.Steps.TryGetValue(name, out current))
 				{
 					// Inser step
 					var newStepId = DbFeatureAdapter.InsertStep(context, name);
 
-					current = new DbFeatureStep(newStepId, name);
+					current = new DbFeatureStepRow(newStepId, name);
 
 					this.Steps.Add(name, current);
 				}

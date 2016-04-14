@@ -189,11 +189,11 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return context.Execute(new Query<DbContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextCreator));
 		}
 
-		public static List<DbFeatureStep> GetSteps(ITransactionContext context)
+		public static List<DbFeatureStepRow> GetSteps(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return context.Execute(new Query<DbFeatureStep>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator));
+			return context.Execute(new Query<DbFeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator));
 		}
 
 
@@ -338,15 +338,15 @@ CREATE TABLE [FEATURES] (
 			context.Execute(new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE)", InsertExcetionEntrySqlParams));
 		}
 
-		public static void InsertStepEntry(ITransactionContext context, DbFeatureEntry featureEntry, DbFeatureStep step, FeatureEntryStep entryStep)
+		public static void InsertStepEntry(ITransactionContext context, DbFeatureEntry featureEntry, DbFeatureStepRow stepRow, FeatureEntryStep entryStep)
 		{
 			if (featureEntry == null) throw new ArgumentNullException(nameof(featureEntry));
-			if (step == null) throw new ArgumentNullException(nameof(step));
+			if (stepRow == null) throw new ArgumentNullException(nameof(stepRow));
 			if (entryStep == null) throw new ArgumentNullException(nameof(entryStep));
 
 			// Set parameters values
 			InsertFeatureStepEntrySqlParams[0].Value = featureEntry.Id;
-			InsertFeatureStepEntrySqlParams[1].Value = step.Id;
+			InsertFeatureStepEntrySqlParams[1].Value = stepRow.Id;
 			InsertFeatureStepEntrySqlParams[2].Value = Convert.ToDecimal(entryStep.TimeSpent.TotalMilliseconds);
 			InsertFeatureStepEntrySqlParams[3].Value = entryStep.Details;
 
@@ -362,9 +362,9 @@ CREATE TABLE [FEATURES] (
 			return new DbContextRow(r.GetInt64(0), r.GetString(1));
 		}
 
-		private static DbFeatureStep DbFeatureStepCreator(IFieldDataReader r)
+		private static DbFeatureStepRow DbFeatureStepCreator(IFieldDataReader r)
 		{
-			return new DbFeatureStep(r.GetInt64(0), r.GetString(1));
+			return new DbFeatureStepRow(r.GetInt64(0), r.GetString(1));
 		}
 	}
 }

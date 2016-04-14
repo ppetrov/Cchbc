@@ -4,20 +4,6 @@ using Cchbc.Data;
 
 namespace Cchbc.Features.Db
 {
-	public sealed class FeatureStepRow
-	{
-		public readonly long Id;
-		public readonly string Name;
-
-		public FeatureStepRow(long id, string name)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			this.Id = id;
-			this.Name = name;
-		}
-	}
-
 	public sealed class FeatureEntryRow
 	{
 		public readonly long Id;
@@ -77,7 +63,7 @@ namespace Cchbc.Features.Db
 			var clientContextRows = GetContextRows(clientContext);
 			var contextsMap = ReplicateContexts(serverContext, clientContextRows);
 
-			var clientStepRows = GetFeatureStepRows(clientContext);
+			var clientStepRows = GetDbFeatureStepRows(clientContext);
 			var stepsMap = ReplicateSteps(serverContext, clientStepRows);
 
 			var clientFeatureRows = GetFeatureRows(clientContext);
@@ -116,9 +102,9 @@ namespace Cchbc.Features.Db
 			return map;
 		}
 
-		private static Dictionary<long, long> ReplicateSteps(ITransactionContext serverContext, List<FeatureStepRow> clientStepRows)
+		private static Dictionary<long, long> ReplicateSteps(ITransactionContext serverContext, List<DbFeatureStepRow> clientStepRows)
 		{
-			var steps = GetFeatureStepRows(serverContext);
+			var steps = GetDbFeatureStepRows(serverContext);
 
 			var serverStepRows = new Dictionary<string, long>(steps.Count);
 			foreach (var step in steps)
@@ -292,9 +278,9 @@ namespace Cchbc.Features.Db
 			return context.Execute(new Query<DbContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextRowCreator));
 		}
 
-		private static List<FeatureStepRow> GetFeatureStepRows(ITransactionContext context)
+		private static List<DbFeatureStepRow> GetDbFeatureStepRows(ITransactionContext context)
 		{
-			return context.Execute(new Query<FeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", FeatureStepRowCreator));
+			return context.Execute(new Query<DbFeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepRowCreator));
 		}
 
 		private static List<DbFeatureRow> GetFeatureRows(ITransactionContext context)
@@ -312,7 +298,7 @@ namespace Cchbc.Features.Db
 			return context.Execute(new Query<FeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_ENTRY_STEPS", EntryStepRowCreator));
 		}
 
-		private static DbFeatureUser GetOrCreateUser(ITransactionContext context, string userName)
+		private static DbFeatureUserRow GetOrCreateUser(ITransactionContext context, string userName)
 		{
 			var userId = -1L;
 			var user = GetUserId(context, userName);
@@ -320,10 +306,10 @@ namespace Cchbc.Features.Db
 			{
 				userId = CreateUser(context, userName);
 			}
-			return new DbFeatureUser(userId, userName);
+			return new DbFeatureUserRow(userId, userName);
 		}
 
-		public static long? GetUserId(ITransactionContext context, string name)
+		private static long? GetUserId(ITransactionContext context, string name)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
@@ -363,9 +349,9 @@ namespace Cchbc.Features.Db
 			return new DbContextRow(r.GetInt64(0), r.GetString(1));
 		}
 
-		private static FeatureStepRow FeatureStepRowCreator(IFieldDataReader r)
+		private static DbFeatureStepRow DbFeatureStepRowCreator(IFieldDataReader r)
 		{
-			return new FeatureStepRow(r.GetInt64(0), r.GetString(1));
+			return new DbFeatureStepRow(r.GetInt64(0), r.GetString(1));
 		}
 
 		private static DbFeatureRow DbFeatureRowCreator(IFieldDataReader r)
