@@ -28,13 +28,13 @@ namespace Cchbc.Features.Db.Managers
 			if (clientContext == null) throw new ArgumentNullException(nameof(clientContext));
 			if (userName == null) throw new ArgumentNullException(nameof(userName));
 
-			var clientContextRows = GetContextRows(clientContext);
+			var clientContextRows = DbFeatureAdapter.GetContexts(clientContext);
 			var contextsMap = ReplicateContexts(serverContext, clientContextRows);
 
-			var clientStepRows = GetDbFeatureStepRows(clientContext);
+			var clientStepRows = DbFeatureAdapter.GetSteps(clientContext);
 			var stepsMap = ReplicateSteps(serverContext, clientStepRows);
 
-			var clientFeatureRows = GetFeatureRows(clientContext);
+			var clientFeatureRows = DbFeatureAdapter.GetFeatures(clientContext);
 			var featuresMap = ReplicateFeatures(serverContext, clientFeatureRows, contextsMap);
 
 			var featureEntryRows = GetFeatureEntryRows(clientContext);
@@ -42,11 +42,13 @@ namespace Cchbc.Features.Db.Managers
 
 			var featureEntryStepRows = GetEntryStepRows(clientContext);
 			ReplicateFeatureEntryStepRow(serverContext, featureEntryStepRows, featureEntriesMap, stepsMap);
+
+			// TODO : Replicate exceptions !!!
 		}
 
 		private static Dictionary<long, long> ReplicateContexts(ITransactionContext serverContext, List<DbContextRow> clientContextRows)
 		{
-			var contextRows = GetContextRows(serverContext);
+			var contextRows = DbFeatureAdapter.GetContexts(serverContext);
 
 			var serverContextsRows = new Dictionary<string, long>(contextRows.Count);
 			foreach (var context in contextRows)
@@ -61,7 +63,7 @@ namespace Cchbc.Features.Db.Managers
 				long serverId;
 				var serverContextId = serverContextsRows.TryGetValue(context.Name, out serverId)
 					? serverId
-					: InsertContext(serverContext, context.Name);
+					: DbFeatureAdapter.InsertContext(serverContext, context.Name);
 
 				var clientContextId = context.Id;
 				map.Add(clientContextId, serverContextId);
@@ -72,7 +74,7 @@ namespace Cchbc.Features.Db.Managers
 
 		private static Dictionary<long, long> ReplicateSteps(ITransactionContext serverContext, List<DbFeatureStepRow> clientStepRows)
 		{
-			var steps = GetDbFeatureStepRows(serverContext);
+			var steps = DbFeatureAdapter.GetSteps(serverContext);
 
 			var serverStepRows = new Dictionary<string, long>(steps.Count);
 			foreach (var step in steps)
@@ -87,7 +89,7 @@ namespace Cchbc.Features.Db.Managers
 				long serverId;
 				var serverStepId = serverStepRows.TryGetValue(step.Name, out serverId)
 					? serverId
-					: InsertStep(serverContext, step.Name);
+					: DbFeatureAdapter.InsertStep(serverContext, step.Name);
 
 				var clientStepId = step.Id;
 				map.Add(clientStepId, serverStepId);
@@ -100,7 +102,7 @@ namespace Cchbc.Features.Db.Managers
 		{
 			var serverFeatures = new Dictionary<long, Dictionary<string, long>>();
 
-			foreach (var feature in GetFeatureRows(serverContext))
+			foreach (var feature in DbFeatureAdapter.GetFeatures(serverContext))
 			{
 				Dictionary<string, long> byContext;
 
@@ -127,7 +129,7 @@ namespace Cchbc.Features.Db.Managers
 				var byContext = serverFeatures[contextId];
 				var featureId = byContext.TryGetValue(name, out serverFeatureId)
 					? serverFeatureId
-					: InsertFeature(serverContext, name, contextId);
+					: DbFeatureAdapter.InsertFeature(serverContext, name, contextId);
 
 				featuresMap.Add(feature.Id, featureId);
 			}
@@ -161,51 +163,12 @@ namespace Cchbc.Features.Db.Managers
 			}
 		}
 
-		private static long InsertContext(ITransactionContext context, string name)
-		{
-			// Set parameters values
-			var sqlParams = new[]
-			{
-				new QueryParameter(@"NAME", name),
-			};
 
-			// Insert the record
-			context.Execute(new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)", sqlParams));
 
-			// Get new Id back
-			return context.GetNewId();
-		}
 
-		private static long InsertStep(ITransactionContext context, string name)
-		{
-			// Set parameters values
-			var sqlParams = new[]
-			{
-				new QueryParameter(@"NAME", name),
-			};
 
-			// Insert the record
-			context.Execute(new Query(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)", sqlParams));
 
-			// Get new Id back
-			return context.GetNewId();
-		}
 
-		private static long InsertFeature(ITransactionContext context, string name, long contextId)
-		{
-			// Set parameters values
-			var sqlParams = new[]
-			{
-				new QueryParameter(@"@NAME", name),
-				new QueryParameter(@"@CONTEXT", contextId),
-			};
-
-			// Insert the record
-			context.Execute(new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", sqlParams));
-
-			// Get new Id back
-			return context.GetNewId();
-		}
 
 		private static long InsertFeatureEntry(ITransactionContext context, DbFeatureEntryRow row, long userId)
 		{
@@ -241,20 +204,6 @@ namespace Cchbc.Features.Db.Managers
 			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", sqlParams));
 		}
 
-		private static List<DbContextRow> GetContextRows(ITransactionContext context)
-		{
-			return context.Execute(new Query<DbContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextRowCreator));
-		}
-
-		private static List<DbFeatureStepRow> GetDbFeatureStepRows(ITransactionContext context)
-		{
-			return context.Execute(new Query<DbFeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepRowCreator));
-		}
-
-		private static List<DbFeatureRow> GetFeatureRows(ITransactionContext context)
-		{
-			return context.Execute(new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator));
-		}
 
 		private static List<DbFeatureEntryRow> GetFeatureEntryRows(ITransactionContext context)
 		{
@@ -265,6 +214,7 @@ namespace Cchbc.Features.Db.Managers
 		{
 			return context.Execute(new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_ENTRY_STEPS", EntryStepRowCreator));
 		}
+
 
 		private static DbFeatureUserRow GetOrCreateUser(ITransactionContext context, string userName)
 		{
@@ -312,20 +262,6 @@ namespace Cchbc.Features.Db.Managers
 			return context.GetNewId();
 		}
 
-		private static DbContextRow DbContextRowCreator(IFieldDataReader r)
-		{
-			return new DbContextRow(r.GetInt64(0), r.GetString(1));
-		}
-
-		private static DbFeatureStepRow DbFeatureStepRowCreator(IFieldDataReader r)
-		{
-			return new DbFeatureStepRow(r.GetInt64(0), r.GetString(1));
-		}
-
-		private static DbFeatureRow DbFeatureRowCreator(IFieldDataReader r)
-		{
-			return new DbFeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
-		}
 
 		private static DbFeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
 		{

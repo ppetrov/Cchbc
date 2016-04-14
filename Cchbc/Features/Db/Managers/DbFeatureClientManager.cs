@@ -164,16 +164,16 @@ namespace Cchbc.Features.Db.Managers
 			this.Features.Clear();
 
 			// Fetch & add new values
-			foreach (var feature in DbFeatureAdapter.GetFeatures(context, this.Contexts))
+			foreach (var feature in DbFeatureAdapter.GetFeatures(context))
 			{
-				var dbContext = feature.ContextId;
+				var contextId = feature.ContextId;
 
 				// Find features by context
 				Dictionary<string, DbFeatureRow> byContext;
-				if (!this.Features.TryGetValue(dbContext, out byContext))
+				if (!this.Features.TryGetValue(contextId, out byContext))
 				{
 					byContext = new Dictionary<string, DbFeatureRow>(StringComparer.OrdinalIgnoreCase);
-					this.Features.Add(dbContext, byContext);
+					this.Features.Add(contextId, byContext);
 				}
 
 				byContext.Add(feature.Name, feature);

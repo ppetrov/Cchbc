@@ -197,27 +197,11 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return context.Execute(new Query<DbFeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator));
 		}
 
-		public static List<DbFeatureRow> GetFeatures(ITransactionContext context, Dictionary<string, DbContextRow> contexts)
+		public static List<DbFeatureRow> GetFeatures(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (contexts == null) throw new ArgumentNullException(nameof(contexts));
 
-			var features = context.Execute(new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator));
-			if (features.Count == 0) return features;
-
-			var contextsById = new Dictionary<long, long>();
-			foreach (var dbContext in contexts.Values)
-			{
-				contextsById.Add(dbContext.Id, dbContext.Id);
-			}
-
-			var mappedFeatures = new List<DbFeatureRow>(features.Count);
-			foreach (var feature in features)
-			{
-				mappedFeatures.Add(new DbFeatureRow(feature.Id, feature.Name, contextsById[feature.ContextId]));
-			}
-
-			return mappedFeatures;
+			return context.Execute(new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator));
 		}
 
 		public static long InsertContext(ITransactionContext context, string name)
