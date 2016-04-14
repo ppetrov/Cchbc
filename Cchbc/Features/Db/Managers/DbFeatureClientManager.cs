@@ -44,8 +44,8 @@ namespace Cchbc.Features.Db.Managers
 			var contextRow = this.SaveContext(transactionContext, feature.Context);
 			var featureRow = this.SaveFeature(transactionContext, contextRow, feature.Name);
 
-			var dbFeatureEntry = DbFeatureAdapter.InsertFeatureEntry(transactionContext, featureRow.Id, feature, details);
-			this.SaveSteps(transactionContext, dbFeatureEntry, feature.Steps);
+			var featureEntryId = DbFeatureAdapter.InsertFeatureEntry(transactionContext, featureRow.Id, details, feature);
+			this.SaveSteps(transactionContext, featureEntryId, feature.Steps);
 		}
 
 		public void Save(ITransactionContext transactionContext, FeatureException entry)
@@ -107,7 +107,7 @@ namespace Cchbc.Features.Db.Managers
 			return feature;
 		}
 
-		private void SaveSteps(ITransactionContext context, DbFeatureEntryRow featureEntryRow, ICollection<FeatureStep> steps)
+		private void SaveSteps(ITransactionContext context, long featureEntryId, ICollection<FeatureStep> steps)
 		{
 			foreach (var step in steps)
 			{
@@ -128,7 +128,7 @@ namespace Cchbc.Features.Db.Managers
 			// Inser step entries
 			foreach (var step in steps)
 			{
-				DbFeatureAdapter.InsertStepEntry(context, featureEntryRow.Id, this.Steps[step.Name].Id, step);
+				DbFeatureAdapter.InsertStepEntry(context, featureEntryId, this.Steps[step.Name].Id, Convert.ToDecimal(step.TimeSpent.TotalMilliseconds), step.Details);
 			}
 		}
 

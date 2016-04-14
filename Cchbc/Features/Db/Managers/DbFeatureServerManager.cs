@@ -142,13 +142,13 @@ namespace Cchbc.Features.Db.Managers
 
 		private static Dictionary<long, long> ReplicateFeatureEntries(ITransactionContext serverContext, List<DbFeatureEntryRow> featureEntryRows, Dictionary<long, long> featuresMap, string userName)
 		{
-			var user = DbFeatureAdapter.GetOrCreateUser(serverContext, userName);
+			var userId = DbFeatureAdapter.GetOrCreateUser(serverContext, userName);
 
 			var map = new Dictionary<long, long>(featureEntryRows.Count);
 
 			foreach (var row in featureEntryRows)
 			{
-				map.Add(row.Id, DbFeatureAdapter.InsertFeatureEntry(serverContext, user.Id, row.TimeSpent, row.Details, row.CreatedAt, featuresMap[row.FeatureId]));
+				map.Add(row.Id, DbFeatureAdapter.InsertFeatureEntry(serverContext, featuresMap[row.FeatureId], row.Details, row.TimeSpent, row.CreatedAt, userId));
 			}
 
 			return map;
