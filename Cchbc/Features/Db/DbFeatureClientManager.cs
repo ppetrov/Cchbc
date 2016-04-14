@@ -6,9 +6,9 @@ namespace Cchbc.Features.Db
 {
 	public sealed class DbFeatureClientManager
 	{
-		public Dictionary<string, DbContext> Contexts { get; } = new Dictionary<string, DbContext>(StringComparer.OrdinalIgnoreCase);
+		public Dictionary<string, DbContextRow> Contexts { get; } = new Dictionary<string, DbContextRow>(StringComparer.OrdinalIgnoreCase);
 		public Dictionary<string, DbFeatureStep> Steps { get; } = new Dictionary<string, DbFeatureStep>(StringComparer.OrdinalIgnoreCase);
-		public Dictionary<long, Dictionary<string, DbFeature>> Features { get; } = new Dictionary<long, Dictionary<string, DbFeature>>();
+		public Dictionary<long, Dictionary<string, DbFeatureRow>> Features { get; } = new Dictionary<long, Dictionary<string, DbFeatureRow>>();
 
 		public static void CreateSchema(ITransactionContext context)
 		{
@@ -56,31 +56,31 @@ namespace Cchbc.Features.Db
 			DbFeatureAdapter.InsertExceptionEntry(transactionContext, feature, entry);
 		}
 
-		private DbContext SaveContext(ITransactionContext transactionContext, string name)
+		private DbContextRow SaveContext(ITransactionContext transactionContext, string name)
 		{
-			DbContext context;
+			DbContextRow contextRow;
 
-			if (!this.Contexts.TryGetValue(name, out context))
+			if (!this.Contexts.TryGetValue(name, out contextRow))
 			{
 				// Insert into database
 				var newContextId = DbFeatureAdapter.InsertContext(transactionContext, name);
 
-				context = new DbContext(newContextId, name);
+				contextRow = new DbContextRow(newContextId, name);
 
 				// Insert the new context into the collection
-				this.Contexts.Add(name, context);
+				this.Contexts.Add(name, contextRow);
 			}
 
-			return context;
+			return contextRow;
 		}
 
-		private DbFeature SaveFeature(ITransactionContext transactionContext, DbContext context, string name)
+		private DbFeatureRow SaveFeature(ITransactionContext transactionContext, DbContextRow contextRow, string name)
 		{
 			// Check if the context exists
-			DbFeature feature = null;
+			DbFeatureRow feature = null;
 
-			var contextId = context.Id;
-			Dictionary<string, DbFeature> features;
+			var contextId = contextRow.Id;
+			Dictionary<string, DbFeatureRow> features;
 			if (this.Features.TryGetValue(contextId, out features))
 			{
 				features.TryGetValue(name, out feature);
@@ -91,12 +91,12 @@ namespace Cchbc.Features.Db
 				// Insert into database
 				var newFeatureId = DbFeatureAdapter.InsertFeature(transactionContext, name, contextId);
 
-				feature = new DbFeature(newFeatureId, name, context);
+				feature = new DbFeatureRow(newFeatureId, name, contextId);
 
 				// Insert the new feature into the collection
 				if (!this.Features.TryGetValue(contextId, out features))
 				{
-					features = new Dictionary<string, DbFeature>(StringComparer.OrdinalIgnoreCase);
+					features = new Dictionary<string, DbFeatureRow>(StringComparer.OrdinalIgnoreCase);
 					this.Features.Add(contextId, features);
 				}
 				features.Add(name, feature);
@@ -163,13 +163,13 @@ namespace Cchbc.Features.Db
 			// Fetch & add new values
 			foreach (var feature in DbFeatureAdapter.GetFeatures(context, this.Contexts))
 			{
-				var dbContext = feature.Context.Id;
+				var dbContext = feature.ContextId;
 
 				// Find features by context
-				Dictionary<string, DbFeature> byContext;
+				Dictionary<string, DbFeatureRow> byContext;
 				if (!this.Features.TryGetValue(dbContext, out byContext))
 				{
-					byContext = new Dictionary<string, DbFeature>(StringComparer.OrdinalIgnoreCase);
+					byContext = new Dictionary<string, DbFeatureRow>(StringComparer.OrdinalIgnoreCase);
 					this.Features.Add(dbContext, byContext);
 				}
 

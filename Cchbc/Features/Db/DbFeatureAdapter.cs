@@ -182,11 +182,11 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 
 
 
-		public static List<DbContext> GetContexts(ITransactionContext context)
+		public static List<DbContextRow> GetContexts(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return context.Execute(new Query<DbContext>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextCreator));
+			return context.Execute(new Query<DbContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextCreator));
 		}
 
 		public static List<DbFeatureStep> GetSteps(ITransactionContext context)
@@ -198,24 +198,24 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 
 
 
-		public static List<DbFeature> GetFeatures(ITransactionContext context, Dictionary<string, DbContext> contexts)
+		public static List<DbFeatureRow> GetFeatures(ITransactionContext context, Dictionary<string, DbContextRow> contexts)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (contexts == null) throw new ArgumentNullException(nameof(contexts));
 
-			var features = context.Execute(new Query<DbFeature>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureCreator));
+			var features = context.Execute(new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator));
 			if (features.Count == 0) return features;
 
-			var contextsById = new Dictionary<long, DbContext>();
+			var contextsById = new Dictionary<long, long>();
 			foreach (var dbContext in contexts.Values)
 			{
-				contextsById.Add(dbContext.Id, dbContext);
+				contextsById.Add(dbContext.Id, dbContext.Id);
 			}
 
-			var mappedFeatures = new List<DbFeature>(features.Count);
+			var mappedFeatures = new List<DbFeatureRow>(features.Count);
 			foreach (var feature in features)
 			{
-				mappedFeatures.Add(new DbFeature(feature.Id, feature.Name, contextsById[feature.Context.Id]));
+				mappedFeatures.Add(new DbFeatureRow(feature.Id, feature.Name, contextsById[feature.ContextId]));
 			}
 
 			return mappedFeatures;
@@ -268,9 +268,9 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return context.GetNewId();
 		}
 
-		private static DbFeature DbFeatureCreator(IFieldDataReader r)
+		private static DbFeatureRow DbFeatureRowCreator(IFieldDataReader r)
 		{
-			return new DbFeature(r.GetInt64(0), r.GetString(1), new DbContext(r.GetInt64(2), string.Empty));
+			return new DbFeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
 		}
 
 		private static void CreateCommonSchema(ITransactionContext context)
@@ -300,7 +300,7 @@ CREATE TABLE [FEATURES] (
 )"));
 		}
 
-		public static DbFeatureEntry InsertFeatureEntry(ITransactionContext context, DbFeature feature, FeatureEntry featureEntry)
+		public static DbFeatureEntry InsertFeatureEntry(ITransactionContext context, DbFeatureRow feature, FeatureEntry featureEntry)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
@@ -322,7 +322,7 @@ CREATE TABLE [FEATURES] (
 			return new DbFeatureEntry(context.GetNewId(), feature, details, timeSpent);
 		}
 
-		public static void InsertExceptionEntry(ITransactionContext context, DbFeature feature, FeatureException featureException)
+		public static void InsertExceptionEntry(ITransactionContext context, DbFeatureRow feature, FeatureException featureException)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
@@ -357,9 +357,9 @@ CREATE TABLE [FEATURES] (
 
 
 
-		private static DbContext DbContextCreator(IFieldDataReader r)
+		private static DbContextRow DbContextCreator(IFieldDataReader r)
 		{
-			return new DbContext(r.GetInt64(0), r.GetString(1));
+			return new DbContextRow(r.GetInt64(0), r.GetString(1));
 		}
 
 		private static DbFeatureStep DbFeatureStepCreator(IFieldDataReader r)

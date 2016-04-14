@@ -4,86 +4,56 @@ using Cchbc.Data;
 
 namespace Cchbc.Features.Db
 {
+	public sealed class FeatureStepRow
+	{
+		public readonly long Id;
+		public readonly string Name;
+
+		public FeatureStepRow(long id, string name)
+		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			this.Id = id;
+			this.Name = name;
+		}
+	}
+
+	public sealed class FeatureEntryRow
+	{
+		public readonly long Id;
+		public readonly decimal TimeSpent;
+		public readonly string Details;
+		public readonly DateTime CreatedAt;
+		public long FeatureId;
+
+		public FeatureEntryRow(long id, decimal timeSpent, string details, DateTime createdAt, long featureId)
+		{
+			Id = id;
+			TimeSpent = timeSpent;
+			Details = details;
+			CreatedAt = createdAt;
+			FeatureId = featureId;
+		}
+	}
+
+	public sealed class FeatureEntryStepRow
+	{
+		public readonly decimal TimeSpent;
+		public readonly string Details;
+		public long FeatureEntryId;
+		public long FeatureStepId;
+
+		public FeatureEntryStepRow(decimal timeSpent, string details, long featureEntryId, long featureStepId)
+		{
+			TimeSpent = timeSpent;
+			Details = details;
+			FeatureEntryId = featureEntryId;
+			FeatureStepId = featureStepId;
+		}
+	}
+
 	public static class DbFeatureServerManager
 	{
-		public sealed class FeatureContextRow
-		{
-			public readonly long Id;
-			public readonly string Name;
-
-			public FeatureContextRow(long id, string name)
-			{
-				if (name == null) throw new ArgumentNullException(nameof(name));
-
-				this.Id = id;
-				this.Name = name;
-			}
-		}
-
-		public sealed class FeatureStepRow
-		{
-			public readonly long Id;
-			public readonly string Name;
-
-			public FeatureStepRow(long id, string name)
-			{
-				if (name == null) throw new ArgumentNullException(nameof(name));
-
-				this.Id = id;
-				this.Name = name;
-			}
-		}
-
-		public sealed class FeatureRow
-		{
-			public readonly long Id;
-			public readonly string Name;
-			public readonly long ContextId;
-
-			public FeatureRow(long id, string name, long contextId)
-			{
-				if (name == null) throw new ArgumentNullException(nameof(name));
-
-				this.Id = id;
-				this.Name = name;
-				this.ContextId = contextId;
-			}
-		}
-
-		public sealed class FeatureEntryRow
-		{
-			public readonly long Id;
-			public readonly decimal TimeSpent;
-			public readonly string Details;
-			public readonly DateTime CreatedAt;
-			public long FeatureId;
-
-			public FeatureEntryRow(long id, decimal timeSpent, string details, DateTime createdAt, long featureId)
-			{
-				Id = id;
-				TimeSpent = timeSpent;
-				Details = details;
-				CreatedAt = createdAt;
-				FeatureId = featureId;
-			}
-		}
-
-		public sealed class FeatureEntryStepRow
-		{
-			public readonly decimal TimeSpent;
-			public readonly string Details;
-			public long FeatureEntryId;
-			public long FeatureStepId;
-
-			public FeatureEntryStepRow(decimal timeSpent, string details, long featureEntryId, long featureStepId)
-			{
-				TimeSpent = timeSpent;
-				Details = details;
-				FeatureEntryId = featureEntryId;
-				FeatureStepId = featureStepId;
-			}
-		}
-
 		public static void CreateSchema(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -120,7 +90,7 @@ namespace Cchbc.Features.Db
 			ReplicateFeatureEntryStepRow(serverContext, featureEntryStepRows, featureEntriesMap, stepsMap);
 		}
 
-		private static Dictionary<long, long> ReplicateContexts(ITransactionContext serverContext, List<FeatureContextRow> clientContextRows)
+		private static Dictionary<long, long> ReplicateContexts(ITransactionContext serverContext, List<DbContextRow> clientContextRows)
 		{
 			var contextRows = GetContextRows(serverContext);
 
@@ -172,7 +142,7 @@ namespace Cchbc.Features.Db
 			return map;
 		}
 
-		private static Dictionary<long, long> ReplicateFeatures(ITransactionContext serverContext, List<FeatureRow> clientFeatureRows, Dictionary<long, long> contextsMap)
+		private static Dictionary<long, long> ReplicateFeatures(ITransactionContext serverContext, List<DbFeatureRow> clientFeatureRows, Dictionary<long, long> contextsMap)
 		{
 			var serverFeatures = new Dictionary<long, Dictionary<string, long>>();
 
@@ -317,9 +287,9 @@ namespace Cchbc.Features.Db
 			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", sqlParams));
 		}
 
-		private static List<FeatureContextRow> GetContextRows(ITransactionContext context)
+		private static List<DbContextRow> GetContextRows(ITransactionContext context)
 		{
-			return context.Execute(new Query<FeatureContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", ContextRowCreator));
+			return context.Execute(new Query<DbContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextRowCreator));
 		}
 
 		private static List<FeatureStepRow> GetFeatureStepRows(ITransactionContext context)
@@ -327,9 +297,9 @@ namespace Cchbc.Features.Db
 			return context.Execute(new Query<FeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", FeatureStepRowCreator));
 		}
 
-		private static List<FeatureRow> GetFeatureRows(ITransactionContext context)
+		private static List<DbFeatureRow> GetFeatureRows(ITransactionContext context)
 		{
-			return context.Execute(new Query<FeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", FeatureRowCreator));
+			return context.Execute(new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator));
 		}
 
 		private static List<FeatureEntryRow> GetFeatureEntryRows(ITransactionContext context)
@@ -388,9 +358,9 @@ namespace Cchbc.Features.Db
 			return context.GetNewId();
 		}
 
-		private static FeatureContextRow ContextRowCreator(IFieldDataReader r)
+		private static DbContextRow DbContextRowCreator(IFieldDataReader r)
 		{
-			return new FeatureContextRow(r.GetInt64(0), r.GetString(1));
+			return new DbContextRow(r.GetInt64(0), r.GetString(1));
 		}
 
 		private static FeatureStepRow FeatureStepRowCreator(IFieldDataReader r)
@@ -398,9 +368,9 @@ namespace Cchbc.Features.Db
 			return new FeatureStepRow(r.GetInt64(0), r.GetString(1));
 		}
 
-		private static FeatureRow FeatureRowCreator(IFieldDataReader r)
+		private static DbFeatureRow DbFeatureRowCreator(IFieldDataReader r)
 		{
-			return new FeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
+			return new DbFeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
 		}
 
 		private static FeatureEntryRow FeatureEntryRowCreator(IFieldDataReader r)

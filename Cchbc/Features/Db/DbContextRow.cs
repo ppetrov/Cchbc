@@ -1,14 +1,13 @@
 using System;
-using Cchbc.Objects;
 
 namespace Cchbc.Features.Db
 {
-	public sealed class DbContext : IDbObject
+	public sealed class DbContextRow
 	{
-		public long Id { get; set; }
+		public long Id { get; }
 		public string Name { get; }
 
-		public DbContext(long id, string name)
+		public DbContextRow(long id, string name)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
