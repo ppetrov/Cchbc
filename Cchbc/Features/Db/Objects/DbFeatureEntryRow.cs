@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features.Db
+namespace Cchbc.Features.Db.Objects
 {
 	public sealed class DbFeatureEntryRow
 	{

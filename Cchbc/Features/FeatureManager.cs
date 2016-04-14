@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Cchbc.Data;
 using Cchbc.Features.Db;
+using Cchbc.Features.Db.Managers;
 
 namespace Cchbc.Features
 {

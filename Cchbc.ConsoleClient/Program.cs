@@ -17,6 +17,7 @@ using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Db;
+using Cchbc.Features.Db.Managers;
 using LoginModule.Adapter;
 using LoginModule.Objects;
 using LoginModule.ViewModels;

@@ -2,6 +2,7 @@
 using System.Windows;
 using Cchbc.Features;
 using Cchbc.Features.Db;
+using Cchbc.Features.Db.Managers;
 
 namespace DataCollector.UI
 {
