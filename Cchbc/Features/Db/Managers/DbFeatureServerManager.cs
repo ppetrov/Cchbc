@@ -37,11 +37,14 @@ namespace Cchbc.Features.Db.Managers
 			var clientFeatureRows = DbFeatureAdapter.GetFeatures(clientContext);
 			var featuresMap = ReplicateFeatures(serverContext, clientFeatureRows, contextsMap);
 
-			var featureEntryRows = GetFeatureEntryRows(clientContext);
+			var featureEntryRows = DbFeatureAdapter.GetFeatureEntryRows(clientContext);
 			var featureEntriesMap = ReplicateFeatureEntries(serverContext, featureEntryRows, featuresMap, userName);
 
-			var featureEntryStepRows = GetEntryStepRows(clientContext);
-			ReplicateFeatureEntryStepRow(serverContext, featureEntryStepRows, featureEntriesMap, stepsMap);
+			var featureEntryStepRows = DbFeatureAdapter.GetEntryStepRows(clientContext);
+			foreach (var stepRow in featureEntryStepRows)
+			{
+				DbFeatureAdapter.InsertStepEntry(serverContext, featureEntriesMap[stepRow.FeatureEntryId], stepsMap[stepRow.FeatureStepId], stepRow.TimeSpent, stepRow.Details);
+			}
 
 			// TODO : Replicate exceptions !!!
 		}
@@ -139,138 +142,16 @@ namespace Cchbc.Features.Db.Managers
 
 		private static Dictionary<long, long> ReplicateFeatureEntries(ITransactionContext serverContext, List<DbFeatureEntryRow> featureEntryRows, Dictionary<long, long> featuresMap, string userName)
 		{
-			var user = GetOrCreateUser(serverContext, userName);
+			var user = DbFeatureAdapter.GetOrCreateUser(serverContext, userName);
 
 			var map = new Dictionary<long, long>(featureEntryRows.Count);
 
-			foreach (var entry in featureEntryRows)
+			foreach (var row in featureEntryRows)
 			{
-				entry.FeatureId = featuresMap[entry.FeatureId];
-				map.Add(entry.Id, InsertFeatureEntry(serverContext, entry, user.Id));
+				map.Add(row.Id, DbFeatureAdapter.InsertFeatureEntry(serverContext, user.Id, row.TimeSpent, row.Details, row.CreatedAt, featuresMap[row.FeatureId]));
 			}
 
 			return map;
-		}
-
-		private static void ReplicateFeatureEntryStepRow(ITransactionContext serverContext, List<DbFeatureEntryStepRow> featureEntryStepRows, Dictionary<long, long> featureEntriesMap, Dictionary<long, long> stepsMap)
-		{
-			foreach (var row in featureEntryStepRows)
-			{
-				row.FeatureEntryId = featureEntriesMap[row.FeatureEntryId];
-				row.FeatureStepId = stepsMap[row.FeatureStepId];
-
-				InsertFeatureEntryStepRow(serverContext, row);
-			}
-		}
-
-
-
-
-
-
-
-
-		private static long InsertFeatureEntry(ITransactionContext context, DbFeatureEntryRow row, long userId)
-		{
-			// Set parameters values
-			var sqlParams = new[]
-			{
-				new QueryParameter(@"@TIMESPENT", row.TimeSpent),
-				new QueryParameter(@"@DETAILS", row.Details),
-				new QueryParameter(@"@CREATEDAT", row.CreatedAt),
-				new QueryParameter(@"@FEATURE", row.FeatureId),
-				new QueryParameter(@"@USER", userId),
-			};
-
-			// Insert the record
-			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID, USER_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATEDAT, @FEATURE, @USER)", sqlParams));
-
-			// Get new Id back
-			return context.GetNewId();
-		}
-
-		private static void InsertFeatureEntryStepRow(ITransactionContext context, DbFeatureEntryStepRow row)
-		{
-			// Set parameters values
-			var sqlParams = new[]
-			{
-				new QueryParameter(@"@ENTRY", row.FeatureEntryId),
-				new QueryParameter(@"@STEP", row.FeatureStepId),
-				new QueryParameter(@"@TIMESPENT", row.TimeSpent),
-				new QueryParameter(@"@DETAILS", row.Details),
-			};
-
-			// Insert the record
-			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", sqlParams));
-		}
-
-
-		private static List<DbFeatureEntryRow> GetFeatureEntryRows(ITransactionContext context)
-		{
-			return context.Execute(new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator));
-		}
-
-		private static List<DbFeatureEntryStepRow> GetEntryStepRows(ITransactionContext context)
-		{
-			return context.Execute(new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_ENTRY_STEPS", EntryStepRowCreator));
-		}
-
-
-		private static DbFeatureUserRow GetOrCreateUser(ITransactionContext context, string userName)
-		{
-			var userId = -1L;
-			var user = GetUserId(context, userName);
-			if (!user.HasValue)
-			{
-				userId = CreateUser(context, userName);
-			}
-			return new DbFeatureUserRow(userId, userName);
-		}
-
-		private static long? GetUserId(ITransactionContext context, string name)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			// Set parameters values
-			var sqlParams = new[]
-			{
-				new QueryParameter(@"NAME", name),
-			};
-
-			// select the record
-			var ids = context.Execute(new Query<long>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", r => r.GetInt64(0), sqlParams));
-			if (ids.Count > 0)
-			{
-				return ids[0];
-			}
-			return null;
-		}
-
-		private static long CreateUser(ITransactionContext context, string name)
-		{
-			// Set parameters values
-			var sqlParams = new[]
-			{
-				new QueryParameter(@"NAME", name),
-			};
-
-			// Insert the record
-			context.Execute(new Query(@"INSERT INTO FEATURE_USERS(NAME) VALUES (@NAME)", sqlParams));
-
-			// Get new Id back
-			return context.GetNewId();
-		}
-
-
-		private static DbFeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
-		{
-			return new DbFeatureEntryRow(r.GetInt64(0), r.GetDecimal(1), r.GetString(2), r.GetDateTime(3), r.GetInt64(4));
-		}
-
-		private static DbFeatureEntryStepRow EntryStepRowCreator(IFieldDataReader r)
-		{
-			return new DbFeatureEntryStepRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2), r.GetInt64(3));
 		}
 	}
 }

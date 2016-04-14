@@ -35,17 +35,17 @@ namespace Cchbc.Features.Db.Managers
 			this.LoadFeatures(context);
 		}
 
-		public void Save(ITransactionContext transactionContext, Feature entry, string details)
+		public void Save(ITransactionContext transactionContext, Feature feature, string details)
 		{
 			if (transactionContext == null) throw new ArgumentNullException(nameof(transactionContext));
-			if (entry == null) throw new ArgumentNullException(nameof(entry));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (details == null) throw new ArgumentNullException(nameof(details));
 
-			var context = this.SaveContext(transactionContext, entry.Context);
-			var feature = this.SaveFeature(transactionContext, context, entry.Name);
+			var contextRow = this.SaveContext(transactionContext, feature.Context);
+			var featureRow = this.SaveFeature(transactionContext, contextRow, feature.Name);
 
-			var dbFeatureEntry = DbFeatureAdapter.InsertFeatureEntry(transactionContext, feature.Id, entry, details);
-			this.SaveSteps(transactionContext, dbFeatureEntry, entry.Steps);
+			var dbFeatureEntry = DbFeatureAdapter.InsertFeatureEntry(transactionContext, featureRow.Id, feature, details);
+			this.SaveSteps(transactionContext, dbFeatureEntry, feature.Steps);
 		}
 
 		public void Save(ITransactionContext transactionContext, FeatureException entry)
@@ -53,10 +53,10 @@ namespace Cchbc.Features.Db.Managers
 			if (transactionContext == null) throw new ArgumentNullException(nameof(transactionContext));
 			if (entry == null) throw new ArgumentNullException(nameof(entry));
 
-			var context = this.SaveContext(transactionContext, entry.Context);
-			var feature = this.SaveFeature(transactionContext, context, entry.Name);
+			var contextRow = this.SaveContext(transactionContext, entry.Context);
+			var featureRow = this.SaveFeature(transactionContext, contextRow, entry.Name);
 
-			DbFeatureAdapter.InsertExceptionEntry(transactionContext, feature.Id, entry);
+			DbFeatureAdapter.InsertExceptionEntry(transactionContext, featureRow.Id, entry);
 		}
 
 		private DbContextRow SaveContext(ITransactionContext transactionContext, string name)
@@ -107,11 +107,9 @@ namespace Cchbc.Features.Db.Managers
 			return feature;
 		}
 
-		private void SaveSteps(ITransactionContext context, DbFeatureEntryRow featureEntryRow, ICollection<FeatureStep> entrySteps)
+		private void SaveSteps(ITransactionContext context, DbFeatureEntryRow featureEntryRow, ICollection<FeatureStep> steps)
 		{
-			if (entrySteps.Count == 0) return;
-
-			foreach (var step in entrySteps)
+			foreach (var step in steps)
 			{
 				var name = step.Name;
 
@@ -128,9 +126,9 @@ namespace Cchbc.Features.Db.Managers
 			}
 
 			// Inser step entries
-			foreach (var step in entrySteps)
+			foreach (var step in steps)
 			{
-				DbFeatureAdapter.InsertStepEntry(context, featureEntryRow, this.Steps[step.Name], step);
+				DbFeatureAdapter.InsertStepEntry(context, featureEntryRow.Id, this.Steps[step.Name].Id, step);
 			}
 		}
 

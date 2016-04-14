@@ -282,6 +282,37 @@ CREATE TABLE [FEATURES] (
 )"));
 		}
 
+		public static DbFeatureUserRow GetOrCreateUser(ITransactionContext context, string userName)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (userName == null) throw new ArgumentNullException(nameof(userName));
+
+			long userId;
+
+			// Set parameters values
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"NAME", userName),
+			};
+
+			// select the record
+			var ids = context.Execute(new Query<long>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", r => r.GetInt64(0), sqlParams));
+			if (ids.Count > 0)
+			{
+				userId = ids[0];
+			}
+			else
+			{
+				// Insert the record
+				context.Execute(new Query(@"INSERT INTO FEATURE_USERS(NAME) VALUES (@NAME)", sqlParams));
+
+				// Get new Id back
+				userId = context.GetNewId();
+			}
+
+			return new DbFeatureUserRow(userId, userName);
+		}
+
 		public static DbFeatureEntryRow InsertFeatureEntry(ITransactionContext context, long featureId, Feature feature, string details)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -304,6 +335,27 @@ CREATE TABLE [FEATURES] (
 			return new DbFeatureEntryRow(context.GetNewId(), timeSpent, details, dateTime, featureId);
 		}
 
+		public static long InsertFeatureEntry(ITransactionContext context, long userId, decimal timeSpent, string details, DateTime createdAt, long featureId)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			// Set parameters values
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"@TIMESPENT", timeSpent),
+				new QueryParameter(@"@DETAILS", details),
+				new QueryParameter(@"@CREATEDAT", createdAt),
+				new QueryParameter(@"@FEATURE", featureId),
+				new QueryParameter(@"@USER", userId),
+			};
+
+			// Insert the record
+			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID, USER_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATEDAT, @FEATURE, @USER)", sqlParams));
+
+			// Get new Id back
+			return context.GetNewId();
+		}
+
 		public static void InsertExceptionEntry(ITransactionContext context, long featureId, FeatureException featureException)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -319,20 +371,50 @@ CREATE TABLE [FEATURES] (
 			context.Execute(new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE)", InsertExcetionEntrySqlParams));
 		}
 
-		public static void InsertStepEntry(ITransactionContext context, DbFeatureEntryRow featureEntryRow, DbFeatureStepRow stepRow, FeatureStep entryStep)
+		public static void InsertStepEntry(ITransactionContext context, long featureEntryId, long stepId, FeatureStep entryStep)
 		{
-			if (featureEntryRow == null) throw new ArgumentNullException(nameof(featureEntryRow));
-			if (stepRow == null) throw new ArgumentNullException(nameof(stepRow));
+			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (entryStep == null) throw new ArgumentNullException(nameof(entryStep));
 
+			InsertStepEntry(context, featureEntryId, stepId, Convert.ToDecimal(entryStep.TimeSpent.TotalMilliseconds), entryStep.Details);
+		}
+
+		public static void InsertStepEntry(ITransactionContext context, long featureEntryId, long stepId, decimal timeSpent, string details)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
 			// Set parameters values
-			InsertFeatureStepEntrySqlParams[0].Value = featureEntryRow.Id;
-			InsertFeatureStepEntrySqlParams[1].Value = stepRow.Id;
-			InsertFeatureStepEntrySqlParams[2].Value = Convert.ToDecimal(entryStep.TimeSpent.TotalMilliseconds);
-			InsertFeatureStepEntrySqlParams[3].Value = entryStep.Details;
+			InsertFeatureStepEntrySqlParams[0].Value = featureEntryId;
+			InsertFeatureStepEntrySqlParams[1].Value = stepId;
+			InsertFeatureStepEntrySqlParams[2].Value = timeSpent;
+			InsertFeatureStepEntrySqlParams[3].Value = details;
 
 			// Insert the record
 			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", InsertFeatureStepEntrySqlParams));
+		}
+
+		public static List<DbFeatureEntryRow> GetFeatureEntryRows(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			return context.Execute(new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator));
+		}
+
+		public static List<DbFeatureEntryStepRow> GetEntryStepRows(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			return context.Execute(new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_ENTRY_STEPS", EntryStepRowCreator));
+		}
+
+		private static DbFeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
+		{
+			return new DbFeatureEntryRow(r.GetInt64(0), r.GetDecimal(1), r.GetString(2), r.GetDateTime(3), r.GetInt64(4));
+		}
+
+		private static DbFeatureEntryStepRow EntryStepRowCreator(IFieldDataReader r)
+		{
+			return new DbFeatureEntryStepRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2), r.GetInt64(3));
 		}
 
 		private static DbContextRow DbContextCreator(IFieldDataReader r)

@@ -4,8 +4,8 @@ namespace Cchbc.Features.Db.Objects
 	{
 		public readonly decimal TimeSpent;
 		public readonly string Details;
-		public long FeatureEntryId;
-		public long FeatureStepId;
+		public readonly long FeatureEntryId;
+		public readonly long FeatureStepId;
 
 		public DbFeatureEntryStepRow(decimal timeSpent, string details, long featureEntryId, long featureStepId)
 		{
