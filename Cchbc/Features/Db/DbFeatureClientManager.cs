@@ -41,7 +41,7 @@ namespace Cchbc.Features.Db
 			var context = this.SaveContext(transactionContext, entry.Context);
 			var feature = this.SaveFeature(transactionContext, context, entry.Name);
 
-			var dbFeatureEntry = DbFeatureAdapter.InsertFeatureEntry(transactionContext, feature, entry);
+			var dbFeatureEntry = DbFeatureAdapter.InsertFeatureEntry(transactionContext, feature.Id, entry);
 			this.SaveSteps(transactionContext, dbFeatureEntry, entry.Steps);
 		}
 
@@ -53,7 +53,7 @@ namespace Cchbc.Features.Db
 			var context = this.SaveContext(transactionContext, entry.Context);
 			var feature = this.SaveFeature(transactionContext, context, entry.Name);
 
-			DbFeatureAdapter.InsertExceptionEntry(transactionContext, feature, entry);
+			DbFeatureAdapter.InsertExceptionEntry(transactionContext, feature.Id, entry);
 		}
 
 		private DbContextRow SaveContext(ITransactionContext transactionContext, string name)
@@ -104,7 +104,7 @@ namespace Cchbc.Features.Db
 			return feature;
 		}
 
-		private void SaveSteps(ITransactionContext context, DbFeatureEntry featureEntry, ICollection<FeatureEntryStep> entrySteps)
+		private void SaveSteps(ITransactionContext context, DbFeatureEntryRow featureEntryRow, ICollection<FeatureEntryStep> entrySteps)
 		{
 			if (entrySteps.Count == 0) return;
 
@@ -127,7 +127,7 @@ namespace Cchbc.Features.Db
 			// Inser step entries
 			foreach (var step in entrySteps)
 			{
-				DbFeatureAdapter.InsertStepEntry(context, featureEntry, this.Steps[step.Name], step);
+				DbFeatureAdapter.InsertStepEntry(context, featureEntryRow, this.Steps[step.Name], step);
 			}
 		}
 

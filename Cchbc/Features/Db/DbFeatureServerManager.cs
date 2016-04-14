@@ -4,24 +4,6 @@ using Cchbc.Data;
 
 namespace Cchbc.Features.Db
 {
-	public sealed class FeatureEntryRow
-	{
-		public readonly long Id;
-		public readonly decimal TimeSpent;
-		public readonly string Details;
-		public readonly DateTime CreatedAt;
-		public long FeatureId;
-
-		public FeatureEntryRow(long id, decimal timeSpent, string details, DateTime createdAt, long featureId)
-		{
-			Id = id;
-			TimeSpent = timeSpent;
-			Details = details;
-			CreatedAt = createdAt;
-			FeatureId = featureId;
-		}
-	}
-
 	public sealed class FeatureEntryStepRow
 	{
 		public readonly decimal TimeSpent;
@@ -167,7 +149,7 @@ namespace Cchbc.Features.Db
 			return featuresMap;
 		}
 
-		private static Dictionary<long, long> ReplicateFeatureEntries(ITransactionContext serverContext, List<FeatureEntryRow> featureEntryRows, Dictionary<long, long> featuresMap, string userName)
+		private static Dictionary<long, long> ReplicateFeatureEntries(ITransactionContext serverContext, List<DbFeatureEntryRow> featureEntryRows, Dictionary<long, long> featuresMap, string userName)
 		{
 			var user = GetOrCreateUser(serverContext, userName);
 
@@ -239,7 +221,7 @@ namespace Cchbc.Features.Db
 			return context.GetNewId();
 		}
 
-		private static long InsertFeatureEntry(ITransactionContext context, FeatureEntryRow row, long userId)
+		private static long InsertFeatureEntry(ITransactionContext context, DbFeatureEntryRow row, long userId)
 		{
 			// Set parameters values
 			var sqlParams = new[]
@@ -288,9 +270,9 @@ namespace Cchbc.Features.Db
 			return context.Execute(new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator));
 		}
 
-		private static List<FeatureEntryRow> GetFeatureEntryRows(ITransactionContext context)
+		private static List<DbFeatureEntryRow> GetFeatureEntryRows(ITransactionContext context)
 		{
-			return context.Execute(new Query<FeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID FROM FEATURE_ENTRIES", FeatureEntryRowCreator));
+			return context.Execute(new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator));
 		}
 
 		private static List<FeatureEntryStepRow> GetEntryStepRows(ITransactionContext context)
@@ -359,9 +341,9 @@ namespace Cchbc.Features.Db
 			return new DbFeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
 		}
 
-		private static FeatureEntryRow FeatureEntryRowCreator(IFieldDataReader r)
+		private static DbFeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
 		{
-			return new FeatureEntryRow(r.GetInt64(0), r.GetDecimal(1), r.GetString(2), r.GetDateTime(3), r.GetInt64(4));
+			return new DbFeatureEntryRow(r.GetInt64(0), r.GetDecimal(1), r.GetString(2), r.GetDateTime(3), r.GetInt64(4));
 		}
 
 		private static FeatureEntryStepRow EntryStepRowCreator(IFieldDataReader r)
