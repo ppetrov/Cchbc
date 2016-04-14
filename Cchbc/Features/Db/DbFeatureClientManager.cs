@@ -1,37 +1,36 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Cchbc.Data;
 
 namespace Cchbc.Features.Db
 {
-	public sealed class DbFeatureClientManager : DbFeatureManager
+	public sealed class DbFeatureClientManager
 	{
+		public Dictionary<string, DbContext> Contexts { get; } = new Dictionary<string, DbContext>(StringComparer.OrdinalIgnoreCase);
+		public Dictionary<string, DbFeatureStep> Steps { get; } = new Dictionary<string, DbFeatureStep>(StringComparer.OrdinalIgnoreCase);
+		public Dictionary<long, Dictionary<string, DbFeature>> Features { get; } = new Dictionary<long, Dictionary<string, DbFeature>>();
+
 		public static void CreateSchema(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			DbFeatureClientAdapter.CreateSchema(context);
+			DbFeatureAdapter.CreateClientSchema(context);
 		}
 
 		public static void DropSchema(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			DbFeatureClientAdapter.DropSchema(context);
+			DbFeatureAdapter.DropClientSchema(context);
 		}
 
-		public List<FeatureEntryRow> GetFeatureEntries(ITransactionContext context)
+		public void Load(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return DbFeatureClientAdapter.GetFeatureEntries(context);
-		}
-
-		public List<FeatureEntryStepRow> GetFeatureEntrySteps(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			return DbFeatureClientAdapter.GetFeatureEntrySteps(context);
+			this.LoadContexts(context);
+			this.LoadSteps(context);
+			this.LoadFeatures(context);
 		}
 
 		public void Save(ITransactionContext transactionContext, FeatureEntry entry)
@@ -42,7 +41,7 @@ namespace Cchbc.Features.Db
 			var context = this.SaveContext(transactionContext, entry.Context);
 			var feature = this.SaveFeature(transactionContext, context, entry.Name);
 
-			var dbFeatureEntry = DbFeatureClientAdapter.InsertFeatureEntry(transactionContext, feature, entry);
+			var dbFeatureEntry = DbFeatureAdapter.InsertFeatureEntry(transactionContext, feature, entry);
 			this.SaveSteps(transactionContext, dbFeatureEntry, entry.Steps);
 		}
 
@@ -54,7 +53,7 @@ namespace Cchbc.Features.Db
 			var context = this.SaveContext(transactionContext, entry.Context);
 			var feature = this.SaveFeature(transactionContext, context, entry.Name);
 
-			DbFeatureClientAdapter.InsertExceptionEntry(transactionContext, feature, entry);
+			DbFeatureAdapter.InsertExceptionEntry(transactionContext, feature, entry);
 		}
 
 		private DbContext SaveContext(ITransactionContext transactionContext, string name)
@@ -128,7 +127,53 @@ namespace Cchbc.Features.Db
 			// Inser step entries
 			foreach (var step in entrySteps)
 			{
-				DbFeatureClientAdapter.InsertStepEntry(context, featureEntry, this.Steps[step.Name], step);
+				DbFeatureAdapter.InsertStepEntry(context, featureEntry, this.Steps[step.Name], step);
+			}
+		}
+
+		private void LoadContexts(ITransactionContext transactionContext)
+		{
+			// Clear contexts from old values
+			this.Contexts.Clear();
+
+			// Fetch & add new values
+			foreach (var context in DbFeatureAdapter.GetContexts(transactionContext))
+			{
+				this.Contexts.Add(context.Name, context);
+			}
+		}
+
+		private void LoadSteps(ITransactionContext context)
+		{
+			// Clear steps from old values
+			this.Steps.Clear();
+
+			// Fetch & add new values
+			foreach (var step in DbFeatureAdapter.GetSteps(context))
+			{
+				this.Steps.Add(step.Name, step);
+			}
+		}
+
+		private void LoadFeatures(ITransactionContext context)
+		{
+			// Clear steps from old values
+			this.Features.Clear();
+
+			// Fetch & add new values
+			foreach (var feature in DbFeatureAdapter.GetFeatures(context, this.Contexts))
+			{
+				var dbContext = feature.Context.Id;
+
+				// Find features by context
+				Dictionary<string, DbFeature> byContext;
+				if (!this.Features.TryGetValue(dbContext, out byContext))
+				{
+					byContext = new Dictionary<string, DbFeature>(StringComparer.OrdinalIgnoreCase);
+					this.Features.Add(dbContext, byContext);
+				}
+
+				byContext.Add(feature.Name, feature);
 			}
 		}
 	}

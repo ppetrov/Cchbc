@@ -1,246 +1,416 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Cchbc.Data;
 
 namespace Cchbc.Features.Db
 {
-	public sealed class DbFeatureServerManager : DbFeatureManager
+	public static class DbFeatureServerManager
 	{
-		private Dictionary<long, DbContext> Client2ServerContexts { get; } = new Dictionary<long, DbContext>();
-		private Dictionary<long, DbFeatureStep> Client2ServerSteps { get; } = new Dictionary<long, DbFeatureStep>();
+		public sealed class FeatureContextRow
+		{
+			public readonly long Id;
+			public readonly string Name;
 
-		public void SaveClientData(ITransactionContext context, string userName, DbFeatureClientManager client, List<FeatureEntryRow> featureRows, List<FeatureEntryStepRow> steps)
+			public FeatureContextRow(long id, string name)
+			{
+				if (name == null) throw new ArgumentNullException(nameof(name));
+
+				this.Id = id;
+				this.Name = name;
+			}
+		}
+
+		public sealed class FeatureStepRow
+		{
+			public readonly long Id;
+			public readonly string Name;
+
+			public FeatureStepRow(long id, string name)
+			{
+				if (name == null) throw new ArgumentNullException(nameof(name));
+
+				this.Id = id;
+				this.Name = name;
+			}
+		}
+
+		public sealed class FeatureRow
+		{
+			public readonly long Id;
+			public readonly string Name;
+			public readonly long ContextId;
+
+			public FeatureRow(long id, string name, long contextId)
+			{
+				if (name == null) throw new ArgumentNullException(nameof(name));
+
+				this.Id = id;
+				this.Name = name;
+				this.ContextId = contextId;
+			}
+		}
+
+		public sealed class FeatureEntryRow
+		{
+			public readonly long Id;
+			public readonly decimal TimeSpent;
+			public readonly string Details;
+			public readonly DateTime CreatedAt;
+			public long FeatureId;
+
+			public FeatureEntryRow(long id, decimal timeSpent, string details, DateTime createdAt, long featureId)
+			{
+				Id = id;
+				TimeSpent = timeSpent;
+				Details = details;
+				CreatedAt = createdAt;
+				FeatureId = featureId;
+			}
+		}
+
+		public sealed class FeatureEntryStepRow
+		{
+			public readonly decimal TimeSpent;
+			public readonly string Details;
+			public long FeatureEntryId;
+			public long FeatureStepId;
+
+			public FeatureEntryStepRow(decimal timeSpent, string details, long featureEntryId, long featureStepId)
+			{
+				TimeSpent = timeSpent;
+				Details = details;
+				FeatureEntryId = featureEntryId;
+				FeatureStepId = featureStepId;
+			}
+		}
+
+		public static void CreateSchema(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (userName == null) throw new ArgumentNullException(nameof(userName));
-			if (client == null) throw new ArgumentNullException(nameof(client));
 
-			var user = UserHelper.GetOrCreateUser(context, userName);
-
-			Merge(context, client.Contexts);
-			Merge(context, client.Steps);
-			var mappedFeaturesIds = Merge(context, client.Features);
-
-			var map = steps.GroupBy(v => v.FeatureEntryId).ToDictionary(v => v.Key, v => v.ToList());
-
-			foreach (var row in featureRows)
-			{
-				var oldFeatureId = row.FeatureId;
-				var newFeatureId = mappedFeaturesIds[oldFeatureId];
-
-				row.FeatureId = newFeatureId;
-
-				var featureEntryId = DbFeatureServerAdapter.Insert(context, user, row);
-
-				List<FeatureEntryStepRow> local;
-				if (map.TryGetValue(oldFeatureId, out local))
-				{
-					foreach (var stepRow in local)
-					{
-						var oldStepId = stepRow.FeatureStepId;
-						var newStepId = this.Client2ServerSteps[oldStepId].Id;
-
-						stepRow.FeatureStepId = newStepId;
-
-						DbFeatureServerAdapter.Insert(context, featureEntryId, stepRow);
-					}
-				}
-			}
+			DbFeatureAdapter.CreateServerSchema(context);
 		}
 
-
-
-
-
-		private void Merge(ITransactionContext context, Dictionary<string, DbContext> clientContexts)
+		public static void DropSchema(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (clientContexts == null) throw new ArgumentNullException(nameof(clientContexts));
 
-			// Add the new contexts
-			this.Insert(context, this.GetNewContexts(clientContexts));
-
-			// Map client to server contexts
-			this.Client2ServerContexts.Clear();
-			foreach (var dbContext in clientContexts.Values)
-			{
-				this.Client2ServerContexts.Add(dbContext.Id, this.Contexts[dbContext.Name]);
-			}
+			DbFeatureAdapter.DropServerSchema(context);
 		}
 
-		private void Merge(ITransactionContext context, Dictionary<string, DbFeatureStep> clientSteps)
+		public static void Replicate(ITransactionContext serverContext, ITransactionContext clientContext, string userName)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (clientSteps == null) throw new ArgumentNullException(nameof(clientSteps));
-
-			// Add the new steps
-			this.Insert(context, this.GetNewSteps(clientSteps));
-
-			// Map client to server steps
-			this.Client2ServerSteps.Clear();
-			foreach (var step in clientSteps.Values)
-			{
-				this.Client2ServerSteps.Add(step.Id, this.Steps[step.Name]);
-			}
-		}
-
-		private Dictionary<long, long> Merge(ITransactionContext context, Dictionary<long, Dictionary<string, DbFeature>> clientFeatures)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (clientFeatures == null) throw new ArgumentNullException(nameof(clientFeatures));
-
-			var mappedIds = new Dictionary<long, long>();
-
-			var newFeatures = new List<DbFeature>();
-
-			foreach (var clientContext in clientFeatures)
-			{
-				var clientContextId = clientContext.Key;
-
-				// Map client 2 server context
-				var serverContext = this.Client2ServerContexts[clientContextId];
-
-				// Get the server features via serverContext
-				Dictionary<string, DbFeature> serverFeatures;
-				this.Features.TryGetValue(serverContext.Id, out serverFeatures);
-				serverFeatures = serverFeatures ?? new Dictionary<string, DbFeature>(0, StringComparer.OrdinalIgnoreCase);
-
-				// Get the new features
-				foreach (var feature in clientContext.Value)
-				{
-					DbFeature value;
-
-					var name = feature.Key;
-					if (!serverFeatures.TryGetValue(name, out value))
-					{
-						newFeatures.Add(new DbFeature(feature.Value.Id, name, serverContext));
-					}
-					else
-					{
-
-					}
-
-				}
-			}
-
-			return this.Insert(context, newFeatures);
-		}
-
-		private List<DbContext> GetNewContexts(Dictionary<string, DbContext> contexts)
-		{
-			var newContexts = new List<DbContext>();
-
-			foreach (var clientContext in contexts.Values)
-			{
-				DbContext serverContext;
-				if (!this.Contexts.TryGetValue(clientContext.Name, out serverContext))
-				{
-					newContexts.Add(clientContext);
-				}
-			}
-
-			return newContexts;
-		}
-
-		private List<DbFeatureStep> GetNewSteps(Dictionary<string, DbFeatureStep> steps)
-		{
-			var newSteps = new List<DbFeatureStep>();
-
-			foreach (var clientStep in steps.Values)
-			{
-				DbFeatureStep serverStep;
-				if (!this.Steps.TryGetValue(clientStep.Name, out serverStep))
-				{
-					newSteps.Add(clientStep);
-				}
-			}
-
-			return newSteps;
-		}
-
-		private void Insert(ITransactionContext context, List<DbContext> contexts)
-		{
-			foreach (var dbContext in contexts)
-			{
-				var name = dbContext.Name;
-				var newContext = new DbContext(DbFeatureAdapter.InsertContext(context, name), name);
-
-				this.Contexts.Add(name, newContext);
-			}
-		}
-
-		private void Insert(ITransactionContext context, List<DbFeatureStep> steps)
-		{
-			foreach (var dbStep in steps)
-			{
-				var name = dbStep.Name;
-				var newStep = new DbFeatureStep(DbFeatureAdapter.InsertStep(context, name), name);
-
-				this.Steps.Add(name, newStep);
-			}
-		}
-
-		private Dictionary<long, long> Insert(ITransactionContext context, List<DbFeature> features)
-		{
-			var mappedIds = new Dictionary<long, long>(features.Count);
-
-			foreach (var dbFeature in features)
-			{
-				var dbContextId = dbFeature.Context.Id;
-
-				var oldFeatureId = dbFeature.Id;
-				var newFeatureId = DbFeatureAdapter.InsertFeature(context, dbFeature.Name, dbContextId);
-				dbFeature.Id = newFeatureId;
-
-				mappedIds.Add(oldFeatureId, newFeatureId);
-
-				Dictionary<string, DbFeature> byContext;
-				if (!this.Features.TryGetValue(dbContextId, out byContext))
-				{
-					byContext = new Dictionary<string, DbFeature>(StringComparer.OrdinalIgnoreCase);
-					this.Features.Add(dbContextId, byContext);
-				}
-
-				byContext.Add(dbFeature.Name, dbFeature);
-			}
-
-			return mappedIds;
-		}
-	}
-
-	public static class UserHelper
-	{
-		public static DbFeatureUser GetOrCreateUser(ITransactionContext context, string userName)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (serverContext == null) throw new ArgumentNullException(nameof(serverContext));
+			if (clientContext == null) throw new ArgumentNullException(nameof(clientContext));
 			if (userName == null) throw new ArgumentNullException(nameof(userName));
 
-			return GetUser(context, userName) ?? CreateUser(context, userName);
+			var clientContextRows = GetContextRows(clientContext);
+			var contextsMap = ReplicateContexts(serverContext, clientContextRows);
+
+			var clientStepRows = GetFeatureStepRows(clientContext);
+			var stepsMap = ReplicateSteps(serverContext, clientStepRows);
+
+			var clientFeatureRows = GetFeatureRows(clientContext);
+			var featuresMap = ReplicateFeatures(serverContext, clientFeatureRows, contextsMap);
+
+			var featureEntryRows = GetFeatureEntryRows(clientContext);
+			var featureEntriesMap = ReplicateFeatureEntries(serverContext, featureEntryRows, featuresMap, userName);
+
+			var featureEntryStepRows = GetEntryStepRows(clientContext);
+			ReplicateFeatureEntryStepRow(serverContext, featureEntryStepRows, featureEntriesMap, stepsMap);
 		}
 
-		private static DbFeatureUser GetUser(ITransactionContext context, string userName)
+		private static Dictionary<long, long> ReplicateContexts(ITransactionContext serverContext, List<FeatureContextRow> clientContextRows)
+		{
+			var contextRows = GetContextRows(serverContext);
+
+			var serverContextsRows = new Dictionary<string, long>(contextRows.Count);
+			foreach (var context in contextRows)
+			{
+				serverContextsRows.Add(context.Name, context.Id);
+			}
+
+			var map = new Dictionary<long, long>(clientContextRows.Count);
+
+			foreach (var context in clientContextRows)
+			{
+				long serverId;
+				var serverContextId = serverContextsRows.TryGetValue(context.Name, out serverId)
+					? serverId
+					: InsertContext(serverContext, context.Name);
+
+				var clientContextId = context.Id;
+				map.Add(clientContextId, serverContextId);
+			}
+
+			return map;
+		}
+
+		private static Dictionary<long, long> ReplicateSteps(ITransactionContext serverContext, List<FeatureStepRow> clientStepRows)
+		{
+			var steps = GetFeatureStepRows(serverContext);
+
+			var serverStepRows = new Dictionary<string, long>(steps.Count);
+			foreach (var step in steps)
+			{
+				serverStepRows.Add(step.Name, step.Id);
+			}
+
+			var map = new Dictionary<long, long>(clientStepRows.Count);
+
+			foreach (var step in clientStepRows)
+			{
+				long serverId;
+				var serverStepId = serverStepRows.TryGetValue(step.Name, out serverId)
+					? serverId
+					: InsertStep(serverContext, step.Name);
+
+				var clientStepId = step.Id;
+				map.Add(clientStepId, serverStepId);
+			}
+
+			return map;
+		}
+
+		private static Dictionary<long, long> ReplicateFeatures(ITransactionContext serverContext, List<FeatureRow> clientFeatureRows, Dictionary<long, long> contextsMap)
+		{
+			var serverFeatures = new Dictionary<long, Dictionary<string, long>>();
+
+			foreach (var feature in GetFeatureRows(serverContext))
+			{
+				Dictionary<string, long> byContext;
+
+				var contextId = feature.ContextId;
+				if (!serverFeatures.TryGetValue(contextId, out byContext))
+				{
+					byContext = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+					serverFeatures.Add(contextId, byContext);
+				}
+
+				byContext.Add(feature.Name, feature.Id);
+			}
+
+
+			var featuresMap = new Dictionary<long, long>(clientFeatureRows.Count);
+
+			foreach (var feature in clientFeatureRows)
+			{
+				var contextId = contextsMap[feature.ContextId];
+				var name = feature.Name;
+
+				// We are sure that the key exists in the dictionary.
+				long serverFeatureId;
+				var byContext = serverFeatures[contextId];
+				var featureId = byContext.TryGetValue(name, out serverFeatureId)
+					? serverFeatureId
+					: InsertFeature(serverContext, name, contextId);
+
+				featuresMap.Add(feature.Id, featureId);
+			}
+
+			return featuresMap;
+		}
+
+		private static Dictionary<long, long> ReplicateFeatureEntries(ITransactionContext serverContext, List<FeatureEntryRow> featureEntryRows, Dictionary<long, long> featuresMap, string userName)
+		{
+			var user = GetOrCreateUser(serverContext, userName);
+
+			var map = new Dictionary<long, long>(featureEntryRows.Count);
+
+			foreach (var entry in featureEntryRows)
+			{
+				entry.FeatureId = featuresMap[entry.FeatureId];
+				map.Add(entry.Id, InsertFeatureEntry(serverContext, entry, user.Id));
+			}
+
+			return map;
+		}
+
+		private static void ReplicateFeatureEntryStepRow(ITransactionContext serverContext, List<FeatureEntryStepRow> featureEntryStepRows, Dictionary<long, long> featureEntriesMap, Dictionary<long, long> stepsMap)
+		{
+			foreach (var row in featureEntryStepRows)
+			{
+				row.FeatureEntryId = featureEntriesMap[row.FeatureEntryId];
+				row.FeatureStepId = stepsMap[row.FeatureStepId];
+
+				InsertFeatureEntryStepRow(serverContext, row);
+			}
+		}
+
+		private static long InsertContext(ITransactionContext context, string name)
+		{
+			// Set parameters values
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"NAME", name),
+			};
+
+			// Insert the record
+			context.Execute(new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)", sqlParams));
+
+			// Get new Id back
+			return context.GetNewId();
+		}
+
+		private static long InsertStep(ITransactionContext context, string name)
+		{
+			// Set parameters values
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"NAME", name),
+			};
+
+			// Insert the record
+			context.Execute(new Query(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)", sqlParams));
+
+			// Get new Id back
+			return context.GetNewId();
+		}
+
+		private static long InsertFeature(ITransactionContext context, string name, long contextId)
+		{
+			// Set parameters values
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"@NAME", name),
+				new QueryParameter(@"@CONTEXT", contextId),
+			};
+
+			// Insert the record
+			context.Execute(new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", sqlParams));
+
+			// Get new Id back
+			return context.GetNewId();
+		}
+
+		private static long InsertFeatureEntry(ITransactionContext context, FeatureEntryRow row, long userId)
+		{
+			// Set parameters values
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"@TIMESPENT", row.TimeSpent),
+				new QueryParameter(@"@DETAILS", row.Details),
+				new QueryParameter(@"@CREATEDAT", row.CreatedAt),
+				new QueryParameter(@"@FEATURE", row.FeatureId),
+				new QueryParameter(@"@USER", userId),
+			};
+
+			// Insert the record
+			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID, USER_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATEDAT, @FEATURE, @USER)", sqlParams));
+
+			// Get new Id back
+			return context.GetNewId();
+		}
+
+		private static void InsertFeatureEntryStepRow(ITransactionContext context, FeatureEntryStepRow row)
+		{
+			// Set parameters values
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"@ENTRY", row.FeatureEntryId),
+				new QueryParameter(@"@STEP", row.FeatureStepId),
+				new QueryParameter(@"@TIMESPENT", row.TimeSpent),
+				new QueryParameter(@"@DETAILS", row.Details),
+			};
+
+			// Insert the record
+			context.Execute(new Query(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", sqlParams));
+		}
+
+		private static List<FeatureContextRow> GetContextRows(ITransactionContext context)
+		{
+			return context.Execute(new Query<FeatureContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", ContextRowCreator));
+		}
+
+		private static List<FeatureStepRow> GetFeatureStepRows(ITransactionContext context)
+		{
+			return context.Execute(new Query<FeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", FeatureStepRowCreator));
+		}
+
+		private static List<FeatureRow> GetFeatureRows(ITransactionContext context)
+		{
+			return context.Execute(new Query<FeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", FeatureRowCreator));
+		}
+
+		private static List<FeatureEntryRow> GetFeatureEntryRows(ITransactionContext context)
+		{
+			return context.Execute(new Query<FeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID FROM FEATURE_ENTRIES", FeatureEntryRowCreator));
+		}
+
+		private static List<FeatureEntryStepRow> GetEntryStepRows(ITransactionContext context)
+		{
+			return context.Execute(new Query<FeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_ENTRY_STEPS", EntryStepRowCreator));
+		}
+
+		private static DbFeatureUser GetOrCreateUser(ITransactionContext context, string userName)
+		{
+			var userId = -1L;
+			var user = GetUserId(context, userName);
+			if (!user.HasValue)
+			{
+				userId = CreateUser(context, userName);
+			}
+			return new DbFeatureUser(userId, userName);
+		}
+
+		public static long? GetUserId(ITransactionContext context, string name)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (userName == null) throw new ArgumentNullException(nameof(userName));
+			if (name == null) throw new ArgumentNullException(nameof(name));
 
-			var userId = DbFeatureServerAdapter.GetUser(context, userName);
-			if (userId.HasValue)
+			// Set parameters values
+			var sqlParams = new[]
 			{
-				return new DbFeatureUser(userId.Value, userName);
+				new QueryParameter(@"NAME", name),
+			};
+
+			// select the record
+			var ids = context.Execute(new Query<long>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", r => r.GetInt64(0), sqlParams));
+			if (ids.Count > 0)
+			{
+				return ids[0];
 			}
 			return null;
 		}
 
-		private static DbFeatureUser CreateUser(ITransactionContext context, string userName)
+		private static long CreateUser(ITransactionContext context, string name)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (userName == null) throw new ArgumentNullException(nameof(userName));
+			// Set parameters values
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"NAME", name),
+			};
 
-			return new DbFeatureUser(DbFeatureServerAdapter.InsertUser(context, userName), userName);
+			// Insert the record
+			context.Execute(new Query(@"INSERT INTO FEATURE_USERS(NAME) VALUES (@NAME)", sqlParams));
+
+			// Get new Id back
+			return context.GetNewId();
+		}
+
+		private static FeatureContextRow ContextRowCreator(IFieldDataReader r)
+		{
+			return new FeatureContextRow(r.GetInt64(0), r.GetString(1));
+		}
+
+		private static FeatureStepRow FeatureStepRowCreator(IFieldDataReader r)
+		{
+			return new FeatureStepRow(r.GetInt64(0), r.GetString(1));
+		}
+
+		private static FeatureRow FeatureRowCreator(IFieldDataReader r)
+		{
+			return new FeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
+		}
+
+		private static FeatureEntryRow FeatureEntryRowCreator(IFieldDataReader r)
+		{
+			return new FeatureEntryRow(r.GetInt64(0), r.GetDecimal(1), r.GetString(2), r.GetDateTime(3), r.GetInt64(4));
+		}
+
+		private static FeatureEntryStepRow EntryStepRowCreator(IFieldDataReader r)
+		{
+			return new FeatureEntryStepRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2), r.GetInt64(3));
 		}
 	}
-
-
-	
 }

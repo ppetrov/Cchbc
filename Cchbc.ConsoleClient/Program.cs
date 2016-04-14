@@ -36,7 +36,7 @@ namespace Cchbc.ConsoleClient
 	{
 		static void Main(string[] args)
 		{
-			var serverDb = @"Data Source = C:\Users\codem\Desktop\iandonov.sqlite; Version = 3;";
+			var serverDb = @"Data Source = C:\Users\codem\Desktop\server.sqlite; Version = 3;";
 			var clientDb = @"Data Source = C:\Users\codem\Desktop\ppetrov.sqlite; Version = 3;";
 
 			var si = clientDb.LastIndexOf('\\') + 1;
@@ -47,23 +47,21 @@ namespace Cchbc.ConsoleClient
 				//DropSchema(serverDb);
 				//CreateSchema(serverDb);
 
-
-				
-				using (var s = new TransactionContextCreator(serverDb).Create())
+				using (var server = new TransactionContextCreator(serverDb).Create())
 				{
-					using (var c = new TransactionContextCreator(clientDb).Create())
+					using (var client = new TransactionContextCreator(clientDb).Create())
 					{
 						var w = Stopwatch.StartNew();
-						var r = new DbReplication();
-						r.Replicate(s, c);
+						
+						DbFeatureServerManager.Replicate(server, client, @"ppetrov");
 
-						c.Complete();
-						s.Complete();
+						client.Complete();
+						server.Complete();
 						w.Stop();
 						Console.WriteLine(w.ElapsedMilliseconds);
 					}
 				}
-				
+
 
 
 				//var client = GetClient(clientDb);
@@ -158,44 +156,11 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		private static DbFeatureClientManager GetClient(string clientDb)
-		{
-			var client = new DbFeatureClientManager();
-
-			using (var context = new TransactionContextCreator(clientDb).Create())
-			{
-				client.Load(context);
-
-				foreach (var row in DbFeatureClientAdapter.GetFeatureEntries(context))
-				{
-					Console.WriteLine(row);
-				}
-
-				Console.WriteLine();
-
-				foreach (var row in DbFeatureClientAdapter.GetFeatureEntrySteps(context))
-				{
-					Console.WriteLine(row);
-				}
-
-				Console.WriteLine();
-
-				foreach (var row in client.GetFeatureEntries(context))
-				{
-					Console.WriteLine(row);
-				}
-
-				context.Complete();
-			}
-
-			return client;
-		}
-
 		private static void CreateSchema(string serverDb)
 		{
 			using (var serverContext = new TransactionContextCreator(serverDb).Create())
 			{
-				DbFeatureServerAdapter.CreateSchema(serverContext);
+				DbFeatureServerManager.CreateSchema(serverContext);
 				serverContext.Complete();
 
 				Console.WriteLine(@"Create schema");
@@ -208,7 +173,7 @@ namespace Cchbc.ConsoleClient
 			{
 				try
 				{
-					DbFeatureServerAdapter.DropSchema(serverContext);
+					DbFeatureServerManager.DropSchema(serverContext);
 					serverContext.Complete();
 				}
 				catch
