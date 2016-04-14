@@ -186,7 +186,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return context.Execute(new Query<DbContext>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbFeatureContextCreator));
+			return context.Execute(new Query<DbContext>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextCreator));
 		}
 
 		public static List<DbFeatureStep> GetSteps(ITransactionContext context)
@@ -195,6 +195,8 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 
 			return context.Execute(new Query<DbFeatureStep>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator));
 		}
+
+
 
 		public static List<DbFeature> GetFeatures(ITransactionContext context, Dictionary<string, DbContext> contexts)
 		{
@@ -218,6 +220,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 
 			return mappedFeatures;
 		}
+
 
 		public static long InsertContext(ITransactionContext context, string name)
 		{
@@ -268,11 +271,6 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 		private static DbFeature DbFeatureCreator(IFieldDataReader r)
 		{
 			return new DbFeature(r.GetInt64(0), r.GetString(1), new DbContext(r.GetInt64(2), string.Empty));
-		}
-
-		private static DbFeatureStep DbFeatureStepCreator(IFieldDataReader r)
-		{
-			return new DbFeatureStep(r.GetInt64(0), r.GetString(1));
 		}
 
 		private static void CreateCommonSchema(ITransactionContext context)
@@ -359,9 +357,14 @@ CREATE TABLE [FEATURES] (
 
 
 
-		private static DbContext DbFeatureContextCreator(IFieldDataReader r)
+		private static DbContext DbContextCreator(IFieldDataReader r)
 		{
 			return new DbContext(r.GetInt64(0), r.GetString(1));
+		}
+
+		private static DbFeatureStep DbFeatureStepCreator(IFieldDataReader r)
+		{
+			return new DbFeatureStep(r.GetInt64(0), r.GetString(1));
 		}
 	}
 }
