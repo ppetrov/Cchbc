@@ -76,6 +76,8 @@ namespace Cchbc.ConsoleClient
 
 		public void Fill<T>(Dictionary<long, T> items, Func<T, long> selector, Query<T> query)
 		{
+			items.Clear();
+
 			using (var cmd = _cn.CreateCommand())
 			{
 				cmd.Transaction = _tr;
@@ -101,6 +103,8 @@ namespace Cchbc.ConsoleClient
 
 		public void Fill<T>(Dictionary<long, T> items, Action<IFieldDataReader, Dictionary<long, T>> filler, Query query)
 		{
+			items.Clear();
+
 			using (var cmd = _cn.CreateCommand())
 			{
 				cmd.Transaction = _tr;

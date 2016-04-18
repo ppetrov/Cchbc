@@ -136,13 +136,13 @@ CREATE TABLE[FEATURE_USERS] (
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE [FEATURE_ENTRIES] (
+CREATE TABLE [FEATURE_EXCEPTIONS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
-	[TimeSpent] decimal(38, 0) NOT NULL, 
-	[Details] nvarchar(254) NULL, 
+	[Message] nvarchar(254) NOT NULL, 
+	[StackTrace] nvarchar(254) NOT NULL, 
 	[CreatedAt] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
-	[User_Id] integer NOT NULL
+	[User_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Id])
 		REFERENCES [FEATURES] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
@@ -152,15 +152,18 @@ CREATE TABLE [FEATURE_ENTRIES] (
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE [FEATURE_EXCEPTIONS] (
+CREATE TABLE [FEATURE_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
-	[Message] nvarchar(254) NOT NULL, 
-	[StackTrace] nvarchar(254) NOT NULL, 
+	[TimeSpent] decimal(38, 0) NOT NULL, 
+	[Details] nvarchar(254) NULL, 
 	[CreatedAt] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
-	[User_Id] integer NOT NULL
+	[User_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Id])
 		REFERENCES [FEATURES] ([Id])
+		ON UPDATE CASCADE ON DELETE CASCADE
+	FOREIGN KEY ([User_Id])
+		REFERENCES [FEATURE_USERS] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
 

@@ -132,12 +132,15 @@ namespace Cchbc.Features.Db.Managers
 				var contextId = contextsMap[feature.ContextId];
 				var name = feature.Name;
 
-				// We are sure that the key exists in the dictionary.
-				long serverFeatureId;
-				var byContext = serverFeatures[contextId];
-				var featureId = byContext.TryGetValue(name, out serverFeatureId)
-					? serverFeatureId
-					: DbFeatureAdapter.InsertFeature(serverContext, name, contextId);
+				long featureId;
+
+				Dictionary<string, long> byContext;
+
+				// Entirely New feature or New feature in the context
+				if (!serverFeatures.TryGetValue(contextId, out byContext) || !byContext.TryGetValue(name, out featureId))
+				{
+					featureId = DbFeatureAdapter.InsertFeature(serverContext, name, contextId);
+				}
 
 				featuresMap.Add(feature.Id, featureId);
 			}

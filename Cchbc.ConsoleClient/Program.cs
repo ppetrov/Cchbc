@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
-using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
-using Cchbc.Features.Db;
 using Cchbc.Features.Db.Managers;
 using LoginModule.Adapter;
 using LoginModule.Objects;
@@ -38,22 +33,21 @@ namespace Cchbc.ConsoleClient
 		static void Main(string[] args)
 		{
 			var serverDb = @"Data Source = C:\Users\codem\Desktop\server.sqlite; Version = 3;";
-			var clientDb = @"Data Source = C:\Users\codem\Desktop\ppetrov.sqlite; Version = 3;";
+			var clientDb = @"Data Source = C:\Users\codem\Desktop\ifsa.sqlite; Version = 3;";
 
 			var si = clientDb.LastIndexOf('\\') + 1;
 			var ei = clientDb.IndexOf('.', si);
 			var userName = clientDb.Substring(si, ei - si);
 			try
 			{
-				//DropSchema(serverDb);
-				//CreateSchema(serverDb);
+				CreateSchema(serverDb);
 
 				using (var server = new TransactionContextCreator(serverDb).Create())
 				{
 					using (var client = new TransactionContextCreator(clientDb).Create())
 					{
 						var w = Stopwatch.StartNew();
-						
+
 						DbFeatureServerManager.Replicate(server, client, @"ppetrov");
 
 						client.Complete();
@@ -157,14 +151,27 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		private static void CreateSchema(string serverDb)
+		private static void CreateSchema(string connectionString)
 		{
-			using (var serverContext = new TransactionContextCreator(serverDb).Create())
+			var creator = new TransactionContextCreator(connectionString);
+			try
+			{
+				using (var serverContext = creator.Create())
+				{
+					DbFeatureServerManager.DropSchema(serverContext);
+					serverContext.Complete();
+
+					Console.WriteLine(@"Drop schema");
+				}
+			}
+			catch { }
+
+			using (var serverContext = creator.Create())
 			{
 				DbFeatureServerManager.CreateSchema(serverContext);
 				serverContext.Complete();
 
-				Console.WriteLine(@"Create schema");
+				Console.WriteLine(@"Schema created");
 			}
 		}
 

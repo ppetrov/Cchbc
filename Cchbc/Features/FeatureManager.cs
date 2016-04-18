@@ -8,28 +8,30 @@ namespace Cchbc.Features
 	{
 		private DbFeatureClientManager DbClientClientManager { get; } = new DbFeatureClientManager();
 
-		private ITransactionContextCreator ContextCreator { get; set; }
+		public ITransactionContextCreator ContextCreator { get; set; }
 
-		public void CreateSchema(ITransactionContext context)
+		public void CreateSchema()
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+			using (var context = this.ContextCreator.Create())
+			{
+				DbFeatureClientManager.CreateSchema(context);
 
-			DbFeatureClientManager.CreateSchema(context);
+				context.Complete();
+			}
 		}
 
-		public void DropSchema(ITransactionContext context)
+		public void DropSchema()
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+			using (var context = this.ContextCreator.Create())
+			{
+				DbFeatureClientManager.DropSchema(context);
 
-			DbFeatureClientManager.DropSchema(context);
+				context.Complete();
+			}
 		}
 
-		public void Load(ITransactionContextCreator contextCreator)
+		public void Load()
 		{
-			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
-
-			this.ContextCreator = contextCreator;
-
 			using (var context = this.ContextCreator.Create())
 			{
 				this.DbClientClientManager.Load(context);

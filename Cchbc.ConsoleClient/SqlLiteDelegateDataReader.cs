@@ -1,14 +1,14 @@
 using System;
-using System.Data.Common;
+using System.Data;
 using Cchbc.Data;
 
 namespace Cchbc.ConsoleClient
 {
 	public sealed class SqlLiteDelegateDataReader : IFieldDataReader
 	{
-		private readonly DbDataReader _r;
+		private readonly IDataReader _r;
 
-		public SqlLiteDelegateDataReader(DbDataReader r)
+		public SqlLiteDelegateDataReader(IDataReader r)
 		{
 			if (r == null) throw new ArgumentNullException(nameof(r));
 

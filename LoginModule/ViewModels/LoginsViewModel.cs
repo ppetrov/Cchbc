@@ -15,7 +15,7 @@ namespace LoginModule.ViewModels
 	public sealed class LoginsViewModel : ViewModel
 	{
 		private IModalDialog ModalDialog { get; }
-		private FeatureManager FeatureManager { get; }		
+		private FeatureManager FeatureManager { get; }
 		private string Context { get; } = nameof(LoginsViewModel);
 
 		public LoginsModule Module { get; }
@@ -129,21 +129,33 @@ namespace LoginModule.ViewModels
 			var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadDataAsync));
 			try
 			{
-				var models = await this.Module.GetAllAsync();
-				var viewModels = new LoginViewModel[models.Count];
-				var index = 0;
-				foreach (var model in models)
-				{
-					viewModels[index++] = new LoginViewModel(model);
-				}
+				feature.AddStep(nameof(GetLoginsFromDbAsync));
+				var viewModels = await GetLoginsFromDbAsync();
+
+				feature.AddStep(nameof(DisplayLogins));
 				this.DisplayLogins(viewModels, feature);
 
-				this.FeatureManager.Stop(feature, models.Count.ToString());
+				this.FeatureManager.Stop(feature, viewModels.Length.ToString());
 			}
 			catch (Exception ex)
 			{
 				this.FeatureManager.LogException(feature, ex);
 			}
+		}
+
+		private async Task<LoginViewModel[]> GetLoginsFromDbAsync()
+		{
+			var models = await this.Module.GetAllAsync();
+
+			var viewModels = new LoginViewModel[models.Count];
+
+			var index = 0;
+			foreach (var model in models)
+			{
+				viewModels[index++] = new LoginViewModel(model);
+			}
+
+			return viewModels;
 		}
 
 		public Task UpdateAsync(LoginViewModel viewModel, IModalDialog dialog)
@@ -179,7 +191,7 @@ namespace LoginModule.ViewModels
 
 		private void DisplayLogins(LoginViewModel[] viewModels, Feature feature)
 		{
-			feature.AddStep(nameof(DisplayLogins));
+			
 
 			this.Module.SetupViewModels(viewModels);
 			this.ApplySearch();
