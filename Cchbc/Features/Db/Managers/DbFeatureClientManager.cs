@@ -48,15 +48,15 @@ namespace Cchbc.Features.Db.Managers
 			this.SaveSteps(transactionContext, featureEntryId, feature.Steps);
 		}
 
-		public void Save(ITransactionContext transactionContext, FeatureException entry)
+		public void Save(ITransactionContext transactionContext, Feature feature, Exception exception)
 		{
 			if (transactionContext == null) throw new ArgumentNullException(nameof(transactionContext));
-			if (entry == null) throw new ArgumentNullException(nameof(entry));
+			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			var contextRow = this.SaveContext(transactionContext, entry.Context);
-			var featureRow = this.SaveFeature(transactionContext, contextRow, entry.Name);
+			var contextRow = this.SaveContext(transactionContext, feature.Context);
+			var featureRow = this.SaveFeature(transactionContext, contextRow, feature.Name);
 
-			DbFeatureAdapter.InsertExceptionEntry(transactionContext, featureRow.Id, entry);
+			DbFeatureAdapter.InsertExceptionEntry(transactionContext, featureRow.Id, exception);
 		}
 
 		private DbContextRow SaveContext(ITransactionContext transactionContext, string name)

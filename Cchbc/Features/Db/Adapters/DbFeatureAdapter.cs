@@ -43,6 +43,15 @@ namespace Cchbc.Features.Db.Adapters
 			new QueryParameter(@"@FEATURE", 0L),
 		};
 
+		private static readonly QueryParameter[] InsertServerExcetionEntrySqlParams =
+		{
+			new QueryParameter(@"@MESSAGE", string.Empty),
+			new QueryParameter(@"@STACKTRACE", string.Empty),
+			new QueryParameter(@"@CREATEDAT", DateTime.MinValue),
+			new QueryParameter(@"@FEATURE", 0L),
+			new QueryParameter(@"@USER", 0L),
+		};
+
 		private static readonly QueryParameter[] InsertFeatureStepEntrySqlParams =
 		{
 			new QueryParameter(@"@ENTRY", 0L),
@@ -65,6 +74,7 @@ namespace Cchbc.Features.Db.Adapters
 		private static readonly Query<DbFeatureRow> GetFeaturesQuery = new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
 		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
 		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_ENTRY_STEPS", EntryStepRowCreator);
+		private static readonly Query<DbExceptionRow> GetExceptionsQuery = new Query<DbExceptionRow>(@"SELECT MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID FROM FEATURE_EXCEPTIONS", DbExceptionRowCreator);
 		private static readonly Query<long> GetUserQuery = new Query<long>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", r => r.GetInt64(0), NameSqlParams);
 
 		public static void CreateClientSchema(ITransactionContext context)
@@ -119,7 +129,6 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 
 			CreateCommonSchema(context);
 
-
 			context.Execute(new Query(@"
 CREATE TABLE[FEATURE_USERS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -133,7 +142,7 @@ CREATE TABLE [FEATURE_ENTRIES] (
 	[Details] nvarchar(254) NULL, 
 	[CreatedAt] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
-	[User_Id] integer NOT NULL, 
+	[User_Id] integer NOT NULL
 	FOREIGN KEY ([Feature_Id])
 		REFERENCES [FEATURES] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
@@ -149,6 +158,7 @@ CREATE TABLE [FEATURE_EXCEPTIONS] (
 	[StackTrace] nvarchar(254) NOT NULL, 
 	[CreatedAt] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
+	[User_Id] integer NOT NULL
 	FOREIGN KEY ([Feature_Id])
 		REFERENCES [FEATURES] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
@@ -223,11 +233,6 @@ CREATE TABLE [FEATURES] (
 			context.Execute(new Query(@"DROP TABLE FEATURE_CONTEXTS"));
 		}
 
-		
-
-
-
-
 		public static long GetOrCreateUser(ITransactionContext context, string userName)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -279,6 +284,13 @@ CREATE TABLE [FEATURES] (
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return context.Execute(GetFeatureEntryStepsQuery);
+		}
+
+		public static List<DbExceptionRow> GetExceptions(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			return context.Execute(GetExceptionsQuery);
 		}
 
 		public static long InsertContext(ITransactionContext context, string name)
@@ -346,16 +358,32 @@ CREATE TABLE [FEATURES] (
 			return ExecureInsert(context, InsertServerFeatureEntryQuery);
 		}
 
-		public static void InsertExceptionEntry(ITransactionContext context, long featureId, FeatureException featureException)
+		public static void InsertExceptionEntry(ITransactionContext context, long featureId, Exception exception)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (featureException == null) throw new ArgumentNullException(nameof(featureException));
+			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
 			// Set parameters values
-			InsertExcetionEntrySqlParams[0].Value = featureException.Exception.Message;
-			InsertExcetionEntrySqlParams[1].Value = featureException.Exception.StackTrace;
+			InsertExcetionEntrySqlParams[0].Value = exception.Message;
+			InsertExcetionEntrySqlParams[1].Value = exception.StackTrace;
 			InsertExcetionEntrySqlParams[2].Value = DateTime.Now;
 			InsertExcetionEntrySqlParams[3].Value = featureId;
+
+			// Insert the record
+			context.Execute(InsertExceptionQuery);
+		}
+
+		public static void InsertExceptionEntry(ITransactionContext context, long featureId, DbExceptionRow exceptionRow, long userId)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (exceptionRow == null) throw new ArgumentNullException(nameof(exceptionRow));
+
+			// Set parameters values
+			InsertServerExcetionEntrySqlParams[0].Value = exceptionRow.Message;
+			InsertServerExcetionEntrySqlParams[1].Value = exceptionRow.StackTrace;
+			InsertServerExcetionEntrySqlParams[2].Value = exceptionRow.CreatedAt;
+			InsertServerExcetionEntrySqlParams[3].Value = featureId;
+			InsertServerExcetionEntrySqlParams[4].Value = userId;
 
 			// Insert the record
 			context.Execute(InsertExceptionQuery);
@@ -378,6 +406,11 @@ CREATE TABLE [FEATURES] (
 		private static DbContextRow DbContextCreator(IFieldDataReader r)
 		{
 			return new DbContextRow(r.GetInt64(0), r.GetString(1));
+		}
+
+		private static DbExceptionRow DbExceptionRowCreator(IFieldDataReader r)
+		{
+			return new DbExceptionRow(r.GetString(0), r.GetString(1), r.GetDateTime(2), r.GetInt64(3));
 		}
 
 		private static DbFeatureStepRow DbFeatureStepCreator(IFieldDataReader r)

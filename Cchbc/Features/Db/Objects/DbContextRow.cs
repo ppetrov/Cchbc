@@ -4,8 +4,8 @@ namespace Cchbc.Features.Db.Objects
 {
 	public sealed class DbContextRow
 	{
-		public long Id { get; }
-		public string Name { get; }
+		public readonly long Id;
+		public readonly string Name;
 
 		public DbContextRow(long id, string name)
 		{

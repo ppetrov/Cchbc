@@ -67,7 +67,7 @@ namespace Cchbc.Features
 
 			using (var context = this.ContextCreator.Create())
 			{
-				this.DbClientClientManager.Save(context, new FeatureException(feature.Context, feature.Name, exception));
+				this.DbClientClientManager.Save(context, feature, exception);
 
 				context.Complete();
 			}

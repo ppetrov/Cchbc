@@ -28,6 +28,8 @@ namespace Cchbc.Features.Db.Managers
 			if (clientContext == null) throw new ArgumentNullException(nameof(clientContext));
 			if (userName == null) throw new ArgumentNullException(nameof(userName));
 
+			var userId = DbFeatureAdapter.GetOrCreateUser(serverContext, userName);
+
 			var clientContextRows = DbFeatureAdapter.GetContexts(clientContext);
 			var contextsMap = ReplicateContexts(serverContext, clientContextRows);
 
@@ -38,15 +40,18 @@ namespace Cchbc.Features.Db.Managers
 			var featuresMap = ReplicateFeatures(serverContext, clientFeatureRows, contextsMap);
 
 			var featureEntryRows = DbFeatureAdapter.GetFeatureEntryRows(clientContext);
-			var featureEntriesMap = ReplicateFeatureEntries(serverContext, featureEntryRows, featuresMap, userName);
+			var featureEntriesMap = ReplicateFeatureEntries(serverContext, featureEntryRows, featuresMap, userId);
 
-			var featureEntryStepRows = DbFeatureAdapter.GetEntryStepRows(clientContext);
-			foreach (var stepRow in featureEntryStepRows)
+			foreach (var stepRow in DbFeatureAdapter.GetEntryStepRows(clientContext))
 			{
 				DbFeatureAdapter.InsertStepEntry(serverContext, featureEntriesMap[stepRow.FeatureEntryId], stepsMap[stepRow.FeatureStepId], stepRow.TimeSpent, stepRow.Details);
 			}
 
-			// TODO : Replicate exceptions !!!
+			var dbExceptionRows = DbFeatureAdapter.GetExceptions(clientContext);
+			foreach (var exceptionRow in dbExceptionRows)
+			{
+				DbFeatureAdapter.InsertExceptionEntry(serverContext, featuresMap[exceptionRow.FeatureId], exceptionRow, userId);
+			}
 		}
 
 		private static Dictionary<long, long> ReplicateContexts(ITransactionContext serverContext, List<DbContextRow> clientContextRows)
@@ -140,10 +145,8 @@ namespace Cchbc.Features.Db.Managers
 			return featuresMap;
 		}
 
-		private static Dictionary<long, long> ReplicateFeatureEntries(ITransactionContext serverContext, List<DbFeatureEntryRow> featureEntryRows, Dictionary<long, long> featuresMap, string userName)
+		private static Dictionary<long, long> ReplicateFeatureEntries(ITransactionContext serverContext, List<DbFeatureEntryRow> featureEntryRows, Dictionary<long, long> featuresMap, long userId)
 		{
-			var userId = DbFeatureAdapter.GetOrCreateUser(serverContext, userName);
-
 			var map = new Dictionary<long, long>(featureEntryRows.Count);
 
 			foreach (var row in featureEntryRows)

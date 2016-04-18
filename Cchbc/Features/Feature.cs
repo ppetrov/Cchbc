@@ -86,7 +86,7 @@ namespace Cchbc.Features
 				// Take the last one
 				var previous = this.Steps[this.Steps.Count - 1];
 
-				// Set the TimeSpent to the calculated one
+				// Set the TimeSpent to the delta end - start
 				previous.TimeSpent = this.Stopwatch.Elapsed - previous.TimeSpent;
 			}
 		}
