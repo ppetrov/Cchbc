@@ -16,7 +16,7 @@ using Cchbc.Features.Db.Managers;
 using LoginModule.Adapter;
 using LoginModule.Objects;
 using LoginModule.ViewModels;
-
+using Cchbc.Data;
 
 namespace Cchbc.ConsoleClient
 {
@@ -32,30 +32,30 @@ namespace Cchbc.ConsoleClient
 	{
 		static void Main(string[] args)
 		{
-			var serverDb = @"Data Source = C:\Users\codem\Desktop\server.sqlite; Version = 3;";
-			var clientDb = @"Data Source = C:\Users\codem\Desktop\ifsa.sqlite; Version = 3;";
+			var serverDb = @"Data Source = C:\Users\PetarPetrov\Desktop\server.sqlite; Version = 3;";
+			var clientDb = @"Data Source = C:\Users\PetarPetrov\Desktop\client.sqlite; Version = 3;";
 
 			var si = clientDb.LastIndexOf('\\') + 1;
 			var ei = clientDb.IndexOf('.', si);
 			var userName = clientDb.Substring(si, ei - si);
 			try
 			{
-				CreateSchema(serverDb);
+				//CreateSchema(serverDb);
 
 				using (var server = new TransactionContextCreator(serverDb).Create())
 				{
-					using (var client = new TransactionContextCreator(clientDb).Create())
-					{
-						var w = Stopwatch.StartNew();
+                    using (var client = new TransactionContextCreator(clientDb).Create())
+                    {
+                        var w = Stopwatch.StartNew();
 
-						DbFeatureServerManager.Replicate(server, client, @"ppetrov");
+                        DbFeatureServerManager.Replicate(server, client, @"ppetrov");
 
-						client.Complete();
-						server.Complete();
-						w.Stop();
-						Console.WriteLine(w.ElapsedMilliseconds);
-					}
-				}
+                        client.Complete();
+                        server.Complete();
+                        w.Stop();
+                        Console.WriteLine(w.ElapsedMilliseconds);
+                    }
+                }
 
 
 
