@@ -43,7 +43,6 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Adapters.cs" />
     <Compile Include="ContextCreator.cs" />
     <Compile Include="FeaturesReplicationModule.cs" />
     <Compile Include="Objects.cs" />

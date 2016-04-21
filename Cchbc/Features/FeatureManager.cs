@@ -38,7 +38,9 @@ namespace Cchbc.Features
         {
             using (var context = this.ContextCreator.Create())
             {
-                this.Load(context);
+                this.LoadContexts(context);
+                this.LoadSteps(context);
+                this.LoadFeatures(context);
 
                 context.Complete();
             }
@@ -60,7 +62,10 @@ namespace Cchbc.Features
 
             using (var context = this.ContextCreator.Create())
             {
-                this.Save(context, feature, details ?? string.Empty);
+                var featureRow = this.Save(context, feature);
+
+                var featureEntryId = DbFeatureAdapter.InsertFeatureEntry(context, featureRow.Id, feature, details ?? string.Empty);
+                this.SaveSteps(context, featureEntryId, feature.Steps);
 
                 context.Complete();
             }
@@ -73,7 +78,9 @@ namespace Cchbc.Features
 
             using (var context = this.ContextCreator.Create())
             {
-                this.Save(context, feature, exception);
+                var featureRow = this.Save(context, feature);
+
+                DbFeatureAdapter.InsertExceptionEntry(context, featureRow.Id, exception);
 
                 context.Complete();
             }
@@ -88,37 +95,9 @@ namespace Cchbc.Features
             return feature;
         }
 
-        private void Load(ITransactionContext context)
+        private DbFeatureRow Save(ITransactionContext context, Feature feature)
         {
-            if (context == null) throw new ArgumentNullException(nameof(context));
-
-            this.LoadContexts(context);
-            this.LoadSteps(context);
-            this.LoadFeatures(context);
-        }
-
-        private void Save(ITransactionContext transactionContext, Feature feature, string details)
-        {
-            if (transactionContext == null) throw new ArgumentNullException(nameof(transactionContext));
-            if (feature == null) throw new ArgumentNullException(nameof(feature));
-            if (details == null) throw new ArgumentNullException(nameof(details));
-
-            var contextRow = this.SaveContext(transactionContext, feature.Context);
-            var featureRow = this.SaveFeature(transactionContext, contextRow, feature.Name);
-
-            var featureEntryId = DbFeatureAdapter.InsertFeatureEntry(transactionContext, featureRow.Id, details, feature);
-            this.SaveSteps(transactionContext, featureEntryId, feature.Steps);
-        }
-
-        private void Save(ITransactionContext transactionContext, Feature feature, Exception exception)
-        {
-            if (transactionContext == null) throw new ArgumentNullException(nameof(transactionContext));
-            if (exception == null) throw new ArgumentNullException(nameof(exception));
-
-            var contextRow = this.SaveContext(transactionContext, feature.Context);
-            var featureRow = this.SaveFeature(transactionContext, contextRow, feature.Name);
-
-            DbFeatureAdapter.InsertExceptionEntry(transactionContext, featureRow.Id, exception);
+            return this.SaveFeature(context, this.SaveContext(context, feature.Context), feature.Name);
         }
 
         private DbContextRow SaveContext(ITransactionContext transactionContext, string name)
@@ -171,6 +150,8 @@ namespace Cchbc.Features
 
         private void SaveSteps(ITransactionContext context, long featureEntryId, ICollection<FeatureStep> steps)
         {
+            if (steps.Count == 0) return;
+
             foreach (var step in steps)
             {
                 var name = step.Name;
@@ -190,7 +171,8 @@ namespace Cchbc.Features
             // Inser step entries
             foreach (var step in steps)
             {
-                DbFeatureAdapter.InsertStepEntry(context, featureEntryId, this.Steps[step.Name].Id, Convert.ToDecimal(step.TimeSpent.TotalMilliseconds), step.Details);
+                DbFeatureAdapter.InsertStepEntry(context, featureEntryId, this.Steps[step.Name].Id,
+                    Convert.ToDecimal(step.TimeSpent.TotalMilliseconds), step.Details);
             }
         }
 
