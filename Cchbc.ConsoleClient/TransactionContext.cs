@@ -18,8 +18,8 @@ namespace Cchbc.ConsoleClient
 			// Create connection
 			_cn = new SQLiteConnection(cnString);
 
-			// Open connection
-			_cn.Open();
+            // Open connection
+            _cn.Open();
 
 			// Begin transaction
 			_tr = _cn.BeginTransaction();

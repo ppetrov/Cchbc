@@ -12,11 +12,8 @@ using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
 using Cchbc.Dialog;
 using Cchbc.Features;
-using Cchbc.Features.Db.Managers;
-using LoginModule.Adapter;
-using LoginModule.Objects;
-using LoginModule.ViewModels;
-using Cchbc.Data;
+using Cchbc.Features.Admin;
+using Cchbc.Features.Admin.FeatureUsageModule;
 
 namespace Cchbc.ConsoleClient
 {
@@ -40,46 +37,45 @@ namespace Cchbc.ConsoleClient
 			var userName = clientDb.Substring(si, ei - si);
 			try
 			{
-				//CreateSchema(serverDb);
+                //CreateSchema(serverDb);
 
-				using (var server = new TransactionContextCreator(serverDb).Create())
-				{
-                    using (var client = new TransactionContextCreator(clientDb).Create())
-                    {
-                        var w = Stopwatch.StartNew();
+                //Replicate(serverDb, clientDb);
 
-                        DbFeatureServerManager.Replicate(server, client, @"ppetrov");
+                var viewModel = new FeatureUsagesViewModel(new TransactionContextCreator(serverDb));
 
-                        client.Complete();
-                        server.Complete();
-                        w.Stop();
-                        Console.WriteLine(w.ElapsedMilliseconds);
-                    }
-                }
+                viewModel.LoadDataForCurrentTimePeriod();
+
+			    Display(viewModel);
+
+			    viewModel.CurrentTimePeriod = viewModel.TimePeriods[1];
+
+                Display(viewModel);
 
 
 
-				//var client = GetClient(clientDb);
 
-				//using (var serverContext = new TransactionContextCreator(serverDb).Create())
-				//{
-				//	var server = new DbFeatureServerManager();
-				//	server.Load(serverContext);
 
-				//	List<FeatureEntryRow> rows;
-				//	List<FeatureEntryStepRow> rows2;
-				//	using (var context = new TransactionContextCreator(clientDb).Create())
-				//	{
-				//		rows = client.GetFeatureEntries(context);
-				//		rows2 = client.GetFeatureEntrySteps(context);
-				//	}
+                //var client = GetClient(clientDb);
 
-				//	server.SaveClientData(serverContext, userName, client, rows, rows2);
-				//	serverContext.Complete();
+                //using (var serverContext = new TransactionContextCreator(serverDb).Create())
+                //{
+                //	var server = new DbFeatureServerManager();
+                //	server.Load(serverContext);
 
-				//	Console.WriteLine(@"Done");
-				//}
-			}
+                //	List<FeatureEntryRow> rows;
+                //	List<FeatureEntryStepRow> rows2;
+                //	using (var context = new TransactionContextCreator(clientDb).Create())
+                //	{
+                //		rows = client.GetFeatureEntries(context);
+                //		rows2 = client.GetFeatureEntrySteps(context);
+                //	}
+
+                //	server.SaveClientData(serverContext, userName, client, rows, rows2);
+                //	serverContext.Complete();
+
+                //	Console.WriteLine(@"Done");
+                //}
+            }
 			catch (Exception e)
 			{
 				Console.WriteLine(e);
@@ -95,63 +91,94 @@ namespace Cchbc.ConsoleClient
 			//var prj = new ClrProject();
 			//prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
 
-			var core = new Core();
-			core.ContextCreator = new TransactionContextCreator(string.Empty);
-			core.ModalDialog = new ConsoleDialog();
-			var viewModel = new LoginsViewModel(core, new LoginAdapter());
-			try
-			{
-				viewModel.InsertAsync(new Login(1, @"PPetrov", @"Password", DateTime.Now, false)).Wait();
+			//var core = new Core();
+			//core.ContextCreator = new TransactionContextCreator(string.Empty);
+			//core.ModalDialog = new ConsoleDialog();
+			//var viewModel = new LoginsViewModel(core, new LoginAdapter());
+			//try
+			//{
+			//	viewModel.InsertAsync(new Login(1, @"PPetrov", @"Password", DateTime.Now, false)).Wait();
 
-				Console.WriteLine(@"Done");
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine(ex);
-			}
+			//	Console.WriteLine(@"Done");
+			//}
+			//catch (Exception ex)
+			//{
+			//	Console.WriteLine(ex);
+			//}
 
-			return;
-
-
+			//return;
 
 
 
 
 
 
-			// Register helpers
-			var cache = core.DataCache;
-			cache.Add(new BrandHelper());
-			cache.Add(new FlavorHelper());
-			cache.Add(new ArticleHelper());
 
-			try
-			{
-				File.WriteAllText(@"C:\temp\diagnostics.txt", string.Empty);
 
-				//var viewModel = new LoginsViewModel(core, new LoginAdapter());
-				//viewModel.LoadData();
+			//// Register helpers
+			//var cache = core.DataCache;
+			//cache.Add(new BrandHelper());
+			//cache.Add(new FlavorHelper());
+			//cache.Add(new ArticleHelper());
 
-				//var v = new LoginViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
-				//var dialog = new ConsoleDialog();
-				//viewModel.AddAsync(v, dialog).Wait();
-				//viewModel.AddAsync(v, dialog).Wait();
-				//viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hack").Wait();
-				//viewModel.AddAsync(v, dialog).Wait();
-				//viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hackV2").Wait();
+			//try
+			//{
+			//	File.WriteAllText(@"C:\temp\diagnostics.txt", string.Empty);
 
-				//foreach (var login in viewModel.Logins)
-				//{
-				//	Console.WriteLine(login.Name + " " + v.Password);
-				//}
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-			}
+			//	//var viewModel = new LoginsViewModel(core, new LoginAdapter());
+			//	//viewModel.LoadData();
+
+			//	//var v = new LoginViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
+			//	//var dialog = new ConsoleDialog();
+			//	//viewModel.AddAsync(v, dialog).Wait();
+			//	//viewModel.AddAsync(v, dialog).Wait();
+			//	//viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hack").Wait();
+			//	//viewModel.AddAsync(v, dialog).Wait();
+			//	//viewModel.ChangePasswordAsync(v, dialog, @"sc1f1r3hackV2").Wait();
+
+			//	//foreach (var login in viewModel.Logins)
+			//	//{
+			//	//	Console.WriteLine(login.Name + " " + v.Password);
+			//	//}
+			//}
+			//catch (Exception e)
+			//{
+			//	Console.WriteLine(e);
+			//}
 		}
 
-		private static void CreateSchema(string connectionString)
+	    private static void Display(FeatureUsagesViewModel viewModel)
+	    {
+	        var total = 0L;
+	        foreach (var f in viewModel.FeatureUsages)
+	        {
+	            var detail = f.Name.PadRight(20) + " " + f.Context.PadRight(10) + " " + f.Count;
+	            Console.WriteLine(detail);
+
+	            total += f.Count;
+	        }
+	        Console.WriteLine(total);
+	    }
+
+	    private static void Replicate(string serverDb, string clientDb)
+	    {
+	        using (var server = new TransactionContextCreator(serverDb).Create())
+	        {
+	            using (var client = new TransactionContextCreator(clientDb).Create())
+	            {
+	                var w = Stopwatch.StartNew();
+
+	                DbFeatureServerManager.Replicate(server, client, @"ppetrov");
+
+	                client.Complete();
+	                server.Complete();
+	                w.Stop();
+	                Console.WriteLine(w.ElapsedMilliseconds);
+	            }
+	        }
+	    }
+
+	    private static void CreateSchema(string connectionString)
 		{
 			var creator = new TransactionContextCreator(connectionString);
 			try
