@@ -37,45 +37,54 @@ namespace Cchbc.ConsoleClient
 			var userName = clientDb.Substring(si, ei - si);
 			try
 			{
-                //CreateSchema(serverDb);
+				//CreateSchema(serverDb);
 
-                //Replicate(serverDb, clientDb);
-
-                var viewModel = new FeatureUsagesViewModel(new TransactionContextCreator(serverDb));
-
-                viewModel.LoadDataForCurrentTimePeriod();
-
-			    Display(viewModel);
-
-			    viewModel.CurrentTimePeriod = viewModel.TimePeriods[1];
-
-                Display(viewModel);
+				for (int i = 0; i < 100000; i++)
+				{
+					Replicate(serverDb, clientDb);
+				}
 
 
+				//return;
+				//            var viewModel = new FeatureUsagesViewModel(new TransactionContextCreator(serverDb));
+
+				//            viewModel.LoadDataForCurrentTimePeriod();
+
+				//   Display(viewModel);
+
+				//Console.ReadLine();
+
+				//viewModel.CurrentTimePeriod = viewModel.TimePeriods[1];
+
+				//            Display(viewModel);
+
+				//Console.ReadLine();
 
 
 
-                //var client = GetClient(clientDb);
 
-                //using (var serverContext = new TransactionContextCreator(serverDb).Create())
-                //{
-                //	var server = new DbFeatureServerManager();
-                //	server.Load(serverContext);
 
-                //	List<FeatureEntryRow> rows;
-                //	List<FeatureEntryStepRow> rows2;
-                //	using (var context = new TransactionContextCreator(clientDb).Create())
-                //	{
-                //		rows = client.GetFeatureEntries(context);
-                //		rows2 = client.GetFeatureEntrySteps(context);
-                //	}
+				//var client = GetClient(clientDb);
 
-                //	server.SaveClientData(serverContext, userName, client, rows, rows2);
-                //	serverContext.Complete();
+				//using (var serverContext = new TransactionContextCreator(serverDb).Create())
+				//{
+				//	var server = new DbFeatureServerManager();
+				//	server.Load(serverContext);
 
-                //	Console.WriteLine(@"Done");
-                //}
-            }
+				//	List<FeatureEntryRow> rows;
+				//	List<FeatureEntryStepRow> rows2;
+				//	using (var context = new TransactionContextCreator(clientDb).Create())
+				//	{
+				//		rows = client.GetFeatureEntries(context);
+				//		rows2 = client.GetFeatureEntrySteps(context);
+				//	}
+
+				//	server.SaveClientData(serverContext, userName, client, rows, rows2);
+				//	serverContext.Complete();
+
+				//	Console.WriteLine(@"Done");
+				//}
+			}
 			catch (Exception e)
 			{
 				Console.WriteLine(e);
@@ -147,38 +156,39 @@ namespace Cchbc.ConsoleClient
 			//}
 		}
 
-	    private static void Display(FeatureUsagesViewModel viewModel)
-	    {
-	        var total = 0L;
-	        foreach (var f in viewModel.FeatureUsages)
-	        {
-	            var detail = f.Name.PadRight(20) + " " + f.Context.PadRight(10) + " " + f.Count;
-	            Console.WriteLine(detail);
+		private static void Display(FeatureUsagesViewModel viewModel)
+		{
+			var total = 0L;
+			foreach (var f in viewModel.FeatureUsages)
+			{
+				var detail = f.Name.PadRight(20) + " " + f.Context.PadRight(10) + " " + f.Count;
+				Console.WriteLine(detail);
 
-	            total += f.Count;
-	        }
-	        Console.WriteLine(total);
-	    }
+				total += f.Count;
+			}
+			Console.WriteLine(total);
+		}
 
-	    private static void Replicate(string serverDb, string clientDb)
-	    {
-	        using (var server = new TransactionContextCreator(serverDb).Create())
-	        {
-	            using (var client = new TransactionContextCreator(clientDb).Create())
-	            {
-	                var w = Stopwatch.StartNew();
+		private static void Replicate(string serverDb, string clientDb)
+		{
+			using (var server = new TransactionContextCreator(serverDb).Create())
+			{
+				using (var client = new TransactionContextCreator(clientDb).Create())
+				{
+					var w = Stopwatch.StartNew();
 
-	                DbFeatureServerManager.Replicate(server, client, @"ppetrov");
+					DbFeatureServerManager.Replicate(server, client, @"ppetrov");
 
-	                client.Complete();
-	                server.Complete();
-	                w.Stop();
-	                Console.WriteLine(w.ElapsedMilliseconds);
-	            }
-	        }
-	    }
+					client.Complete();
+					server.Complete();
 
-	    private static void CreateSchema(string connectionString)
+					w.Stop();
+					Console.WriteLine(w.ElapsedMilliseconds);
+				}
+			}
+		}
+
+		private static void CreateSchema(string connectionString)
 		{
 			var creator = new TransactionContextCreator(connectionString);
 			try

@@ -48,12 +48,9 @@
     <Compile Include="Data\ITransactionContext.cs" />
     <Compile Include="Dialog\DialogResult.cs" />
     <Compile Include="Dialog\IModalDialog.cs" />
-    <Compile Include="Features\Db\Objects\DbExceptionRow.cs" />
-    <Compile Include="Features\Db\Objects\DbFeatureEntryStepRow.cs" />
     <Compile Include="Features\Db\Adapters\DbFeatureAdapter.cs" />
     <Compile Include="Features\Db\Objects\DbFeatureRow.cs" />
     <Compile Include="Features\Db\Objects\DbContextRow.cs" />
-    <Compile Include="Features\Db\Objects\DbFeatureEntryRow.cs" />
     <Compile Include="Features\Db\Objects\DbFeatureStepRow.cs" />
     <Compile Include="Features\Db\Objects\DbFeatureUserRow.cs" />
     <Compile Include="Features\Feature.cs" />

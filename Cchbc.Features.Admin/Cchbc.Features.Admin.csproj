@@ -42,7 +42,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Dashboard.cs" />
+    <Compile Include="DbExceptionRow.cs" />
+    <Compile Include="DbFeatureEntryRow.cs" />
+    <Compile Include="DbFeatureEntryStepRow.cs" />
     <Compile Include="DbFeatureServerManager.cs" />
+    <Compile Include="DbServerFeatureAdapter.cs" />
     <Compile Include="FeatureUsageModule\FeatureUsagesViewModel.cs" />
     <Compile Include="FeatureUsageModule\Objects\FeatureUsage.cs" />
     <Compile Include="FeatureUsageModule\ViewModels\FeatureUsageViewModel.cs" />

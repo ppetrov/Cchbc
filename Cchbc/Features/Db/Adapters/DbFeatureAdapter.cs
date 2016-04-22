@@ -9,13 +9,13 @@ namespace Cchbc.Features.Db.Adapters
     {
         private static readonly QueryParameter[] NameSqlParams =
         {
-            new QueryParameter(@"NAME", string.Empty),
+            new QueryParameter(@"@NAME", string.Empty)
         };
 
         private static readonly QueryParameter[] InsertFeatureSqlParams =
         {
             new QueryParameter(@"@NAME", string.Empty),
-            new QueryParameter(@"@CONTEXT", 0L),
+            new QueryParameter(@"@CONTEXT", 0L)
         };
 
         private static readonly QueryParameter[] InsertFeatureEntrySqlParams =
@@ -23,7 +23,7 @@ namespace Cchbc.Features.Db.Adapters
             new QueryParameter(@"@TIMESPENT", 0M),
             new QueryParameter(@"@DETAILS", string.Empty),
             new QueryParameter(@"@CREATEDAT", DateTime.MinValue),
-            new QueryParameter(@"@FEATURE", 0L),
+            new QueryParameter(@"@FEATURE", 0L)
         };
 
         private static readonly QueryParameter[] InsertExcetionEntrySqlParams =
@@ -31,7 +31,7 @@ namespace Cchbc.Features.Db.Adapters
             new QueryParameter(@"@MESSAGE", string.Empty),
             new QueryParameter(@"@STACKTRACE", string.Empty),
             new QueryParameter(@"@CREATEDAT", DateTime.MinValue),
-            new QueryParameter(@"@FEATURE", 0L),
+            new QueryParameter(@"@FEATURE", 0L)
         };
 
         private static readonly QueryParameter[] InsertFeatureStepEntrySqlParams =
@@ -39,7 +39,7 @@ namespace Cchbc.Features.Db.Adapters
             new QueryParameter(@"@ENTRY", 0L),
             new QueryParameter(@"@STEP", 0L),
             new QueryParameter(@"@TIMESPENT", 0M),
-            new QueryParameter(@"@DETAILS", string.Empty),
+            new QueryParameter(@"@DETAILS", string.Empty)
         };
 
         private static readonly Query InsertContextQuery = new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)", NameSqlParams);
@@ -53,10 +53,8 @@ namespace Cchbc.Features.Db.Adapters
         private static readonly Query<DbFeatureStepRow> GetStepsQuery = new Query<DbFeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator);
         private static readonly Query<DbFeatureRow> GetFeaturesQuery = new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
 
-        public static void CreateClientSchema(ITransactionContext context)
+        public static void CreateSchema(ITransactionContext context)
         {
-            if (context == null) throw new ArgumentNullException(nameof(context));
-
             if (context == null) throw new ArgumentNullException(nameof(context));
 
             context.Execute(new Query(@"
@@ -117,11 +115,11 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 		ON UPDATE CASCADE ON DELETE CASCADE
 	FOREIGN KEY ([Feature_Step_Id])
 		REFERENCES [FEATURE_STEPS] ([Id])
-		ON UPDATE CASCADE ON DELETE CASCADE		
+		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
         }
 
-        public static void DropClientSchema(ITransactionContext context)
+        public static void DropSchema(ITransactionContext context)
         {
             if (context == null) throw new ArgumentNullException(nameof(context));
 

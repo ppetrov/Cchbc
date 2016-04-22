@@ -18,7 +18,7 @@ namespace Cchbc.Features
         {
             using (var context = this.ContextCreator.Create())
             {
-                DbFeatureAdapter.CreateClientSchema(context);
+                DbFeatureAdapter.CreateSchema(context);
 
                 context.Complete();
             }
@@ -28,7 +28,7 @@ namespace Cchbc.Features
         {
             using (var context = this.ContextCreator.Create())
             {
-                DbFeatureAdapter.DropClientSchema(context);
+                DbFeatureAdapter.DropSchema(context);
 
                 context.Complete();
             }
