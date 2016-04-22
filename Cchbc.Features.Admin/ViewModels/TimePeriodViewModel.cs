@@ -1,7 +1,7 @@
 ﻿using System;
-using Cchbc.Features.Admin.FeatureUsageModule.Objects;
+using Cchbc.Features.Admin.Objects;
 
-namespace Cchbc.Features.Admin.FeatureUsageModule.ViewModels
+namespace Cchbc.Features.Admin.ViewModels
 {
     public sealed class TimePeriodViewModel
     {

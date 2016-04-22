@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using Cchbc.Data;
 using Cchbc.Features.Admin.FeatureUsageModule.Adapters;
 using Cchbc.Features.Admin.FeatureUsageModule.Objects;
+using Cchbc.Features.Admin.Objects;
 
 namespace Cchbc.Features.Admin.FeatureUsageModule.Managers
 {
@@ -17,7 +17,7 @@ namespace Cchbc.Features.Admin.FeatureUsageModule.Managers
             this.Adapter = adapter;
         }
 
-        public List<FeatureUsage> GetBy(ITransactionContext context, TimePeriod timePeriod)
+        public FeatureUsage[] GetBy(ITransactionContext context, TimePeriod timePeriod)
         {
             if (context == null) throw new ArgumentNullException(nameof(context));
             if (timePeriod == null) throw new ArgumentNullException(nameof(timePeriod));

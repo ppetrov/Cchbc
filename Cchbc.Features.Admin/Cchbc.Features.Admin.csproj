@@ -41,12 +41,19 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Adapters\CommonAdapter.cs" />
     <Compile Include="Dashboard.cs" />
-    <Compile Include="DbExceptionRow.cs" />
-    <Compile Include="DbFeatureEntryRow.cs" />
-    <Compile Include="DbFeatureEntryStepRow.cs" />
-    <Compile Include="DbFeatureServerManager.cs" />
-    <Compile Include="DbServerFeatureAdapter.cs" />
+    <Compile Include="FeatureExceptionModule\Adapters\ExceptionManagerAdapter.cs" />
+    <Compile Include="FeatureExceptionModule\Managers\FeatureExceptionManager.cs" />
+    <Compile Include="FeatureExceptionModule\ViewModels\FeatureExceptionViewModel.cs" />
+    <Compile Include="FeatureExceptionModule\Objects\FeatureException.cs" />
+    <Compile Include="FeatureExceptionModule\FeatureExceptionsViewModel.cs" />
+    <Compile Include="Helpers\TimePeriodHelper.cs" />
+    <Compile Include="Replication\DbExceptionRow.cs" />
+    <Compile Include="Replication\DbFeatureEntryRow.cs" />
+    <Compile Include="Replication\DbFeatureEntryStepRow.cs" />
+    <Compile Include="Replication\DbFeatureServerManager.cs" />
+    <Compile Include="Replication\DbServerFeatureAdapter.cs" />
     <Compile Include="FeatureUsageModule\FeatureUsagesViewModel.cs" />
     <Compile Include="FeatureUsageModule\Objects\FeatureUsage.cs" />
     <Compile Include="FeatureUsageModule\ViewModels\FeatureUsageViewModel.cs" />
@@ -54,8 +61,8 @@
     <Compile Include="FeatureUsageModule\Managers\FeatureUsageManager.cs" />
     <Compile Include="NamingConventions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="FeatureUsageModule\Objects\TimePeriod.cs" />
-    <Compile Include="FeatureUsageModule\ViewModels\TimePeriodViewModel.cs" />
+    <Compile Include="Objects\TimePeriod.cs" />
+    <Compile Include="ViewModels\TimePeriodViewModel.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

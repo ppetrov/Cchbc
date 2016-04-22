@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features.Admin
+namespace Cchbc.Features.Admin.Replication
 {
     public sealed class DbFeatureEntryRow
     {

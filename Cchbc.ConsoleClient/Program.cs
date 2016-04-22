@@ -13,7 +13,9 @@ using Cchbc.Archive;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Admin;
+using Cchbc.Features.Admin.FeatureExceptionModule;
 using Cchbc.Features.Admin.FeatureUsageModule;
+using Cchbc.Features.Admin.Replication;
 
 namespace Cchbc.ConsoleClient
 {
@@ -27,10 +29,11 @@ namespace Cchbc.ConsoleClient
 
 	public class Program
 	{
+
 		static void Main(string[] args)
 		{
 			var serverDb = @"Data Source = C:\Users\PetarPetrov\Desktop\server.sqlite; Version = 3;";
-			var clientDb = @"Data Source = C:\Users\PetarPetrov\Desktop\client.sqlite; Version = 3;";
+			var clientDb = @"Data Source = C:\Users\PetarPetrov\Desktop\ifsa.sqlite; Version = 3;";
 
 			var si = clientDb.LastIndexOf('\\') + 1;
 			var ei = clientDb.IndexOf('.', si);
@@ -39,26 +42,27 @@ namespace Cchbc.ConsoleClient
 			{
 				//CreateSchema(serverDb);
 
-				for (int i = 0; i < 100000; i++)
+				//Replicate(serverDb, clientDb);
+				//return;
+
+				
+				var creator = new TransactionContextCreator(serverDb);
+				var usagesViewModel = new FeatureUsagesViewModel(creator);
+				var exceptionsViewModel = new FeatureExceptionsViewModel(creator);
+
+				var s = Stopwatch.StartNew();
+
+				for (var i = 0; i < 1; i++)
 				{
-					Replicate(serverDb, clientDb);
+					usagesViewModel.LoadDataForCurrentTimePeriod();
+					exceptionsViewModel.LoadDataForCurrentTimePeriod();
 				}
 
+				Console.WriteLine(s.ElapsedMilliseconds);
 
-				//return;
-				//            var viewModel = new FeatureUsagesViewModel(new TransactionContextCreator(serverDb));
-
-				//            viewModel.LoadDataForCurrentTimePeriod();
-
-				//   Display(viewModel);
-
-				//Console.ReadLine();
-
-				//viewModel.CurrentTimePeriod = viewModel.TimePeriods[1];
-
-				//            Display(viewModel);
-
-				//Console.ReadLine();
+				Display(usagesViewModel);
+				Console.WriteLine();
+				Display(exceptionsViewModel);
 
 
 
@@ -156,15 +160,33 @@ namespace Cchbc.ConsoleClient
 			//}
 		}
 
+		private static void Display(FeatureExceptionsViewModel viewModel)
+		{
+			foreach (var f in viewModel.Exceptions)
+			{
+				var details = string.Join(@", ", new[]
+				{
+					f.User,
+					f.Context,
+					f.Feature,
+					f.Message,
+					f.CreateAt,
+				});
+				//var detail = f.Name.PadRight(20) + " " + f.Context.PadRight(10) + " " + f.Count;
+				Console.WriteLine(details);
+			}
+			Console.WriteLine(@"Total: " + viewModel.Exceptions.Count);
+		}
+
 		private static void Display(FeatureUsagesViewModel viewModel)
 		{
 			var total = 0L;
 			foreach (var f in viewModel.FeatureUsages)
 			{
-				var detail = f.Name.PadRight(20) + " " + f.Context.PadRight(10) + " " + f.Count;
+				var detail = f.Context.PadRight(20) + " " + f.Name.PadRight(20) + " " + f.Count;
 				Console.WriteLine(detail);
 
-				total += f.Count;
+				total += f.FeatureUsage.Count;
 			}
 			Console.WriteLine(total);
 		}

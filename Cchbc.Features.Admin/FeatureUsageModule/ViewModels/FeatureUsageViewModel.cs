@@ -5,17 +5,20 @@ namespace Cchbc.Features.Admin.FeatureUsageModule.ViewModels
 {
     public sealed class FeatureUsageViewModel
     {
-        private FeatureUsage FeatureUsage { get; }
+        public FeatureUsage FeatureUsage { get; }
 
-        public string Name => this.FeatureUsage.Name;
-        public string Context => this.FeatureUsage.Context;
-        public int Count => this.FeatureUsage.Count;
+        public string Name { get; }
+        public string Context { get; }
+        public string Count { get; }
 
         public FeatureUsageViewModel(FeatureUsage featureUsage)
         {
             if (featureUsage == null) throw new ArgumentNullException(nameof(featureUsage));
 
             this.FeatureUsage = featureUsage;
+	        this.Name = featureUsage.Name;
+	        this.Context = featureUsage.Context;
+	        this.Count = featureUsage.Count.ToString();
         }
     }
 }

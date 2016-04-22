@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features.Admin.FeatureUsageModule.Objects
+namespace Cchbc.Features.Admin.Objects
 {
     public sealed class TimePeriod
     {

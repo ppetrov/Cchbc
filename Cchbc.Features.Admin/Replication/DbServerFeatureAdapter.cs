@@ -4,7 +4,7 @@ using Cchbc.Data;
 using Cchbc.Features.Db.Adapters;
 using Cchbc.Features.Db.Objects;
 
-namespace Cchbc.Features.Admin
+namespace Cchbc.Features.Admin.Replication
 {
     public static class DbServerFeatureAdapter
     {
@@ -267,7 +267,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 
         private static DbFeatureEntryStepRow EntryStepRowCreator(IFieldDataReader r)
         {
-            return new DbFeatureEntryStepRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2), r.GetInt64(3));
+            return new DbFeatureEntryStepRow(r.GetDecimal(0), r.GetString(1), r.GetInt64(2), r.GetInt64(3));
         }
 
         private static long ExecureInsert(ITransactionContext context, Query query)
