@@ -1,6 +1,6 @@
 ﻿using System;
 using Cchbc.Data;
-using Cchbc.Features.Admin.FeatureUsageModule;
+using Cchbc.Features.Admin.FeatureCountsModule;
 
 namespace Cchbc.Features.Admin
 {

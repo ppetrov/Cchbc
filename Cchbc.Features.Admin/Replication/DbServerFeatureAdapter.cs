@@ -17,7 +17,7 @@ namespace Cchbc.Features.Admin.Replication
         {
             new QueryParameter(@"@TIMESPENT", 0M),
             new QueryParameter(@"@DETAILS", string.Empty),
-            new QueryParameter(@"@CREATEDAT", DateTime.MinValue),
+            new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
             new QueryParameter(@"@FEATURE", 0L),
             new QueryParameter(@"@USER", 0L),
         };
@@ -26,18 +26,18 @@ namespace Cchbc.Features.Admin.Replication
         {
             new QueryParameter(@"@MESSAGE", string.Empty),
             new QueryParameter(@"@STACKTRACE", string.Empty),
-            new QueryParameter(@"@CREATEDAT", DateTime.MinValue),
+            new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
             new QueryParameter(@"@FEATURE", 0L),
             new QueryParameter(@"@USER", 0L),
         };
 
         private static readonly Query InserUserQuery = new Query(@"INSERT INTO FEATURE_USERS(NAME) VALUES (@NAME)", NameSqlParams);
-        private static readonly Query InsertServerFeatureEntryQuery = new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID, USER_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATEDAT, @FEATURE, @USER)", InsertFeatureEntrySqlParams);
-        private static readonly Query InsertExceptionQuery = new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID, USER_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE, @USER)", InsertExcetionEntrySqlParams);
+        private static readonly Query InsertServerFeatureEntryQuery = new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID, USER_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATED_AT, @FEATURE, @USER)", InsertFeatureEntrySqlParams);
+        private static readonly Query InsertExceptionQuery = new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID, USER_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATED_AT, @FEATURE, @USER)", InsertExcetionEntrySqlParams);
 
-        private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
+        private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
         private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_ENTRY_STEPS", EntryStepRowCreator);
-        private static readonly Query<DbExceptionRow> GetExceptionsQuery = new Query<DbExceptionRow>(@"SELECT MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID FROM FEATURE_EXCEPTIONS", DbExceptionRowCreator);
+        private static readonly Query<DbExceptionRow> GetExceptionsQuery = new Query<DbExceptionRow>(@"SELECT MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTIONS", DbExceptionRowCreator);
         private static readonly Query<long> GetUserQuery = new Query<long>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", r => r.GetInt64(0), NameSqlParams);
 
         public static void CreateSchema(ITransactionContext context)
@@ -77,7 +77,7 @@ CREATE TABLE [FEATURE_EXCEPTIONS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[Message] nvarchar(254) NOT NULL, 
 	[StackTrace] nvarchar(254) NOT NULL, 
-	[CreatedAt] datetime NOT NULL, 
+	[Created_At] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
 	[User_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Id])
@@ -93,7 +93,7 @@ CREATE TABLE [FEATURE_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
 	[Details] nvarchar(254) NULL, 
-	[CreatedAt] datetime NOT NULL, 
+	[Created_At] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
 	[User_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Id])

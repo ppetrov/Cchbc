@@ -24,7 +24,7 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule.Managers
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (timePeriod == null) throw new ArgumentNullException(nameof(timePeriod));
 
-			return this.Adapter.GetBy(context, timePeriod, provider.Contexts, provider.Features, provider.Users);
+			return this.Adapter.GetBy(provider, context, timePeriod);
 		}
 	}
 }

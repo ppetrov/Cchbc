@@ -22,7 +22,7 @@ namespace Cchbc.Features.Db.Adapters
         {
             new QueryParameter(@"@TIMESPENT", 0M),
             new QueryParameter(@"@DETAILS", string.Empty),
-            new QueryParameter(@"@CREATEDAT", DateTime.MinValue),
+            new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
             new QueryParameter(@"@FEATURE", 0L)
         };
 
@@ -30,7 +30,7 @@ namespace Cchbc.Features.Db.Adapters
         {
             new QueryParameter(@"@MESSAGE", string.Empty),
             new QueryParameter(@"@STACKTRACE", string.Empty),
-            new QueryParameter(@"@CREATEDAT", DateTime.MinValue),
+            new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
             new QueryParameter(@"@FEATURE", 0L)
         };
 
@@ -45,8 +45,8 @@ namespace Cchbc.Features.Db.Adapters
         private static readonly Query InsertContextQuery = new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)", NameSqlParams);
         private static readonly Query InsertStepQuery = new Query(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)", NameSqlParams);
         private static readonly Query InsertFeatureQuery = new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", InsertFeatureSqlParams);
-        private static readonly Query InsertClientFeatureEntryQuery = new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATEDAT, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATEDAT, @FEATURE)", InsertFeatureEntrySqlParams);
-        private static readonly Query InsertExceptionQuery = new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATEDAT, @FEATURE)", InsertExcetionEntrySqlParams);
+        private static readonly Query InsertClientFeatureEntryQuery = new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATED_AT, @FEATURE)", InsertFeatureEntrySqlParams);
+        private static readonly Query InsertExceptionQuery = new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATED_AT, @FEATURE)", InsertExcetionEntrySqlParams);
         private static readonly Query InsertStepEntryQuery = new Query(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", InsertFeatureStepEntrySqlParams);
 
         private static readonly Query<DbContextRow> GetContextsQuery = new Query<DbContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextCreator);
@@ -84,7 +84,7 @@ CREATE TABLE [FEATURE_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
 	[Details] nvarchar(254) NOT NULL, 
-	[CreatedAt] datetime NOT NULL, 
+	[Created_At] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Id])
 		REFERENCES [FEATURES] ([Id])
@@ -96,7 +96,7 @@ CREATE TABLE [FEATURE_EXCEPTIONS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[Message] nvarchar(254) NOT NULL, 
 	[StackTrace] nvarchar(254) NOT NULL, 
-	[CreatedAt] datetime NOT NULL, 
+	[Created_At] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Id])
 		REFERENCES [FEATURES] ([Id])

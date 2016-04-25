@@ -42,11 +42,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Dashboard.cs" />
+    <Compile Include="FeatureCountsModule\Objects\ExceptionCount.cs" />
     <Compile Include="FeatureExceptionModule\Adapters\ExceptionManagerAdapter.cs" />
     <Compile Include="FeatureExceptionModule\Managers\FeatureExceptionManager.cs" />
     <Compile Include="FeatureExceptionModule\ViewModels\FeatureExceptionViewModel.cs" />
     <Compile Include="FeatureExceptionModule\Objects\FeatureException.cs" />
     <Compile Include="FeatureExceptionModule\FeatureExceptionsViewModel.cs" />
+    <Compile Include="FeatureUserModule\Class1.cs" />
     <Compile Include="Helpers\TimePeriodHelper.cs" />
     <Compile Include="Providers\CommonDataProvider.cs" />
     <Compile Include="Replication\DbExceptionRow.cs" />
@@ -54,11 +56,11 @@
     <Compile Include="Replication\DbFeatureEntryStepRow.cs" />
     <Compile Include="Replication\DbFeatureServerManager.cs" />
     <Compile Include="Replication\DbServerFeatureAdapter.cs" />
-    <Compile Include="FeatureUsageModule\FeatureUsagesViewModel.cs" />
-    <Compile Include="FeatureUsageModule\Objects\FeatureUsage.cs" />
-    <Compile Include="FeatureUsageModule\ViewModels\FeatureUsageViewModel.cs" />
-    <Compile Include="FeatureUsageModule\Adapters\FeatureUsageAdapter.cs" />
-    <Compile Include="FeatureUsageModule\Managers\FeatureUsageManager.cs" />
+    <Compile Include="FeatureCountsModule\FeatureUsagesViewModel.cs" />
+    <Compile Include="FeatureCountsModule\Objects\FeatureCount.cs" />
+    <Compile Include="FeatureCountsModule\ViewModels\FeatureUsageViewModel.cs" />
+    <Compile Include="FeatureCountsModule\Adapters\FeatureCountAdapter.cs" />
+    <Compile Include="FeatureCountsModule\Managers\FeatureCountManager.cs" />
     <Compile Include="NamingConventions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Objects\TimePeriod.cs" />

@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using Cchbc.Data;
-using Cchbc.Features.Admin.FeatureUsageModule.Adapters;
-using Cchbc.Features.Admin.FeatureUsageModule.Managers;
-using Cchbc.Features.Admin.FeatureUsageModule.ViewModels;
+using Cchbc.Features.Admin.FeatureCountsModule.Adapters;
+using Cchbc.Features.Admin.FeatureCountsModule.Managers;
+using Cchbc.Features.Admin.FeatureCountsModule.ViewModels;
 using Cchbc.Features.Admin.Helpers;
 using Cchbc.Features.Admin.Providers;
 using Cchbc.Features.Admin.ViewModels;
 using Cchbc.Objects;
 
-namespace Cchbc.Features.Admin.FeatureUsageModule
+namespace Cchbc.Features.Admin.FeatureCountsModule
 {
 	public sealed class FeatureUsagesViewModel : ViewModel
 	{
-		private FeatureUsageManager FeatureUsageManager { get; } = new FeatureUsageManager(new FeatureUsageAdapter());
+		private FeatureCountManager FeatureCountManager { get; } = new FeatureCountManager(new FeatureCountAdapter());
 
 		private ITransactionContextCreator ContextCreator { get; }
 		private CommonDataProvider DataProvider { get; }
@@ -55,7 +55,7 @@ namespace Cchbc.Features.Admin.FeatureUsageModule
 			{
 				this.FeatureUsages.Clear();
 
-				foreach (var featureUsage in this.FeatureUsageManager.GetBy(this.DataProvider, context, this.CurrentTimePeriod.TimePeriod))
+				foreach (var featureUsage in this.FeatureCountManager.GetBy(this.DataProvider, context, this.CurrentTimePeriod.TimePeriod))
 				{
 					this.FeatureUsages.Add(new FeatureUsageViewModel(featureUsage));
 				}

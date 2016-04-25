@@ -1,9 +1,8 @@
 using System;
-using System.Collections.Generic;
 using Cchbc.Data;
 using Cchbc.Features.Admin.FeatureExceptionModule.Objects;
 using Cchbc.Features.Admin.Objects;
-using Cchbc.Features.Db.Objects;
+using Cchbc.Features.Admin.Providers;
 
 namespace Cchbc.Features.Admin.FeatureExceptionModule.Adapters
 {
@@ -30,7 +29,7 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule.Adapters
 			}
 		}
 
-		public FeatureException[] GetBy(ITransactionContext context, TimePeriod timePeriod, Dictionary<long, DbContextRow> contexts, Dictionary<long, DbFeatureRow> features, Dictionary<long, DbFeatureUserRow> users)
+		public FeatureException[] GetBy(CommonDataProvider provider, ITransactionContext context, TimePeriod timePeriod)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (timePeriod == null) throw new ArgumentNullException(nameof(timePeriod));
@@ -41,10 +40,14 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule.Adapters
 				new QueryParameter(@"@TODATE", timePeriod.ToDate),
 			};
 
-			var query = new Query<DbServerExceptionRow>(@"SELECT MESSAGE, STACKTRACE, CREATEDAT, FEATURE_ID, USER_ID FROM FEATURE_EXCEPTIONS WHERE @FROMDATE < CREATEDAT AND CREATEDAT < @TODATE ORDER BY CREATEDAT DESC", this.DbServerExceptionRowCreator, sqlParams);
+			var query = new Query<DbServerExceptionRow>(@"SELECT MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID, USER_ID FROM FEATURE_EXCEPTIONS WHERE @FROMDATE < CREATED_AT AND CREATED_AT < @TODATE ORDER BY CREATED_AT DESC", this.DbServerExceptionRowCreator, sqlParams);
 			var rows = context.Execute(query);
 
 			var exceptions = new FeatureException[rows.Count];
+
+		    var contexts = provider.Contexts;
+		    var features = provider.Features;
+		    var users = provider.Users;
 
 			for (var i = 0; i < rows.Count; i++)
 			{

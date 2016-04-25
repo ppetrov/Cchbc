@@ -1,21 +1,21 @@
 ﻿using System;
 
-namespace Cchbc.Features.Admin.FeatureUsageModule.Objects
+namespace Cchbc.Features.Admin.FeatureCountsModule.Objects
 {
-    public sealed class FeatureUsage
+    public sealed class FeatureCount
     {
         public string Name { get; }
         public string Context { get; }
-        public int Count { get; }
+        public int Value { get; }
 
-        public FeatureUsage(string context, string name, int count)
+        public FeatureCount(string context, string name, int value)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
             if (context == null) throw new ArgumentNullException(nameof(context));
 
             this.Name = name;
             this.Context = context;
-            this.Count = count;
+            this.Value = value;
         }
     }
 }
