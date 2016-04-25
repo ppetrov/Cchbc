@@ -12,7 +12,7 @@ namespace Cchbc.Features.Admin
         {
             if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
 
-            this.FeatureUsagesViewModel = new FeatureUsagesViewModel(contextCreator);
+            this.FeatureUsagesViewModel = new FeatureUsagesViewModel(contextCreator, null);
         }
 
         public void Load()

@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using Cchbc.Data;
-using Cchbc.Features.Admin.Adapters;
 using Cchbc.Features.Admin.FeatureUsageModule.Objects;
 using Cchbc.Features.Admin.Objects;
+using Cchbc.Features.Db.Objects;
 
 namespace Cchbc.Features.Admin.FeatureUsageModule.Adapters
 {
@@ -22,10 +23,12 @@ namespace Cchbc.Features.Admin.FeatureUsageModule.Adapters
 			}
 		}
 
-		public FeatureUsage[] GetBy(ITransactionContext context, TimePeriod timePeriod)
+		public FeatureUsage[] GetBy(ITransactionContext context, TimePeriod timePeriod, Dictionary<long, DbContextRow> contexts, Dictionary<long, DbFeatureRow> features)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (timePeriod == null) throw new ArgumentNullException(nameof(timePeriod));
+			if (contexts == null) throw new ArgumentNullException(nameof(contexts));
+			if (features == null) throw new ArgumentNullException(nameof(features));
 
 			var sqlParams = new[]
 			{
@@ -56,16 +59,10 @@ namespace Cchbc.Features.Admin.FeatureUsageModule.Adapters
 
 			var featureUsages = new FeatureUsage[rows.Count];
 
-			if (featureUsages.Length > 0)
+			for (var i = 0; i < rows.Count; i++)
 			{
-				var contexts = CommonAdapter.GetContexts(context);
-				var features = CommonAdapter.GetFeatures(context);
-
-				for (var i = 0; i < rows.Count; i++)
-				{
-					var row = rows[i];
-					featureUsages[i] = new FeatureUsage(contexts[row.ContextId].Name, features[row.FeatureId].Name, row.Count);
-				}
+				var row = rows[i];
+				featureUsages[i] = new FeatureUsage(contexts[row.ContextId].Name, features[row.FeatureId].Name, row.Count);
 			}
 
 			return featureUsages;

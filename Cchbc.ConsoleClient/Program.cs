@@ -10,11 +10,13 @@ using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
+using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Admin;
 using Cchbc.Features.Admin.FeatureExceptionModule;
 using Cchbc.Features.Admin.FeatureUsageModule;
+using Cchbc.Features.Admin.Providers;
 using Cchbc.Features.Admin.Replication;
 
 namespace Cchbc.ConsoleClient
@@ -47,8 +49,13 @@ namespace Cchbc.ConsoleClient
 
 				
 				var creator = new TransactionContextCreator(serverDb);
-				var usagesViewModel = new FeatureUsagesViewModel(creator);
-				var exceptionsViewModel = new FeatureExceptionsViewModel(creator);
+				var dataProvider = new CommonDataProvider();
+				using (var ctx = creator.Create())
+				{
+					dataProvider.Load(ctx);
+				}
+				var usagesViewModel = new FeatureUsagesViewModel(creator, dataProvider);
+				var exceptionsViewModel = new FeatureExceptionsViewModel(creator, dataProvider);
 
 				var s = Stopwatch.StartNew();
 
@@ -61,7 +68,9 @@ namespace Cchbc.ConsoleClient
 				Console.WriteLine(s.ElapsedMilliseconds);
 
 				Display(usagesViewModel);
+
 				Console.WriteLine();
+				
 				Display(exceptionsViewModel);
 
 

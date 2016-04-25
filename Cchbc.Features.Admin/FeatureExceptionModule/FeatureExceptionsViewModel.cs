@@ -5,6 +5,7 @@ using Cchbc.Features.Admin.FeatureExceptionModule.Adapters;
 using Cchbc.Features.Admin.FeatureExceptionModule.Managers;
 using Cchbc.Features.Admin.FeatureExceptionModule.ViewModels;
 using Cchbc.Features.Admin.Helpers;
+using Cchbc.Features.Admin.Providers;
 using Cchbc.Features.Admin.ViewModels;
 using Cchbc.Objects;
 
@@ -16,6 +17,7 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule
 		private FeatureExceptionManager FeatureExceptionManager { get; } = new FeatureExceptionManager(new ExceptionManagerAdapter());
 
 		private ITransactionContextCreator ContextCreator { get; }
+		private CommonDataProvider DataProvider { get; }
 
 		private TimePeriodViewModel _currentTimePeriod;
 		public TimePeriodViewModel CurrentTimePeriod
@@ -32,11 +34,12 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule
 		public ObservableCollection<TimePeriodViewModel> TimePeriods { get; } = new ObservableCollection<TimePeriodViewModel>();
 		public ObservableCollection<FeatureExceptionViewModel> Exceptions { get; } = new ObservableCollection<FeatureExceptionViewModel>();
 
-		public FeatureExceptionsViewModel(ITransactionContextCreator contextCreator)
+		public FeatureExceptionsViewModel(ITransactionContextCreator contextCreator, CommonDataProvider dataProvider)
 		{
 			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
 
 			this.ContextCreator = contextCreator;
+			DataProvider = dataProvider;
 
 			foreach (var timePeriodViewModel in TimePeriodHelper.GetStandardPeriods())
 			{
@@ -53,7 +56,7 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule
 			{
 				this.Exceptions.Clear();
 
-				foreach (var featureException in this.FeatureExceptionManager.GetBy(ctx, this.CurrentTimePeriod.TimePeriod))
+				foreach (var featureException in this.FeatureExceptionManager.GetBy(this.DataProvider, ctx, this.CurrentTimePeriod.TimePeriod))
 				{
 					this.Exceptions.Add(new FeatureExceptionViewModel(featureException));
 				}

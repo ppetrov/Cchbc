@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 using Cchbc.Data;
-using Cchbc.Features.Admin.Adapters;
 using Cchbc.Features.Admin.FeatureExceptionModule.Objects;
 using Cchbc.Features.Admin.Objects;
+using Cchbc.Features.Db.Objects;
 
 namespace Cchbc.Features.Admin.FeatureExceptionModule.Adapters
 {
@@ -29,7 +30,7 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule.Adapters
 			}
 		}
 
-		public FeatureException[] GetBy(ITransactionContext context, TimePeriod timePeriod)
+		public FeatureException[] GetBy(ITransactionContext context, TimePeriod timePeriod, Dictionary<long, DbContextRow> contexts, Dictionary<long, DbFeatureRow> features, Dictionary<long, DbFeatureUserRow> users)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (timePeriod == null) throw new ArgumentNullException(nameof(timePeriod));
@@ -45,21 +46,14 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule.Adapters
 
 			var exceptions = new FeatureException[rows.Count];
 
-			if (exceptions.Length > 0)
+			for (var i = 0; i < rows.Count; i++)
 			{
-				var userNames = CommonAdapter.GetUserNames(context);
-				var contexts = CommonAdapter.GetContexts(context);
-				var features = CommonAdapter.GetFeatures(context);
+				var row = rows[i];
+				var feature = features[row.FeatureId];
+				var contextName = contexts[feature.ContextId].Name;
+				var userName = users[row.UserId].Name;
 
-				for (var i = 0; i < rows.Count; i++)
-				{
-					var row = rows[i];
-					var feature = features[row.FeatureId];
-					var contextName = contexts[feature.ContextId].Name;
-					var userName = userNames[row.UserId];
-
-					exceptions[i] = new FeatureException(contextName, feature.Name, userName, row.Message, row.StackTrace, row.CreatedAt);
-				}
+				exceptions[i] = new FeatureException(contextName, feature.Name, userName, row.Message, row.StackTrace, row.CreatedAt);
 			}
 
 			return exceptions;

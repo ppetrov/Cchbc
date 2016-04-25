@@ -193,7 +193,7 @@ namespace Cchbc.ConsoleClient
 
 		private static void DisplayQuery(string statement)
 		{
-			if (true)
+			if (false)
 			{
 				Console.WriteLine(Regex.Replace(statement.Replace('\t', ' ').Replace(Environment.NewLine, @" "), @" +", @" ").Trim());
 			}
