@@ -6,7 +6,7 @@ using Cchbc.Features.Admin.Providers;
 
 namespace Cchbc.Features.Admin.FeatureExceptionModule.Adapters
 {
-	public sealed class ExceptionManagerAdapter
+	public sealed class FeatureExceptionAdapter
 	{
 		private sealed class DbServerExceptionRow
 		{
@@ -40,7 +40,17 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule.Adapters
 				new QueryParameter(@"@TODATE", timePeriod.ToDate),
 			};
 
-			var query = new Query<DbServerExceptionRow>(@"SELECT MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID, USER_ID FROM FEATURE_EXCEPTIONS WHERE @FROMDATE < CREATED_AT AND CREATED_AT < @TODATE ORDER BY CREATED_AT DESC", this.DbServerExceptionRowCreator, sqlParams);
+			var query = new Query<DbServerExceptionRow>(@"
+			SELECT MESSAGE,
+					STACKTRACE,
+					CREATED_AT,
+					FEATURE_ID,
+					USER_ID
+			FROM FEATURE_EXCEPTIONS
+			WHERE @FROMDATE <= CREATED_AT
+				AND CREATED_AT < @TODATE
+			ORDER BY CREATED_AT DESC", this.DbServerExceptionRowCreator, sqlParams);
+
 			var rows = context.Execute(query);
 
 			var exceptions = new FeatureException[rows.Count];

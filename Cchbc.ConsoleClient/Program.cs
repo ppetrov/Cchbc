@@ -16,6 +16,13 @@ using Cchbc.Features;
 using Cchbc.Features.Admin;
 using Cchbc.Features.Admin.FeatureExceptionModule;
 using Cchbc.Features.Admin.FeatureCountsModule;
+using Cchbc.Features.Admin.FeatureCountsModule.Adapters;
+using Cchbc.Features.Admin.FeatureCountsModule.Managers;
+using Cchbc.Features.Admin.FeatureExceptionModule.Adapters;
+using Cchbc.Features.Admin.FeatureExceptionModule.Managers;
+using Cchbc.Features.Admin.FeatureUserModule;
+using Cchbc.Features.Admin.FeatureUserModule.Adapters;
+using Cchbc.Features.Admin.FeatureUserModule.Managers;
 using Cchbc.Features.Admin.Providers;
 using Cchbc.Features.Admin.Replication;
 
@@ -42,21 +49,24 @@ namespace Cchbc.ConsoleClient
             var userName = clientDb.Substring(si, ei - si);
             try
             {
-                //CreateSchema(serverDb);
-                //return;
+				//CreateSchema(serverDb);
+				//return;
 
-                //Replicate(serverDb, clientDb);
-                //return;
+				//Replicate(serverDb, clientDb);
+				//return;
 
 
-                var creator = new TransactionContextCreator(serverDb);
+				var creator = new TransactionContextCreator(serverDb);
                 var dataProvider = new CommonDataProvider();
                 using (var ctx = creator.Create())
                 {
                     dataProvider.Load(ctx);
+
+                    ctx.Complete();
                 }
-                var usagesViewModel = new FeatureUsagesViewModel(creator, dataProvider);
-                var exceptionsViewModel = new FeatureExceptionsViewModel(creator, dataProvider);
+                var usagesViewModel = new FeatureUsagesViewModel(creator, dataProvider, new FeatureCountManager(new FeatureCountAdapter()));
+                var exceptionsViewModel = new FeatureExceptionsViewModel(creator, dataProvider, new FeatureExceptionManager(new FeatureExceptionAdapter()));
+                var usersViewModel = new UsersOverviewViewModel(creator, dataProvider, new UserOverviewManager(new UserOverviewAdapter()));
 
                 var s = Stopwatch.StartNew();
 
@@ -64,6 +74,7 @@ namespace Cchbc.ConsoleClient
                 {
                     usagesViewModel.LoadDataForCurrentTimePeriod();
                     exceptionsViewModel.LoadDataForCurrentTimePeriod();
+                    usersViewModel.Load();
                 }
 
                 Console.WriteLine(s.ElapsedMilliseconds);
@@ -73,6 +84,10 @@ namespace Cchbc.ConsoleClient
                 Console.WriteLine();
 
                 Display(exceptionsViewModel);
+
+                Console.WriteLine();
+
+                Display(usersViewModel);
 
 
 
@@ -170,6 +185,32 @@ namespace Cchbc.ConsoleClient
             //}
         }
 
+        private static void Display(UsersOverviewViewModel viewModel)
+        {
+            foreach (var f in viewModel.Users)
+            {
+                var details = string.Join(@", ", new[]
+                {
+                    f.Name,
+                    @"Features: " + f.Features.Count,
+                    @"Exceptions: " + f.Exceptions.Count,                    
+                });
+                foreach (var _ in f.Features)
+                {
+                    Console.Write(_.Count + ", ");
+                }
+
+                Console.WriteLine();
+                
+                foreach (var _ in f.Exceptions)
+                {
+                    Console.Write(_.Count + ", ");
+                }
+                Console.WriteLine(details);
+            }
+            Console.WriteLine();
+        }
+
         private static void Display(FeatureExceptionsViewModel viewModel)
         {
             foreach (var f in viewModel.Exceptions)
@@ -182,7 +223,6 @@ namespace Cchbc.ConsoleClient
                     f.Message,
                     f.CreateAt,
                 });
-                //var detail = f.Name.PadRight(20) + " " + f.Context.PadRight(10) + " " + f.Value;
                 Console.WriteLine(details);
             }
             Console.WriteLine(@"Total: " + viewModel.Exceptions.Count);

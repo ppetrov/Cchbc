@@ -7,11 +7,11 @@ using Cchbc.Features.Admin.Objects;
 
 namespace Cchbc.Features.Admin.FeatureExceptionModule.Managers
 {
-	public sealed class FeatureExceptionManager
-	{
-		public ExceptionManagerAdapter Adapter { get; }
+	public sealed class FeatureExceptionManager : IFeatureExceptionManager
+    {
+		public FeatureExceptionAdapter Adapter { get; }
 
-		public FeatureExceptionManager(ExceptionManagerAdapter adapter)
+		public FeatureExceptionManager(FeatureExceptionAdapter adapter)
 		{
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 

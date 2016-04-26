@@ -42,13 +42,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Dashboard.cs" />
+    <Compile Include="FeatureCountsModule\Managers\IFeatureCountManager.cs" />
     <Compile Include="FeatureCountsModule\Objects\ExceptionCount.cs" />
-    <Compile Include="FeatureExceptionModule\Adapters\ExceptionManagerAdapter.cs" />
+    <Compile Include="FeatureExceptionModule\Adapters\FeatureExceptionAdapter.cs" />
     <Compile Include="FeatureExceptionModule\Managers\FeatureExceptionManager.cs" />
+    <Compile Include="FeatureExceptionModule\Managers\IFeatureExceptionManager.cs" />
     <Compile Include="FeatureExceptionModule\ViewModels\FeatureExceptionViewModel.cs" />
     <Compile Include="FeatureExceptionModule\Objects\FeatureException.cs" />
     <Compile Include="FeatureExceptionModule\FeatureExceptionsViewModel.cs" />
-    <Compile Include="FeatureUserModule\Class1.cs" />
+    <Compile Include="FeatureUserModule\Adapters\UserOverviewAdapter.cs" />
+    <Compile Include="FeatureUserModule\Objects\FeatureCountByPeriod.cs" />
+    <Compile Include="FeatureUserModule\ViewModels\FeatureCountByPeriodViewModel.cs" />
+    <Compile Include="FeatureUserModule\Objects\IndexedTimePeriod.cs" />
+    <Compile Include="FeatureUserModule\Managers\IUserOverviewManager.cs" />
+    <Compile Include="FeatureUserModule\Objects\UserFeatureCount.cs" />
+    <Compile Include="FeatureUserModule\Objects\UserOverview.cs" />
+    <Compile Include="FeatureUserModule\Managers\UserOverviewManager.cs" />
+    <Compile Include="FeatureUserModule\ViewModels\UserOverviewViewModel.cs" />
+    <Compile Include="FeatureUserModule\UsersOverviewViewModel.cs" />
     <Compile Include="Helpers\TimePeriodHelper.cs" />
     <Compile Include="Providers\CommonDataProvider.cs" />
     <Compile Include="Replication\DbExceptionRow.cs" />
@@ -66,9 +77,7 @@
     <Compile Include="Objects\TimePeriod.cs" />
     <Compile Include="ViewModels\TimePeriodViewModel.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Adapters\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

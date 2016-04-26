@@ -7,8 +7,8 @@ using Cchbc.Features.Admin.Providers;
 
 namespace Cchbc.Features.Admin.FeatureCountsModule.Managers
 {
-	public sealed class FeatureCountManager
-	{
+	public sealed class FeatureCountManager : IFeatureCountManager
+    {
 		public FeatureCountAdapter Adapter { get; }
 
 		public FeatureCountManager(FeatureCountAdapter adapter)
