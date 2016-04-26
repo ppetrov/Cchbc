@@ -19,9 +19,11 @@ namespace Cchbc.Features.Admin
             return ApplyNaming(input);
         }
 
-        private static string ApplyNaming(string input)
+        public static string ApplyNaming(string input)
         {
-            var value = input;
+	        if (input == null) throw new ArgumentNullException(nameof(input));
+
+	        var value = input;
 
             if (value.EndsWith(@"LOADED", StringComparison.OrdinalIgnoreCase))
             {

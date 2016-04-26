@@ -22,12 +22,12 @@ namespace Cchbc.Features.Admin.Providers
 
 			foreach (var row in DbFeatureAdapter.GetContexts(context))
 			{
-				this.Contexts.Add(row.Id, row);
+				this.Contexts.Add(row.Id, new DbContextRow(row.Id, NamingConventions.ApplyNaming(row.Name)));
 			}
 
 			foreach (var row in DbFeatureAdapter.GetFeatures(context))
 			{
-				this.Features.Add(row.Id, row);
+				this.Features.Add(row.Id, new DbFeatureRow(row.Id, NamingConventions.ApplyNaming(row.Name), row.ContextId));
 			}
 
 			foreach (var row in context.Execute(new Query<DbFeatureUserRow>(@"SELECT ID, NAME FROM FEATURE_USERS", DbFeatureUserRowCreator)))
