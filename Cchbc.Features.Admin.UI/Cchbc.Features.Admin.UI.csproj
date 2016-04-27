@@ -96,14 +96,17 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="ContextViewModelConverter.cs" />
+    <Compile Include="DashboardScreen.xaml.cs">
+      <DependentUpon>DashboardScreen.xaml</DependentUpon>
+    </Compile>
     <Compile Include="FeatureDetailsScreen.xaml.cs">
       <DependentUpon>FeatureDetailsScreen.xaml</DependentUpon>
     </Compile>
     <Compile Include="FeatureSortOrderConverter.cs" />
-    <Compile Include="MainPage.xaml.cs">
-      <DependentUpon>MainPage.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SearchUsersContentDialog.xaml.cs">
+      <DependentUpon>SearchUsersContentDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SQLite\SQLiteColumnType.cs" />
     <Compile Include="SQLite\SQLiteCommand.cs" />
     <Compile Include="SQLite\SQLiteConfigOption.cs" />
@@ -126,6 +129,8 @@
     <None Include="Cchbc.Features.Admin.UI_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\blueprint_wide.jpg" />
+    <Content Include="Assets\p3.jpg" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -140,13 +145,17 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="DashboardScreen.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="FeatureDetailsScreen.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="MainPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
+    <Page Include="SearchUsersContentDialog.xaml">
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>

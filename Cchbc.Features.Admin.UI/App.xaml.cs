@@ -33,7 +33,8 @@ namespace Cchbc.Features.Admin.UI
             if (System.Diagnostics.Debugger.IsAttached)
             {
                 this.DebugSettings.EnableFrameRateCounter = true;
-            }
+				//this.DebugSettings.IsTextPerformanceVisualizationEnabled = true;
+			}
 #endif
             Frame rootFrame = Window.Current.Content as Frame;
 
@@ -62,7 +63,7 @@ namespace Cchbc.Features.Admin.UI
                     // When the navigation stack isn't restored navigate to the first page,
                     // configuring the new page by passing required information as a navigation
                     // parameter
-                    rootFrame.Navigate(typeof(FeatureDetailsScreen), e.Arguments);
+                    rootFrame.Navigate(typeof(DashboardScreen), e.Arguments);
                 }
                 // Ensure the current window is active
                 Window.Current.Activate();

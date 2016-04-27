@@ -1,0 +1,101 @@
+﻿<Page
+    x:Class="Cchbc.Features.Admin.UI.DashboardScreen"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:featureDetailsModule="using:Cchbc.Features.Admin.FeatureDetailsModule"
+    Loaded="DashboardScreenLoaded"
+    mc:Ignorable="d">
+
+    <Grid Background="{StaticResource ThemeBackground}">
+
+        <Grid Margin="25">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="3*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+
+            <!--Users-->
+            <Grid Grid.Row="0" Grid.Column="0" Style="{StaticResource CchbcDataTemplateGrid}" Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{x:Bind ViewModel.UsersCaption}" Style="{StaticResource HeaderTextStyle}" VerticalAlignment="Center" Margin="5,0,0,0"></TextBlock>
+                    <AppBarButton Grid.Column="1" Label="Search" Foreground="#84DDF0" Tapped="BtnSearchUsersTapped">
+                        <SymbolIcon Symbol="Find"></SymbolIcon>
+                    </AppBarButton>
+                </Grid>
+
+                <ListView Grid.Row="1" ItemContainerStyle="{StaticResource FullLineItemStyle}"
+                      SelectionMode="None"
+                      ItemsSource="{x:Bind ViewModel.Users}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="featureDetailsModule:DashboardUserViewModel">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+
+                                <!--Name & Profile image-->
+                                <Grid Grid.Column="0" Margin="5">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"></RowDefinition>
+                                        <RowDefinition Height="*"></RowDefinition>
+                                    </Grid.RowDefinitions>
+
+                                    <Image Source="Assets/p3.jpg" Width="64" Height="64">
+
+                                    </Image>
+
+                                    <StackPanel Grid.Row="1" Orientation="Vertical">
+                                        <TextBlock Text="{x:Bind Name}" FontSize="16" Foreground="#BD93F9"></TextBlock>
+                                        <TextBlock Text="{x:Bind ReplicatedAt}" FontSize="10" FontStyle="Italic" Foreground="#BD93F9"></TextBlock>
+                                    </StackPanel>
+                                </Grid>
+
+
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+
+            <!--Content-->
+            <Grid Grid.Row="0" Grid.Column="1" >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateGrid}" Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
+                        <TextBlock Text="{x:Bind ViewModel.UsageCaption}" Style="{StaticResource HeaderTextStyle}" Margin="5,0,0,0"></TextBlock>
+                    </Grid>
+                </Grid>
+
+                <Grid Grid.Row="1" Style="{StaticResource CchbcDataTemplateGrid}" Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
+                        <TextBlock Text="{x:Bind ViewModel.ExceptionsCaption}" Style="{StaticResource HeaderTextStyle}" Margin="5,0,0,0"></TextBlock>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Page>
