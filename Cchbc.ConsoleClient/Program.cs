@@ -38,6 +38,24 @@ namespace Cchbc.ConsoleClient
 
 	public class Program
 	{
+		private static void Replicate(string serverDb, string clientDb)
+		{
+			using (var server = new TransactionContextCreator(serverDb).Create())
+			{
+				using (var client = new TransactionContextCreator(clientDb).Create())
+				{
+					var w = Stopwatch.StartNew();
+
+					DbFeatureServerManager.Replicate(server, client, @"iandonov", @"2.17.0.523");
+
+					client.Complete();
+					server.Complete();
+
+					w.Stop();
+					Console.WriteLine(w.ElapsedMilliseconds);
+				}
+			}
+		}
 
 		static void Main(string[] args)
 		{
@@ -51,7 +69,10 @@ namespace Cchbc.ConsoleClient
 			{
 				//CreateSchema(serverDb);
 
-				Replicate(serverDb, clientDb);
+				for (var i = 0; i < 1; i++)
+				{
+					Replicate(serverDb, clientDb);
+				}
 				return;
 
 
@@ -240,24 +261,7 @@ namespace Cchbc.ConsoleClient
 			Console.WriteLine(total);
 		}
 
-		private static void Replicate(string serverDb, string clientDb)
-		{
-			using (var server = new TransactionContextCreator(serverDb).Create())
-			{
-				using (var client = new TransactionContextCreator(clientDb).Create())
-				{
-					var w = Stopwatch.StartNew();
-
-					DbFeatureServerManager.Replicate(server, client, @"vsimeonov");
-
-					client.Complete();
-					server.Complete();
-
-					w.Stop();
-					Console.WriteLine(w.ElapsedMilliseconds);
-				}
-			}
-		}
+		
 
 		private static void CreateSchema(string connectionString)
 		{
@@ -272,7 +276,10 @@ namespace Cchbc.ConsoleClient
 					Console.WriteLine(@"Drop schema");
 				}
 			}
-			catch { }
+			catch (Exception e)
+			{
+				
+			}
 
 			using (var serverContext = creator.Create())
 			{

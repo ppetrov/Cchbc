@@ -27,13 +27,15 @@ namespace Cchbc.Features.Admin.Replication
 			// TODO : !!!
 		}
 
-		public static void Replicate(ITransactionContext serverContext, ITransactionContext clientContext, string userName)
+		public static void Replicate(ITransactionContext serverContext, ITransactionContext clientContext, string userName, string version)
 		{
 			if (serverContext == null) throw new ArgumentNullException(nameof(serverContext));
 			if (clientContext == null) throw new ArgumentNullException(nameof(clientContext));
 			if (userName == null) throw new ArgumentNullException(nameof(userName));
+			if (version == null) throw new ArgumentNullException(nameof(version));
 
-			var userId = DbServerFeatureAdapter.GetOrCreateUser(serverContext, userName);
+			var versionId = DbServerFeatureAdapter.GetOrCreateVersion(serverContext, version);
+			var userId = DbServerFeatureAdapter.GetOrCreateUser(serverContext, userName, versionId);
 
 			var clientContextRows = DbServerFeatureAdapter.GetContexts(clientContext);
 			var contextsMap = ReplicateContexts(serverContext, clientContextRows);
@@ -45,7 +47,7 @@ namespace Cchbc.Features.Admin.Replication
 			var featuresMap = ReplicateFeatures(serverContext, clientFeatureRows, contextsMap);
 
 			var featureEntryRows = DbServerFeatureAdapter.GetFeatureEntryRows(clientContext);
-			var featureEntriesMap = ReplicateFeatureEntries(serverContext, featureEntryRows, featuresMap, userId);
+			var featureEntriesMap = ReplicateFeatureEntries(serverContext, featureEntryRows, featuresMap, userId, versionId);
 
 			foreach (var stepRow in DbServerFeatureAdapter.GetEntryStepRows(clientContext))
 			{
@@ -54,7 +56,7 @@ namespace Cchbc.Features.Admin.Replication
 
 			foreach (var exceptionRow in DbServerFeatureAdapter.GetExceptions(clientContext))
 			{
-				DbServerFeatureAdapter.InsertExceptionEntry(serverContext, userId, featuresMap[exceptionRow.FeatureId], exceptionRow);
+				DbServerFeatureAdapter.InsertExceptionEntry(serverContext, userId, versionId, featuresMap[exceptionRow.FeatureId], exceptionRow);
 			}
 		}
 
@@ -154,13 +156,13 @@ namespace Cchbc.Features.Admin.Replication
 			return featuresMap;
 		}
 
-		private static Dictionary<long, long> ReplicateFeatureEntries(ITransactionContext serverContext, List<DbFeatureEntryRow> featureEntryRows, Dictionary<long, long> featuresMap, long userId)
+		private static Dictionary<long, long> ReplicateFeatureEntries(ITransactionContext serverContext, List<DbFeatureEntryRow> featureEntryRows, Dictionary<long, long> featuresMap, long userId, long versionId)
 		{
 			var map = new Dictionary<long, long>(featureEntryRows.Count);
 
 			foreach (var row in featureEntryRows)
 			{
-				map.Add(row.Id, DbServerFeatureAdapter.InsertFeatureEntry(serverContext, userId, featuresMap[row.FeatureId], row.Details, row.TimeSpent, row.CreatedAt));
+				map.Add(row.Id, DbServerFeatureAdapter.InsertFeatureEntry(serverContext, userId, versionId, featuresMap[row.FeatureId], row.Details, row.TimeSpent, row.CreatedAt));
 			}
 
 			return map;

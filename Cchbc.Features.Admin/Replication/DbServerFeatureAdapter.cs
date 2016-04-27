@@ -8,37 +8,48 @@ namespace Cchbc.Features.Admin.Replication
 {
 	public static class DbServerFeatureAdapter
 	{
-		private static readonly Query InserUserQuery = new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT) VALUES (@NAME, @REPLICATED_AT)", new[] {
+		private static readonly Query InserUserQuery = new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT, VERSION_ID) VALUES (@NAME, @REPLICATED_AT, @VERSION_ID)", new[] {
 			new QueryParameter(@"NAME", string.Empty),
 			new QueryParameter(@"REPLICATED_AT", DateTime.MinValue),
+			new QueryParameter(@"@VERSION_ID", 0),
 		});
 
-		private static readonly Query UpdateUserQuery = new Query(@"UPDATE FEATURE_USERS SET REPLICATED_AT = @REPLICATED_AT WHERE ID = @ID", new[] {
+		private static readonly Query InserVersionQuery = new Query(@"INSERT INTO FEATURE_VERSIONS(NAME) VALUES (@NAME)", new[] {
+			new QueryParameter(@"NAME", string.Empty),
+		});
+
+		private static readonly Query UpdateUserQuery = new Query(@"UPDATE FEATURE_USERS SET REPLICATED_AT = @REPLICATED_AT, VERSION_ID = @VERSION_ID WHERE ID = @ID", new[] {
 			new QueryParameter(@"@ID", 0L),
 			new QueryParameter(@"@REPLICATED_AT", DateTime.MinValue),
+			new QueryParameter(@"@VERSION_ID", 0),
 		});
 
-		private static readonly Query InsertServerFeatureEntryQuery = new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID, USER_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATED_AT, @FEATURE, @USER)", new[] {
+		private static readonly Query InsertServerFeatureEntryQuery = new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATED_AT, @FEATURE, @USER, @VERSION)", new[] {
 			new QueryParameter(@"@TIMESPENT", 0M),
 			new QueryParameter(@"@DETAILS", string.Empty),
 			new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
 			new QueryParameter(@"@FEATURE", 0L),
 			new QueryParameter(@"@USER", 0L),
+			new QueryParameter(@"@VERSION", 0L),
 		});
 
-		private static readonly Query InsertExceptionQuery = new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID, USER_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATED_AT, @FEATURE, @USER)",
+		private static readonly Query InsertExceptionQuery = new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATED_AT, @FEATURE, @USER, @VERSION)",
 			new[] {
 			new QueryParameter(@"@MESSAGE", string.Empty),
 			new QueryParameter(@"@STACKTRACE", string.Empty),
 			new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
 			new QueryParameter(@"@FEATURE", 0L),
 			new QueryParameter(@"@USER", 0L),
+			new QueryParameter(@"@VERSION", 0L),
 		});
 
 		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
 		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_ENTRY_STEPS", EntryStepRowCreator);
 		private static readonly Query<DbExceptionRow> GetExceptionsQuery = new Query<DbExceptionRow>(@"SELECT MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTIONS", DbExceptionRowCreator);
 		private static readonly Query<long> GetUserQuery = new Query<long>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", r => r.GetInt64(0), new[] {
+			new QueryParameter(@"NAME", string.Empty),
+		});
+		private static readonly Query<long> GetVersionQuery = new Query<long>(@"SELECT ID FROM FEATURE_VERSIONS WHERE NAME = @NAME", r => r.GetInt64(0), new[] {
 			new QueryParameter(@"NAME", string.Empty),
 		});
 
@@ -59,6 +70,12 @@ CREATE TABLE[FEATURE_STEPS] (
 )"));
 
 			context.Execute(new Query(@"
+CREATE TABLE[FEATURE_VERSIONS] (
+	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	[Name] nvarchar(254) NOT NULL
+)"));
+
+			context.Execute(new Query(@"
 CREATE TABLE [FEATURES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[Name] nvarchar(254) NOT NULL, 
@@ -72,7 +89,8 @@ CREATE TABLE [FEATURES] (
 CREATE TABLE[FEATURE_USERS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	[Name] nvarchar(254) NOT NULL,
-	[Replicated_At] datetime NOT NULL
+	[Replicated_At] datetime NOT NULL,
+	[Version_Id] integer NOT NULL
 )"));
 
 			context.Execute(new Query(@"
@@ -83,11 +101,15 @@ CREATE TABLE [FEATURE_EXCEPTIONS] (
 	[Created_At] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
 	[User_Id] integer NOT NULL, 
+	[Version_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Id])
 		REFERENCES [FEATURES] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
 	FOREIGN KEY ([User_Id])
 		REFERENCES [FEATURE_USERS] ([Id])
+		ON UPDATE CASCADE ON DELETE CASCADE
+	FOREIGN KEY ([Version_Id])
+		REFERENCES [FEATURE_VERSIONS] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
 
@@ -99,11 +121,15 @@ CREATE TABLE [FEATURE_ENTRIES] (
 	[Created_At] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
 	[User_Id] integer NOT NULL, 
+	[Version_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Id])
 		REFERENCES [FEATURES] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
 	FOREIGN KEY ([User_Id])
 		REFERENCES [FEATURE_USERS] ([Id])
+		ON UPDATE CASCADE ON DELETE CASCADE
+	FOREIGN KEY ([Version_Id])
+		REFERENCES [FEATURE_VERSIONS] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
 
@@ -130,13 +156,34 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			context.Execute(new Query(@"DROP TABLE FEATURE_ENTRY_STEPS"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_EXCEPTIONS"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_ENTRIES"));
+			context.Execute(new Query(@"DROP TABLE FEATURE_USERS"));
 			context.Execute(new Query(@"DROP TABLE FEATURES"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_STEPS"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_CONTEXTS"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_USERS"));
+			context.Execute(new Query(@"DROP TABLE FEATURE_VERSIONS"));
 		}
 
-		public static long GetOrCreateUser(ITransactionContext context, string userName)
+		public static long GetOrCreateVersion(ITransactionContext context, string version)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (version == null) throw new ArgumentNullException(nameof(version));
+
+			// Set parameters values
+			GetVersionQuery.Parameters[0].Value = version;
+
+			// select the record
+			var ids = context.Execute(GetVersionQuery);
+			if (ids.Count > 0)
+			{
+				return ids[0];
+			}
+
+			InserVersionQuery.Parameters[0].Value = version;
+
+			return ExecureInsert(context, InserVersionQuery);
+		}
+
+		public static long GetOrCreateUser(ITransactionContext context, string userName, long versionId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (userName == null) throw new ArgumentNullException(nameof(userName));
@@ -154,6 +201,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 
 				UpdateUserQuery.Parameters[0].Value = userId;
 				UpdateUserQuery.Parameters[1].Value = currentTime;
+				UpdateUserQuery.Parameters[2].Value = versionId;
 
 				context.Execute(UpdateUserQuery);
 
@@ -162,6 +210,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 
 			InserUserQuery.Parameters[0].Value = userName;
 			InserUserQuery.Parameters[1].Value = currentTime;
+			InserUserQuery.Parameters[2].Value = versionId;
 
 			return ExecureInsert(context, InserUserQuery);
 		}
@@ -232,7 +281,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return DbFeatureAdapter.InsertFeature(context, name, contextId);
 		}
 
-		public static long InsertFeatureEntry(ITransactionContext context, long userId, long featureId, string details, decimal timeSpent, DateTime createdAt)
+		public static long InsertFeatureEntry(ITransactionContext context, long userId, long versionId, long featureId, string details, decimal timeSpent, DateTime createdAt)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (details == null) throw new ArgumentNullException(nameof(details));
@@ -245,11 +294,12 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			query.Parameters[2].Value = createdAt;
 			query.Parameters[3].Value = featureId;
 			query.Parameters[4].Value = userId;
+			query.Parameters[5].Value = versionId;
 
 			return ExecureInsert(context, InsertServerFeatureEntryQuery);
 		}
 
-		public static void InsertExceptionEntry(ITransactionContext context, long userId, long featureId, DbExceptionRow exceptionRow)
+		public static void InsertExceptionEntry(ITransactionContext context, long userId, long versionId, long featureId, DbExceptionRow exceptionRow)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (exceptionRow == null) throw new ArgumentNullException(nameof(exceptionRow));
@@ -262,6 +312,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			query.Parameters[2].Value = exceptionRow.CreatedAt;
 			query.Parameters[3].Value = featureId;
 			query.Parameters[4].Value = userId;
+			query.Parameters[5].Value = versionId;
 
 			// Insert the record
 			context.Execute(InsertExceptionQuery);
