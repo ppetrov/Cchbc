@@ -95,6 +95,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 	{
 		private Dashboard Dashboard { get; }
 
+		public string FindUserCaption { get; }
 		public string UsersCaption { get; }
 		public ObservableCollection<DashboardUserViewModel> Users => this.Dashboard.Users;
 
@@ -112,6 +113,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.UsersCaption = @"Users";
 			this.UsageCaption = @"Usage";
 			this.ExceptionsCaption = @"Exceptions";
+			this.FindUserCaption = @"Find";
 
 			this.SearchUsersCommand = new RelayCommand(() =>
 			{
@@ -129,10 +131,11 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 	public sealed class Dashboard
 	{
+		private CommonDataProvider DataProvider { get; } = new CommonDataProvider();
 		private ITransactionContextCreator ContextCreator { get; }
 		private DashboardSettings Settings { get; } = new DashboardSettings();
 		private DashboardSettingsManager SettingsManager { get; } = new DashboardSettingsManager(new DashboardSettingsAdapter());
-		private DashboardUserManager UserManager { get; } = new DashboardUserManager(new DashboardUserAdapter());
+		//private DashboardUserManager UserManager { get; } = new DashboardUserManager(new DashboardUserAdapter());
 
 		public ObservableCollection<DashboardUserViewModel> Users { get; } = new ObservableCollection<DashboardUserViewModel>();
 
@@ -147,8 +150,10 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		{
 			using (var ctx = this.ContextCreator.Create())
 			{
+				this.DataProvider.Load(ctx);
+
 				this.LoadSettings(ctx);
-				this.LoadUsers(ctx);
+				this.LoadUsers();
 
 				ctx.Complete();
 			}
@@ -159,64 +164,26 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.SettingsManager.Load(context, this.Settings);
 		}
 
-		private void LoadUsers(ITransactionContext context)
+		private void LoadUsers()
 		{
-			var users = this.UserManager.GetUsers(context, this.Settings.NumberOfUsersToDisplay);
+			var versions = this.DataProvider.Versions;
 
 			this.Users.Clear();
-			foreach (var user in users)
+			foreach (var user in this.DataProvider.Users.Values)
 			{
-				this.Users.Add(new DashboardUserViewModel(user));
+				this.Users.Add(new DashboardUserViewModel(new DashboardUser(user.Id, user.Name, versions[user.VersionId].Name, user.ReplicatedAt)));
 			}
 		}
 	}
 
-	public sealed class DashboardUserManager
-	{
-		public DashboardUserAdapter Adapter { get; }
 
-		public DashboardUserManager(DashboardUserAdapter adapter)
-		{
-			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
-
-			this.Adapter = adapter;
-		}
-
-		public List<DashboardUser> GetUsers(ITransactionContext context, int numberOfUsers)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			return this.Adapter.GetUsers(context, numberOfUsers);
-		}
-	}
-
-	public sealed class DashboardUserAdapter
-	{
-		public List<DashboardUser> GetUsers(ITransactionContext context, int numberOfUsers)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var query = @"SELECT ID, NAME, REPLICATED_AT FROM FEATURE_USERS ORDER BY REPLICATED_AT DESC LIMIT @numberOfUsers";
-
-			var sqlParams = new[]
-			{
-				new QueryParameter(@"@numberOfUsers", numberOfUsers),
-			};
-
-			return context.Execute(new Query<DashboardUser>(query, this.DashboardUserCreator, sqlParams));
-		}
-
-		private DashboardUser DashboardUserCreator(IFieldDataReader r)
-		{
-			return new DashboardUser(r.GetInt64(0), r.GetString(1), r.GetDateTime(2));
-		}
-	}
 
 	public sealed class DashboardUserViewModel : ViewModel
 	{
 		public DashboardUser User { get; }
 
 		public string Name { get; }
+		public string Version { get; }
 		public string ReplicatedAt { get; }
 
 		public DashboardUserViewModel(DashboardUser user)
@@ -225,6 +192,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 			this.User = user;
 			this.Name = user.Name;
+			this.Version = user.Version;
 			this.ReplicatedAt = user.ReplicatedAt.ToString(@"T");
 		}
 	}
@@ -233,14 +201,17 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 	{
 		public long Id { get; }
 		public string Name { get; }
+		public string Version { get; }
 		public DateTime ReplicatedAt { get; }
 
-		public DashboardUser(long id, string name, DateTime replicatedAt)
+		public DashboardUser(long id, string name, string version, DateTime replicatedAt)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (version == null) throw new ArgumentNullException(nameof(version));
 
 			this.Id = id;
 			this.Name = name;
+			this.Version = version;
 			this.ReplicatedAt = replicatedAt;
 		}
 	}

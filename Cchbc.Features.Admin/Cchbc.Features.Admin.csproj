@@ -61,6 +61,8 @@
     <Compile Include="FeatureUserModule\ViewModels\UserOverviewViewModel.cs" />
     <Compile Include="FeatureUserModule\UsersOverviewViewModel.cs" />
     <Compile Include="Helpers\TimePeriodHelper.cs" />
+    <Compile Include="Objects\DbFeatureUserRow.cs" />
+    <Compile Include="Objects\DbFeatureVersionRow.cs" />
     <Compile Include="Providers\CommonDataProvider.cs" />
     <Compile Include="Replication\DbExceptionRow.cs" />
     <Compile Include="Replication\DbFeatureEntryRow.cs" />

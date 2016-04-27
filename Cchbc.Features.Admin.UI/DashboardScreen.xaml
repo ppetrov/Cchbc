@@ -29,7 +29,7 @@
                         <ColumnDefinition Width="Auto"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="{x:Bind ViewModel.UsersCaption}" Style="{StaticResource HeaderTextStyle}" VerticalAlignment="Center" Margin="5,0,0,0"></TextBlock>
-                    <AppBarButton Grid.Column="1" Label="Search" Foreground="#84DDF0" Tapped="BtnSearchUsersTapped">
+                    <AppBarButton Grid.Column="1" Label="{x:Bind ViewModel.FindUserCaption}" Foreground="#84DDF0" Tapped="BtnSearchUsersTapped">
                         <SymbolIcon Symbol="Find"></SymbolIcon>
                     </AppBarButton>
                 </Grid>
@@ -52,12 +52,9 @@
                                         <RowDefinition Height="*"></RowDefinition>
                                     </Grid.RowDefinitions>
 
-                                    <Image Source="Assets/p3.jpg" Width="64" Height="64">
-
-                                    </Image>
-
                                     <StackPanel Grid.Row="1" Orientation="Vertical">
-                                        <TextBlock Text="{x:Bind Name}" FontSize="16" Foreground="#BD93F9"></TextBlock>
+                                        <TextBlock Text="{x:Bind Name}" FontSize="16" Foreground="#F4B569"></TextBlock>
+                                        <TextBlock Text="{x:Bind Version}" FontSize="10" Foreground="#F4B569"></TextBlock>
                                         <TextBlock Text="{x:Bind ReplicatedAt}" FontSize="10" FontStyle="Italic" Foreground="#BD93F9"></TextBlock>
                                     </StackPanel>
                                 </Grid>
