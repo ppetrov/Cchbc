@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Cchbc.Common;
 using Cchbc.Data;
+using Cchbc.Features.Admin.Objects;
 using Cchbc.Features.Admin.Providers;
 using Cchbc.Features.Db.Objects;
 using Cchbc.Objects;
@@ -135,9 +136,10 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		private ITransactionContextCreator ContextCreator { get; }
 		private DashboardSettings Settings { get; } = new DashboardSettings();
 		private DashboardSettingsManager SettingsManager { get; } = new DashboardSettingsManager(new DashboardSettingsAdapter());
-		//private DashboardUserManager UserManager { get; } = new DashboardUserManager(new DashboardUserAdapter());
+		private DashboardVersionManager VersionManager { get; } = new DashboardVersionManager(new DashboardVersionAdapter());
 
 		public ObservableCollection<DashboardUserViewModel> Users { get; } = new ObservableCollection<DashboardUserViewModel>();
+		public ObservableCollection<DashboardVersion> Versions { get; } = new ObservableCollection<DashboardVersion>();
 
 		public Dashboard(ITransactionContextCreator contextCreator)
 		{
@@ -154,6 +156,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 				this.LoadSettings(ctx);
 				this.LoadUsers();
+				this.LoadVersions(ctx);
 
 				ctx.Complete();
 			}
@@ -174,6 +177,21 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				this.Users.Add(new DashboardUserViewModel(new DashboardUser(user.Id, user.Name, versions[user.VersionId].Name, user.ReplicatedAt)));
 			}
 		}
+
+		private void LoadVersions(ITransactionContext context)
+		{
+			var versions = this.VersionManager.GetBy(this.DataProvider, context);
+
+			this.Versions.Clear();
+			foreach (var version in versions)
+			{
+				this.Versions.Add(version);
+			}
+		}
+
+		
+
+		
 	}
 
 
@@ -213,6 +231,77 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.Name = name;
 			this.Version = version;
 			this.ReplicatedAt = replicatedAt;
+		}
+	}
+
+	public sealed class DashboardVersion
+	{
+		public DbFeatureVersionRow Version { get; }
+		public int ExceptionsCount { get; }
+
+		public DashboardVersion(DbFeatureVersionRow version, int exceptionsCount)
+		{
+			if (version == null) throw new ArgumentNullException(nameof(version));
+
+			this.Version = version;
+			this.ExceptionsCount = exceptionsCount;
+		}
+	}
+
+	public sealed class DashboardVersionManager
+	{
+		public DashboardVersionAdapter Adapter { get; }
+
+		public DashboardVersionManager(DashboardVersionAdapter adapter)
+		{
+			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
+
+			this.Adapter = adapter;
+		}
+
+		public List<DashboardVersion> GetBy(CommonDataProvider dataProvider, ITransactionContext context)
+		{
+			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			var versions = dataProvider.Versions;
+			var result = this.Adapter.GetBy(context, versions);
+
+			var dashboardVersions = new List<DashboardVersion>(result.Count);
+
+			foreach (var pair in result)
+			{
+				dashboardVersions.Add(new DashboardVersion(versions[pair.Key], pair.Value));
+			}
+
+			return dashboardVersions;
+		}
+	}
+
+	public sealed class DashboardVersionAdapter
+	{
+		public Dictionary<long, int> GetBy(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (versions == null) throw new ArgumentNullException(nameof(versions));
+
+			var map = new Dictionary<long, int>(versions.Count);
+
+			foreach (var row in versions)
+			{
+				map.Add(row.Key, 0);
+			}
+
+			context.Fill(map, (r, m) =>
+			{
+				var versionId = r.GetInt64(0);
+				var count = r.GetInt32(1);
+
+				m[versionId] = count;
+
+			}, new Query(@"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTIONS GROUP BY VERSION_ID"));
+
+			return map;
 		}
 	}
 

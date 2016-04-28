@@ -46,7 +46,7 @@ namespace Cchbc.ConsoleClient
 				{
 					var w = Stopwatch.StartNew();
 
-					DbFeatureServerManager.Replicate(server, client, @"iandonov", @"2.17.0.523");
+					DbFeatureServerManager.Replicate(server, client, @"ppetrov", @"3.7.1.83");
 
 					client.Complete();
 					server.Complete();
