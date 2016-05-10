@@ -5,8 +5,21 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:featureDetailsModule="using:Cchbc.Features.Admin.FeatureDetailsModule"
+    xmlns:charts="using:Syncfusion.UI.Xaml.Charts"
     Loaded="DashboardScreenLoaded"
     mc:Ignorable="d">
+
+    <Page.Resources>
+        <Style x:Key="MajorTickLineStyle" TargetType="Line">
+            <Setter Property="Stroke" Value="#F4B569"/>
+            <Setter Property="StrokeThickness" Value="0.5"/>
+            <Setter Property="Opacity" Value="0.85"/>
+        </Style>
+        <Style x:Key="AxisLineStyle" TargetType="Line">
+            <Setter Property="Stroke" Value="#F4B569"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+        </Style>
+    </Page.Resources>
 
     <Grid Background="{StaticResource ThemeBackground}">
 
@@ -17,21 +30,14 @@
             </Grid.ColumnDefinitions>
 
             <!--Users-->
-            <Grid Grid.Row="0" Grid.Column="0" Style="{StaticResource CchbcDataTemplateGrid}" Margin="5">
+            <Grid Grid.Row="0" Grid.Column="0" Style="{StaticResource CchbcDataTemplateGrid}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"></RowDefinition>
                     <RowDefinition Height="*"></RowDefinition>
                 </Grid.RowDefinitions>
 
                 <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"></ColumnDefinition>
-                        <ColumnDefinition Width="Auto"></ColumnDefinition>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="{x:Bind ViewModel.UsersCaption}" Style="{StaticResource HeaderTextStyle}" VerticalAlignment="Center" Margin="5,0,0,0"></TextBlock>
-                    <AppBarButton Grid.Column="1" Label="{x:Bind ViewModel.FindUserCaption}" Foreground="#84DDF0" Tapped="BtnSearchUsersTapped">
-                        <SymbolIcon Symbol="Find"></SymbolIcon>
-                    </AppBarButton>
+                    <TextBlock Text="{x:Bind ViewModel.UsersCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
                 </Grid>
 
                 <ListView Grid.Row="1" ItemContainerStyle="{StaticResource FullLineItemStyle}"
@@ -52,11 +58,25 @@
                                         <RowDefinition Height="*"></RowDefinition>
                                     </Grid.RowDefinitions>
 
-                                    <StackPanel Grid.Row="1" Orientation="Vertical">
-                                        <TextBlock Text="{x:Bind Name}" FontSize="16" Foreground="#F4B569"></TextBlock>
-                                        <TextBlock Text="{x:Bind Version}" FontSize="10" Foreground="#F4B569"></TextBlock>
-                                        <TextBlock Text="{x:Bind ReplicatedAt}" FontSize="10" FontStyle="Italic" Foreground="#BD93F9"></TextBlock>
-                                    </StackPanel>
+                                    <Grid Grid.Row="1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                            <ColumnDefinition Width="*"></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"></RowDefinition>
+                                            <RowDefinition Height="Auto"></RowDefinition>
+                                            <RowDefinition Height="Auto"></RowDefinition>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name" FontSize="14" Foreground="#F4B569" Margin="0,0,5,0"></TextBlock>
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Version" FontSize="14" Foreground="#F4B569" Margin="0,0,5,0"></TextBlock>
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="ReplicatedAt" FontSize="14" Foreground="#F4B569" Margin="0,0,5,0"></TextBlock>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind Name}" FontSize="14" FontWeight="Bold" Foreground="#F4B569"></TextBlock>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind Version}" FontSize="14" FontWeight="Bold" Foreground="#F4B569"></TextBlock>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{x:Bind ReplicatedAt}" FontSize="14" FontWeight="Bold" Foreground="#F4B569"></TextBlock>
+                                    </Grid>
                                 </Grid>
 
 
@@ -71,25 +91,64 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"></RowDefinition>
                     <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateGrid}" Margin="5">
+                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateGrid}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
                     <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
-                        <TextBlock Text="{x:Bind ViewModel.UsageCaption}" Style="{StaticResource HeaderTextStyle}" Margin="5,0,0,0"></TextBlock>
+                        <TextBlock Text="{x:Bind ViewModel.VersionsCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
+                    </Grid>
+                    <Grid Grid.Row="1">
+                        <charts:SfChart Grid.Row="0" Margin="5" AreaBackground="#202130" Palette="PurpleChrome" Background="#202130" Foreground="#fefefe">
+                            <charts:SfChart.Legend>
+                                <charts:ChartLegend />
+                            </charts:SfChart.Legend>
+                            <charts:SfChart.PrimaryAxis>
+                                <charts:CategoryAxis FontSize="14" PlotOffset="35" ShowGridLines="False" Foreground="#F4B569" AxisLineStyle="{StaticResource AxisLineStyle}" />
+                            </charts:SfChart.PrimaryAxis>
+                            <charts:SfChart.SecondaryAxis>
+                                <charts:NumericalAxis FontSize="14" Minimum="0" RangePadding="Normal" Foreground="#F4B569" MajorGridLineStyle="{StaticResource MajorTickLineStyle}" AxisLineStyle="{StaticResource AxisLineStyle}"/>
+                            </charts:SfChart.SecondaryAxis>
+                            <charts:SfChart.Series>
+                                <charts:StackingColumnSeries EnableAnimation="True" AnimationDuration="00:00:01" Label="Users"
+                         ItemsSource="{x:Bind ViewModel.Versions}" XBindingPath="Name" YBindingPath="Users" >
+                                    <charts:StackingColumnSeries.AdornmentsInfo>
+                                        <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
+                                    </charts:StackingColumnSeries.AdornmentsInfo>
+                                </charts:StackingColumnSeries>
+
+                                <charts:StackingColumnSeries EnableAnimation="True" AnimationDuration="00:00:02" Label="Exceptions"
+                        ItemsSource="{x:Bind ViewModel.Versions}" XBindingPath="Name" YBindingPath="Exceptions" >
+                                    <charts:StackingColumnSeries.AdornmentsInfo>
+                                        <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
+                                    </charts:StackingColumnSeries.AdornmentsInfo>
+                                </charts:StackingColumnSeries>
+                            </charts:SfChart.Series>
+                        </charts:SfChart>
                     </Grid>
                 </Grid>
 
-                <Grid Grid.Row="1" Style="{StaticResource CchbcDataTemplateGrid}" Margin="5">
+                <Grid Grid.Row="1" Style="{StaticResource CchbcDataTemplateGrid}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
                     <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
-                        <TextBlock Text="{x:Bind ViewModel.ExceptionsCaption}" Style="{StaticResource HeaderTextStyle}" Margin="5,0,0,0"></TextBlock>
+                        <TextBlock Text="{x:Bind ViewModel.ExceptionsCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
+                    </Grid>
+                </Grid>
+
+                <Grid Grid.Row="2" Style="{StaticResource CchbcDataTemplateGrid}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
+                        <TextBlock Text="{x:Bind ViewModel.UsageCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
                     </Grid>
                 </Grid>
             </Grid>

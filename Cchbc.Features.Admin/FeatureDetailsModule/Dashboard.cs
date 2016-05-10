@@ -11,46 +11,9 @@ using Cchbc.Objects;
 
 namespace Cchbc.Features.Admin.FeatureDetailsModule
 {
-	public sealed class Setting
-	{
-		public string Name { get; }
-		public string Value { get; }
-
-		public Setting(string name, string value)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
-			if (value == null) throw new ArgumentNullException(nameof(value));
-
-			this.Name = name;
-			this.Value = value;
-		}
-	}
-
-	public static class SettingHelper
-	{
-		public static int ParseInt(string input)
-		{
-			if (input == null) throw new ArgumentNullException(nameof(input));
-
-			var value = input.Trim();
-			if (value != string.Empty)
-			{
-				int number;
-				if (int.TryParse(value, out number))
-				{
-					return number;
-				}
-
-				// TODO : Log warning - cannot parse int value
-			}
-
-			return 0;
-		}
-	}
-
 	public sealed class DashboardSettings
 	{
-		public int NumberOfUsersToDisplay { get; set; } = 10;
+		//public int NumberOfUsersToDisplay { get; set; } = 10;
 	}
 
 	public sealed class DashboardSettingsManager
@@ -71,11 +34,11 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 			foreach (var setting in this.Adapter.GetSettings(context))
 			{
-				if (setting.Name.Equals(nameof(DashboardSettings.NumberOfUsersToDisplay), StringComparison.OrdinalIgnoreCase))
-				{
-					settings.NumberOfUsersToDisplay = SettingHelper.ParseInt(setting.Value);
-					break;
-				}
+				//if (setting.Name.Equals(nameof(DashboardSettings.NumberOfUsersToDisplay), StringComparison.OrdinalIgnoreCase))
+				//{
+				//	settings.NumberOfUsersToDisplay = SettingHelper.ParseInt(setting.Value) ?? 10;
+				//	break;
+				//}
 			}
 		}
 	}
@@ -84,6 +47,8 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 	{
 		public List<Setting> GetSettings(ITransactionContext context)
 		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
 			var settings = new List<Setting>();
 
 			// TODO : !!! Load settings from database
@@ -99,11 +64,11 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public string FindUserCaption { get; }
 		public string UsersCaption { get; }
 		public ObservableCollection<DashboardUserViewModel> Users => this.Dashboard.Users;
+		public ObservableCollection<DashboardVersionViewModel> Versions => this.Dashboard.Versions;
 
+		public string VersionsCaption { get; }
 		public string UsageCaption { get; }
 		public string ExceptionsCaption { get; }
-
-		public ICommand SearchUsersCommand { get; }
 
 		public DashboardViewModel(Dashboard dashboard)
 		{
@@ -111,18 +76,12 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 			this.Dashboard = dashboard;
 
+			this.VersionsCaption = @"By Versions";
 			this.UsersCaption = @"Users";
 			this.UsageCaption = @"Usage";
 			this.ExceptionsCaption = @"Exceptions";
 			this.FindUserCaption = @"Find";
-
-			this.SearchUsersCommand = new RelayCommand(() =>
-			{
-				// Display content dialog ???
-			});
 		}
-
-
 
 		public void Load()
 		{
@@ -139,7 +98,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		private DashboardVersionManager VersionManager { get; } = new DashboardVersionManager(new DashboardVersionAdapter());
 
 		public ObservableCollection<DashboardUserViewModel> Users { get; } = new ObservableCollection<DashboardUserViewModel>();
-		public ObservableCollection<DashboardVersion> Versions { get; } = new ObservableCollection<DashboardVersion>();
+		public ObservableCollection<DashboardVersionViewModel> Versions { get; } = new ObservableCollection<DashboardVersionViewModel>();
 
 		public Dashboard(ITransactionContextCreator contextCreator)
 		{
@@ -185,16 +144,33 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.Versions.Clear();
 			foreach (var version in versions)
 			{
-				this.Versions.Add(version);
+				this.Versions.Add(new DashboardVersionViewModel(version));
 			}
 		}
 
-		
 
-		
+
+
 	}
 
+	public sealed class DashboardVersionViewModel : ViewModel
+	{
+		public DashboardVersion Version { get; }
 
+		public string Name { get; }
+		public int Users { get; }
+		public int Exceptions { get; }
+
+		public DashboardVersionViewModel(DashboardVersion version)
+		{
+			if (version == null) throw new ArgumentNullException(nameof(version));
+
+			this.Version = version;
+			this.Name = version.Version.Name;
+			this.Users = version.Users;
+			this.Exceptions = version.Exceptions;
+		}
+	}
 
 	public sealed class DashboardUserViewModel : ViewModel
 	{
@@ -214,6 +190,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.ReplicatedAt = user.ReplicatedAt.ToString(@"T");
 		}
 	}
+
 
 	public sealed class DashboardUser
 	{
@@ -237,14 +214,16 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 	public sealed class DashboardVersion
 	{
 		public DbFeatureVersionRow Version { get; }
-		public int ExceptionsCount { get; }
+		public int Users { get; }
+		public int Exceptions { get; }
 
-		public DashboardVersion(DbFeatureVersionRow version, int exceptionsCount)
+		public DashboardVersion(DbFeatureVersionRow version, int users, int exceptions)
 		{
 			if (version == null) throw new ArgumentNullException(nameof(version));
 
 			this.Version = version;
-			this.ExceptionsCount = exceptionsCount;
+			this.Users = users;
+			this.Exceptions = exceptions;
 		}
 	}
 
@@ -259,19 +238,30 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.Adapter = adapter;
 		}
 
-		public List<DashboardVersion> GetBy(CommonDataProvider dataProvider, ITransactionContext context)
+		public DashboardVersion[] GetBy(CommonDataProvider dataProvider, ITransactionContext context)
 		{
 			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			var versions = dataProvider.Versions;
-			var result = this.Adapter.GetBy(context, versions);
+			var dashboardVersions = new DashboardVersion[versions.Count];
 
-			var dashboardVersions = new List<DashboardVersion>(result.Count);
+			var exceptions = this.Adapter.GetExceptionsBy(context, versions);
+			var users = this.Adapter.GetUsersBy(context, versions);
 
-			foreach (var pair in result)
+			var index = 0;
+			foreach (var versionPair in versions)
 			{
-				dashboardVersions.Add(new DashboardVersion(versions[pair.Key], pair.Value));
+				var versionId = versionPair.Key;
+				var version = versionPair.Value;
+
+				int usersCount;
+				users.TryGetValue(versionId, out usersCount);
+
+				int exceptionsCount;
+				exceptions.TryGetValue(versionId, out exceptionsCount);
+
+				dashboardVersions[index++] = new DashboardVersion(version, usersCount, exceptionsCount);
 			}
 
 			return dashboardVersions;
@@ -280,7 +270,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 	public sealed class DashboardVersionAdapter
 	{
-		public Dictionary<long, int> GetBy(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
+		public Dictionary<long, int> GetExceptionsBy(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (versions == null) throw new ArgumentNullException(nameof(versions));
@@ -300,6 +290,30 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				m[versionId] = count;
 
 			}, new Query(@"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTIONS GROUP BY VERSION_ID"));
+
+			return map;
+		}
+
+		public Dictionary<long, int> GetUsersBy(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (versions == null) throw new ArgumentNullException(nameof(versions));
+
+			var map = new Dictionary<long, int>(versions.Count);
+
+			foreach (var row in versions)
+			{
+				map.Add(row.Key, 0);
+			}
+
+			context.Fill(map, (r, m) =>
+			{
+				var versionId = r.GetInt64(0);
+				var count = r.GetInt32(1);
+
+				m[versionId] = count;
+
+			}, new Query(@"SELECT VERSION_ID, COUNT(*) FROM FEATURE_USERS GROUP BY VERSION_ID"));
 
 			return map;
 		}

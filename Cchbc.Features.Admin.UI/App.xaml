@@ -19,7 +19,8 @@
         </Style>
 
         <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#84DDF0"/>
+            <Setter Property="Foreground" Value="Violet"/>
+            <Setter Property="Margin" Value="5"/>
             <Setter Property="FontSize" Value="20"/>
             <Setter Property="FontWeight" Value="Bold"/>
         </Style>
@@ -31,7 +32,7 @@
 
         <Style x:Key="CchbcDataTemplateGrid" TargetType="Grid" >
             <Setter Property="Background" Value="#48525A"/>
-            
+            <Setter Property="Margin" Value="5"/>
             <Setter Property="Opacity" Value="0.875"/>
         </Style>
 

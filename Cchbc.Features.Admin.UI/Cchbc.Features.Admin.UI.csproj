@@ -175,6 +175,9 @@
     <SDKReference Include="SQLite.UWP.2015, Version=3.12.2">
       <Name>SQLite for Universal Windows Platform</Name>
     </SDKReference>
+    <SDKReference Include="Syncfusion Controls for UWP XAML, Version=14.1.0.41">
+      <Name>Syncfusion Controls for UWP XAML</Name>
+    </SDKReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

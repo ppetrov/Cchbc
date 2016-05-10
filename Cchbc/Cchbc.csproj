@@ -58,6 +58,8 @@
     <Compile Include="Features\FeatureStepEventArgs.cs" />
     <Compile Include="Features\FeatureEventArgs.cs" />
     <Compile Include="Localization\LocalizationManager.cs" />
+    <Compile Include="Logs\ILog.cs" />
+    <Compile Include="Logs\LogLevel.cs" />
     <Compile Include="ReadOnlyModule.cs" />
     <Compile Include="Search\FilterOption.cs" />
     <Compile Include="Search\Searcher.cs" />
