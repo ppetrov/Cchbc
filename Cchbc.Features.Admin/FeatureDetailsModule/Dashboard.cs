@@ -63,6 +63,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 		public ObservableCollection<DashboardUserViewModel> Users => this.Dashboard.Users;
 		public ObservableCollection<DashboardVersionViewModel> Versions => this.Dashboard.Versions;
+		public ObservableCollection<DashboardExceptionViewModel> Exceptions => this.Dashboard.Exceptions;
 
 		public string UsersCaption { get; }
 		public string VersionStatsReportCaption { get; }
@@ -78,7 +79,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.UsersCaption = @"Users";
 			this.VersionStatsReportCaption = @"By Version statistics";
 			this.UsageCaption = @"Usage";
-			this.ExceptionsCaptions = @"Exceptions for the latest 24 hours";
+			this.ExceptionsCaptions = @"Exceptions for the last 24 hours";
 		}
 
 		public void Load()
@@ -94,9 +95,11 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		private DashboardSettings Settings { get; } = new DashboardSettings();
 		private DashboardSettingsManager SettingsManager { get; } = new DashboardSettingsManager(new DashboardSettingsAdapter());
 		private DashboardVersionManager VersionManager { get; } = new DashboardVersionManager(new DashboardVersionAdapter());
+		private DashboardExceptionManager ExceptionManager { get; } = new DashboardExceptionManager(new DashboardExceptionAdapter());
 
 		public ObservableCollection<DashboardUserViewModel> Users { get; } = new ObservableCollection<DashboardUserViewModel>();
 		public ObservableCollection<DashboardVersionViewModel> Versions { get; } = new ObservableCollection<DashboardVersionViewModel>();
+		public ObservableCollection<DashboardExceptionViewModel> Exceptions { get; } = new ObservableCollection<DashboardExceptionViewModel>();
 
 		public Dashboard(ITransactionContextCreator contextCreator)
 		{
@@ -114,6 +117,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				this.LoadSettings(ctx);
 				this.LoadUsers();
 				this.LoadVersions(ctx);
+				this.LoadExceptions(ctx);
 
 				ctx.Complete();
 			}
@@ -146,8 +150,16 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			}
 		}
 
+		private void LoadExceptions(ITransactionContext context)
+		{
+			var exceptions = this.ExceptionManager.GetBy(this.DataProvider, context);
 
-
+			this.Exceptions.Clear();
+			foreach (var exception in exceptions)
+			{
+				this.Exceptions.Add(new DashboardExceptionViewModel(new DashboardException(exception.Key, exception.Value)));
+			}
+		}
 
 	}
 
@@ -167,6 +179,35 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.Name = version.Version.Name;
 			this.Users = version.Users;
 			this.Exceptions = version.Exceptions;
+		}
+	}
+
+	public sealed class DashboardException
+	{
+		public DateTime DateTime { get; }
+		public int Count { get; }
+
+		public DashboardException(DateTime dateTime, int count)
+		{
+			this.DateTime = dateTime;
+			this.Count = count;
+		}
+	}
+
+	public sealed class DashboardExceptionViewModel : ViewModel
+	{
+		private DashboardException Exception { get; }
+
+		public DateTime DateTime { get; }
+		public int Count { get; }
+
+		public DashboardExceptionViewModel(DashboardException exception)
+		{
+			if (exception == null) throw new ArgumentNullException(nameof(exception));
+
+			this.Exception = exception;
+			this.DateTime = exception.DateTime;
+			this.Count = exception.Count;
 		}
 	}
 
@@ -262,7 +303,88 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				dashboardVersions[index++] = new DashboardVersion(version, usersCount, exceptionsCount);
 			}
 
+			Array.Sort(dashboardVersions, (x, y) =>
+			{
+				var cmp = string.Compare(x.Version.Name, y.Version.Name, StringComparison.OrdinalIgnoreCase);
+				return cmp;
+			});
+
 			return dashboardVersions;
+		}
+	}
+
+	public sealed class DashboardExceptionManager
+	{
+		public DashboardExceptionAdapter Adapter { get; }
+
+		public DashboardExceptionManager(DashboardExceptionAdapter adapter)
+		{
+			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
+
+			this.Adapter = adapter;
+		}
+
+		public Dictionary<DateTime, int> GetBy(CommonDataProvider dataProvider, ITransactionContext context)
+		{
+			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			var offset = DateTime.Now;
+			var r = new Random();
+
+			var tmp = new Dictionary<DateTime, int>();
+			for (var i = 0; i < 24; i++)
+			{
+				tmp.Add(offset.AddMinutes(5 * i), r.Next(5, 55));
+			}
+
+			return tmp;
+
+			var toDate = DateTime.Now;
+			// TODO : This must be a setting
+			// and we must have ratios for the chart
+			// 1 hour by 2.5 minute => 24 samples
+			// 12 hours by 12 minutes => 60 samples
+			// 1 day by 24 minutes => 60 samples
+			// 1 week by 168 minutes => 60 samples
+			// 1 month by xxx minutes => 60 samples
+			var fromDate = toDate.AddDays(-100);
+			return this.Adapter.GetBy(context, fromDate, toDate);
+		}
+	}
+
+	public sealed class DashboardExceptionAdapter
+	{
+		public Dictionary<DateTime, int> GetBy(ITransactionContext context, DateTime fromDate, DateTime toDate)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			var query = new Query(@"SELECT CREATED_AT FROM FEATURE_EXCEPTIONS WHERE @FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE", new[]
+			{
+				new QueryParameter(@"@FROMDATE", fromDate),
+				new QueryParameter(@"@TODATE", toDate),
+			});
+
+			// TODO : this must be calculated
+			var map = new Dictionary<DateTime, int>(60);
+
+			context.Fill(map, (r, m) =>
+			{
+				var date = r.GetDateTime(0);
+				// TODO : truncate to 5 minute
+				date = new DateTime(date.Year, date.Month, date.Day, date.Hour, date.Minute, 0);
+
+				if (!m.ContainsKey(date))
+				{
+					m.Add(date, 1);
+				}
+				else
+				{
+					m[date]++;
+				}
+			}, query);
+
+			return map;
 		}
 	}
 

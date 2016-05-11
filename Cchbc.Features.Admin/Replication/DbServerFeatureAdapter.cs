@@ -8,6 +8,15 @@ namespace Cchbc.Features.Admin.Replication
 {
 	public static class DbServerFeatureAdapter
 	{
+		private static readonly Query InserChangeQuery = new Query(@"INSERT INTO FEATURE_CHANGES(LAST_CHANGED_AT) VALUES (@CHANGED_AT)", new[]
+		{
+			new QueryParameter(@"CHANGED_AT", DateTime.MinValue),
+		});
+		private static readonly Query UpdateChangeQuery = new Query(@"UPDATE FEATURE_CHANGES SET LAST_CHANGED_AT = @CHANGED_AT", new[]
+		{
+			new QueryParameter(@"CHANGED_AT", DateTime.MinValue),
+		});
+
 		private static readonly Query InserUserQuery = new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT, VERSION_ID) VALUES (@NAME, @REPLICATED_AT, @VERSION_ID)", new[] {
 			new QueryParameter(@"NAME", string.Empty),
 			new QueryParameter(@"REPLICATED_AT", DateTime.MinValue),
@@ -56,6 +65,12 @@ namespace Cchbc.Features.Admin.Replication
 		public static void CreateSchema(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			context.Execute(new Query(@"
+CREATE TABLE[FEATURE_CHANGES] (
+	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	[LAST_CHANGED_AT] datetime NOT NULL
+)"));
 
 			context.Execute(new Query(@"
 CREATE TABLE[FEATURE_CONTEXTS] (
@@ -161,6 +176,20 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			context.Execute(new Query(@"DROP TABLE FEATURE_STEPS"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_CONTEXTS"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_VERSIONS"));
+			context.Execute(new Query(@"DROP TABLE FEATURE_CHANGES"));
+		}
+
+		public static void UpdateLastChangedFlag(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			UpdateChangeQuery.Parameters[0].Value = InserChangeQuery.Parameters[0].Value = DateTime.Now;
+
+			var isUpdated = Convert.ToBoolean(context.Execute(UpdateChangeQuery));
+			if (!isUpdated)
+			{
+				context.Execute(InserChangeQuery);
+			}
 		}
 
 		public static long GetOrCreateVersion(ITransactionContext context, string version)

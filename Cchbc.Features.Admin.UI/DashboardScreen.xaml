@@ -102,34 +102,32 @@
                     <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
                         <TextBlock Text="{x:Bind ViewModel.VersionStatsReportCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
                     </Grid>
-                    <Grid Grid.Row="1">
-                        <charts:SfChart Grid.Row="0" Margin="5" AreaBackground="#202130" Palette="PurpleChrome" Background="#202130" Foreground="#fefefe">
-                            <charts:SfChart.Legend>
-                                <charts:ChartLegend />
-                            </charts:SfChart.Legend>
-                            <charts:SfChart.PrimaryAxis>
-                                <charts:CategoryAxis FontSize="14" PlotOffset="35" ShowGridLines="False" Foreground="#F4B569" AxisLineStyle="{StaticResource AxisLineStyle}" />
-                            </charts:SfChart.PrimaryAxis>
-                            <charts:SfChart.SecondaryAxis>
-                                <charts:NumericalAxis FontSize="14" Minimum="0" RangePadding="Normal" Foreground="#F4B569" MajorGridLineStyle="{StaticResource MajorTickLineStyle}" AxisLineStyle="{StaticResource AxisLineStyle}"/>
-                            </charts:SfChart.SecondaryAxis>
-                            <charts:SfChart.Series>
-                                <charts:StackingColumnSeries EnableAnimation="True" AnimationDuration="00:00:01" Label="Users"
+                    <charts:SfChart Grid.Row="1" Margin="5" AreaBackground="#202130" Palette="PurpleChrome" Background="#202130" Foreground="#fefefe">
+                        <charts:SfChart.Legend>
+                            <charts:ChartLegend />
+                        </charts:SfChart.Legend>
+                        <charts:SfChart.PrimaryAxis>
+                            <charts:CategoryAxis FontSize="14" PlotOffset="35" ShowGridLines="False" Foreground="#F4B569" AxisLineStyle="{StaticResource AxisLineStyle}" />
+                        </charts:SfChart.PrimaryAxis>
+                        <charts:SfChart.SecondaryAxis>
+                            <charts:NumericalAxis FontSize="14" Minimum="0" RangePadding="Normal" Foreground="#F4B569" MajorGridLineStyle="{StaticResource MajorTickLineStyle}" AxisLineStyle="{StaticResource AxisLineStyle}"/>
+                        </charts:SfChart.SecondaryAxis>
+                        <charts:SfChart.Series>
+                            <charts:StackingColumnSeries EnableAnimation="True" AnimationDuration="00:00:01" Label="Users"
                          ItemsSource="{x:Bind ViewModel.Versions}" XBindingPath="Name" YBindingPath="Users" >
-                                    <charts:StackingColumnSeries.AdornmentsInfo>
-                                        <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
-                                    </charts:StackingColumnSeries.AdornmentsInfo>
-                                </charts:StackingColumnSeries>
+                                <charts:StackingColumnSeries.AdornmentsInfo>
+                                    <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
+                                </charts:StackingColumnSeries.AdornmentsInfo>
+                            </charts:StackingColumnSeries>
 
-                                <charts:StackingColumnSeries EnableAnimation="True" AnimationDuration="00:00:02" Label="Exceptions"
+                            <charts:StackingColumnSeries EnableAnimation="True" AnimationDuration="00:00:01" Label="Exceptions"
                         ItemsSource="{x:Bind ViewModel.Versions}" XBindingPath="Name" YBindingPath="Exceptions" >
-                                    <charts:StackingColumnSeries.AdornmentsInfo>
-                                        <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
-                                    </charts:StackingColumnSeries.AdornmentsInfo>
-                                </charts:StackingColumnSeries>
-                            </charts:SfChart.Series>
-                        </charts:SfChart>
-                    </Grid>
+                                <charts:StackingColumnSeries.AdornmentsInfo>
+                                    <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
+                                </charts:StackingColumnSeries.AdornmentsInfo>
+                            </charts:StackingColumnSeries>
+                        </charts:SfChart.Series>
+                    </charts:SfChart>
                 </Grid>
 
                 <Grid Grid.Row="1" Style="{StaticResource CchbcDataTemplateGrid}">
@@ -140,6 +138,24 @@
                     <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
                         <TextBlock Text="{x:Bind ViewModel.ExceptionsCaptions}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
                     </Grid>
+
+                    <charts:SfChart Grid.Row="1" Margin="5" AreaBackground="#202130" Palette="PurpleChrome" Background="#202130" Foreground="#fefefe">
+                        <charts:SfChart.PrimaryAxis>
+                            <charts:CategoryAxis FontSize="14" LabelFormat="hh:mm:ss" PlotOffset="35" ShowGridLines="False" Foreground="#F4B569" AxisLineStyle="{StaticResource AxisLineStyle}" />
+                        </charts:SfChart.PrimaryAxis>
+                        <charts:SfChart.SecondaryAxis>
+                            <charts:NumericalAxis FontSize="14" Minimum="0"  RangePadding="Normal" Foreground="#F4B569" MajorGridLineStyle="{StaticResource MajorTickLineStyle}" AxisLineStyle="{StaticResource AxisLineStyle}"/>
+                        </charts:SfChart.SecondaryAxis>
+                        <charts:SfChart.Series>
+                            <charts:ColumnSeries EnableAnimation="True" AnimationDuration="00:00:01"
+                         ItemsSource="{x:Bind ViewModel.Exceptions}" XBindingPath="DateTime" YBindingPath="Count" >
+                                <charts:ColumnSeries.AdornmentsInfo>
+                                    <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
+                                </charts:ColumnSeries.AdornmentsInfo>
+                            </charts:ColumnSeries>
+
+                        </charts:SfChart.Series>
+                    </charts:SfChart>
                 </Grid>
 
                 <Grid Grid.Row="2" Style="{StaticResource CchbcDataTemplateGrid}">

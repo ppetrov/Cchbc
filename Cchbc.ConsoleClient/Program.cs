@@ -38,6 +38,35 @@ namespace Cchbc.ConsoleClient
 
 	public class Program
 	{
+		private static void CreateSchema(string connectionString)
+		{
+			var creator = new TransactionContextCreator(connectionString);
+			try
+			{
+				using (var serverContext = creator.Create())
+				{
+					DbFeatureServerManager.DropSchema(serverContext);
+					serverContext.Complete();
+
+					Console.WriteLine(@"Drop schema");
+				}
+			}
+			catch (Exception e)
+			{
+
+			}
+
+			using (var serverContext = creator.Create())
+			{
+				DbFeatureServerManager.CreateSchema(serverContext);
+				serverContext.Complete();
+
+				Console.WriteLine(@"Schema created");
+			}
+		}
+
+		
+
 		private static void Replicate(string serverDb, string clientDb)
 		{
 			using (var server = new TransactionContextCreator(serverDb).Create())
@@ -46,7 +75,7 @@ namespace Cchbc.ConsoleClient
 				{
 					var w = Stopwatch.StartNew();
 
-					DbFeatureServerManager.Replicate(server, client, @"ppetrov", @"3.7.1.83");
+					DbFeatureServerManager.Replicate(server, client, @"ppetrov", @"4.1.2.55");
 
 					client.Complete();
 					server.Complete();
@@ -68,11 +97,14 @@ namespace Cchbc.ConsoleClient
 			try
 			{
 				//CreateSchema(serverDb);
+				//return;
 
 				for (var i = 0; i < 1; i++)
 				{
+					//DateTime.Now.ToString(@"")
 					Replicate(serverDb, clientDb);
 				}
+
 				return;
 
 
@@ -263,48 +295,7 @@ namespace Cchbc.ConsoleClient
 
 		
 
-		private static void CreateSchema(string connectionString)
-		{
-			var creator = new TransactionContextCreator(connectionString);
-			try
-			{
-				using (var serverContext = creator.Create())
-				{
-					DbFeatureServerManager.DropSchema(serverContext);
-					serverContext.Complete();
-
-					Console.WriteLine(@"Drop schema");
-				}
-			}
-			catch (Exception e)
-			{
-				
-			}
-
-			using (var serverContext = creator.Create())
-			{
-				DbFeatureServerManager.CreateSchema(serverContext);
-				serverContext.Complete();
-
-				Console.WriteLine(@"Schema created");
-			}
-		}
-
-		private static void DropSchema(string serverDb)
-		{
-			using (var serverContext = new TransactionContextCreator(serverDb).Create())
-			{
-				try
-				{
-					DbFeatureServerManager.DropSchema(serverContext);
-					serverContext.Complete();
-				}
-				catch
-				{
-				}
-				Console.WriteLine(@"Drop schema");
-			}
-		}
+		
 
 		private static void GenerateProject(DbProject project, string directoryPath)
 		{

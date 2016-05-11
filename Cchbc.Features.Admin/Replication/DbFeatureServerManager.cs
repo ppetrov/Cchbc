@@ -34,6 +34,8 @@ namespace Cchbc.Features.Admin.Replication
 			if (userName == null) throw new ArgumentNullException(nameof(userName));
 			if (version == null) throw new ArgumentNullException(nameof(version));
 
+			DbServerFeatureAdapter.UpdateLastChangedFlag(serverContext);
+
 			var versionId = DbServerFeatureAdapter.GetOrCreateVersion(serverContext, version);
 			var userId = DbServerFeatureAdapter.GetOrCreateUser(serverContext, userName, versionId);
 
