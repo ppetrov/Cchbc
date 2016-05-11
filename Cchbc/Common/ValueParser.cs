@@ -1,9 +1,9 @@
 using System;
 using Cchbc.Logs;
 
-namespace Cchbc.Features.Admin.FeatureDetailsModule
+namespace Cchbc.Common
 {
-	public static class SettingHelper
+	public static class ValueParser
 	{
 		public static int? ParseInt(string input, ILog log)
 		{

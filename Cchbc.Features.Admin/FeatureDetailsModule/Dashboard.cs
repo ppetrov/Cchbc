@@ -36,7 +36,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			{
 				//if (setting.Name.Equals(nameof(DashboardSettings.NumberOfUsersToDisplay), StringComparison.OrdinalIgnoreCase))
 				//{
-				//	settings.NumberOfUsersToDisplay = SettingHelper.ParseInt(setting.Value) ?? 10;
+				//	settings.NumberOfUsersToDisplay = ValueParser.ParseInt(setting.Value) ?? 10;
 				//	break;
 				//}
 			}
@@ -61,14 +61,13 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 	{
 		private Dashboard Dashboard { get; }
 
-		public string FindUserCaption { get; }
-		public string UsersCaption { get; }
 		public ObservableCollection<DashboardUserViewModel> Users => this.Dashboard.Users;
 		public ObservableCollection<DashboardVersionViewModel> Versions => this.Dashboard.Versions;
 
-		public string VersionsCaption { get; }
+		public string UsersCaption { get; }
+		public string VersionStatsReportCaption { get; }
+		public string ExceptionsCaptions { get; }
 		public string UsageCaption { get; }
-		public string ExceptionsCaption { get; }
 
 		public DashboardViewModel(Dashboard dashboard)
 		{
@@ -76,11 +75,10 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 			this.Dashboard = dashboard;
 
-			this.VersionsCaption = @"By Versions";
 			this.UsersCaption = @"Users";
+			this.VersionStatsReportCaption = @"By Version statistics";
 			this.UsageCaption = @"Usage";
-			this.ExceptionsCaption = @"Exceptions";
-			this.FindUserCaption = @"Find";
+			this.ExceptionsCaptions = @"Exceptions for the latest 24 hours";
 		}
 
 		public void Load()

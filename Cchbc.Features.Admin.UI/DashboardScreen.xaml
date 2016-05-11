@@ -100,7 +100,7 @@
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
                     <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
-                        <TextBlock Text="{x:Bind ViewModel.VersionsCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
+                        <TextBlock Text="{x:Bind ViewModel.VersionStatsReportCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
                     </Grid>
                     <Grid Grid.Row="1">
                         <charts:SfChart Grid.Row="0" Margin="5" AreaBackground="#202130" Palette="PurpleChrome" Background="#202130" Foreground="#fefefe">
@@ -138,7 +138,7 @@
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
                     <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
-                        <TextBlock Text="{x:Bind ViewModel.ExceptionsCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
+                        <TextBlock Text="{x:Bind ViewModel.ExceptionsCaptions}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
                     </Grid>
                 </Grid>
 

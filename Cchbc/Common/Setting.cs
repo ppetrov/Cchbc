@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features.Admin.FeatureDetailsModule
+namespace Cchbc.Common
 {
 	public sealed class Setting
 	{

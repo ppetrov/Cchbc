@@ -44,8 +44,6 @@
     <Compile Include="FeatureCountsModule\Managers\IFeatureCountManager.cs" />
     <Compile Include="FeatureCountsModule\Objects\ExceptionCount.cs" />
     <Compile Include="FeatureDetailsModule\Dashboard.cs" />
-    <Compile Include="FeatureDetailsModule\Setting.cs" />
-    <Compile Include="FeatureDetailsModule\SettingHelper.cs" />
     <Compile Include="FeatureExceptionModule\Adapters\FeatureExceptionAdapter.cs" />
     <Compile Include="FeatureExceptionModule\Managers\FeatureExceptionManager.cs" />
     <Compile Include="FeatureExceptionModule\Managers\IFeatureExceptionManager.cs" />
