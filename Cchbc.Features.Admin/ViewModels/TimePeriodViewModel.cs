@@ -5,15 +5,15 @@ namespace Cchbc.Features.Admin.ViewModels
 {
     public sealed class TimePeriodViewModel
     {
-        public string Name { get; }
+        public string Description { get; }
         public TimePeriod TimePeriod { get; }
 
-        public TimePeriodViewModel(string name, TimePeriod timePeriod)
+        public TimePeriodViewModel(string description, TimePeriod timePeriod)
         {
-            if (name == null) throw new ArgumentNullException(nameof(name));
+            if (description == null) throw new ArgumentNullException(nameof(description));
             if (timePeriod == null) throw new ArgumentNullException(nameof(timePeriod));
 
-            this.Name = name;
+            this.Description = description;
             this.TimePeriod = timePeriod;
         }
     }

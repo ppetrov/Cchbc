@@ -64,6 +64,8 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public ObservableCollection<DashboardUserViewModel> Users => this.Dashboard.Users;
 		public ObservableCollection<DashboardVersionViewModel> Versions => this.Dashboard.Versions;
 		public ObservableCollection<DashboardExceptionViewModel> Exceptions => this.Dashboard.Exceptions;
+		public ObservableCollection<DashboardFeatureByCountViewModel> MostUsedFeatures => this.Dashboard.MostUsedFeatures;
+		public ObservableCollection<DashboardFeatureByTimeViewModel> SlowestFeatures => this.Dashboard.SlowestFeatures;
 
 		public string UsersCaption { get; }
 		public string VersionStatsReportCaption { get; }
@@ -78,7 +80,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 			this.UsersCaption = @"Users";
 			this.VersionStatsReportCaption = @"By Version statistics";
-			this.UsageCaption = @"Usage";
+			this.UsageCaption = @"Most used/Slowest features";
 			this.ExceptionsCaptions = @"Exceptions for the last 24 hours";
 		}
 
@@ -96,10 +98,14 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		private DashboardSettingsManager SettingsManager { get; } = new DashboardSettingsManager(new DashboardSettingsAdapter());
 		private DashboardVersionManager VersionManager { get; } = new DashboardVersionManager(new DashboardVersionAdapter());
 		private DashboardExceptionManager ExceptionManager { get; } = new DashboardExceptionManager(new DashboardExceptionAdapter());
+		private DashboardFeatureManager FeatureManager { get; } = new DashboardFeatureManager(new DashboardFeatureAdapter());
 
 		public ObservableCollection<DashboardUserViewModel> Users { get; } = new ObservableCollection<DashboardUserViewModel>();
 		public ObservableCollection<DashboardVersionViewModel> Versions { get; } = new ObservableCollection<DashboardVersionViewModel>();
 		public ObservableCollection<DashboardExceptionViewModel> Exceptions { get; } = new ObservableCollection<DashboardExceptionViewModel>();
+		public ObservableCollection<DashboardFeatureByCountViewModel> MostUsedFeatures { get; } = new ObservableCollection<DashboardFeatureByCountViewModel>();
+		public ObservableCollection<DashboardFeatureByCountViewModel> LeastUsedFeatures { get; } = new ObservableCollection<DashboardFeatureByCountViewModel>();
+		public ObservableCollection<DashboardFeatureByTimeViewModel> SlowestFeatures { get; } = new ObservableCollection<DashboardFeatureByTimeViewModel>();
 
 		public Dashboard(ITransactionContextCreator contextCreator)
 		{
@@ -110,6 +116,17 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 		public void Load()
 		{
+			// TODO : !!!
+			// Where N1 & N2 are settings
+			//- Top N1 Most/Least used features
+			//- Top N2 Slowest features
+
+			// TODO : Load in parallel with spinning bar progress
+			// TODO : Add big numbers for
+			// Versions
+			// Exceptions
+			// Users
+
 			using (var ctx = this.ContextCreator.Create())
 			{
 				this.DataProvider.Load(ctx);
@@ -118,8 +135,38 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				this.LoadUsers();
 				this.LoadVersions(ctx);
 				this.LoadExceptions(ctx);
+				this.LoadFeatures(ctx);
 
 				ctx.Complete();
+			}
+		}
+
+		private void LoadFeatures(ITransactionContext context)
+		{
+			var mostUsedLimit = 10;
+			var leastUsedLimit = 10;
+			var slowestLimit = 10;
+
+			var mostUsed = this.FeatureManager.GetMostUsed(context, mostUsedLimit);
+			var leastUsed = this.FeatureManager.GetLeastUsed(context, leastUsedLimit);
+			var slowest = this.FeatureManager.GetSlowest(context, slowestLimit);
+
+			this.MostUsedFeatures.Clear();
+			foreach (var byCount in mostUsed)
+			{
+				this.MostUsedFeatures.Add(new DashboardFeatureByCountViewModel(byCount));
+			}
+
+			this.LeastUsedFeatures.Clear();
+			foreach (var byCount in leastUsed)
+			{
+				this.LeastUsedFeatures.Add(new DashboardFeatureByCountViewModel(byCount));
+			}
+
+			this.SlowestFeatures.Clear();
+			foreach (var byTime in slowest)
+			{
+				this.SlowestFeatures.Add(new DashboardFeatureByTimeViewModel(byTime));
 			}
 		}
 
@@ -152,7 +199,9 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 		private void LoadExceptions(ITransactionContext context)
 		{
-			var exceptions = this.ExceptionManager.GetBy(this.DataProvider, context);
+			// TODO : get from settings
+			var current = DateTime.Now;
+			var exceptions = this.ExceptionManager.GetBy(this.DataProvider, context, new DashboardPeriod(new TimePeriod(current.AddHours(-1), current), 24));
 
 			this.Exceptions.Clear();
 			foreach (var exception in exceptions)
@@ -191,6 +240,68 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		{
 			this.DateTime = dateTime;
 			this.Count = count;
+		}
+	}
+
+	public sealed class DashboardFeatureByTime
+	{
+		public long Id { get; }
+		public string Name { get; }
+		public TimeSpan TimeSpent { get; }
+
+		public DashboardFeatureByTime(long id, string name, TimeSpan timeSpent)
+		{
+			this.Id = id;
+			this.Name = name;
+			this.TimeSpent = timeSpent;
+		}
+	}
+
+	public sealed class DashboardFeatureByCount
+	{
+		public long Id { get; }
+		public string Name { get; }
+		public int Count { get; }
+
+		public DashboardFeatureByCount(long id, string name, int count)
+		{
+			this.Id = id;
+			this.Name = name;
+			this.Count = count;
+		}
+	}
+
+	public sealed class DashboardFeatureByTimeViewModel : ViewModel
+	{
+		public DashboardFeatureByTime Feature { get; }
+
+		public string Name { get; }
+		public TimeSpan TimeSpent { get; }
+
+		public DashboardFeatureByTimeViewModel(DashboardFeatureByTime feature)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			this.Feature = feature;
+			this.Name = feature.Name;
+			this.TimeSpent = feature.TimeSpent;
+		}
+	}
+
+	public sealed class DashboardFeatureByCountViewModel : ViewModel
+	{
+		public DashboardFeatureByCount Feature { get; }
+
+		public string Name { get; }
+		public int Count { get; }
+
+		public DashboardFeatureByCountViewModel(DashboardFeatureByCount feature)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			this.Feature = feature;
+			this.Name = feature.Name;
+			this.Count = feature.Count;
 		}
 	}
 
@@ -313,6 +424,20 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		}
 	}
 
+	public sealed class DashboardPeriod
+	{
+		public TimePeriod Period { get; }
+		public int Samples { get; }
+
+		public DashboardPeriod(TimePeriod duration, int samples)
+		{
+			if (duration == null) throw new ArgumentNullException(nameof(duration));
+
+			this.Period = duration;
+			this.Samples = samples;
+		}
+	}
+
 	public sealed class DashboardExceptionManager
 	{
 		public DashboardExceptionAdapter Adapter { get; }
@@ -324,10 +449,11 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.Adapter = adapter;
 		}
 
-		public Dictionary<DateTime, int> GetBy(CommonDataProvider dataProvider, ITransactionContext context)
+		public Dictionary<DateTime, int> GetBy(CommonDataProvider dataProvider, ITransactionContext context, DashboardPeriod period)
 		{
 			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (period == null) throw new ArgumentNullException(nameof(period));
 
 			var offset = DateTime.Now;
 			var r = new Random();
@@ -350,6 +476,69 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			// 1 month by xxx minutes => 60 samples
 			var fromDate = toDate.AddDays(-100);
 			return this.Adapter.GetBy(context, fromDate, toDate);
+		}
+	}
+
+	public sealed class DashboardFeatureManager
+	{
+		private DashboardFeatureAdapter Adapter { get; }
+
+		public DashboardFeatureManager(DashboardFeatureAdapter adapter)
+		{
+			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
+
+			this.Adapter = adapter;
+		}
+
+		public List<DashboardFeatureByTime> GetSlowest(ITransactionContext context, int limit)
+		{
+			return this.Adapter.GetSlowest(context, limit);
+		}
+
+		public List<DashboardFeatureByCount> GetMostUsed(ITransactionContext context, int limit)
+		{
+			return this.Adapter.GetMostUsed(context, limit);
+		}
+
+		public List<DashboardFeatureByCount> GetLeastUsed(ITransactionContext context, int limit)
+		{
+			return this.Adapter.GetLeastUsed(context, limit);
+		}
+	}
+
+	public sealed class DashboardFeatureAdapter
+	{
+		public List<DashboardFeatureByTime> GetSlowest(ITransactionContext context, int limit)
+		{
+			// TODO : Add ability to exclude some features
+			// Most used will be LoadAgenda & Sync Data
+			// Slowest will be Sync Data
+
+			// Select * from features ... where ... and not exist (select 1 from excluded_features where type = 'Time')
+
+			return new List<DashboardFeatureByTime>(limit);
+		}
+
+		public List<DashboardFeatureByCount> GetMostUsed(ITransactionContext context, int limit)
+		{
+			// TODO : Add ability to exclude some features
+			// Most used will be LoadAgenda & Sync Data
+			// Slowest will be Sync Data
+
+			// Select * from features ... where ... and not exist (select 1 from excluded_features where type = 'CountMax')
+
+			return new List<DashboardFeatureByCount>(limit);
+		}
+
+		public List<DashboardFeatureByCount> GetLeastUsed(ITransactionContext context, int limit)
+		{
+			// TODO : Add ability to exclude some features
+			// Most used will be LoadAgenda & Sync Data
+			// Slowest will be Sync Data
+
+			// Select * from features ... where ... and not exist (select 1 from excluded_features where type = 'CountMin')
+
+			return new List<DashboardFeatureByCount>(limit);
 		}
 	}
 
