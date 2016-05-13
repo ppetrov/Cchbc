@@ -7,6 +7,6 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule.Managers
 {
 	public interface IFeatureExceptionManager
 	{
-		FeatureException[] GetBy(CommonDataProvider provider, ITransactionContext context, TimePeriod timePeriod);
+		FeatureException[] GetBy(CommonDataProvider provider, ITransactionContext context, RangeTimePeriod rangeTimePeriod);
 	}
 }

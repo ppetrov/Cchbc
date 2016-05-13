@@ -63,6 +63,8 @@
     <Compile Include="Helpers\TimePeriodHelper.cs" />
     <Compile Include="Objects\DbFeatureUserRow.cs" />
     <Compile Include="Objects\DbFeatureVersionRow.cs" />
+    <Compile Include="Objects\RelativeTimePeriod.cs" />
+    <Compile Include="Objects\RelativeTimeType.cs" />
     <Compile Include="Providers\CommonDataProvider.cs" />
     <Compile Include="Replication\DbExceptionRow.cs" />
     <Compile Include="Replication\DbFeatureEntryRow.cs" />
@@ -76,7 +78,7 @@
     <Compile Include="FeatureCountsModule\Managers\FeatureCountManager.cs" />
     <Compile Include="NamingConventions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Objects\TimePeriod.cs" />
+    <Compile Include="Objects\RangeTimePeriod.cs" />
     <Compile Include="ViewModels\TimePeriodViewModel.cs" />
   </ItemGroup>
   <ItemGroup />

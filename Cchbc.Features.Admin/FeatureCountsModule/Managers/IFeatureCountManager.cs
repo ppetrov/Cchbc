@@ -7,6 +7,6 @@ namespace Cchbc.Features.Admin.FeatureCountsModule.Managers
 {
 	public interface IFeatureCountManager
 	{
-		FeatureCount[] GetBy(CommonDataProvider provider, ITransactionContext context, TimePeriod timePeriod);
+		FeatureCount[] GetBy(CommonDataProvider provider, ITransactionContext context, RangeTimePeriod rangeTimePeriod);
 	}
 }

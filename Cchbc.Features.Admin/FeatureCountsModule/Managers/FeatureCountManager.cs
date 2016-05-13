@@ -18,13 +18,13 @@ namespace Cchbc.Features.Admin.FeatureCountsModule.Managers
 			this.Adapter = adapter;
 		}
 
-		public FeatureCount[] GetBy(CommonDataProvider provider, ITransactionContext context, TimePeriod timePeriod)
+		public FeatureCount[] GetBy(CommonDataProvider provider, ITransactionContext context, RangeTimePeriod rangeTimePeriod)
 		{
 			if (provider == null) throw new ArgumentNullException(nameof(provider));
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (timePeriod == null) throw new ArgumentNullException(nameof(timePeriod));
+			if (rangeTimePeriod == null) throw new ArgumentNullException(nameof(rangeTimePeriod));
 
-			return this.Adapter.GetBy(provider, context, timePeriod);
+			return this.Adapter.GetBy(provider, context, rangeTimePeriod);
 		}
 	}
 }

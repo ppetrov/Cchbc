@@ -12,9 +12,9 @@ namespace Cchbc.Features.Admin.Helpers
             var toDate = today.AddDays(1);
             return new[]
             {
-                new TimePeriodViewModel(@"Today", new TimePeriod(today, toDate)),
-                new TimePeriodViewModel(@"Last 7 days", new TimePeriod(toDate.AddDays(-7), toDate)),
-                new TimePeriodViewModel(@"Last 30 days", new TimePeriod(toDate.AddDays(-30), toDate)),
+                new TimePeriodViewModel(@"Today", new RangeTimePeriod(today, toDate)),
+                new TimePeriodViewModel(@"Last 7 days", new RangeTimePeriod(toDate.AddDays(-7), toDate)),
+                new TimePeriodViewModel(@"Last 30 days", new RangeTimePeriod(toDate.AddDays(-30), toDate)),
             };
         }
     }

@@ -56,7 +56,7 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule
             {
                 this.Exceptions.Clear();
 
-                foreach (var featureException in this.FeatureExceptionManager.GetBy(this.DataProvider, ctx, this.CurrentTimePeriod.TimePeriod))
+                foreach (var featureException in this.FeatureExceptionManager.GetBy(this.DataProvider, ctx, this.CurrentTimePeriod.RangeTimePeriod))
                 {
                     this.Exceptions.Add(new FeatureExceptionViewModel(featureException));
                 }

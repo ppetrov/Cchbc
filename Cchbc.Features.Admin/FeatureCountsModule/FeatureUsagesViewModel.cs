@@ -55,7 +55,7 @@ namespace Cchbc.Features.Admin.FeatureCountsModule
             {
                 this.FeatureUsages.Clear();
 
-                foreach (var featureUsage in this.FeatureCountManager.GetBy(this.DataProvider, ctx, this.CurrentTimePeriod.TimePeriod))
+                foreach (var featureUsage in this.FeatureCountManager.GetBy(this.DataProvider, ctx, this.CurrentTimePeriod.RangeTimePeriod))
                 {
                     this.FeatureUsages.Add(new FeatureUsageViewModel(featureUsage));
                 }

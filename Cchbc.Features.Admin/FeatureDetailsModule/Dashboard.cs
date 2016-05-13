@@ -11,28 +11,16 @@ using Cchbc.Objects;
 
 namespace Cchbc.Features.Admin.FeatureDetailsModule
 {
-	public sealed class DashboardSettings
+	public static class DashboardDataProvider
 	{
-		//public int NumberOfUsersToDisplay { get; set; } = 10;
-	}
-
-	public sealed class DashboardSettingsManager
-	{
-		public DashboardSettingsAdapter Adapter { get; }
-
-		public DashboardSettingsManager(DashboardSettingsAdapter adapter)
-		{
-			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
-
-			this.Adapter = adapter;
-		}
-
-		public void Load(ITransactionContext context, DashboardSettings settings)
+		public static DashboardSettings GetSettings(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (settings == null) throw new ArgumentNullException(nameof(settings));
 
-			foreach (var setting in this.Adapter.GetSettings(context))
+			var settings = new DashboardSettings();
+
+			// TODO : !!! Load settings from database
+			foreach (var setting in new List<Setting>())
 			{
 				//if (setting.Name.Equals(nameof(DashboardSettings.NumberOfUsersToDisplay), StringComparison.OrdinalIgnoreCase))
 				//{
@@ -40,21 +28,138 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				//	break;
 				//}
 			}
-		}
-	}
-
-	public sealed class DashboardSettingsAdapter
-	{
-		public List<Setting> GetSettings(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var settings = new List<Setting>();
-
-			// TODO : !!! Load settings from database
 
 			return settings;
 		}
+
+		public static Dictionary<DateTime, int> GetExceptions(ITransactionContext context, DashboardSettings settings)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (settings == null) throw new ArgumentNullException(nameof(settings));
+
+			var relativeTimePeriod = settings.ExceptionsRelativeTimePeriod;
+			var samples = settings.ExceptionChartSamples;
+
+			var rangeTimePeriod = relativeTimePeriod.ToRange(DateTime.Now);
+
+			var query = new Query(@"SELECT CREATED_AT FROM FEATURE_EXCEPTIONS WHERE @FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE", new[]
+			{
+				new QueryParameter(@"@FROMDATE", rangeTimePeriod.FromDate),
+				new QueryParameter(@"@TODATE", rangeTimePeriod.ToDate),
+			});
+
+
+			var step = ((long)relativeTimePeriod.TimeOffset.TotalMilliseconds) / samples;
+			var baseDate = rangeTimePeriod.FromDate;
+
+			var result = new Dictionary<DateTime, int>(samples);
+			var map = new int[samples];
+
+			context.Fill(result, (r, m) =>
+			{
+				var delta = ((long)(r.GetDateTime(0) - baseDate).TotalMilliseconds) / step;
+				map[delta]++;
+			}, query);
+
+			for (var i = 0; i < map.Length; i++)
+			{
+				var value = map[i];
+				result.Add(baseDate.AddMilliseconds(step * i), value);
+			}
+
+			return result;
+		}
+
+		public static DashboardVersion[] GetVersions(ITransactionContext context, CommonDataProvider dataProvider)
+		{
+			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			var versions = dataProvider.Versions;
+			var dashboardVersions = new DashboardVersion[versions.Count];
+
+			var exceptions = GetExceptionsBy(context, versions);
+			var users = GetUsersBy(context, versions);
+
+			var index = 0;
+			foreach (var versionPair in versions)
+			{
+				var versionId = versionPair.Key;
+				var version = versionPair.Value;
+
+				int usersCount;
+				users.TryGetValue(versionId, out usersCount);
+
+				int exceptionsCount;
+				exceptions.TryGetValue(versionId, out exceptionsCount);
+
+				dashboardVersions[index++] = new DashboardVersion(version, usersCount, exceptionsCount);
+			}
+
+			Array.Sort(dashboardVersions, (x, y) =>
+			{
+				var cmp = string.Compare(x.Version.Name, y.Version.Name, StringComparison.OrdinalIgnoreCase);
+				return cmp;
+			});
+
+			return dashboardVersions;
+		}
+
+		public static Dictionary<long, int> GetExceptionsBy(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (versions == null) throw new ArgumentNullException(nameof(versions));
+
+			var map = new Dictionary<long, int>(versions.Count);
+
+			foreach (var row in versions)
+			{
+				map.Add(row.Key, 0);
+			}
+
+			context.Fill(map, (r, m) =>
+			{
+				var versionId = r.GetInt64(0);
+				var count = r.GetInt32(1);
+
+				m[versionId] = count;
+
+			}, new Query(@"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTIONS GROUP BY VERSION_ID"));
+
+			return map;
+		}
+
+		public static Dictionary<long, int> GetUsersBy(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (versions == null) throw new ArgumentNullException(nameof(versions));
+
+			var map = new Dictionary<long, int>(versions.Count);
+
+			foreach (var row in versions)
+			{
+				map.Add(row.Key, 0);
+			}
+
+			context.Fill(map, (r, m) =>
+			{
+				var versionId = r.GetInt64(0);
+				var count = r.GetInt32(1);
+
+				m[versionId] = count;
+
+			}, new Query(@"SELECT VERSION_ID, COUNT(*) FROM FEATURE_USERS GROUP BY VERSION_ID"));
+
+			return map;
+		}
+	}
+
+	public sealed class DashboardSettings
+	{
+		public int ExceptionChartSamples { get; } = 30;
+		public RelativeTimePeriod ExceptionsRelativeTimePeriod { get; } = new RelativeTimePeriod(TimeSpan.FromHours(1), RelativeTimeType.Past);
+
+		public List<RelativeTimePeriod> RelativeTimePeriods { get; } = new List<RelativeTimePeriod>();
 	}
 
 	public sealed class DashboardViewModel : ViewModel
@@ -84,20 +189,26 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.ExceptionsCaptions = @"Exceptions for the last 24 hours";
 		}
 
-		public void Load()
+		public void Load(ITransactionContextCreator contextCreator, 
+			Func<ITransactionContext, DashboardSettings> settingsProvider, 
+			Func<ITransactionContext, CommonDataProvider, DashboardVersion[]> versionsProvider, 
+			Func<ITransactionContext, DashboardSettings, Dictionary<DateTime, int>> exceptionsProvider)
 		{
-			this.Dashboard.Load();
+			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
+
+			using (var ctx = contextCreator.Create())
+			{
+				this.Dashboard.Load(ctx, settingsProvider, versionsProvider, exceptionsProvider);
+
+				ctx.Complete();
+			}
 		}
 	}
 
 	public sealed class Dashboard
 	{
 		private CommonDataProvider DataProvider { get; } = new CommonDataProvider();
-		private ITransactionContextCreator ContextCreator { get; }
-		private DashboardSettings Settings { get; } = new DashboardSettings();
-		private DashboardSettingsManager SettingsManager { get; } = new DashboardSettingsManager(new DashboardSettingsAdapter());
-		private DashboardVersionManager VersionManager { get; } = new DashboardVersionManager(new DashboardVersionAdapter());
-		private DashboardExceptionManager ExceptionManager { get; } = new DashboardExceptionManager(new DashboardExceptionAdapter());
+
 		private DashboardFeatureManager FeatureManager { get; } = new DashboardFeatureManager(new DashboardFeatureAdapter());
 
 		public ObservableCollection<DashboardUserViewModel> Users { get; } = new ObservableCollection<DashboardUserViewModel>();
@@ -107,15 +218,17 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public ObservableCollection<DashboardFeatureByCountViewModel> LeastUsedFeatures { get; } = new ObservableCollection<DashboardFeatureByCountViewModel>();
 		public ObservableCollection<DashboardFeatureByTimeViewModel> SlowestFeatures { get; } = new ObservableCollection<DashboardFeatureByTimeViewModel>();
 
-		public Dashboard(ITransactionContextCreator contextCreator)
+		public void Load(ITransactionContext context,
+			Func<ITransactionContext, DashboardSettings> settingsProvider,
+			Func<ITransactionContext, CommonDataProvider, DashboardVersion[]> versionsProvider,
+			Func<ITransactionContext, DashboardSettings, Dictionary<DateTime, int>> exceptionsProvider
+			)
 		{
-			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (settingsProvider == null) throw new ArgumentNullException(nameof(settingsProvider));
+			if (versionsProvider == null) throw new ArgumentNullException(nameof(versionsProvider));
+			if (exceptionsProvider == null) throw new ArgumentNullException(nameof(exceptionsProvider));
 
-			this.ContextCreator = contextCreator;
-		}
-
-		public void Load()
-		{
 			// TODO : !!!
 			// Where N1 & N2 are settings
 			//- Top N1 Most/Least used features
@@ -127,17 +240,45 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			// Exceptions
 			// Users
 
-			using (var ctx = this.ContextCreator.Create())
+			this.DataProvider.Load(context);
+
+			var settings = settingsProvider(context);
+			this.LoadUsers();
+			this.LoadVersions(context, versionsProvider);
+			this.LoadFeatures(context);
+			this.LoadExceptions(context, settings, exceptionsProvider);
+		}
+
+		private void LoadUsers()
+		{
+			var versions = this.DataProvider.Versions;
+
+			this.Users.Clear();
+			foreach (var user in this.DataProvider.Users.Values)
 			{
-				this.DataProvider.Load(ctx);
+				this.Users.Add(new DashboardUserViewModel(new DashboardUser(user.Id, user.Name, versions[user.VersionId].Name, user.ReplicatedAt)));
+			}
+		}
 
-				this.LoadSettings(ctx);
-				this.LoadUsers();
-				this.LoadVersions(ctx);
-				this.LoadExceptions(ctx);
-				this.LoadFeatures(ctx);
+		private void LoadVersions(ITransactionContext context, Func<ITransactionContext, CommonDataProvider, DashboardVersion[]> versionsProvider)
+		{
+			var versions = versionsProvider(context, this.DataProvider);
 
-				ctx.Complete();
+			this.Versions.Clear();
+			foreach (var version in versions)
+			{
+				this.Versions.Add(new DashboardVersionViewModel(version));
+			}
+		}
+
+		private void LoadExceptions(ITransactionContext context, DashboardSettings settings, Func<ITransactionContext, DashboardSettings, Dictionary<DateTime, int>> exceptionsProvider)
+		{
+			var exceptions = exceptionsProvider(context, settings);
+
+			this.Exceptions.Clear();
+			foreach (var exception in exceptions)
+			{
+				this.Exceptions.Add(new DashboardExceptionViewModel(new DashboardException(exception.Key, exception.Value)));
 			}
 		}
 
@@ -167,46 +308,6 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			foreach (var byTime in slowest)
 			{
 				this.SlowestFeatures.Add(new DashboardFeatureByTimeViewModel(byTime));
-			}
-		}
-
-		private void LoadSettings(ITransactionContext context)
-		{
-			this.SettingsManager.Load(context, this.Settings);
-		}
-
-		private void LoadUsers()
-		{
-			var versions = this.DataProvider.Versions;
-
-			this.Users.Clear();
-			foreach (var user in this.DataProvider.Users.Values)
-			{
-				this.Users.Add(new DashboardUserViewModel(new DashboardUser(user.Id, user.Name, versions[user.VersionId].Name, user.ReplicatedAt)));
-			}
-		}
-
-		private void LoadVersions(ITransactionContext context)
-		{
-			var versions = this.VersionManager.GetBy(this.DataProvider, context);
-
-			this.Versions.Clear();
-			foreach (var version in versions)
-			{
-				this.Versions.Add(new DashboardVersionViewModel(version));
-			}
-		}
-
-		private void LoadExceptions(ITransactionContext context)
-		{
-			// TODO : get from settings
-			var current = DateTime.Now;
-			var exceptions = this.ExceptionManager.GetBy(this.DataProvider, context, new DashboardPeriod(new TimePeriod(current.AddHours(-1), current), 24));
-
-			this.Exceptions.Clear();
-			foreach (var exception in exceptions)
-			{
-				this.Exceptions.Add(new DashboardExceptionViewModel(new DashboardException(exception.Key, exception.Value)));
 			}
 		}
 
@@ -377,107 +478,9 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		}
 	}
 
-	public sealed class DashboardVersionManager
-	{
-		public DashboardVersionAdapter Adapter { get; }
 
-		public DashboardVersionManager(DashboardVersionAdapter adapter)
-		{
-			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
-			this.Adapter = adapter;
-		}
 
-		public DashboardVersion[] GetBy(CommonDataProvider dataProvider, ITransactionContext context)
-		{
-			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var versions = dataProvider.Versions;
-			var dashboardVersions = new DashboardVersion[versions.Count];
-
-			var exceptions = this.Adapter.GetExceptionsBy(context, versions);
-			var users = this.Adapter.GetUsersBy(context, versions);
-
-			var index = 0;
-			foreach (var versionPair in versions)
-			{
-				var versionId = versionPair.Key;
-				var version = versionPair.Value;
-
-				int usersCount;
-				users.TryGetValue(versionId, out usersCount);
-
-				int exceptionsCount;
-				exceptions.TryGetValue(versionId, out exceptionsCount);
-
-				dashboardVersions[index++] = new DashboardVersion(version, usersCount, exceptionsCount);
-			}
-
-			Array.Sort(dashboardVersions, (x, y) =>
-			{
-				var cmp = string.Compare(x.Version.Name, y.Version.Name, StringComparison.OrdinalIgnoreCase);
-				return cmp;
-			});
-
-			return dashboardVersions;
-		}
-	}
-
-	public sealed class DashboardPeriod
-	{
-		public TimePeriod Period { get; }
-		public int Samples { get; }
-
-		public DashboardPeriod(TimePeriod duration, int samples)
-		{
-			if (duration == null) throw new ArgumentNullException(nameof(duration));
-
-			this.Period = duration;
-			this.Samples = samples;
-		}
-	}
-
-	public sealed class DashboardExceptionManager
-	{
-		public DashboardExceptionAdapter Adapter { get; }
-
-		public DashboardExceptionManager(DashboardExceptionAdapter adapter)
-		{
-			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
-
-			this.Adapter = adapter;
-		}
-
-		public Dictionary<DateTime, int> GetBy(CommonDataProvider dataProvider, ITransactionContext context, DashboardPeriod period)
-		{
-			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (period == null) throw new ArgumentNullException(nameof(period));
-
-			var offset = DateTime.Now;
-			var r = new Random();
-
-			var tmp = new Dictionary<DateTime, int>();
-			for (var i = 0; i < 24; i++)
-			{
-				tmp.Add(offset.AddMinutes(5 * i), r.Next(5, 55));
-			}
-
-			return tmp;
-
-			var toDate = DateTime.Now;
-			// TODO : This must be a setting
-			// and we must have ratios for the chart
-			// 1 hour by 2.5 minute => 24 samples
-			// 12 hours by 12 minutes => 60 samples
-			// 1 day by 24 minutes => 60 samples
-			// 1 week by 168 minutes => 60 samples
-			// 1 month by xxx minutes => 60 samples
-			var fromDate = toDate.AddDays(-100);
-			return this.Adapter.GetBy(context, fromDate, toDate);
-		}
-	}
 
 	public sealed class DashboardFeatureManager
 	{
@@ -542,108 +545,6 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		}
 	}
 
-	public sealed class DashboardExceptionAdapter
-	{
-		public Dictionary<DateTime, int> GetBy(ITransactionContext context, DateTime fromDate, DateTime toDate)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var query = new Query(@"SELECT CREATED_AT FROM FEATURE_EXCEPTIONS WHERE @FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE", new[]
-			{
-				new QueryParameter(@"@FROMDATE", fromDate),
-				new QueryParameter(@"@TODATE", toDate),
-			});
-
-			// TODO : this must be calculated
-			var map = new Dictionary<DateTime, int>(60);
-
-			context.Fill(map, (r, m) =>
-			{
-				var date = r.GetDateTime(0);
-				// TODO : truncate to 5 minute
-				date = new DateTime(date.Year, date.Month, date.Day, date.Hour, date.Minute, 0);
-
-				if (!m.ContainsKey(date))
-				{
-					m.Add(date, 1);
-				}
-				else
-				{
-					m[date]++;
-				}
-			}, query);
-
-			return map;
-		}
-	}
-
-	public sealed class DashboardVersionAdapter
-	{
-		public Dictionary<long, int> GetExceptionsBy(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (versions == null) throw new ArgumentNullException(nameof(versions));
-
-			var map = new Dictionary<long, int>(versions.Count);
-
-			foreach (var row in versions)
-			{
-				map.Add(row.Key, 0);
-			}
-
-			context.Fill(map, (r, m) =>
-			{
-				var versionId = r.GetInt64(0);
-				var count = r.GetInt32(1);
-
-				m[versionId] = count;
-
-			}, new Query(@"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTIONS GROUP BY VERSION_ID"));
-
-			return map;
-		}
-
-		public Dictionary<long, int> GetUsersBy(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (versions == null) throw new ArgumentNullException(nameof(versions));
-
-			var map = new Dictionary<long, int>(versions.Count);
-
-			foreach (var row in versions)
-			{
-				map.Add(row.Key, 0);
-			}
-
-			context.Fill(map, (r, m) =>
-			{
-				var versionId = r.GetInt64(0);
-				var count = r.GetInt32(1);
-
-				m[versionId] = count;
-
-			}, new Query(@"SELECT VERSION_ID, COUNT(*) FROM FEATURE_USERS GROUP BY VERSION_ID"));
-
-			return map;
-		}
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -652,6 +553,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public string Caption { get; }
 
 		private FeatureSortOrder _sortOrder;
+
 		public FeatureSortOrder SortOrder
 		{
 			get { return _sortOrder; }
@@ -699,6 +601,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public ObservableCollection<FeatureViewModel> Features { get; } = new ObservableCollection<FeatureViewModel>();
 
 		private ContextViewModel _currentContext;
+
 		public ContextViewModel CurrentContext
 		{
 			get { return _currentContext; }
@@ -710,6 +613,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		}
 
 		private FeatureViewModel _currentFeature;
+
 		public FeatureViewModel CurrentFeature
 		{
 			get { return _currentFeature; }
@@ -816,6 +720,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public string Name { get; }
 
 		private int _count;
+
 		public int Count
 		{
 			get { return _count; }

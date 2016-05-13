@@ -7,8 +7,7 @@ namespace Cchbc.Features.Admin.UI
 {
 	public sealed partial class DashboardScreen
 	{
-		public DashboardViewModel ViewModel { get; } = 
-			new DashboardViewModel(new Dashboard(new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"server.sqlite"))));
+		public DashboardViewModel ViewModel { get; } = new DashboardViewModel(new Dashboard());
 
 		public DashboardScreen()
 		{
@@ -17,7 +16,8 @@ namespace Cchbc.Features.Admin.UI
 
 		private void DashboardScreenLoaded(object sender, RoutedEventArgs e)
 		{
-			this.ViewModel.Load();
+			var creator = new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"server.sqlite"));
+			this.ViewModel.Load(creator, DashboardDataProvider.GetSettings, DashboardDataProvider.GetVersions, DashboardDataProvider.GetExceptions);
 		}
 	}
 }

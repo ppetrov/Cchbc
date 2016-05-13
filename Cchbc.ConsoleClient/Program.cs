@@ -96,6 +96,8 @@ namespace Cchbc.ConsoleClient
 			var userName = clientDb.Substring(si, ei - si);
 			try
 			{
+				Console.WriteLine(DateTime.Now.Millisecond);
+				return;
 				//CreateSchema(serverDb);
 				//return;
 

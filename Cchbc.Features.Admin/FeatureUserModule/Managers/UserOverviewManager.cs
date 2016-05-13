@@ -28,14 +28,14 @@ namespace Cchbc.Features.Admin.FeatureUserModule.Managers
 
 			foreach (var indexedTimePeriod in timePeriods)
 			{
-				foreach (var featureCount in this.Adapter.GetFeaturesBy(dataProvider, context, indexedTimePeriod.TimePeriod))
+				foreach (var featureCount in this.Adapter.GetFeaturesBy(dataProvider, context, indexedTimePeriod.RangeTimePeriod))
 				{
 					var userOverview = GetOrCreateUserOverview(map, featureCount.User, timePeriods);
 
 					userOverview.Features[indexedTimePeriod.Index].Count = featureCount.Value;
 				}
 
-				foreach (var featureCount in this.Adapter.GetExceptionsBy(dataProvider, context, indexedTimePeriod.TimePeriod))
+				foreach (var featureCount in this.Adapter.GetExceptionsBy(dataProvider, context, indexedTimePeriod.RangeTimePeriod))
 				{
 					var userOverview = GetOrCreateUserOverview(map, featureCount.User, timePeriods);
 

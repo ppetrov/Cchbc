@@ -29,15 +29,15 @@ namespace Cchbc.Features.Admin.FeatureExceptionModule.Adapters
 			}
 		}
 
-		public FeatureException[] GetBy(CommonDataProvider provider, ITransactionContext context, TimePeriod timePeriod)
+		public FeatureException[] GetBy(CommonDataProvider provider, ITransactionContext context, RangeTimePeriod rangeTimePeriod)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (timePeriod == null) throw new ArgumentNullException(nameof(timePeriod));
+			if (rangeTimePeriod == null) throw new ArgumentNullException(nameof(rangeTimePeriod));
 
 			var sqlParams = new[]
 			{
-				new QueryParameter(@"@FROMDATE", timePeriod.FromDate),
-				new QueryParameter(@"@TODATE", timePeriod.ToDate),
+				new QueryParameter(@"@FROMDATE", rangeTimePeriod.FromDate),
+				new QueryParameter(@"@TODATE", rangeTimePeriod.ToDate),
 			};
 
 			var query = new Query<DbServerExceptionRow>(@"

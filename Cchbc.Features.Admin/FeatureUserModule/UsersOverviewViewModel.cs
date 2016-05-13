@@ -40,7 +40,7 @@ namespace Cchbc.Features.Admin.FeatureUserModule
 				var periods = new IndexedTimePeriod[timePeriods.Length];
 				for (var i = 0; i < timePeriods.Length; i++)
 				{
-					periods[i] = new IndexedTimePeriod(i, timePeriods[i].TimePeriod);
+					periods[i] = new IndexedTimePeriod(i, timePeriods[i].RangeTimePeriod);
 				}
 
 				userOverviews = this.UserOverviewManager.GetBy(this.DataProvider, ctx, periods);

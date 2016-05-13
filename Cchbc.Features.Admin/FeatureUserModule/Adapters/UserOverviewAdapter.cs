@@ -20,11 +20,11 @@ namespace Cchbc.Features.Admin.FeatureUserModule.Adapters
 			}
 		}
 
-		public UserFeatureCount[] GetFeaturesBy(CommonDataProvider provider, ITransactionContext context, TimePeriod timePeriod)
+		public UserFeatureCount[] GetFeaturesBy(CommonDataProvider provider, ITransactionContext context, RangeTimePeriod rangeTimePeriod)
 		{
 			if (provider == null) throw new ArgumentNullException(nameof(provider));
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (timePeriod == null) throw new ArgumentNullException(nameof(timePeriod));
+			if (rangeTimePeriod == null) throw new ArgumentNullException(nameof(rangeTimePeriod));
 
 			var query = @"
 			SELECT E.USER_ID,
@@ -34,14 +34,14 @@ namespace Cchbc.Features.Admin.FeatureUserModule.Adapters
 				AND E.CREATED_AT < @TODATE
 			GROUP BY E.USER_ID";
 
-			return GetBy(provider, context, query, timePeriod);
+			return GetBy(provider, context, query, rangeTimePeriod);
 		}
 
-		public UserFeatureCount[] GetExceptionsBy(CommonDataProvider provider, ITransactionContext context, TimePeriod timePeriod)
+		public UserFeatureCount[] GetExceptionsBy(CommonDataProvider provider, ITransactionContext context, RangeTimePeriod rangeTimePeriod)
 		{
 			if (provider == null) throw new ArgumentNullException(nameof(provider));
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (timePeriod == null) throw new ArgumentNullException(nameof(timePeriod));
+			if (rangeTimePeriod == null) throw new ArgumentNullException(nameof(rangeTimePeriod));
 
 			var query = @"
 			SELECT E.USER_ID,
@@ -51,17 +51,17 @@ namespace Cchbc.Features.Admin.FeatureUserModule.Adapters
 				AND E.CREATED_AT < @TODATE
 			GROUP BY E.USER_ID";
 
-			return GetBy(provider, context, query, timePeriod);
+			return GetBy(provider, context, query, rangeTimePeriod);
 		}
 
-		private UserFeatureCount[] GetBy(CommonDataProvider provider, ITransactionContext context, string query, TimePeriod timePeriod)
+		private UserFeatureCount[] GetBy(CommonDataProvider provider, ITransactionContext context, string query, RangeTimePeriod rangeTimePeriod)
 		{
 			var users = provider.Users;
 
 			var sqlParams = new[]
 			{
-				new QueryParameter(@"@FROMDATE", timePeriod.FromDate),
-				new QueryParameter(@"@TODATE", timePeriod.ToDate),
+				new QueryParameter(@"@FROMDATE", rangeTimePeriod.FromDate),
+				new QueryParameter(@"@TODATE", rangeTimePeriod.ToDate),
 			};
 
 			var rows = context.Execute(new Query<UserFeatureCountRow>(query, this.UserFeatureCountRowCreator, sqlParams));

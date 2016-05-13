@@ -6,14 +6,14 @@ namespace Cchbc.Features.Admin.FeatureUserModule.Objects
 	public sealed class IndexedTimePeriod
 	{
 		public int Index { get; }
-		public TimePeriod TimePeriod { get; }
+		public RangeTimePeriod RangeTimePeriod { get; }
 
-		public IndexedTimePeriod(int index, TimePeriod timePeriod)
+		public IndexedTimePeriod(int index, RangeTimePeriod rangeTimePeriod)
 		{
-			if (timePeriod == null) throw new ArgumentNullException(nameof(timePeriod));
+			if (rangeTimePeriod == null) throw new ArgumentNullException(nameof(rangeTimePeriod));
 
 			this.Index = index;
-			this.TimePeriod = timePeriod;
+			this.RangeTimePeriod = rangeTimePeriod;
 		}
 	}
 }
