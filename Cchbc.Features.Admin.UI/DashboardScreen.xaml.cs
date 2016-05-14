@@ -16,8 +16,13 @@ namespace Cchbc.Features.Admin.UI
 
 		private void DashboardScreenLoaded(object sender, RoutedEventArgs e)
 		{
-			var creator = new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"server.sqlite"));
-			this.ViewModel.Load(creator, DashboardDataProvider.GetSettings, DashboardDataProvider.GetVersions, DashboardDataProvider.GetExceptions);
+			var contextCreator = new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"server.sqlite"));
+
+			using (var ctx = contextCreator.Create())
+			{
+				this.ViewModel.Load(ctx, DashboardDataProvider.GetVersions, DashboardDataProvider.GetExceptions);
+				ctx.Complete();
+			}
 		}
 	}
 }

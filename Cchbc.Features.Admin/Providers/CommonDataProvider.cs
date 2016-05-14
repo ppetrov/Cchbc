@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Cchbc.Common;
 using Cchbc.Data;
 using Cchbc.Features.Admin.Objects;
 using Cchbc.Features.Db.Adapters;
@@ -13,6 +14,7 @@ namespace Cchbc.Features.Admin.Providers
 		public Dictionary<long, DbFeatureRow> Features { get; } = new Dictionary<long, DbFeatureRow>();
 		public Dictionary<long, DbFeatureVersionRow> Versions { get; } = new Dictionary<long, DbFeatureVersionRow>();
 		public Dictionary<long, DbFeatureUserRow> Users { get; } = new Dictionary<long, DbFeatureUserRow>();
+		public Dictionary<string, List<Setting>> Settings { get; } = new Dictionary<string, List<Setting>>();
 
 		public void Load(ITransactionContext context)
 		{

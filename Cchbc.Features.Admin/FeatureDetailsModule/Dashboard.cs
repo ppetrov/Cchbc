@@ -13,25 +13,6 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 {
 	public static class DashboardDataProvider
 	{
-		public static DashboardSettings GetSettings(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var settings = new DashboardSettings();
-
-			// TODO : !!! Load settings from database
-			foreach (var setting in new List<Setting>())
-			{
-				//if (setting.Name.Equals(nameof(DashboardSettings.NumberOfUsersToDisplay), StringComparison.OrdinalIgnoreCase))
-				//{
-				//	settings.NumberOfUsersToDisplay = ValueParser.ParseInt(setting.Value) ?? 10;
-				//	break;
-				//}
-			}
-
-			return settings;
-		}
-
 		public static Dictionary<DateTime, int> GetExceptions(ITransactionContext context, DashboardSettings settings)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -70,16 +51,15 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			return result;
 		}
 
-		public static DashboardVersion[] GetVersions(ITransactionContext context, CommonDataProvider dataProvider)
+		public static DashboardVersion[] GetVersions(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
 		{
-			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (versions == null) throw new ArgumentNullException(nameof(versions));
 
-			var versions = dataProvider.Versions;
 			var dashboardVersions = new DashboardVersion[versions.Count];
 
-			var exceptions = GetExceptionsBy(context, versions);
-			var users = GetUsersBy(context, versions);
+			var exceptions = CountExceptionsByVersion(context, versions);
+			var users = CountUsersByVersion(context, versions);
 
 			var index = 0;
 			foreach (var versionPair in versions)
@@ -105,7 +85,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			return dashboardVersions;
 		}
 
-		public static Dictionary<long, int> GetExceptionsBy(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
+		private static Dictionary<long, int> CountExceptionsByVersion(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (versions == null) throw new ArgumentNullException(nameof(versions));
@@ -129,7 +109,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			return map;
 		}
 
-		public static Dictionary<long, int> GetUsersBy(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
+		private static Dictionary<long, int> CountUsersByVersion(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (versions == null) throw new ArgumentNullException(nameof(versions));
@@ -189,19 +169,15 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.ExceptionsCaptions = @"Exceptions for the last 24 hours";
 		}
 
-		public void Load(ITransactionContextCreator contextCreator, 
-			Func<ITransactionContext, DashboardSettings> settingsProvider, 
-			Func<ITransactionContext, CommonDataProvider, DashboardVersion[]> versionsProvider, 
+		public void Load(ITransactionContext context,
+			Func<ITransactionContext, Dictionary<long, DbFeatureVersionRow>, DashboardVersion[]> versionsProvider,
 			Func<ITransactionContext, DashboardSettings, Dictionary<DateTime, int>> exceptionsProvider)
 		{
-			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (versionsProvider == null) throw new ArgumentNullException(nameof(versionsProvider));
+			if (exceptionsProvider == null) throw new ArgumentNullException(nameof(exceptionsProvider));
 
-			using (var ctx = contextCreator.Create())
-			{
-				this.Dashboard.Load(ctx, settingsProvider, versionsProvider, exceptionsProvider);
-
-				ctx.Complete();
-			}
+			this.Dashboard.Load(context, versionsProvider, exceptionsProvider);
 		}
 	}
 
@@ -219,13 +195,10 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public ObservableCollection<DashboardFeatureByTimeViewModel> SlowestFeatures { get; } = new ObservableCollection<DashboardFeatureByTimeViewModel>();
 
 		public void Load(ITransactionContext context,
-			Func<ITransactionContext, DashboardSettings> settingsProvider,
-			Func<ITransactionContext, CommonDataProvider, DashboardVersion[]> versionsProvider,
-			Func<ITransactionContext, DashboardSettings, Dictionary<DateTime, int>> exceptionsProvider
-			)
+			Func<ITransactionContext, Dictionary<long, DbFeatureVersionRow>, DashboardVersion[]> versionsProvider,
+			Func<ITransactionContext, DashboardSettings, Dictionary<DateTime, int>> exceptionsProvider)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (settingsProvider == null) throw new ArgumentNullException(nameof(settingsProvider));
 			if (versionsProvider == null) throw new ArgumentNullException(nameof(versionsProvider));
 			if (exceptionsProvider == null) throw new ArgumentNullException(nameof(exceptionsProvider));
 
@@ -242,11 +215,32 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 			this.DataProvider.Load(context);
 
-			var settings = settingsProvider(context);
+			var settings = GetDashboardSettings(this.DataProvider.Settings);
+
 			this.LoadUsers();
 			this.LoadVersions(context, versionsProvider);
 			this.LoadFeatures(context);
 			this.LoadExceptions(context, settings, exceptionsProvider);
+		}
+
+		private static DashboardSettings GetDashboardSettings(Dictionary<string, List<Setting>> byContextSettings)
+		{
+			var settings = new DashboardSettings();
+
+			List<Setting> values;
+			byContextSettings.TryGetValue(nameof(Dashboard), out values);
+
+			foreach (var setting in values ?? new List<Setting>(0))
+			{
+				//TODO : !!!
+				//if (setting.Name.Equals(nameof(DashboardSettings.NumberOfUsersToDisplay), StringComparison.OrdinalIgnoreCase))
+				//{
+				//	settings.NumberOfUsersToDisplay = ValueParser.ParseInt(setting.Value) ?? 10;
+				//	break;
+				//}
+			}
+
+			return settings;
 		}
 
 		private void LoadUsers()
@@ -260,9 +254,9 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			}
 		}
 
-		private void LoadVersions(ITransactionContext context, Func<ITransactionContext, CommonDataProvider, DashboardVersion[]> versionsProvider)
+		private void LoadVersions(ITransactionContext context, Func<ITransactionContext, Dictionary<long, DbFeatureVersionRow>, DashboardVersion[]> versionsProvider)
 		{
-			var versions = versionsProvider(context, this.DataProvider);
+			var versions = versionsProvider(context, this.DataProvider.Versions);
 
 			this.Versions.Clear();
 			foreach (var version in versions)
