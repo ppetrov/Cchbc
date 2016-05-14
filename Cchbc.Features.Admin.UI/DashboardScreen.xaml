@@ -26,11 +26,20 @@
         <Grid Margin="25">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"></ColumnDefinition>
-                <ColumnDefinition Width="3*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
 
-            <!--Users-->
-            <Grid Grid.Row="0" Grid.Column="0" Style="{StaticResource CchbcDataTemplateGrid}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Grid.Column="0" Grid.RowSpan="1" Grid.ColumnSpan="2" Style="{StaticResource CchbcDataTemplateGrid}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"></RowDefinition>
                     <RowDefinition Height="*"></RowDefinition>
@@ -38,6 +47,7 @@
 
                 <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
                     <TextBlock Text="{x:Bind ViewModel.UsersCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
+                    <ProgressRing IsActive="{x:Bind ViewModel.IsUsersLoading, Mode=OneWay}"></ProgressRing>
                 </Grid>
 
                 <ListView Grid.Row="1" ItemContainerStyle="{StaticResource FullLineItemStyle}"
@@ -86,88 +96,138 @@
                 </ListView>
             </Grid>
 
-            <!--Content-->
-            <Grid Grid.Row="0" Grid.Column="1" >
+            <Grid Grid.Row="1" Grid.Column="0" Grid.RowSpan="1" Grid.ColumnSpan="2" Style="{StaticResource CchbcDataTemplateGrid}">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*"></RowDefinition>
-                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
                     <RowDefinition Height="*"></RowDefinition>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateGrid}">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"></RowDefinition>
-                        <RowDefinition Height="*"></RowDefinition>
-                    </Grid.RowDefinitions>
-                    <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
-                        <TextBlock Text="{x:Bind ViewModel.VersionStatsReportCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
-                    </Grid>
-                    <charts:SfChart Grid.Row="1" Margin="5" AreaBackground="#202130" Palette="PurpleChrome" Background="#202130" Foreground="#fefefe">
-                        <charts:SfChart.Legend>
-                            <charts:ChartLegend />
-                        </charts:SfChart.Legend>
-                        <charts:SfChart.PrimaryAxis>
-                            <charts:CategoryAxis FontSize="14" PlotOffset="35" ShowGridLines="False" Foreground="#F4B569" AxisLineStyle="{StaticResource AxisLineStyle}" />
-                        </charts:SfChart.PrimaryAxis>
-                        <charts:SfChart.SecondaryAxis>
-                            <charts:NumericalAxis FontSize="14" Minimum="0" RangePadding="Normal" Foreground="#F4B569" MajorGridLineStyle="{StaticResource MajorTickLineStyle}" AxisLineStyle="{StaticResource AxisLineStyle}"/>
-                        </charts:SfChart.SecondaryAxis>
-                        <charts:SfChart.Series>
-                            <charts:StackingColumnSeries EnableAnimation="True" AnimationDuration="00:00:01" Label="Users"
-                         ItemsSource="{x:Bind ViewModel.Versions}" XBindingPath="Name" YBindingPath="Users" >
-                                <charts:StackingColumnSeries.AdornmentsInfo>
-                                    <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
-                                </charts:StackingColumnSeries.AdornmentsInfo>
-                            </charts:StackingColumnSeries>
-
-                            <charts:StackingColumnSeries EnableAnimation="True" AnimationDuration="00:00:01" Label="Exceptions"
-                        ItemsSource="{x:Bind ViewModel.Versions}" XBindingPath="Name" YBindingPath="Exceptions" >
-                                <charts:StackingColumnSeries.AdornmentsInfo>
-                                    <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
-                                </charts:StackingColumnSeries.AdornmentsInfo>
-                            </charts:StackingColumnSeries>
-                        </charts:SfChart.Series>
-                    </charts:SfChart>
+                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
+                    <TextBlock Text="{x:Bind ViewModel.StatsCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
                 </Grid>
 
-                <Grid Grid.Row="1" Style="{StaticResource CchbcDataTemplateGrid}">
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"></RowDefinition>
-                        <RowDefinition Height="*"></RowDefinition>
-                    </Grid.RowDefinitions>
-                    <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
-                        <TextBlock Text="{x:Bind ViewModel.ExceptionsCaptions}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
-                    </Grid>
-
-                    <charts:SfChart Grid.Row="1" Margin="5" AreaBackground="#202130" Palette="PurpleChrome" Background="#202130" Foreground="#fefefe">
-                        <charts:SfChart.PrimaryAxis>
-                            <charts:CategoryAxis FontSize="14" LabelFormat="hh:mm:ss" PlotOffset="35" ShowGridLines="False" Foreground="#F4B569" AxisLineStyle="{StaticResource AxisLineStyle}" />
-                        </charts:SfChart.PrimaryAxis>
-                        <charts:SfChart.SecondaryAxis>
-                            <charts:NumericalAxis FontSize="14" Minimum="0"  RangePadding="Normal" Foreground="#F4B569" MajorGridLineStyle="{StaticResource MajorTickLineStyle}" AxisLineStyle="{StaticResource AxisLineStyle}"/>
-                        </charts:SfChart.SecondaryAxis>
-                        <charts:SfChart.Series>
-                            <charts:ColumnSeries EnableAnimation="True" AnimationDuration="00:00:01"
-                         ItemsSource="{x:Bind ViewModel.Exceptions}" XBindingPath="DateTime" YBindingPath="Count" >
-                                <charts:ColumnSeries.AdornmentsInfo>
-                                    <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
-                                </charts:ColumnSeries.AdornmentsInfo>
-                            </charts:ColumnSeries>
-
-                        </charts:SfChart.Series>
-                    </charts:SfChart>
-                </Grid>
-
-                <Grid Grid.Row="2" Style="{StaticResource CchbcDataTemplateGrid}">
-                    <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"></RowDefinition>
-                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
                     </Grid.RowDefinitions>
-                    <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
-                        <TextBlock Text="{x:Bind ViewModel.UsageCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
-                    </Grid>
+
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Users" Style="{StaticResource ValueTextStyle}"></TextBlock>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind ViewModel.TotalUsers}" Style="{StaticResource ValueTextStyle}"></TextBlock>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Versions" Style="{StaticResource ValueTextStyle}"></TextBlock>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind ViewModel.TotalVersions}" Style="{StaticResource ValueTextStyle}"></TextBlock>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Exceptions" Style="{StaticResource ValueTextStyle}"></TextBlock>
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{x:Bind ViewModel.TotalExceptions}" Style="{StaticResource ValueTextStyle}"></TextBlock>
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Features" Style="{StaticResource ValueTextStyle}"></TextBlock>
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{x:Bind ViewModel.TotalFeatures}" Style="{StaticResource ValueTextStyle}"></TextBlock>
+                    
                 </Grid>
             </Grid>
+
+            <Grid Grid.Row="0" Grid.Column="2" Grid.RowSpan="1" Grid.ColumnSpan="4" Style="{StaticResource CchbcDataTemplateGrid}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
+                    <TextBlock Text="{x:Bind ViewModel.VersionStatsReportCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
+                </Grid>
+                <charts:SfChart Grid.Row="1" Margin="5" AreaBackground="#202130" Palette="PurpleChrome" Background="#202130" Foreground="#fefefe">
+                    <charts:SfChart.Legend>
+                        <charts:ChartLegend />
+                    </charts:SfChart.Legend>
+                    <charts:SfChart.PrimaryAxis>
+                        <charts:CategoryAxis FontSize="14" PlotOffset="35" ShowGridLines="False" Foreground="#F4B569" AxisLineStyle="{StaticResource AxisLineStyle}" />
+                    </charts:SfChart.PrimaryAxis>
+                    <charts:SfChart.SecondaryAxis>
+                        <charts:NumericalAxis FontSize="14" Minimum="0" RangePadding="Normal" Foreground="#F4B569" MajorGridLineStyle="{StaticResource MajorTickLineStyle}" AxisLineStyle="{StaticResource AxisLineStyle}"/>
+                    </charts:SfChart.SecondaryAxis>
+                    <charts:SfChart.Series>
+                        <charts:StackingColumnSeries EnableAnimation="True" AnimationDuration="00:00:01" Label="Users"
+                         ItemsSource="{x:Bind ViewModel.Versions}" XBindingPath="Name" YBindingPath="Users" >
+                            <charts:StackingColumnSeries.AdornmentsInfo>
+                                <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
+                            </charts:StackingColumnSeries.AdornmentsInfo>
+                        </charts:StackingColumnSeries>
+
+                        <charts:StackingColumnSeries EnableAnimation="True" AnimationDuration="00:00:01" Label="Exceptions"
+                        ItemsSource="{x:Bind ViewModel.Versions}" XBindingPath="Name" YBindingPath="Exceptions" >
+                            <charts:StackingColumnSeries.AdornmentsInfo>
+                                <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
+                            </charts:StackingColumnSeries.AdornmentsInfo>
+                        </charts:StackingColumnSeries>
+                    </charts:SfChart.Series>
+                </charts:SfChart>
+            </Grid>
+
+            <Grid Grid.Row="1" Grid.Column="2" Grid.RowSpan="1" Grid.ColumnSpan="4" Style="{StaticResource CchbcDataTemplateGrid}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
+                    <TextBlock Text="{x:Bind ViewModel.ExceptionsCaptions}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
+                </Grid>
+
+                <charts:SfChart Grid.Row="1" Margin="5" AreaBackground="#202130" Palette="PurpleChrome" Background="#202130" Foreground="#fefefe">
+                    <charts:SfChart.PrimaryAxis>
+                        <charts:CategoryAxis FontSize="14" LabelFormat="hh:mm:ss" PlotOffset="35" ShowGridLines="False" Foreground="#F4B569" AxisLineStyle="{StaticResource AxisLineStyle}" />
+                    </charts:SfChart.PrimaryAxis>
+                    <charts:SfChart.SecondaryAxis>
+                        <charts:NumericalAxis FontSize="14" Minimum="0"  RangePadding="Normal" Foreground="#F4B569" MajorGridLineStyle="{StaticResource MajorTickLineStyle}" AxisLineStyle="{StaticResource AxisLineStyle}"/>
+                    </charts:SfChart.SecondaryAxis>
+                    <charts:SfChart.Series>
+                        <charts:ColumnSeries EnableAnimation="True" AnimationDuration="00:00:01"
+                         ItemsSource="{x:Bind ViewModel.Exceptions}" XBindingPath="DateTime" YBindingPath="Count" >
+                            <charts:ColumnSeries.AdornmentsInfo>
+                                <charts:ChartAdornmentInfo ShowLabel="True" LabelPosition="Outer" Foreground="#F4B569"></charts:ChartAdornmentInfo>
+                            </charts:ColumnSeries.AdornmentsInfo>
+                        </charts:ColumnSeries>
+
+                    </charts:SfChart.Series>
+                </charts:SfChart>
+            </Grid>
+
+            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource CchbcDataTemplateGrid}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
+                    <TextBlock Text="{x:Bind ViewModel.UsageCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
+                </Grid>
+            </Grid>
+
+            <Grid Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Style="{StaticResource CchbcDataTemplateGrid}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
+                    <TextBlock Text="{x:Bind ViewModel.UsageCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
+                </Grid>
+            </Grid>
+
+            <Grid Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="2" Style="{StaticResource CchbcDataTemplateGrid}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
+                    <TextBlock Text="{x:Bind ViewModel.UsageCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
+                </Grid>
+            </Grid>
+
         </Grid>
     </Grid>
 </Page>

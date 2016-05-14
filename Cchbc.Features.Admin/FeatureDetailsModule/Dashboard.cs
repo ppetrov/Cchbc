@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Cchbc.Common;
 using Cchbc.Data;
@@ -11,57 +12,40 @@ using Cchbc.Objects;
 
 namespace Cchbc.Features.Admin.FeatureDetailsModule
 {
+	// TODO : We don't need all the users ???
+	// TODO : Probably the last 5-10 users performed an replication
+
 	public static class DashboardDataProvider
 	{
-		public static Dictionary<DateTime, int> GetExceptions(ITransactionContext context, DashboardSettings settings)
+		public static Task<List<DashboardUser>> GetUsersAsync(DashboarLoadParams loadParams)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (settings == null) throw new ArgumentNullException(nameof(settings));
+			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			var relativeTimePeriod = settings.ExceptionsRelativeTimePeriod;
-			var samples = settings.ExceptionChartSamples;
+			// TODO : Load the last N users
+			var commonDataProvider = loadParams.DataProvider;
 
-			var rangeTimePeriod = relativeTimePeriod.ToRange(DateTime.Now);
+			var users = new List<DashboardUser>();
+			var versions = commonDataProvider.Versions;
 
-			var query = new Query(@"SELECT CREATED_AT FROM FEATURE_EXCEPTIONS WHERE @FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE", new[]
+			foreach (var userRow in commonDataProvider.Users.Values)
 			{
-				new QueryParameter(@"@FROMDATE", rangeTimePeriod.FromDate),
-				new QueryParameter(@"@TODATE", rangeTimePeriod.ToDate),
-			});
-
-
-			var step = ((long)relativeTimePeriod.TimeOffset.TotalMilliseconds) / samples;
-			var baseDate = rangeTimePeriod.FromDate;
-
-			var result = new Dictionary<DateTime, int>(samples);
-			var map = new int[samples];
-
-			context.Fill(result, (r, m) =>
-			{
-				var delta = ((long)(r.GetDateTime(0) - baseDate).TotalMilliseconds) / step;
-				map[delta]++;
-			}, query);
-
-			for (var i = 0; i < map.Length; i++)
-			{
-				var value = map[i];
-				result.Add(baseDate.AddMilliseconds(step * i), value);
+				users.Add(new DashboardUser(userRow.Id, userRow.Name, versions[userRow.VersionId].Name, userRow.ReplicatedAt));
 			}
 
-			return result;
+			return Task.FromResult(users);
 		}
 
-		public static DashboardVersion[] GetVersions(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
+		public static Task<List<DashboardVersion>> GetVersionsAsync(DashboarLoadParams loadParams)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (versions == null) throw new ArgumentNullException(nameof(versions));
+			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			var dashboardVersions = new DashboardVersion[versions.Count];
+			var context = loadParams.Context;
+			var versions = loadParams.DataProvider.Versions;
+			var dashboardVersions = new List<DashboardVersion>(versions.Count);
 
 			var exceptions = CountExceptionsByVersion(context, versions);
 			var users = CountUsersByVersion(context, versions);
 
-			var index = 0;
 			foreach (var versionPair in versions)
 			{
 				var versionId = versionPair.Key;
@@ -73,16 +57,53 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				int exceptionsCount;
 				exceptions.TryGetValue(versionId, out exceptionsCount);
 
-				dashboardVersions[index++] = new DashboardVersion(version, usersCount, exceptionsCount);
+				dashboardVersions.Add(new DashboardVersion(version, usersCount, exceptionsCount));
 			}
 
-			Array.Sort(dashboardVersions, (x, y) =>
+			dashboardVersions.Sort((x, y) =>
 			{
 				var cmp = string.Compare(x.Version.Name, y.Version.Name, StringComparison.OrdinalIgnoreCase);
 				return cmp;
 			});
 
-			return dashboardVersions;
+			return Task.FromResult(dashboardVersions);
+		}
+
+		public static Task<List<DashboardException>> GetExceptionsAsync(DashboarLoadParams loadParams)
+		{
+			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
+
+			var settings = loadParams.Settings;
+			var relativeTimePeriod = settings.ExceptionsRelativeTimePeriod;
+			var samples = settings.ExceptionsChartSamples;
+
+			var rangeTimePeriod = relativeTimePeriod.ToRange(DateTime.Now);
+
+			var query = new Query(@"SELECT CREATED_AT FROM FEATURE_EXCEPTIONS WHERE @FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE", new[]
+			{
+				new QueryParameter(@"@FROMDATE", rangeTimePeriod.FromDate),
+				new QueryParameter(@"@TODATE", rangeTimePeriod.ToDate),
+			});
+
+			var step = ((long)relativeTimePeriod.TimeOffset.TotalMilliseconds) / samples;
+			var baseDate = rangeTimePeriod.FromDate;
+
+			var map = new int[samples];
+
+			loadParams.Context.Fill(new Dictionary<DateTime, int>(0), (r, m) =>
+			{
+				var delta = ((long)(r.GetDateTime(0) - baseDate).TotalMilliseconds) / step;
+				map[delta]++;
+			}, query);
+
+			var result = new List<DashboardException>(samples);
+
+			for (var i = 0; i < map.Length; i++)
+			{
+				result.Add(new DashboardException(baseDate.AddMilliseconds(step * i), map[i]));
+			}
+
+			return Task.FromResult(result);
 		}
 
 		private static Dictionary<long, int> CountExceptionsByVersion(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
@@ -136,10 +157,12 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 	public sealed class DashboardSettings
 	{
-		public int ExceptionChartSamples { get; } = 30;
-		public RelativeTimePeriod ExceptionsRelativeTimePeriod { get; } = new RelativeTimePeriod(TimeSpan.FromHours(1), RelativeTimeType.Past);
+		public int UsersChartSamples { get; } = 5;
+		public int VersionsChartSamples { get; } = 10;
 
-		public List<RelativeTimePeriod> RelativeTimePeriods { get; } = new List<RelativeTimePeriod>();
+		// Exceptions
+		public int ExceptionsChartSamples { get; } = 30;
+		public RelativeTimePeriod ExceptionsRelativeTimePeriod { get; } = new RelativeTimePeriod(TimeSpan.FromDays(2), RelativeTimeType.Past);
 	}
 
 	public sealed class DashboardViewModel : ViewModel
@@ -153,9 +176,22 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public ObservableCollection<DashboardFeatureByTimeViewModel> SlowestFeatures => this.Dashboard.SlowestFeatures;
 
 		public string UsersCaption { get; }
+		public string StatsCaption { get; }
 		public string VersionStatsReportCaption { get; }
 		public string ExceptionsCaptions { get; }
 		public string UsageCaption { get; }
+
+		private bool _isUsersLoading;
+		public bool IsUsersLoading
+		{
+			get { return _isUsersLoading; }
+			set { this.SetField(ref _isUsersLoading, value); }
+		}
+
+		public int TotalUsers { get; } = 123;
+		public int TotalVersions { get; } = 7;
+		public int TotalExceptions { get; } = 138457;
+		public int TotalFeatures { get; } = 35;
 
 		public DashboardViewModel(Dashboard dashboard)
 		{
@@ -163,30 +199,47 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 			this.Dashboard = dashboard;
 
+			// TODO : Load captions !!!!
 			this.UsersCaption = @"Users";
+			this.StatsCaption = @"Statistics";
+
+			//Users: 123
+			//Versions: 7
+			//Exceptions: 123457
+			//Features: 35
+
 			this.VersionStatsReportCaption = @"By Version statistics";
 			this.UsageCaption = @"Most used/Slowest features";
 			this.ExceptionsCaptions = @"Exceptions for the last 24 hours";
 		}
 
-		public void Load(ITransactionContext context,
-			Func<ITransactionContext, Dictionary<long, DbFeatureVersionRow>, DashboardVersion[]> versionsProvider,
-			Func<ITransactionContext, DashboardSettings, Dictionary<DateTime, int>> exceptionsProvider)
+		public Task LoadAsync(ITransactionContext context,
+			Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider,
+			Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider,
+			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider
+			)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (usersProvider == null) throw new ArgumentNullException(nameof(usersProvider));
 			if (versionsProvider == null) throw new ArgumentNullException(nameof(versionsProvider));
 			if (exceptionsProvider == null) throw new ArgumentNullException(nameof(exceptionsProvider));
 
-			this.Dashboard.Load(context, versionsProvider, exceptionsProvider);
+			Func<DashboarLoadParams, Task<List<DashboardUser>>> withProgressUsersProvider = arg =>
+			{
+				this.IsUsersLoading = true;
+				return usersProvider(arg).ContinueWith(t =>
+				{
+					this.IsUsersLoading = false;
+					return t.Result;
+				}, TaskScheduler.FromCurrentSynchronizationContext());
+			};
+
+			return this.Dashboard.LoadAsync(context, withProgressUsersProvider, versionsProvider, exceptionsProvider);
 		}
 	}
 
 	public sealed class Dashboard
 	{
-		private CommonDataProvider DataProvider { get; } = new CommonDataProvider();
-
-		private DashboardFeatureManager FeatureManager { get; } = new DashboardFeatureManager(new DashboardFeatureAdapter());
-
 		public ObservableCollection<DashboardUserViewModel> Users { get; } = new ObservableCollection<DashboardUserViewModel>();
 		public ObservableCollection<DashboardVersionViewModel> Versions { get; } = new ObservableCollection<DashboardVersionViewModel>();
 		public ObservableCollection<DashboardExceptionViewModel> Exceptions { get; } = new ObservableCollection<DashboardExceptionViewModel>();
@@ -194,42 +247,43 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public ObservableCollection<DashboardFeatureByCountViewModel> LeastUsedFeatures { get; } = new ObservableCollection<DashboardFeatureByCountViewModel>();
 		public ObservableCollection<DashboardFeatureByTimeViewModel> SlowestFeatures { get; } = new ObservableCollection<DashboardFeatureByTimeViewModel>();
 
-		public void Load(ITransactionContext context,
-			Func<ITransactionContext, Dictionary<long, DbFeatureVersionRow>, DashboardVersion[]> versionsProvider,
-			Func<ITransactionContext, DashboardSettings, Dictionary<DateTime, int>> exceptionsProvider)
+		public async Task LoadAsync(ITransactionContext context,
+			Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider,
+			Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider,
+			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider
+			)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (usersProvider == null) throw new ArgumentNullException(nameof(usersProvider));
 			if (versionsProvider == null) throw new ArgumentNullException(nameof(versionsProvider));
 			if (exceptionsProvider == null) throw new ArgumentNullException(nameof(exceptionsProvider));
 
-			// TODO : !!!
-			// Where N1 & N2 are settings
-			//- Top N1 Most/Least used features
-			//- Top N2 Slowest features
+			// Load common data - users, version, settings, features
+			var dataProvider = new CommonDataProvider();
+			dataProvider.Load(context);
 
-			// TODO : Load in parallel with spinning bar progress
-			// TODO : Add big numbers for
-			// Versions
-			// Exceptions
-			// Users
+			var settings = GetDashboardSettings(dataProvider);
+			var loadParams = new DashboarLoadParams(context, settings, dataProvider);
 
-			this.DataProvider.Load(context);
+			var tasks = new[]
+			{
+				this.LoadUsersAsync(loadParams, usersProvider),
+				this.LoadVersionsAsync(loadParams, versionsProvider),
+				this.LoadExceptionsAsync(loadParams, exceptionsProvider),
+				//this.LoadMostUsedFeaturesAsync(loadParams, null),
+				//this.LoadLeastUsedFeaturesAsync(loadParams, null),
+				//this.LoadSlowestUsedFeaturesAsync(loadParams, null),
+			};
 
-			var settings = GetDashboardSettings(this.DataProvider.Settings);
-
-			this.LoadUsers();
-			this.LoadVersions(context, versionsProvider);
-			this.LoadFeatures(context);
-			this.LoadExceptions(context, settings, exceptionsProvider);
+			await Task.WhenAll(tasks);
 		}
 
-		private static DashboardSettings GetDashboardSettings(Dictionary<string, List<Setting>> byContextSettings)
+		private static DashboardSettings GetDashboardSettings(CommonDataProvider dataProvider)
 		{
-			var settings = new DashboardSettings();
-
 			List<Setting> values;
-			byContextSettings.TryGetValue(nameof(Dashboard), out values);
+			dataProvider.Settings.TryGetValue(nameof(Dashboard), out values);
 
+			var settings = new DashboardSettings();
 			foreach (var setting in values ?? new List<Setting>(0))
 			{
 				//TODO : !!!
@@ -239,24 +293,23 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				//	break;
 				//}
 			}
-
 			return settings;
 		}
 
-		private void LoadUsers()
+		private async Task LoadUsersAsync(DashboarLoadParams loadParams, Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider)
 		{
-			var versions = this.DataProvider.Versions;
+			var users = await usersProvider(loadParams);
 
 			this.Users.Clear();
-			foreach (var user in this.DataProvider.Users.Values)
+			foreach (var user in users)
 			{
-				this.Users.Add(new DashboardUserViewModel(new DashboardUser(user.Id, user.Name, versions[user.VersionId].Name, user.ReplicatedAt)));
+				this.Users.Add(new DashboardUserViewModel(user));
 			}
 		}
 
-		private void LoadVersions(ITransactionContext context, Func<ITransactionContext, Dictionary<long, DbFeatureVersionRow>, DashboardVersion[]> versionsProvider)
+		private async Task LoadVersionsAsync(DashboarLoadParams loadParams, Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider)
 		{
-			var versions = versionsProvider(context, this.DataProvider.Versions);
+			var versions = await versionsProvider(loadParams);
 
 			this.Versions.Clear();
 			foreach (var version in versions)
@@ -265,46 +318,67 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			}
 		}
 
-		private void LoadExceptions(ITransactionContext context, DashboardSettings settings, Func<ITransactionContext, DashboardSettings, Dictionary<DateTime, int>> exceptionsProvider)
+		private async Task LoadExceptionsAsync(DashboarLoadParams loadParams, Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider)
 		{
-			var exceptions = exceptionsProvider(context, settings);
+			var exceptions = await exceptionsProvider(loadParams);
 
 			this.Exceptions.Clear();
 			foreach (var exception in exceptions)
 			{
-				this.Exceptions.Add(new DashboardExceptionViewModel(new DashboardException(exception.Key, exception.Value)));
+				this.Exceptions.Add(new DashboardExceptionViewModel(exception));
 			}
 		}
 
-		private void LoadFeatures(ITransactionContext context)
+		private async Task LoadMostUsedFeaturesAsync(DashboarLoadParams loadParams, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> featuresProvider)
 		{
-			var mostUsedLimit = 10;
-			var leastUsedLimit = 10;
-			var slowestLimit = 10;
-
-			var mostUsed = this.FeatureManager.GetMostUsed(context, mostUsedLimit);
-			var leastUsed = this.FeatureManager.GetLeastUsed(context, leastUsedLimit);
-			var slowest = this.FeatureManager.GetSlowest(context, slowestLimit);
-
-			this.MostUsedFeatures.Clear();
-			foreach (var byCount in mostUsed)
-			{
-				this.MostUsedFeatures.Add(new DashboardFeatureByCountViewModel(byCount));
-			}
-
-			this.LeastUsedFeatures.Clear();
-			foreach (var byCount in leastUsed)
-			{
-				this.LeastUsedFeatures.Add(new DashboardFeatureByCountViewModel(byCount));
-			}
-
-			this.SlowestFeatures.Clear();
-			foreach (var byTime in slowest)
-			{
-				this.SlowestFeatures.Add(new DashboardFeatureByTimeViewModel(byTime));
-			}
+			//var mostUsedLimit = 10;
+			//var mostUsed = this.FeatureManager.GetMostUsed(context, mostUsedLimit);
+			//this.MostUsedFeatures.Clear();
+			//foreach (var byCount in mostUsed)
+			//{
+			//	this.MostUsedFeatures.Add(new DashboardFeatureByCountViewModel(byCount));
+			//}
 		}
 
+		private async Task LoadLeastUsedFeaturesAsync(DashboarLoadParams loadParams, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> featuresProvider)
+		{
+			//var leastUsedLimit = 10;
+			//var leastUsed = this.FeatureManager.GetLeastUsed(context, leastUsedLimit);
+			//this.LeastUsedFeatures.Clear();
+			//foreach (var byCount in leastUsed)
+			//{
+			//	this.LeastUsedFeatures.Add(new DashboardFeatureByCountViewModel(byCount));
+			//}
+		}
+
+		private async Task LoadSlowestUsedFeaturesAsync(DashboarLoadParams loadParams, Func<DashboarLoadParams, Task<List<DashboardFeatureByTime>>> featuresProvider)
+		{
+			//var slowestLimit = 10;
+			//var slowest = this.FeatureManager.GetSlowest(context, slowestLimit);
+			//this.SlowestFeatures.Clear();
+			//foreach (var byTime in slowest)
+			//{
+			//	this.SlowestFeatures.Add(new DashboardFeatureByTimeViewModel(byTime));
+			//}
+		}
+	}
+
+	public sealed class DashboarLoadParams
+	{
+		public ITransactionContext Context { get; }
+		public DashboardSettings Settings { get; }
+		public CommonDataProvider DataProvider { get; }
+
+		public DashboarLoadParams(ITransactionContext context, DashboardSettings settings, CommonDataProvider dataProvider)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (settings == null) throw new ArgumentNullException(nameof(settings));
+			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
+
+			this.Context = context;
+			this.Settings = settings;
+			this.DataProvider = dataProvider;
+		}
 	}
 
 	public sealed class DashboardVersionViewModel : ViewModel
