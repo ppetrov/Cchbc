@@ -40,7 +40,7 @@ namespace Cchbc.Features.Admin.Providers
 				this.Versions.Add(row.Id, new DbFeatureVersionRow(row.Id, row.Name));
 			}
 
-			foreach (var row in context.Execute(new Query<DbFeatureUserRow>(@"SELECT ID, NAME, VERSION_ID, REPLICATED_AT FROM FEATURE_USERS", this.DbFeatureUserRowCreator)))
+			foreach (var row in context.Execute(new Query<DbFeatureUserRow>(@"SELECT ID, NAME, REPLICATED_AT, VERSION_ID FROM FEATURE_USERS", this.DbFeatureUserRowCreator)))
 			{
 				this.Users.Add(row.Id, row);
 			}
@@ -48,7 +48,7 @@ namespace Cchbc.Features.Admin.Providers
 
 		private DbFeatureUserRow DbFeatureUserRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureUserRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2), r.GetDateTime(3));
+			return new DbFeatureUserRow(r.GetInt64(0), r.GetString(1), r.GetDateTime(2), r.GetInt64(3));
 		}
 
 		private static DbFeatureVersionRow DbFeatureVersionCreator(IFieldDataReader r)

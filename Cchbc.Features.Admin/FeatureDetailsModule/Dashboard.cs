@@ -18,20 +18,28 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		{
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			// TODO : Load the last N users
-			// TODO : We don't need all the users ???
-			// TODO : Probably the last 5-10 users performed an replication
 			var commonDataProvider = loadParams.DataProvider;
+
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"@MAXUSERS", loadParams.Settings.MaxUsersToLoad),
+			};
+			var query = new Query<DbFeatureUserRow>(@"SELECT ID, NAME, REPLICATED_AT, VERSION_ID FROM FEATURE_USERS ORDER BY REPLICATED_AT DESC LIMIT @MAXUSERS", FeatureUserRowCreator, sqlParams);
 
 			var users = new List<DashboardUser>();
 			var versions = commonDataProvider.Versions;
 
-			foreach (var userRow in commonDataProvider.Users.Values)
+			foreach (var userRow in loadParams.Context.Execute(query))
 			{
 				users.Add(new DashboardUser(userRow.Id, userRow.Name, versions[userRow.VersionId].Name, userRow.ReplicatedAt));
 			}
 
 			return Task.FromResult(users);
+		}
+
+		private static DbFeatureUserRow FeatureUserRowCreator(IFieldDataReader r)
+		{
+			return new DbFeatureUserRow(r.GetInt64(0), r.GetString(1), r.GetDateTime(2), r.GetInt64(3));
 		}
 
 		public static Task<List<DashboardVersion>> GetVersionsAsync(DashboarLoadParams loadParams)
@@ -170,7 +178,8 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 	public sealed class DashboardSettings
 	{
-		public int UsersChartSamples { get; } = 5;
+		public int MaxUsersToLoad { get; } = 5;
+
 		public int VersionsChartSamples { get; } = 10;
 
 		// Exceptions
