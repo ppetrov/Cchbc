@@ -12,9 +12,6 @@ using Cchbc.Objects;
 
 namespace Cchbc.Features.Admin.FeatureDetailsModule
 {
-	// TODO : We don't need all the users ???
-	// TODO : Probably the last 5-10 users performed an replication
-
 	public static class DashboardDataProvider
 	{
 		public static Task<List<DashboardUser>> GetUsersAsync(DashboarLoadParams loadParams)
@@ -22,6 +19,8 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
 			// TODO : Load the last N users
+			// TODO : We don't need all the users ???
+			// TODO : Probably the last 5-10 users performed an replication
 			var commonDataProvider = loadParams.DataProvider;
 
 			var users = new List<DashboardUser>();
@@ -106,6 +105,18 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			return Task.FromResult(result);
 		}
 
+		public static Task<List<DashboardFeatureByCount>> GetMostUsedFeaturesAsync(DashboarLoadParams loadParams)
+		{
+			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
+
+			var mostUsedFeatures = new List<DashboardFeatureByCount>();
+
+			mostUsedFeatures.Add(new DashboardFeatureByCount(1, @"Copy Activity", 123));
+			mostUsedFeatures.Add(new DashboardFeatureByCount(2, @"Close Activity", 77));
+
+			return Task.FromResult(mostUsedFeatures);
+		}
+
 		private static Dictionary<long, int> CountExceptionsByVersion(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -153,6 +164,8 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 			return map;
 		}
+
+
 	}
 
 	public sealed class DashboardSettings
@@ -202,12 +215,6 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			// TODO : Load captions !!!!
 			this.UsersCaption = @"Users";
 			this.StatsCaption = @"Statistics";
-
-			//Users: 123
-			//Versions: 7
-			//Exceptions: 123457
-			//Features: 35
-
 			this.VersionStatsReportCaption = @"By Version statistics";
 			this.UsageCaption = @"Most used/Slowest features";
 			this.ExceptionsCaptions = @"Exceptions for the last 24 hours";
@@ -216,13 +223,13 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public Task LoadAsync(ITransactionContext context,
 			Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider,
 			Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider,
-			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider
-			)
+			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (usersProvider == null) throw new ArgumentNullException(nameof(usersProvider));
 			if (versionsProvider == null) throw new ArgumentNullException(nameof(versionsProvider));
 			if (exceptionsProvider == null) throw new ArgumentNullException(nameof(exceptionsProvider));
+			if (mostUsedFeaturesProvider == null) throw new ArgumentNullException(nameof(mostUsedFeaturesProvider));
 
 			Func<DashboarLoadParams, Task<List<DashboardUser>>> withProgressUsersProvider = arg =>
 			{
@@ -234,7 +241,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				}, TaskScheduler.FromCurrentSynchronizationContext());
 			};
 
-			return this.Dashboard.LoadAsync(context, withProgressUsersProvider, versionsProvider, exceptionsProvider);
+			return this.Dashboard.LoadAsync(context, withProgressUsersProvider, versionsProvider, exceptionsProvider, mostUsedFeaturesProvider);
 		}
 	}
 
@@ -250,8 +257,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public async Task LoadAsync(ITransactionContext context,
 			Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider,
 			Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider,
-			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider
-			)
+			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (usersProvider == null) throw new ArgumentNullException(nameof(usersProvider));
@@ -270,7 +276,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				this.LoadUsersAsync(loadParams, usersProvider),
 				this.LoadVersionsAsync(loadParams, versionsProvider),
 				this.LoadExceptionsAsync(loadParams, exceptionsProvider),
-				//this.LoadMostUsedFeaturesAsync(loadParams, null),
+				this.LoadMostUsedFeaturesAsync(loadParams, mostUsedFeaturesProvider),
 				//this.LoadLeastUsedFeaturesAsync(loadParams, null),
 				//this.LoadSlowestUsedFeaturesAsync(loadParams, null),
 			};

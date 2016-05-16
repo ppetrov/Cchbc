@@ -28,8 +28,8 @@ namespace Cchbc.Features.Admin.UI
 					await this.ViewModel.LoadAsync(ctx,
 						DashboardDataProvider.GetUsersAsync,
 						DashboardDataProvider.GetVersionsAsync,
-						DashboardDataProvider.GetExceptionsAsync
-						);
+						DashboardDataProvider.GetExceptionsAsync,
+						DashboardDataProvider.GetMostUsedFeaturesAsync);
 
 					ctx.Complete();
 				}
