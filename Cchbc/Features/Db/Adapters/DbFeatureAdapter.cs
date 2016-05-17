@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Features.Db.Objects;
 
@@ -131,25 +132,25 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			context.Execute(new Query(@"DROP TABLE FEATURE_CONTEXTS"));
 		}
 
-		public static List<DbContextRow> GetContexts(ITransactionContext context)
+		public static Task<List<DbContextRow>> GetContexts(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return context.Execute(GetContextsQuery);
+			return Task.FromResult(context.Execute(GetContextsQuery));
 		}
 
-		public static List<DbFeatureStepRow> GetSteps(ITransactionContext context)
+		public static Task<List<DbFeatureStepRow>> GetSteps(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return context.Execute(GetStepsQuery);
+			return Task.FromResult(context.Execute(GetStepsQuery));
 		}
 
-		public static List<DbFeatureRow> GetFeatures(ITransactionContext context)
+		public static Task<List<DbFeatureRow>> GetFeatures(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return context.Execute(GetFeaturesQuery);
+			return Task.FromResult(context.Execute(GetFeaturesQuery));
 		}
 
 		public static long InsertContext(ITransactionContext context, string name)

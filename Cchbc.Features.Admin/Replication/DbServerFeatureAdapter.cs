@@ -248,21 +248,21 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return DbFeatureAdapter.GetContexts(context);
+			return DbFeatureAdapter.GetContexts(context).Result;
 		}
 
 		public static List<DbFeatureStepRow> GetSteps(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return DbFeatureAdapter.GetSteps(context);
+			return DbFeatureAdapter.GetSteps(context).Result;
 		}
 
 		public static List<DbFeatureRow> GetFeatures(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return DbFeatureAdapter.GetFeatures(context);
+			return DbFeatureAdapter.GetFeatures(context).Result;
 		}
 
 		public static List<DbFeatureEntryRow> GetFeatureEntryRows(ITransactionContext context)

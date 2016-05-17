@@ -114,7 +114,7 @@ namespace Cchbc.ConsoleClient
 				var dataProvider = new CommonDataProvider();
 				using (var ctx = creator.Create())
 				{
-					dataProvider.Load(ctx);
+					dataProvider.LoadAsync(ctx).Wait();
 
 					ctx.Complete();
 				}

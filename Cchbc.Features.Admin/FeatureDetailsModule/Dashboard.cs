@@ -18,7 +18,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public ObservableCollection<DashboardFeatureByCountViewModel> LeastUsedFeatures { get; } = new ObservableCollection<DashboardFeatureByCountViewModel>();
 		public ObservableCollection<DashboardFeatureByTimeViewModel> SlowestFeatures { get; } = new ObservableCollection<DashboardFeatureByTimeViewModel>();
 
-		public Task LoadAsync(ITransactionContext context,
+		public async Task LoadAsync(ITransactionContext context,
 			Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider,
 			Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider,
 			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider,
@@ -37,7 +37,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 			// Load common data - users, version, settings, features
 			var dataProvider = new CommonDataProvider();
-			dataProvider.Load(context);
+			await dataProvider.LoadAsync(context);
 
 			var settings = GetDashboardSettings(dataProvider.Settings);
 			var loadParams = new DashboarLoadParams(context, settings, dataProvider);
@@ -52,7 +52,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				this.LoadSlowestUsedFeaturesAsync(loadParams, slowestFeaturesProvider),
 			};
 
-			return Task.WhenAll(tasks);
+			await Task.WhenAll(tasks);
 		}
 
 		private static DashboardSettings GetDashboardSettings(Dictionary<string, List<Setting>> settings)

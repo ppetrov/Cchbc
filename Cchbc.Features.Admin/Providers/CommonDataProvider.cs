@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Cchbc.Common;
 using Cchbc.Data;
 using Cchbc.Features.Admin.Objects;
@@ -16,30 +17,29 @@ namespace Cchbc.Features.Admin.Providers
 		public Dictionary<long, DbFeatureUserRow> Users { get; } = new Dictionary<long, DbFeatureUserRow>();
 		public Dictionary<string, List<Setting>> Settings { get; } = new Dictionary<string, List<Setting>>();
 
-		public void Load(ITransactionContext context)
+		public async Task LoadAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			this.Contexts.Clear();
-			this.Features.Clear();
-			this.Versions.Clear();
-			this.Users.Clear();
-
-			foreach (var row in DbFeatureAdapter.GetContexts(context))
+			foreach (var row in await DbFeatureAdapter.GetContexts(context))
 			{
 				this.Contexts.Add(row.Id, new DbContextRow(row.Id, NamingConventions.ApplyNaming(row.Name)));
 			}
 
-			foreach (var row in DbFeatureAdapter.GetFeatures(context))
+			this.Features.Clear();
+			foreach (var row in await DbFeatureAdapter.GetFeatures(context))
 			{
 				this.Features.Add(row.Id, new DbFeatureRow(row.Id, NamingConventions.ApplyNaming(row.Name), row.ContextId));
 			}
 
+			this.Versions.Clear();
 			foreach (var row in context.Execute(new Query<DbFeatureVersionRow>(@"SELECT ID, NAME FROM FEATURE_VERSIONS", DbFeatureVersionCreator)))
 			{
 				this.Versions.Add(row.Id, new DbFeatureVersionRow(row.Id, row.Name));
 			}
 
+			this.Users.Clear();
 			foreach (var row in context.Execute(new Query<DbFeatureUserRow>(@"SELECT ID, NAME, REPLICATED_AT, VERSION_ID FROM FEATURE_USERS", this.DbFeatureUserRowCreator)))
 			{
 				this.Users.Add(row.Id, row);
