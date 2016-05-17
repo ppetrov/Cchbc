@@ -25,7 +25,7 @@ namespace Cchbc.Features
 			}
 		}
 
-		public async Task DropSchema()
+		public async Task DropSchemaAsync()
 		{
 			using (var context = this.ContextCreator.Create())
 			{
