@@ -54,7 +54,7 @@ namespace Cchbc.Features.Db.Adapters
 		private static readonly Query<DbFeatureStepRow> GetStepsQuery = new Query<DbFeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator);
 		private static readonly Query<DbFeatureRow> GetFeaturesQuery = new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
 
-		public static void CreateSchema(ITransactionContext context)
+		public static Task CreateSchemaAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -118,9 +118,11 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 		REFERENCES [FEATURE_STEPS] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
+
+			return Task.FromResult(true);
 		}
 
-		public static void DropSchema(ITransactionContext context)
+		public static Task DropSchemaAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -130,6 +132,8 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			context.Execute(new Query(@"DROP TABLE FEATURES"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_STEPS"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_CONTEXTS"));
+
+			return Task.FromResult(true);
 		}
 
 		public static Task<List<DbContextRow>> GetContextsAsync(ITransactionContext context)

@@ -75,7 +75,7 @@ namespace Cchbc.ConsoleClient
 				{
 					var w = Stopwatch.StartNew();
 
-					DbFeatureServerManager.Replicate(server, client, @"ppetrov", @"4.1.2.55");
+					DbFeatureServerManager.ReplicateAsync(server, client, @"ppetrov", @"4.1.2.55");
 
 					client.Complete();
 					server.Complete();
@@ -98,7 +98,7 @@ namespace Cchbc.ConsoleClient
 			{
 				Console.WriteLine(DateTime.Now.Millisecond);
 				return;
-				//CreateSchema(serverDb);
+				//CreateSchemaAsync(serverDb);
 				//return;
 
 				for (var i = 0; i < 1; i++)

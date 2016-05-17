@@ -22,13 +22,7 @@ namespace Cchbc.Features.Admin.Replication
 			DbServerFeatureAdapter.DropSchema(context);
 		}
 
-		public static void UploadPicture(string user, byte[] imageBytes)
-		{
-			// TODO : !!! Better API ???
-			// TODO : !!!
-		}
-
-		public static async Task Replicate(ITransactionContext serverContext, ITransactionContext clientContext, string userName, string version)
+		public static async Task ReplicateAsync(ITransactionContext serverContext, ITransactionContext clientContext, string userName, string version)
 		{
 			if (serverContext == null) throw new ArgumentNullException(nameof(serverContext));
 			if (clientContext == null) throw new ArgumentNullException(nameof(clientContext));

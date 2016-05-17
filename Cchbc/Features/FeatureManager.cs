@@ -15,21 +15,21 @@ namespace Cchbc.Features
 
 		public ITransactionContextCreator ContextCreator { get; set; }
 
-		public void CreateSchema()
+		public async Task CreateSchemaAsync()
 		{
 			using (var context = this.ContextCreator.Create())
 			{
-				DbFeatureAdapter.CreateSchema(context);
+				await DbFeatureAdapter.CreateSchemaAsync(context);
 
 				context.Complete();
 			}
 		}
 
-		public void DropSchema()
+		public async Task DropSchema()
 		{
 			using (var context = this.ContextCreator.Create())
 			{
-				DbFeatureAdapter.DropSchema(context);
+				await DbFeatureAdapter.DropSchemaAsync(context);
 
 				context.Complete();
 			}
