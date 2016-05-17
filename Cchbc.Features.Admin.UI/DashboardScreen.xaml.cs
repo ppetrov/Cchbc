@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Cchbc.Features.Admin.FeatureDetailsModule;
@@ -29,7 +27,9 @@ namespace Cchbc.Features.Admin.UI
 						DashboardDataProvider.GetUsersAsync,
 						DashboardDataProvider.GetVersionsAsync,
 						DashboardDataProvider.GetExceptionsAsync,
-						DashboardDataProvider.GetMostUsedFeaturesAsync);
+						DashboardDataProvider.GetMostUsedFeaturesAsync,
+						DashboardDataProvider.GetLeastUsedFeaturesAsync,
+						DashboardDataProvider.GetSlowestFeaturesAsync);
 
 					ctx.Complete();
 				}

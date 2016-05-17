@@ -47,7 +47,6 @@
 
                 <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
                     <TextBlock Text="{x:Bind ViewModel.UsersCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
-                    <ProgressRing IsActive="{x:Bind ViewModel.IsUsersLoading, Mode=OneWay}"></ProgressRing>
                 </Grid>
 
                 <ListView Grid.Row="1" ItemContainerStyle="{StaticResource FullLineItemStyle}"
@@ -130,7 +129,7 @@
 
                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Features" Style="{StaticResource ValueTextStyle}"></TextBlock>
                     <TextBlock Grid.Row="3" Grid.Column="1" Text="{x:Bind ViewModel.TotalFeatures}" Style="{StaticResource ValueTextStyle}"></TextBlock>
-                    
+
                 </Grid>
             </Grid>
 
