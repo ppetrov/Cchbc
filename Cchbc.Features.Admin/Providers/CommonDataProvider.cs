@@ -22,13 +22,13 @@ namespace Cchbc.Features.Admin.Providers
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			this.Contexts.Clear();
-			foreach (var row in await DbFeatureAdapter.GetContexts(context))
+			foreach (var row in await DbFeatureAdapter.GetContextsAsync(context))
 			{
 				this.Contexts.Add(row.Id, new DbContextRow(row.Id, NamingConventions.ApplyNaming(row.Name)));
 			}
 
 			this.Features.Clear();
-			foreach (var row in await DbFeatureAdapter.GetFeatures(context))
+			foreach (var row in await DbFeatureAdapter.GetFeaturesAsync(context))
 			{
 				this.Features.Add(row.Id, new DbFeatureRow(row.Id, NamingConventions.ApplyNaming(row.Name), row.ContextId));
 			}

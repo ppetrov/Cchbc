@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Features.Db.Adapters;
 using Cchbc.Features.Db.Objects;
@@ -244,25 +245,25 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return ExecureInsert(context, InserUserQuery);
 		}
 
-		public static List<DbContextRow> GetContexts(ITransactionContext context)
+		public static Task<List<DbContextRow>> GetContextsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return DbFeatureAdapter.GetContexts(context).Result;
+			return DbFeatureAdapter.GetContextsAsync(context);
 		}
 
-		public static List<DbFeatureStepRow> GetSteps(ITransactionContext context)
+		public static Task<List<DbFeatureStepRow>> GetStepsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return DbFeatureAdapter.GetSteps(context).Result;
+			return DbFeatureAdapter.GetStepsAsync(context);
 		}
 
-		public static List<DbFeatureRow> GetFeatures(ITransactionContext context)
+		public static Task<List<DbFeatureRow>> GetFeaturesAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return DbFeatureAdapter.GetFeatures(context).Result;
+			return DbFeatureAdapter.GetFeaturesAsync(context);
 		}
 
 		public static List<DbFeatureEntryRow> GetFeatureEntryRows(ITransactionContext context)

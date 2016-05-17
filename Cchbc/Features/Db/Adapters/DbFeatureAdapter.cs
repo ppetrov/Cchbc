@@ -132,21 +132,21 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			context.Execute(new Query(@"DROP TABLE FEATURE_CONTEXTS"));
 		}
 
-		public static Task<List<DbContextRow>> GetContexts(ITransactionContext context)
+		public static Task<List<DbContextRow>> GetContextsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return Task.FromResult(context.Execute(GetContextsQuery));
 		}
 
-		public static Task<List<DbFeatureStepRow>> GetSteps(ITransactionContext context)
+		public static Task<List<DbFeatureStepRow>> GetStepsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return Task.FromResult(context.Execute(GetStepsQuery));
 		}
 
-		public static Task<List<DbFeatureRow>> GetFeatures(ITransactionContext context)
+		public static Task<List<DbFeatureRow>> GetFeaturesAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 

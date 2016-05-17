@@ -183,7 +183,7 @@ namespace Cchbc.Features
 			this.Contexts.Clear();
 
 			// Fetch & add new values
-			foreach (var context in await DbFeatureAdapter.GetContexts(transactionContext))
+			foreach (var context in await DbFeatureAdapter.GetContextsAsync(transactionContext))
 			{
 				this.Contexts.Add(context.Name, context);
 			}
@@ -195,7 +195,7 @@ namespace Cchbc.Features
 			this.Steps.Clear();
 
 			// Fetch & add new values
-			foreach (var step in await DbFeatureAdapter.GetSteps(context))
+			foreach (var step in await DbFeatureAdapter.GetStepsAsync(context))
 			{
 				this.Steps.Add(step.Name, step);
 			}
@@ -207,7 +207,7 @@ namespace Cchbc.Features
 			this.Features.Clear();
 
 			// Fetch & add new values
-			foreach (var feature in await DbFeatureAdapter.GetFeatures(context))
+			foreach (var feature in await DbFeatureAdapter.GetFeaturesAsync(context))
 			{
 				var contextId = feature.ContextId;
 
