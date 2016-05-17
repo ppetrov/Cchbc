@@ -428,7 +428,7 @@ namespace Cchbc.App.OrderModule
 			feature.AddStep(nameof(LoadOrderDetails));
 			await this.LoadOrderDetails();
 
-			featureManager.Stop(feature);
+			featureManager.StopAsync(feature);
 		}
 
 		private async Task LoadOrderDetails()

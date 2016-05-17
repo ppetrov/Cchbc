@@ -157,7 +157,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return Task.FromResult(context.Execute(GetFeaturesQuery));
 		}
 
-		public static long InsertContext(ITransactionContext context, string name)
+		public static Task<long> InsertContextAsync(ITransactionContext context, string name)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
@@ -165,10 +165,10 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			// Set parameters values
 			NameSqlParams[0].Value = name;
 
-			return ExecureInsert(context, InsertContextQuery);
+			return ExecureInsertAsync(context, InsertContextQuery);
 		}
 
-		public static long InsertStep(ITransactionContext context, string name)
+		public static Task<long> InsertStepAsync(ITransactionContext context, string name)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
@@ -176,10 +176,10 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			// Set parameters values
 			NameSqlParams[0].Value = name;
 
-			return ExecureInsert(context, InsertStepQuery);
+			return ExecureInsertAsync(context, InsertStepQuery);
 		}
 
-		public static long InsertFeature(ITransactionContext context, string name, long contextId)
+		public static Task<long> InsertFeatureAsync(ITransactionContext context, string name, long contextId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
@@ -189,10 +189,10 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			InsertFeatureSqlParams[1].Value = contextId;
 
 			// Insert the record
-			return ExecureInsert(context, InsertFeatureQuery);
+			return ExecureInsertAsync(context, InsertFeatureQuery);
 		}
 
-		public static long InsertFeatureEntry(ITransactionContext context, long featureId, Feature feature, string details)
+		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, long featureId, Feature feature, string details)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
@@ -204,10 +204,10 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			InsertFeatureEntrySqlParams[2].Value = DateTime.Now;
 			InsertFeatureEntrySqlParams[3].Value = featureId;
 
-			return ExecureInsert(context, InsertClientFeatureEntryQuery);
+			return ExecureInsertAsync(context, InsertClientFeatureEntryQuery);
 		}
 
-		public static void InsertExceptionEntry(ITransactionContext context, long featureId, Exception exception)
+		public static Task InsertExceptionEntryAsync(ITransactionContext context, long featureId, Exception exception)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
@@ -220,9 +220,11 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 
 			// Insert the record
 			context.Execute(InsertExceptionQuery);
+
+			return Task.FromResult(true);
 		}
 
-		public static void InsertStepEntry(ITransactionContext context, long featureEntryId, long stepId, decimal timeSpent, string details)
+		public static Task InsertStepEntryAsync(ITransactionContext context, long featureEntryId, long stepId, decimal timeSpent, string details)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -234,6 +236,8 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 
 			// Insert the record
 			context.Execute(InsertStepEntryQuery);
+
+			return Task.FromResult(true);
 		}
 
 		private static DbContextRow DbContextCreator(IFieldDataReader r)
@@ -251,13 +255,13 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return new DbFeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
 		}
 
-		private static long ExecureInsert(ITransactionContext context, Query query)
+		private static Task<long> ExecureInsertAsync(ITransactionContext context, Query query)
 		{
 			// Insert the record
 			context.Execute(query);
 
 			// Get new Id back
-			return context.GetNewId();
+			return Task.FromResult(context.GetNewId());
 		}
 	}
 }
