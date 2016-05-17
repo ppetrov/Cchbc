@@ -70,7 +70,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 			var settings = loadParams.Settings;
 			var relativeTimePeriod = settings.ExceptionsRelativeTimePeriod;
-			var samples = settings.ExceptionsChartSamples;
+			var samples = settings.ExceptionsChartEntries;
 
 			var rangeTimePeriod = relativeTimePeriod.ToRange(DateTime.Now);
 

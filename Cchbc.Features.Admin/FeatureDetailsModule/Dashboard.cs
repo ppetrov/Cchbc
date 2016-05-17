@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Cchbc.Common;
 using Cchbc.Data;
 using Cchbc.Features.Admin.Providers;
-
+using Cchbc.Logs;
 
 namespace Cchbc.Features.Admin.FeatureDetailsModule
 {
@@ -37,7 +37,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			var dataProvider = new CommonDataProvider();
 			await dataProvider.LoadAsync(context);
 
-			var settings = GetDashboardSettings(dataProvider.Settings);
+			var settings = GetDashboardSettings(null, dataProvider.Settings);
 			var loadParams = new DashboarLoadParams(context, settings, dataProvider);
 
 			var tasks = new[]
@@ -51,27 +51,6 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			};
 
 			await Task.WhenAll(tasks);
-		}
-
-		private static DashboardSettings GetDashboardSettings(Dictionary<string, List<Setting>> settings)
-		{
-			var dashboardSettings = new DashboardSettings();
-
-			List<Setting> byContext;
-			if (settings.TryGetValue(nameof(Dashboard), out byContext))
-			{
-				foreach (var setting in byContext)
-				{
-					//TODO : !!!
-					//if (setting.Name.Equals(nameof(DashboardSettings.NumberOfUsersToDisplay), StringComparison.OrdinalIgnoreCase))
-					//{
-					//	settings.NumberOfUsersToDisplay = ValueParser.ParseInt(setting.Value) ?? 10;
-					//	break;
-					//}
-				}
-			}
-
-			return dashboardSettings;
 		}
 
 		private async Task LoadUsersAsync(DashboarLoadParams loadParams, Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider)
@@ -139,6 +118,49 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 				this.SlowestFeatures.Add(new DashboardFeatureByTimeViewModel(feature));
 			}
 		}
-	}
 
+		private static DashboardSettings GetDashboardSettings(ILog log, Dictionary<string, List<Setting>> settings)
+		{
+			var context = nameof(Dashboard);
+
+			List<Setting> byContext;
+			if (settings.TryGetValue(context, out byContext))
+			{
+				var maxUsers = default(int?);
+				var maxMostUsedFeatures = default(int?);
+
+				foreach (var setting in byContext)
+				{
+					var name = setting.Name;
+					var value = setting.Value;
+
+					if (name.Equals(nameof(DashboardSettings.MaxUsers), StringComparison.OrdinalIgnoreCase))
+					{
+						maxUsers = ValueParser.ParseInt(value, log);
+						break;
+					}
+					if (name.Equals(nameof(DashboardSettings.MaxMostUsedFeatures), StringComparison.OrdinalIgnoreCase))
+					{
+						maxMostUsedFeatures = ValueParser.ParseInt(value, log);
+						break;
+					}
+				}
+
+				if (maxUsers == null)
+				{
+					log.Log($@"Unable to find value for '{nameof(DashboardSettings.MaxUsers)}'", LogLevel.Warn);
+				}
+				if (maxMostUsedFeatures == null)
+				{
+					log.Log($@"Unable to find value for '{nameof(DashboardSettings.MaxMostUsedFeatures)}'", LogLevel.Warn);
+				}
+
+				return DashboardSettings.Default;
+			}
+
+			log.Log($@"Unable to find settings for '{context}'", LogLevel.Warn);
+
+			return DashboardSettings.Default;
+		}
+	}
 }

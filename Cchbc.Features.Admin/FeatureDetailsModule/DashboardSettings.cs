@@ -5,11 +5,24 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 {
 	public sealed class DashboardSettings
 	{
-		public int MaxUsers { get; } = 5;
-		public int MaxMostUsedFeatures { get; set; } = 10;
-		public int VersionsChartSamples { get; } = 10;
-		public int ExceptionsChartSamples { get; } = 30;
-		public RelativeTimePeriod ExceptionsRelativeTimePeriod { get; } = new RelativeTimePeriod(TimeSpan.FromDays(2), RelativeTimeType.Past);
+		public static readonly DashboardSettings Default = new DashboardSettings(10, 10, 10, 10, 24, new RelativeTimePeriod(TimeSpan.FromHours(1), RelativeTimeType.Past));
 
+		public int MaxUsers { get; }
+		public int MaxMostUsedFeatures { get; }
+		public int MaxLeastUsedFeatures { get; }
+
+		public int VersionsChartEntries { get; }
+		public int ExceptionsChartEntries { get; }
+		public RelativeTimePeriod ExceptionsRelativeTimePeriod { get; }
+
+		public DashboardSettings(int maxUsers, int maxMostUsedFeatures, int maxLeastUsedFeatures, int versionsChartEntries, int exceptionsChartEntries, RelativeTimePeriod exceptionsRelativeTimePeriod)
+		{
+			this.MaxUsers = maxUsers;
+			this.MaxMostUsedFeatures = maxMostUsedFeatures;
+			this.MaxLeastUsedFeatures = maxLeastUsedFeatures;
+			this.VersionsChartEntries = versionsChartEntries;
+			this.ExceptionsChartEntries = exceptionsChartEntries;
+			this.ExceptionsRelativeTimePeriod = exceptionsRelativeTimePeriod;
+		}
 	}
 }

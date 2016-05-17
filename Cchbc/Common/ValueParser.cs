@@ -17,9 +17,9 @@ namespace Cchbc.Common
 				{
 					return number;
 				}
-				log.Log($@"Unable to parse '{input}'", LogLevel.Warn);
 			}
 
+			log.Log($@"Unable to parse '{input}' to int", LogLevel.Warn);
 			return null;
 		}
 	}
