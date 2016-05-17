@@ -40,13 +40,13 @@ namespace Cchbc.Features.Admin.Providers
 			}
 
 			this.Users.Clear();
-			foreach (var row in context.Execute(new Query<DbFeatureUserRow>(@"SELECT ID, NAME, REPLICATED_AT, VERSION_ID FROM FEATURE_USERS", this.DbFeatureUserRowCreator)))
+			foreach (var row in context.Execute(new Query<DbFeatureUserRow>(@"SELECT ID, NAME, REPLICATED_AT, VERSION_ID FROM FEATURE_USERS", DbFeatureUserRowCreator)))
 			{
 				this.Users.Add(row.Id, row);
 			}
 		}
 
-		private DbFeatureUserRow DbFeatureUserRowCreator(IFieldDataReader r)
+		private static DbFeatureUserRow DbFeatureUserRowCreator(IFieldDataReader r)
 		{
 			return new DbFeatureUserRow(r.GetInt64(0), r.GetString(1), r.GetDateTime(2), r.GetInt64(3));
 		}

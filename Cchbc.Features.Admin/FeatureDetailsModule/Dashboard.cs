@@ -24,8 +24,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider,
 			Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider,
 			Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> leastUsedFeaturesProvider,
-			Func<DashboarLoadParams, Task<List<DashboardFeatureByTime>>> slowestFeaturesProvider
-			)
+			Func<DashboarLoadParams, Task<List<DashboardFeatureByTime>>> slowestFeaturesProvider)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (usersProvider == null) throw new ArgumentNullException(nameof(usersProvider));
@@ -35,7 +34,6 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			if (leastUsedFeaturesProvider == null) throw new ArgumentNullException(nameof(leastUsedFeaturesProvider));
 			if (slowestFeaturesProvider == null) throw new ArgumentNullException(nameof(slowestFeaturesProvider));
 
-			// Load common data - users, version, settings, features
 			var dataProvider = new CommonDataProvider();
 			await dataProvider.LoadAsync(context);
 
