@@ -9,7 +9,7 @@ namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
-		private Dictionary<string, DbContextRow> Contexts { get; } = new Dictionary<string, DbContextRow>(StringComparer.OrdinalIgnoreCase);
+		private Dictionary<string, DbFeatureContextRow> Contexts { get; } = new Dictionary<string, DbFeatureContextRow>(StringComparer.OrdinalIgnoreCase);
 		private Dictionary<string, DbFeatureStepRow> Steps { get; } = new Dictionary<string, DbFeatureStepRow>(StringComparer.OrdinalIgnoreCase);
 		private Dictionary<long, Dictionary<string, DbFeatureRow>> Features { get; } = new Dictionary<long, Dictionary<string, DbFeatureRow>>();
 
@@ -101,30 +101,30 @@ namespace Cchbc.Features
 			return await this.SaveFeatureAsync(context, await this.SaveContextAsync(context, feature.Context), feature.Name);
 		}
 
-		private async Task<DbContextRow> SaveContextAsync(ITransactionContext transactionContext, string name)
+		private async Task<DbFeatureContextRow> SaveContextAsync(ITransactionContext transactionContext, string name)
 		{
-			DbContextRow contextRow;
+			DbFeatureContextRow featureContextRow;
 
-			if (!this.Contexts.TryGetValue(name, out contextRow))
+			if (!this.Contexts.TryGetValue(name, out featureContextRow))
 			{
 				// Insert into database
 				var newContextId = await DbFeatureAdapter.InsertContextAsync(transactionContext, name);
 
-				contextRow = new DbContextRow(newContextId, name);
+				featureContextRow = new DbFeatureContextRow(newContextId, name);
 
 				// Insert the new context into the collection
-				this.Contexts.Add(name, contextRow);
+				this.Contexts.Add(name, featureContextRow);
 			}
 
-			return contextRow;
+			return featureContextRow;
 		}
 
-		private async Task<DbFeatureRow> SaveFeatureAsync(ITransactionContext transactionContext, DbContextRow contextRow, string name)
+		private async Task<DbFeatureRow> SaveFeatureAsync(ITransactionContext transactionContext, DbFeatureContextRow featureContextRow, string name)
 		{
 			// Check if the context exists
 			DbFeatureRow feature = null;
 
-			var contextId = contextRow.Id;
+			var contextId = featureContextRow.Id;
 			Dictionary<string, DbFeatureRow> features;
 			if (this.Features.TryGetValue(contextId, out features))
 			{

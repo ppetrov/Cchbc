@@ -1,0 +1,35 @@
+using System;
+using System.Collections.Generic;
+
+namespace Cchbc.Features.Db.Objects
+{
+	public sealed class FeatureClientData
+	{
+		public readonly List<DbFeatureContextRow> ContextRows;
+		public readonly List<DbFeatureStepRow> StepRows;
+		public readonly List<DbFeatureRow> FeatureRows;
+		public readonly List<DbFeatureEntryRow> FeatureEntryRows;
+		public readonly List<DbFeatureEntryStepRow> EntryStepRows;
+		public readonly List<DbFeatureExceptionRow> ExceptionRows;
+
+		public FeatureClientData(
+			List<DbFeatureContextRow> contextRows, List<DbFeatureStepRow> stepRows,
+			List<DbFeatureRow> featureRows, List<DbFeatureEntryRow> featureEntryRows,
+			List<DbFeatureEntryStepRow> entryStepRows, List<DbFeatureExceptionRow> exceptionRows)
+		{
+			if (contextRows == null) throw new ArgumentNullException(nameof(contextRows));
+			if (stepRows == null) throw new ArgumentNullException(nameof(stepRows));
+			if (featureRows == null) throw new ArgumentNullException(nameof(featureRows));
+			if (featureEntryRows == null) throw new ArgumentNullException(nameof(featureEntryRows));
+			if (entryStepRows == null) throw new ArgumentNullException(nameof(entryStepRows));
+			if (exceptionRows == null) throw new ArgumentNullException(nameof(exceptionRows));
+
+			this.ContextRows = contextRows;
+			this.StepRows = stepRows;
+			this.FeatureRows = featureRows;
+			this.FeatureEntryRows = featureEntryRows;
+			this.EntryStepRows = entryStepRows;
+			this.ExceptionRows = exceptionRows;
+		}
+	}
+}

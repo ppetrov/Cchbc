@@ -62,11 +62,8 @@
     <Compile Include="Objects\RelativeTimePeriod.cs" />
     <Compile Include="Objects\RelativeTimeType.cs" />
     <Compile Include="Providers\CommonDataProvider.cs" />
-    <Compile Include="Replication\DbExceptionRow.cs" />
-    <Compile Include="Replication\DbFeatureEntryRow.cs" />
-    <Compile Include="Replication\DbFeatureEntryStepRow.cs" />
     <Compile Include="Replication\DbFeatureServerManager.cs" />
-    <Compile Include="Replication\DbServerFeatureAdapter.cs" />
+    <Compile Include="Replication\DbFeatureServerAdapter.cs" />
     <Compile Include="NamingConventions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Objects\RangeTimePeriod.cs" />

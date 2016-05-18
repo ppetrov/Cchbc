@@ -2,65 +2,69 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cchbc.Data;
+using Cchbc.Features.Db.Adapters;
 using Cchbc.Features.Db.Objects;
 
 namespace Cchbc.Features.Admin.Replication
 {
 	public static class DbFeatureServerManager
 	{
-		public static void CreateSchema(ITransactionContext context)
+		public static Task CreateSchemaAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			DbServerFeatureAdapter.CreateSchema(context);
+			return DbFeatureServerAdapter.CreateSchemaAsync(context);
 		}
 
-		public static void DropSchema(ITransactionContext context)
+		public static Task DropSchemaAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			DbServerFeatureAdapter.DropSchema(context);
+			return DbFeatureServerAdapter.DropSchemaAsync(context);
 		}
 
-		public static async Task ReplicateAsync(ITransactionContext serverContext, ITransactionContext clientContext, string userName, string version)
+		public static async Task ReplicateAsync(string userName, string version, ITransactionContext serverContext, FeatureClientData clientData)
 		{
 			if (serverContext == null) throw new ArgumentNullException(nameof(serverContext));
-			if (clientContext == null) throw new ArgumentNullException(nameof(clientContext));
+			if (clientData == null) throw new ArgumentNullException(nameof(clientData));
 			if (userName == null) throw new ArgumentNullException(nameof(userName));
 			if (version == null) throw new ArgumentNullException(nameof(version));
 
-			DbServerFeatureAdapter.UpdateLastChangedFlag(serverContext);
+			var versionId = await DbFeatureServerAdapter.GetOrCreateVersionAsync(serverContext, version);
+			var userId = await DbFeatureServerAdapter.GetOrCreateUserAsync(serverContext, userName, versionId);
 
-			var versionId = await DbServerFeatureAdapter.GetOrCreateVersionAsync(serverContext, version);
-			var userId = await DbServerFeatureAdapter.GetOrCreateUserAsync(serverContext, userName, versionId);
+			var clientContextRows = clientData.ContextRows;
+			var clientStepRows = clientData.StepRows;
+			var clientFeatureRows = clientData.FeatureRows;
+			var clientFeatureEntryRows = clientData.FeatureEntryRows;
+			var clientFeatureEntryStepRows = clientData.EntryStepRows;
+			var clientFeatureExceptionRows = clientData.ExceptionRows;
 
-			var clientContextRows = await DbServerFeatureAdapter.GetContextsAsync(clientContext);
-			var serverContexts = await GetServerContextsAsync(serverContext);
-			var contextsMap = await ReplicateContextsAsync(serverContext, clientContextRows, serverContexts);
-
-			var clientStepRows = await DbServerFeatureAdapter.GetStepsAsync(clientContext);
-			var serverSteps = await GetServerStepAsync(serverContext);
-			var stepsMap = await ReplicateStepsAsync(serverContext, clientStepRows, serverSteps);
-
-			var clientFeatureRows = await DbServerFeatureAdapter.GetFeaturesAsync(clientContext);
+			var contextsMap = await ReplicateContextsAsync(serverContext, clientContextRows);
+			var stepsMap = await ReplicateStepsAsync(serverContext, clientStepRows);
 			var featuresMap = await ReplicateFeaturesAsync(serverContext, clientFeatureRows, contextsMap);
+			var featureEntriesMap = await ReplicateFeatureEntriesAsync(serverContext, clientFeatureEntryRows, featuresMap, userId, versionId);
 
-			var featureEntryRows = await DbServerFeatureAdapter.GetFeatureEntryRowsAsync(clientContext);
-			var featureEntriesMap = await ReplicateFeatureEntriesAsync(serverContext, featureEntryRows, featuresMap, userId, versionId);
-
-			foreach (var stepRow in await DbServerFeatureAdapter.GetEntryStepRowsAsync(clientContext))
+			foreach (var row in clientFeatureEntryStepRows)
 			{
-				await DbServerFeatureAdapter.InsertStepEntryAsync(serverContext, featureEntriesMap[stepRow.FeatureEntryId], stepsMap[stepRow.FeatureStepId], stepRow.TimeSpent, stepRow.Details);
+				var mappedFeatureEntryId = featureEntriesMap[row.FeatureEntryId];
+				var mappedStepId = stepsMap[row.FeatureStepId];
+				await DbFeatureAdapter.InsertStepEntryAsync(serverContext, mappedFeatureEntryId, mappedStepId, row.TimeSpent, row.Details);
 			}
 
-			foreach (var exceptionRow in await DbServerFeatureAdapter.GetExceptionsAsync(clientContext))
+			foreach (var row in clientFeatureExceptionRows)
 			{
-				await DbServerFeatureAdapter.InsertExceptionEntryAsync(serverContext, userId, versionId, featuresMap[exceptionRow.FeatureId], exceptionRow);
+				var mappedFeatureId = featuresMap[row.FeatureId];
+				await DbFeatureServerAdapter.InsertExceptionEntryAsync(serverContext, userId, versionId, mappedFeatureId, row.Message, row.StackTrace, row.CreatedAt);
 			}
+
+			await DbFeatureServerAdapter.UpdateLastChangedFlagAsync(serverContext);
 		}
 
-		private static async Task<Dictionary<long, long>> ReplicateContextsAsync(ITransactionContext serverContext, List<DbContextRow> clientContextRows, Dictionary<string, long> serverContexts)
+		private static async Task<Dictionary<long, long>> ReplicateContextsAsync(ITransactionContext serverContext, List<DbFeatureContextRow> clientContextRows)
 		{
+			var serverContexts = await GetServerContextsAsync(serverContext);
+
 			var map = new Dictionary<long, long>(clientContextRows.Count);
 
 			foreach (var context in clientContextRows)
@@ -68,7 +72,7 @@ namespace Cchbc.Features.Admin.Replication
 				long serverContextId;
 				if (!serverContexts.TryGetValue(context.Name, out serverContextId))
 				{
-					serverContextId = await DbServerFeatureAdapter.InsertContextAsync(serverContext, context.Name);
+					serverContextId = await DbFeatureAdapter.InsertContextAsync(serverContext, context.Name);
 				}
 
 				var clientContextId = context.Id;
@@ -80,7 +84,7 @@ namespace Cchbc.Features.Admin.Replication
 
 		private static async Task<Dictionary<string, long>> GetServerContextsAsync(ITransactionContext serverContext)
 		{
-			var contexts = await DbServerFeatureAdapter.GetContextsAsync(serverContext);
+			var contexts = await DbFeatureAdapter.GetContextsAsync(serverContext);
 
 			var serverContextsRows = new Dictionary<string, long>(contexts.Count);
 			foreach (var context in contexts)
@@ -93,7 +97,7 @@ namespace Cchbc.Features.Admin.Replication
 
 		private static async Task<Dictionary<string, long>> GetServerStepAsync(ITransactionContext serverContext)
 		{
-			var steps = await DbServerFeatureAdapter.GetStepsAsync(serverContext);
+			var steps = await DbFeatureAdapter.GetStepsAsync(serverContext);
 
 			var serverStepRows = new Dictionary<string, long>(steps.Count);
 			foreach (var step in steps)
@@ -104,8 +108,10 @@ namespace Cchbc.Features.Admin.Replication
 			return serverStepRows;
 		}
 
-		private static async Task<Dictionary<long, long>> ReplicateStepsAsync(ITransactionContext serverContext, List<DbFeatureStepRow> clientStepRows, Dictionary<string, long> serverSteps)
+		private static async Task<Dictionary<long, long>> ReplicateStepsAsync(ITransactionContext serverContext, List<DbFeatureStepRow> clientStepRows)
 		{
+			var serverSteps = await GetServerStepAsync(serverContext);
+
 			var map = new Dictionary<long, long>(clientStepRows.Count);
 
 			foreach (var step in clientStepRows)
@@ -113,7 +119,7 @@ namespace Cchbc.Features.Admin.Replication
 				long serverStepId;
 				if (!serverSteps.TryGetValue(step.Name, out serverStepId))
 				{
-					serverStepId = await DbServerFeatureAdapter.InsertStepAsync(serverContext, step.Name);
+					serverStepId = await DbFeatureAdapter.InsertStepAsync(serverContext, step.Name);
 				}
 
 				var clientStepId = step.Id;
@@ -127,7 +133,7 @@ namespace Cchbc.Features.Admin.Replication
 		{
 			var serverFeatures = new Dictionary<long, Dictionary<string, long>>();
 
-			foreach (var feature in await DbServerFeatureAdapter.GetFeaturesAsync(serverContext))
+			foreach (var feature in await DbFeatureAdapter.GetFeaturesAsync(serverContext))
 			{
 				Dictionary<string, long> byContext;
 
@@ -156,7 +162,7 @@ namespace Cchbc.Features.Admin.Replication
 				// Entirely New feature or New feature in the context
 				if (!serverFeatures.TryGetValue(contextId, out byContext) || !byContext.TryGetValue(name, out featureId))
 				{
-					featureId = await DbServerFeatureAdapter.InsertFeatureAsync(serverContext, name, contextId);
+					featureId = await DbFeatureAdapter.InsertFeatureAsync(serverContext, name, contextId);
 				}
 
 				featuresMap.Add(feature.Id, featureId);
@@ -171,7 +177,8 @@ namespace Cchbc.Features.Admin.Replication
 
 			foreach (var row in featureEntryRows)
 			{
-				map.Add(row.Id, await DbServerFeatureAdapter.InsertFeatureEntryAsync(serverContext, userId, versionId, featuresMap[row.FeatureId], row.Details, row.TimeSpent, row.CreatedAt));
+				var mappedFeatureId = featuresMap[row.FeatureId];
+				map.Add(row.Id, await DbFeatureServerAdapter.InsertFeatureEntryAsync(serverContext, userId, versionId, mappedFeatureId, row.Details, row.TimeSpent, row.CreatedAt));
 			}
 
 			return map;

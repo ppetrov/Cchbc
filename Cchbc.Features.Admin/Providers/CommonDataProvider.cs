@@ -11,7 +11,7 @@ namespace Cchbc.Features.Admin.Providers
 {
 	public sealed class CommonDataProvider
 	{
-		public Dictionary<long, DbContextRow> Contexts { get; } = new Dictionary<long, DbContextRow>();
+		public Dictionary<long, DbFeatureContextRow> Contexts { get; } = new Dictionary<long, DbFeatureContextRow>();
 		public Dictionary<long, DbFeatureRow> Features { get; } = new Dictionary<long, DbFeatureRow>();
 		public Dictionary<long, DbFeatureVersionRow> Versions { get; } = new Dictionary<long, DbFeatureVersionRow>();
 		public Dictionary<long, DbFeatureUserRow> Users { get; } = new Dictionary<long, DbFeatureUserRow>();
@@ -24,7 +24,7 @@ namespace Cchbc.Features.Admin.Providers
 			this.Contexts.Clear();
 			foreach (var row in await DbFeatureAdapter.GetContextsAsync(context))
 			{
-				this.Contexts.Add(row.Id, new DbContextRow(row.Id, NamingConventions.ApplyNaming(row.Name)));
+				this.Contexts.Add(row.Id, new DbFeatureContextRow(row.Id, NamingConventions.ApplyNaming(row.Name)));
 			}
 
 			this.Features.Clear();

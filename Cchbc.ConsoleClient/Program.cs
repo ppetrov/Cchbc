@@ -16,6 +16,8 @@ using Cchbc.Features;
 using Cchbc.Features.Admin;
 using Cchbc.Features.Admin.Providers;
 using Cchbc.Features.Admin.Replication;
+using Cchbc.Features.Db.Adapters;
+using Cchbc.Features.Db.Objects;
 
 namespace Cchbc.ConsoleClient
 {
@@ -27,6 +29,13 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
+	public sealed class Data
+	{
+		public byte[] A { get; } = new byte[1024 * 1024 * 100];
+		public byte[] B { get; } = new byte[1024 * 1024 * 100];
+		public byte[] C { get; } = new byte[1024 * 1024 * 100];
+	}
+
 	public class Program
 	{
 		private static void CreateSchema(string connectionString)
@@ -36,7 +45,7 @@ namespace Cchbc.ConsoleClient
 			{
 				using (var serverContext = creator.Create())
 				{
-					DbFeatureServerManager.DropSchema(serverContext);
+					DbFeatureServerManager.DropSchemaAsync(serverContext);
 					serverContext.Complete();
 
 					Console.WriteLine(@"Drop schema");
@@ -49,32 +58,53 @@ namespace Cchbc.ConsoleClient
 
 			using (var serverContext = creator.Create())
 			{
-				DbFeatureServerManager.CreateSchema(serverContext);
+				DbFeatureServerManager.CreateSchemaAsync(serverContext);
 				serverContext.Complete();
 
 				Console.WriteLine(@"Schema created");
 			}
 		}
 
-
-
 		private static void Replicate(string serverDb, string clientDb)
 		{
+			FeatureClientData data;
+			using (var client = new TransactionContextCreator(clientDb).Create())
+			{
+				data = DbFeatureAdapter.GetDataAsync(client).Result;
+				client.Complete();
+			}
+
+			var w = Stopwatch.StartNew();
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
-				using (var client = new TransactionContextCreator(clientDb).Create())
-				{
-					var w = Stopwatch.StartNew();
-
-					DbFeatureServerManager.ReplicateAsync(server, client, @"ppetrov", @"4.1.2.55");
-
-					client.Complete();
-					server.Complete();
-
-					w.Stop();
-					Console.WriteLine(w.ElapsedMilliseconds);
-				}
+				DbFeatureServerManager.ReplicateAsync(@"ppetrov", @"5.8.4.2157", server, data).Wait();
+				server.Complete();
 			}
+
+			w.Stop();
+			Console.WriteLine(w.ElapsedMilliseconds);
+		}
+
+		private static void Process(Data data)
+		{
+			//var a = data.A;
+			//var b = data.B;
+			//var c = data.C;
+
+			var a = new byte[1024 * 1024 * 100 * 0];
+			var b = new byte[1024 * 1024 * 100 * 0];
+			var c = new byte[1024 * 1024 * 100 * 0];
+
+			Process(a);
+			Process(b);
+			Process(c);
+		}
+
+		private static void Process(byte[] data)
+		{
+			Console.Write(@"Before " + System.GC.GetTotalMemory(true));
+			Console.WriteLine(@" Processing data " + data.Length);
+			Thread.Sleep(1000);
 		}
 
 		static void Main(string[] args)
@@ -87,8 +117,6 @@ namespace Cchbc.ConsoleClient
 			var userName = clientDb.Substring(si, ei - si);
 			try
 			{
-				Console.WriteLine(DateTime.Now.Millisecond);
-				return;
 				//CreateSchemaAsync(serverDb);
 				//return;
 
@@ -206,7 +234,6 @@ namespace Cchbc.ConsoleClient
 			//	Console.WriteLine(e);
 			//}
 		}
-
 
 
 
