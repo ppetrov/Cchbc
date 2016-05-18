@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Features.Admin.Objects;
 
-namespace Cchbc.Features.Admin.FeatureDetailsModule
+namespace Cchbc.Features.Admin.DashboardModule
 {
 	public static class DashboardDataProvider
 	{

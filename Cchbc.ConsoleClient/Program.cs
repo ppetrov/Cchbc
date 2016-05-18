@@ -14,15 +14,6 @@ using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Admin;
-using Cchbc.Features.Admin.FeatureExceptionModule;
-using Cchbc.Features.Admin.FeatureCountsModule;
-using Cchbc.Features.Admin.FeatureCountsModule.Adapters;
-using Cchbc.Features.Admin.FeatureCountsModule.Managers;
-using Cchbc.Features.Admin.FeatureExceptionModule.Adapters;
-using Cchbc.Features.Admin.FeatureExceptionModule.Managers;
-using Cchbc.Features.Admin.FeatureUserModule;
-using Cchbc.Features.Admin.FeatureUserModule.Adapters;
-using Cchbc.Features.Admin.FeatureUserModule.Managers;
 using Cchbc.Features.Admin.Providers;
 using Cchbc.Features.Admin.Replication;
 
@@ -65,7 +56,7 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		
+
 
 		private static void Replicate(string serverDb, string clientDb)
 		{
@@ -118,30 +109,7 @@ namespace Cchbc.ConsoleClient
 
 					ctx.Complete();
 				}
-				var usagesViewModel = new FeatureUsagesViewModel(creator, dataProvider, new FeatureCountManager(new FeatureCountAdapter()));
-				var exceptionsViewModel = new FeatureExceptionsViewModel(creator, dataProvider, new FeatureExceptionManager(new FeatureExceptionAdapter()));
-				var usersViewModel = new UsersOverviewViewModel(creator, dataProvider, new UserOverviewManager(new UserOverviewAdapter()));
 
-				var s = Stopwatch.StartNew();
-
-				for (var i = 0; i < 1; i++)
-				{
-					usagesViewModel.LoadDataForCurrentTimePeriod();
-					exceptionsViewModel.LoadDataForCurrentTimePeriod();
-					usersViewModel.Load();
-				}
-
-				Console.WriteLine(s.ElapsedMilliseconds);
-
-				Display(usagesViewModel);
-
-				Console.WriteLine();
-
-				Display(exceptionsViewModel);
-
-				Console.WriteLine();
-
-				Display(usersViewModel);
 
 
 
@@ -239,65 +207,9 @@ namespace Cchbc.ConsoleClient
 			//}
 		}
 
-		private static void Display(UsersOverviewViewModel viewModel)
-		{
-			foreach (var f in viewModel.Users)
-			{
-				var details = string.Join(@", ", new[]
-				{
-					f.Name,
-					@"Features: " + f.Features.Count,
-					@"Exceptions: " + f.Exceptions.Count,
-				});
-				foreach (var _ in f.Features)
-				{
-					Console.Write(_.Count + ", ");
-				}
 
-				Console.WriteLine();
 
-				foreach (var _ in f.Exceptions)
-				{
-					Console.Write(_.Count + ", ");
-				}
-				Console.WriteLine(details);
-			}
-			Console.WriteLine();
-		}
 
-		private static void Display(FeatureExceptionsViewModel viewModel)
-		{
-			foreach (var f in viewModel.Exceptions)
-			{
-				var details = string.Join(@", ", new[]
-				{
-					f.User,
-					f.Context,
-					f.Feature,
-					f.Message,
-					f.CreateAt,
-				});
-				Console.WriteLine(details);
-			}
-			Console.WriteLine(@"Total: " + viewModel.Exceptions.Count);
-		}
-
-		private static void Display(FeatureUsagesViewModel viewModel)
-		{
-			var total = 0L;
-			foreach (var f in viewModel.FeatureUsages)
-			{
-				var detail = f.Context.PadRight(20) + " " + f.Name.PadRight(20) + " " + f.Count;
-				Console.WriteLine(detail);
-
-				total += f.FeatureCount.Value;
-			}
-			Console.WriteLine(total);
-		}
-
-		
-
-		
 
 		private static void GenerateProject(DbProject project, string directoryPath)
 		{

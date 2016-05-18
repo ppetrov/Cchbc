@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using Windows.UI.Xaml.Input;
-using Cchbc.Features.Admin.FeatureDetailsModule;
+using Cchbc.Features.Admin.DashboardModule;
 
 namespace Cchbc.Features.Admin.UI
 {

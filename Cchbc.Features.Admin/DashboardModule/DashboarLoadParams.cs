@@ -2,7 +2,7 @@ using System;
 using Cchbc.Data;
 using Cchbc.Features.Admin.Providers;
 
-namespace Cchbc.Features.Admin.FeatureDetailsModule
+namespace Cchbc.Features.Admin.DashboardModule
 {
 	public sealed class DashboarLoadParams
 	{

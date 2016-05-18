@@ -7,7 +7,7 @@ using Cchbc.Data;
 using Cchbc.Features.Admin.Providers;
 using Cchbc.Logs;
 
-namespace Cchbc.Features.Admin.FeatureDetailsModule
+namespace Cchbc.Features.Admin.DashboardModule
 {
 	public sealed class Dashboard
 	{
@@ -18,15 +18,10 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 		public ObservableCollection<DashboardFeatureByCountViewModel> LeastUsedFeatures { get; } = new ObservableCollection<DashboardFeatureByCountViewModel>();
 		public ObservableCollection<DashboardFeatureByTimeViewModel> SlowestFeatures { get; } = new ObservableCollection<DashboardFeatureByTimeViewModel>();
 
-		public async Task LoadAsync(ITransactionContext context,
-			Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider,
-			Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider,
-			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider,
-			Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider,
-			Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> leastUsedFeaturesProvider,
-			Func<DashboarLoadParams, Task<List<DashboardFeatureByTime>>> slowestFeaturesProvider)
+		public async Task LoadAsync(ITransactionContext context, Action<string, LogLevel> log, Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider, Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider, Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> leastUsedFeaturesProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByTime>>> slowestFeaturesProvider)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (log == null) throw new ArgumentNullException(nameof(log));
 			if (usersProvider == null) throw new ArgumentNullException(nameof(usersProvider));
 			if (versionsProvider == null) throw new ArgumentNullException(nameof(versionsProvider));
 			if (exceptionsProvider == null) throw new ArgumentNullException(nameof(exceptionsProvider));
@@ -37,7 +32,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			var dataProvider = new CommonDataProvider();
 			await dataProvider.LoadAsync(context);
 
-			var settings = GetDashboardSettings(null, dataProvider.Settings);
+			var settings = GetDashboardSettings(log, dataProvider.Settings);
 			var loadParams = new DashboarLoadParams(context, settings, dataProvider);
 
 			var tasks = new[]
@@ -119,7 +114,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			}
 		}
 
-		private static DashboardSettings GetDashboardSettings(ILog log, Dictionary<string, List<Setting>> settings)
+		private static DashboardSettings GetDashboardSettings(Action<string, LogLevel> log, Dictionary<string, List<Setting>> settings)
 		{
 			var context = nameof(Dashboard);
 
@@ -148,17 +143,17 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 
 				if (maxUsers == null)
 				{
-					log.Log($@"Unable to find value for '{nameof(DashboardSettings.MaxUsers)}'", LogLevel.Warn);
+					log($@"Unable to find value for '{nameof(DashboardSettings.MaxUsers)}'", LogLevel.Warn);
 				}
 				if (maxMostUsedFeatures == null)
 				{
-					log.Log($@"Unable to find value for '{nameof(DashboardSettings.MaxMostUsedFeatures)}'", LogLevel.Warn);
+					log($@"Unable to find value for '{nameof(DashboardSettings.MaxMostUsedFeatures)}'", LogLevel.Warn);
 				}
 
 				return DashboardSettings.Default;
 			}
 
-			log.Log($@"Unable to find settings for '{context}'", LogLevel.Warn);
+			log($@"Unable to find settings for '{context}'", LogLevel.Warn);
 
 			return DashboardSettings.Default;
 		}

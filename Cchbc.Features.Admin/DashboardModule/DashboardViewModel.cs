@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Cchbc.Data;
+using Cchbc.Logs;
 using Cchbc.Objects;
 
-namespace Cchbc.Features.Admin.FeatureDetailsModule
+namespace Cchbc.Features.Admin.DashboardModule
 {
 	public sealed class DashboardViewModel : ViewModel
 	{
@@ -43,15 +44,10 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			this.ExceptionsCaptions = @"Exceptions for the last 24 hours";
 		}
 
-		public Task LoadAsync(ITransactionContext context,
-			Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider,
-			Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider,
-			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider,
-			Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider,
-			Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> leastUsedFeaturesProvider,
-			Func<DashboarLoadParams, Task<List<DashboardFeatureByTime>>> slowestFeaturesProvider)
+		public Task LoadAsync(ITransactionContext context, Action<string, LogLevel> log, Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider, Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider, Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> leastUsedFeaturesProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByTime>>> slowestFeaturesProvider)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (log == null) throw new ArgumentNullException(nameof(log));
 			if (usersProvider == null) throw new ArgumentNullException(nameof(usersProvider));
 			if (versionsProvider == null) throw new ArgumentNullException(nameof(versionsProvider));
 			if (exceptionsProvider == null) throw new ArgumentNullException(nameof(exceptionsProvider));
@@ -59,7 +55,7 @@ namespace Cchbc.Features.Admin.FeatureDetailsModule
 			if (leastUsedFeaturesProvider == null) throw new ArgumentNullException(nameof(leastUsedFeaturesProvider));
 			if (slowestFeaturesProvider == null) throw new ArgumentNullException(nameof(slowestFeaturesProvider));
 
-			return this.Dashboard.LoadAsync(context, usersProvider, versionsProvider, exceptionsProvider, mostUsedFeaturesProvider, leastUsedFeaturesProvider, slowestFeaturesProvider);
+			return this.Dashboard.LoadAsync(context, log, usersProvider, versionsProvider, exceptionsProvider, mostUsedFeaturesProvider, leastUsedFeaturesProvider, slowestFeaturesProvider);
 		}
 	}
 }

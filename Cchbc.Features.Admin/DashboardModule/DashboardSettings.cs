@@ -1,7 +1,7 @@
 ﻿using System;
 using Cchbc.Features.Admin.Objects;
 
-namespace Cchbc.Features.Admin.FeatureDetailsModule
+namespace Cchbc.Features.Admin.DashboardModule
 {
 	public sealed class DashboardSettings
 	{

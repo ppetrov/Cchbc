@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using Windows.Storage;
 using Windows.UI.Xaml;
-using Cchbc.Features.Admin.FeatureDetailsModule;
+using Cchbc.Features.Admin.DashboardModule;
 
 namespace Cchbc.Features.Admin.UI
 {
@@ -23,13 +24,13 @@ namespace Cchbc.Features.Admin.UI
 			{
 				using (var ctx = contextCreator.Create())
 				{
-					await this.ViewModel.LoadAsync(ctx,
-						DashboardDataProvider.GetUsersAsync,
-						DashboardDataProvider.GetVersionsAsync,
-						DashboardDataProvider.GetExceptionsAsync,
-						DashboardDataProvider.GetMostUsedFeaturesAsync,
-						DashboardDataProvider.GetLeastUsedFeaturesAsync,
-						DashboardDataProvider.GetSlowestFeaturesAsync);
+					await this.ViewModel.LoadAsync(ctx, (msg, level) =>
+					{
+						Debug.WriteLine(level + ":" + msg);
+					},
+						DashboardDataProvider.GetUsersAsync, DashboardDataProvider.GetVersionsAsync,
+						DashboardDataProvider.GetExceptionsAsync, DashboardDataProvider.GetMostUsedFeaturesAsync,
+						DashboardDataProvider.GetLeastUsedFeaturesAsync, DashboardDataProvider.GetSlowestFeaturesAsync);
 
 					ctx.Complete();
 				}

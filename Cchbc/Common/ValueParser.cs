@@ -5,7 +5,7 @@ namespace Cchbc.Common
 {
 	public static class ValueParser
 	{
-		public static int? ParseInt(string input, ILog log)
+		public static int? ParseInt(string input, Action<string, LogLevel> log)
 		{
 			if (input == null) throw new ArgumentNullException(nameof(input));
 
@@ -19,7 +19,7 @@ namespace Cchbc.Common
 				}
 			}
 
-			log.Log($@"Unable to parse '{input}' to int", LogLevel.Warn);
+			log($@"Unable to parse '{input}' to int", LogLevel.Warn);
 			return null;
 		}
 	}

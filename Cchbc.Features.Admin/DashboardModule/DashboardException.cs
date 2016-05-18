@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features.Admin.FeatureDetailsModule
+namespace Cchbc.Features.Admin.DashboardModule
 {
 	public sealed class DashboardException
 	{
