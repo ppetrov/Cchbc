@@ -29,12 +29,6 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class Data
-	{
-		public byte[] A { get; } = new byte[1024 * 1024 * 100];
-		public byte[] B { get; } = new byte[1024 * 1024 * 100];
-		public byte[] C { get; } = new byte[1024 * 1024 * 100];
-	}
 
 	public class Program
 	{
@@ -77,34 +71,12 @@ namespace Cchbc.ConsoleClient
 			var w = Stopwatch.StartNew();
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
-				DbFeatureServerManager.ReplicateAsync(@"ppetrov", @"5.8.4.2157", server, data).Wait();
+				DbFeatureServerManager.ReplicateAsync(@"ppetrov", @"4.8.4.2157", server, data).Wait();
 				server.Complete();
 			}
 
 			w.Stop();
 			Console.WriteLine(w.ElapsedMilliseconds);
-		}
-
-		private static void Process(Data data)
-		{
-			//var a = data.A;
-			//var b = data.B;
-			//var c = data.C;
-
-			var a = new byte[1024 * 1024 * 100 * 0];
-			var b = new byte[1024 * 1024 * 100 * 0];
-			var c = new byte[1024 * 1024 * 100 * 0];
-
-			Process(a);
-			Process(b);
-			Process(c);
-		}
-
-		private static void Process(byte[] data)
-		{
-			Console.Write(@"Before " + System.GC.GetTotalMemory(true));
-			Console.WriteLine(@" Processing data " + data.Length);
-			Thread.Sleep(1000);
 		}
 
 		static void Main(string[] args)
