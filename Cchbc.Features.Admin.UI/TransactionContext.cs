@@ -99,7 +99,7 @@ namespace Cchbc.Features.Admin.UI
 			}
 		}
 
-		public void Fill<TK, TV>(Dictionary<TK, TV> items, Action<IFieldDataReader, Dictionary<TK, TV>> filler, Query query)
+		public void Fill<T>(Dictionary<long, T> items, Action<IFieldDataReader, Dictionary<long, T>> filler, Query query)
 		{
 			items.Clear();
 
@@ -152,7 +152,7 @@ namespace Cchbc.Features.Admin.UI
 
 		public void Complete()
 		{
-			
+
 		}
 
 		public void Dispose()
@@ -172,7 +172,7 @@ namespace Cchbc.Features.Admin.UI
 
 		private static void DisplayQuery(string statement)
 		{
-			
+
 		}
 	}
 }

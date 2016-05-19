@@ -63,16 +63,23 @@ namespace Cchbc.Features.Admin.Replication
 
 		private static async Task<Dictionary<long, long>> ReplicateContextsAsync(ITransactionContext serverContext, List<DbFeatureContextRow> clientContextRows)
 		{
-			var serverContexts = await GetServerContextsAsync(serverContext);
+			var serverContexts = await DbFeatureAdapter.GetContextsMappedByNameAsync(serverContext);
 
 			var map = new Dictionary<long, long>(clientContextRows.Count);
 
 			foreach (var context in clientContextRows)
 			{
 				long serverContextId;
-				if (!serverContexts.TryGetValue(context.Name, out serverContextId))
+				var name = context.Name;
+
+				DbFeatureContextRow serverContextRow;
+				if (serverContexts.TryGetValue(name, out serverContextRow))
 				{
-					serverContextId = await DbFeatureAdapter.InsertContextAsync(serverContext, context.Name);
+					serverContextId = serverContextRow.Id;
+				}
+				else
+				{
+					serverContextId = await DbFeatureAdapter.InsertContextAsync(serverContext, name);
 				}
 
 				var clientContextId = context.Id;
@@ -82,44 +89,25 @@ namespace Cchbc.Features.Admin.Replication
 			return map;
 		}
 
-		private static async Task<Dictionary<string, long>> GetServerContextsAsync(ITransactionContext serverContext)
-		{
-			var contexts = await DbFeatureAdapter.GetContextsAsync(serverContext);
-
-			var serverContextsRows = new Dictionary<string, long>(contexts.Count);
-			foreach (var context in contexts)
-			{
-				serverContextsRows.Add(context.Name, context.Id);
-			}
-
-			return serverContextsRows;
-		}
-
-		private static async Task<Dictionary<string, long>> GetServerStepAsync(ITransactionContext serverContext)
-		{
-			var steps = await DbFeatureAdapter.GetStepsAsync(serverContext);
-
-			var serverStepRows = new Dictionary<string, long>(steps.Count);
-			foreach (var step in steps)
-			{
-				serverStepRows.Add(step.Name, step.Id);
-			}
-
-			return serverStepRows;
-		}
-
 		private static async Task<Dictionary<long, long>> ReplicateStepsAsync(ITransactionContext serverContext, List<DbFeatureStepRow> clientStepRows)
 		{
-			var serverSteps = await GetServerStepAsync(serverContext);
+			var serverSteps = await DbFeatureAdapter.GetStepsMappedByNameAsync(serverContext);
 
 			var map = new Dictionary<long, long>(clientStepRows.Count);
 
 			foreach (var step in clientStepRows)
 			{
 				long serverStepId;
-				if (!serverSteps.TryGetValue(step.Name, out serverStepId))
+				var name = step.Name;
+
+				DbFeatureStepRow serverStepRow;
+				if (serverSteps.TryGetValue(name, out serverStepRow))
 				{
-					serverStepId = await DbFeatureAdapter.InsertStepAsync(serverContext, step.Name);
+					serverStepId = serverStepRow.Id;
+				}
+				else
+				{
+					serverStepId = await DbFeatureAdapter.InsertStepAsync(serverContext, name);
 				}
 
 				var clientStepId = step.Id;

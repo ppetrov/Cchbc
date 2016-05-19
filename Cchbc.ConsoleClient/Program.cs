@@ -10,11 +10,8 @@ using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
-using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
-using Cchbc.Features.Admin;
-using Cchbc.Features.Admin.Providers;
 using Cchbc.Features.Admin.Replication;
 using Cchbc.Features.Db.Adapters;
 using Cchbc.Features.Db.Objects;
@@ -101,14 +98,7 @@ namespace Cchbc.ConsoleClient
 				return;
 
 
-				var creator = new TransactionContextCreator(serverDb);
-				var dataProvider = new CommonDataProvider();
-				using (var ctx = creator.Create())
-				{
-					dataProvider.LoadAsync(ctx).Wait();
-
-					ctx.Complete();
-				}
+				
 
 
 

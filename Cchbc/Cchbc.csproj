@@ -37,6 +37,7 @@
     <Compile Include="Archive\ZipArchive.cs" />
     <Compile Include="Archive\ZipData.cs" />
     <Compile Include="Archive\ZipHeader.cs" />
+    <Compile Include="Common\CoreContext.cs" />
     <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Common\Setting.cs" />
     <Compile Include="Common\ValueParser.cs" />

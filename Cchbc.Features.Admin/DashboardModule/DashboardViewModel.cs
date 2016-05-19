@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using Cchbc.Data;
-using Cchbc.Logs;
+using Cchbc.Common;
 using Cchbc.Objects;
 
 namespace Cchbc.Features.Admin.DashboardModule
@@ -44,18 +43,22 @@ namespace Cchbc.Features.Admin.DashboardModule
 			this.ExceptionsCaptions = @"Exceptions for the last 24 hours";
 		}
 
-		public Task LoadAsync(ITransactionContext context, Action<string, LogLevel> log, Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider, Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider, Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> leastUsedFeaturesProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByTime>>> slowestFeaturesProvider)
+		public Task LoadAsync(CoreContext coreContext, Func<CoreContext, Task<DashboardSettings>> settingsProvider,
+			Func<CoreContext, Task<DashboardCommonData>> commonDataProvider,
+			Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider, Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider,
+			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider,
+			Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> leastUsedFeaturesProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByTime>>> slowestFeaturesProvider)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (log == null) throw new ArgumentNullException(nameof(log));
+			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
 			if (usersProvider == null) throw new ArgumentNullException(nameof(usersProvider));
 			if (versionsProvider == null) throw new ArgumentNullException(nameof(versionsProvider));
 			if (exceptionsProvider == null) throw new ArgumentNullException(nameof(exceptionsProvider));
 			if (mostUsedFeaturesProvider == null) throw new ArgumentNullException(nameof(mostUsedFeaturesProvider));
 			if (leastUsedFeaturesProvider == null) throw new ArgumentNullException(nameof(leastUsedFeaturesProvider));
 			if (slowestFeaturesProvider == null) throw new ArgumentNullException(nameof(slowestFeaturesProvider));
+			if (settingsProvider == null) throw new ArgumentNullException(nameof(settingsProvider));
 
-			return this.Dashboard.LoadAsync(context, log, usersProvider, versionsProvider, exceptionsProvider, mostUsedFeaturesProvider, leastUsedFeaturesProvider, slowestFeaturesProvider);
+			return this.Dashboard.LoadAsync(coreContext, settingsProvider, commonDataProvider, usersProvider, versionsProvider, exceptionsProvider, mostUsedFeaturesProvider, leastUsedFeaturesProvider, slowestFeaturesProvider);
 		}
 	}
 }

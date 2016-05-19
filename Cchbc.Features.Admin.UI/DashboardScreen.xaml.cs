@@ -3,7 +3,10 @@ using System.Diagnostics;
 using System.IO;
 using Windows.Storage;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Input;
+using Cchbc.Common;
 using Cchbc.Features.Admin.DashboardModule;
+using Cchbc.Logs;
 
 namespace Cchbc.Features.Admin.UI
 {
@@ -19,26 +22,53 @@ namespace Cchbc.Features.Admin.UI
 		private async void DashboardScreenLoaded(object sender, RoutedEventArgs e)
 		{
 			var contextCreator = new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"server.sqlite"));
-
 			try
 			{
+				Action<string, LogLevel> log = (msg, level) =>
+				{
+					// Easy to port to a file
+					// or db !!!
+					Debug.WriteLine(level + ":" + msg);
+				};
+
+				var fm = new FeatureManager { ContextCreator = contextCreator };
+				await fm.LoadAsync();
+
+				var f = fm.StartNew(@"Dashboard", @"Load");
+
+				var w = Stopwatch.StartNew();
 				using (var ctx = contextCreator.Create())
 				{
-					await this.ViewModel.LoadAsync(ctx, (msg, level) =>
-					{
-						Debug.WriteLine(level + ":" + msg);
-					},
-						DashboardDataProvider.GetUsersAsync, DashboardDataProvider.GetVersionsAsync,
+
+					var coreContext = new CoreContext(ctx, log, f);
+
+					await this.ViewModel.LoadAsync(coreContext,
+						DashboardDataProvider.GetSettingsAsync,
+						DashboardDataProvider.GetCommonDataAsync,
+						DashboardDataProvider.GetUsersAsync,
+						DashboardDataProvider.GetVersionsAsync,
 						DashboardDataProvider.GetExceptionsAsync, DashboardDataProvider.GetMostUsedFeaturesAsync,
 						DashboardDataProvider.GetLeastUsedFeaturesAsync, DashboardDataProvider.GetSlowestFeaturesAsync);
 
 					ctx.Complete();
+				}
+
+				log(string.Empty + w.Elapsed.TotalMilliseconds, LogLevel.Info);
+
+				foreach (var s in f.Steps)
+				{
+					log(@" - " + s.Name + @": " + s.TimeSpent.TotalMilliseconds + " ms", LogLevel.Info);
 				}
 			}
 			catch (Exception ex)
 			{
 
 			}
+		}
+
+		private void UIElement_OnTapped(object sender, TappedRoutedEventArgs e)
+		{
+			this.DashboardScreenLoaded(sender, e);
 		}
 	}
 }

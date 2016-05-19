@@ -220,18 +220,34 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return Task.FromResult(true);
 		}
 
-		public static Task<List<DbFeatureVersionRow>> GetVersionsAsync(ITransactionContext context)
+		public static Task<Dictionary<long, DbFeatureVersionRow>> GetVersionsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return Task.FromResult(context.Execute(GetVersionsQuery));
+			var result = new Dictionary<long, DbFeatureVersionRow>();
+
+			context.Fill(result, (r, map) =>
+			{
+				var row = GetVersionsQuery.Creator(r);
+				map.Add(row.Id, row);
+			}, new Query(GetVersionsQuery.Statement));
+
+			return Task.FromResult(result);
 		}
 
-		public static Task<List<DbFeatureUserRow>> GetUsersAsync(ITransactionContext context)
+		public static Task<Dictionary<long, DbFeatureUserRow>> GetUsersAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return Task.FromResult(context.Execute(GetUsersQuery));
+			var result = new Dictionary<long, DbFeatureUserRow>();
+
+			context.Fill(result, (r, map) =>
+			{
+				var row = GetUsersQuery.Creator(r);
+				map.Add(row.Id, row);
+			}, new Query(GetUsersQuery.Statement));
+
+			return Task.FromResult(result);
 		}
 
 		public static Task<long> GetOrCreateVersionAsync(ITransactionContext context, string version)

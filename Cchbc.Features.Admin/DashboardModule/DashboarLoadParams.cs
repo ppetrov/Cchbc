@@ -1,24 +1,23 @@
 using System;
-using Cchbc.Data;
-using Cchbc.Features.Admin.Providers;
+using Cchbc.Common;
 
 namespace Cchbc.Features.Admin.DashboardModule
 {
 	public sealed class DashboarLoadParams
 	{
-		public ITransactionContext Context { get; }
+		public CoreContext CoreContext { get; }
 		public DashboardSettings Settings { get; }
-		public CommonDataProvider DataProvider { get; }
+		public DashboardCommonData Data { get; }
 
-		public DashboarLoadParams(ITransactionContext context, DashboardSettings settings, CommonDataProvider dataProvider)
+		public DashboarLoadParams(CoreContext coreContext, DashboardSettings settings, DashboardCommonData data)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
 			if (settings == null) throw new ArgumentNullException(nameof(settings));
-			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
+			if (data == null) throw new ArgumentNullException(nameof(data));
 
-			this.Context = context;
+			this.CoreContext = coreContext;
 			this.Settings = settings;
-			this.DataProvider = dataProvider;
+			this.Data = data;
 		}
 	}
 }

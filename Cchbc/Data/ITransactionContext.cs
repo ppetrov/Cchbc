@@ -11,7 +11,7 @@ namespace Cchbc.Data
 
 		void Fill<T>(Dictionary<long, T> items, Func<T, long> selector, Query<T> query);
 
-		void Fill<TK, TV>(Dictionary<TK, TV> items, Action<IFieldDataReader, Dictionary<TK, TV>> filler, Query query);
+		void Fill<T>(Dictionary<long, T> items, Action<IFieldDataReader, Dictionary<long, T>> filler, Query query);
 
 		long GetNewId();
 

@@ -9,9 +9,9 @@ namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
-		private Dictionary<string, DbFeatureContextRow> Contexts { get; } = new Dictionary<string, DbFeatureContextRow>(StringComparer.OrdinalIgnoreCase);
-		private Dictionary<string, DbFeatureStepRow> Steps { get; } = new Dictionary<string, DbFeatureStepRow>(StringComparer.OrdinalIgnoreCase);
-		private Dictionary<long, Dictionary<string, DbFeatureRow>> Features { get; } = new Dictionary<long, Dictionary<string, DbFeatureRow>>();
+		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }
+		private Dictionary<string, DbFeatureStepRow> Steps { get; set; }
+		private Dictionary<long, Dictionary<string, DbFeatureRow>> Features { get; set; }
 
 		public ITransactionContextCreator ContextCreator { get; set; }
 
@@ -39,9 +39,9 @@ namespace Cchbc.Features
 		{
 			using (var context = this.ContextCreator.Create())
 			{
-				await this.LoadContextsAsync(context);
-				await this.LoadStepsAsync(context);
-				await this.LoadFeaturesAsync(context);
+				this.Contexts = await DbFeatureAdapter.GetContextsMappedByNameAsync(context);
+				this.Steps = await DbFeatureAdapter.GetStepsMappedByNameAsync(context);
+				this.Features = await this.GetFeaturesAsync(context);
 
 				context.Complete();
 			}
@@ -180,34 +180,9 @@ namespace Cchbc.Features
 			}
 		}
 
-		private async Task LoadContextsAsync(ITransactionContext transactionContext)
+		private async Task<Dictionary<long, Dictionary<string, DbFeatureRow>>> GetFeaturesAsync(ITransactionContext context)
 		{
-			// Clear contexts from old values
-			this.Contexts.Clear();
-
-			// Fetch & add new values
-			foreach (var context in await DbFeatureAdapter.GetContextsAsync(transactionContext))
-			{
-				this.Contexts.Add(context.Name, context);
-			}
-		}
-
-		private async Task LoadStepsAsync(ITransactionContext context)
-		{
-			// Clear steps from old values
-			this.Steps.Clear();
-
-			// Fetch & add new values
-			foreach (var step in await DbFeatureAdapter.GetStepsAsync(context))
-			{
-				this.Steps.Add(step.Name, step);
-			}
-		}
-
-		private async Task LoadFeaturesAsync(ITransactionContext context)
-		{
-			// Clear steps from old values
-			this.Features.Clear();
+			var featuresByContext = new Dictionary<long, Dictionary<string, DbFeatureRow>>(this.Contexts.Count);
 
 			// Fetch & add new values
 			foreach (var feature in await DbFeatureAdapter.GetFeaturesAsync(context))
@@ -216,14 +191,16 @@ namespace Cchbc.Features
 
 				// Find features by context
 				Dictionary<string, DbFeatureRow> byContext;
-				if (!this.Features.TryGetValue(contextId, out byContext))
+				if (!featuresByContext.TryGetValue(contextId, out byContext))
 				{
 					byContext = new Dictionary<string, DbFeatureRow>(StringComparer.OrdinalIgnoreCase);
-					this.Features.Add(contextId, byContext);
+					featuresByContext.Add(contextId, byContext);
 				}
 
 				byContext.Add(feature.Name, feature);
 			}
+
+			return featuresByContext;
 		}
 	}
 }

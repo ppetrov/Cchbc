@@ -22,7 +22,7 @@
     </Page.Resources>
 
     <Grid Background="{StaticResource ThemeBackground}">
-
+        <Button Tapped="UIElement_OnTapped" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Top" Width="150" Background="Violet">Reload Data</Button>
         <Grid Margin="25">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"></ColumnDefinition>
