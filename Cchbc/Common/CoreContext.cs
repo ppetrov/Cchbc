@@ -5,7 +5,7 @@ using Cchbc.Logs;
 
 namespace Cchbc.Common
 {
-	internal sealed class CoreContext
+	public sealed class CoreContext
 	{
 		public ITransactionContext DbContext { get; }
 		public Action<string, LogLevel> Log { get; }
