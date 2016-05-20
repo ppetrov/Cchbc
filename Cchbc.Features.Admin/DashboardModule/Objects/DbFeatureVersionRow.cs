@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.Features.Admin.Objects
+namespace Cchbc.Features.DashboardModule.Objects
 {
 	public sealed class DbFeatureVersionRow
 	{

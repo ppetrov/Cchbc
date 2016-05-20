@@ -1,7 +1,7 @@
 using System;
 using Cchbc.Common;
 
-namespace Cchbc.Features.Admin.DashboardModule
+namespace Cchbc.Features.DashboardModule
 {
 	public sealed class DashboarLoadParams
 	{

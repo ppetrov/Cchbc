@@ -1,15 +1,21 @@
-namespace Cchbc.Features.Admin.DashboardModule
+using System;
+using Cchbc.Features.Db.Objects;
+
+namespace Cchbc.Features.DashboardModule
 {
 	public sealed class DashboardFeatureByCount
 	{
-		public long Id { get; }
-		public string Name { get; }
+		public DbFeatureContextRow Context { get; }
+		public DbFeatureRow Feature { get; }
 		public int Count { get; }
 
-		public DashboardFeatureByCount(long id, string name, int count)
+		public DashboardFeatureByCount(DbFeatureContextRow context, DbFeatureRow feature, int count)
 		{
-			this.Id = id;
-			this.Name = name;
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			this.Context = context;
+			this.Feature = feature;
 			this.Count = count;
 		}
 	}

@@ -5,17 +5,18 @@ using System.Threading.Tasks;
 using Cchbc.Common;
 using Cchbc.Objects;
 
-namespace Cchbc.Features.Admin.DashboardModule
+namespace Cchbc.Features.DashboardModule.ViewModels
 {
 	public sealed class DashboardViewModel : ViewModel
 	{
 		private Dashboard Dashboard { get; }
 
-		public ObservableCollection<DashboardUserViewModel> Users => this.Dashboard.Users;
-		public ObservableCollection<DashboardVersionViewModel> Versions => this.Dashboard.Versions;
-		public ObservableCollection<DashboardExceptionViewModel> Exceptions => this.Dashboard.Exceptions;
-		public ObservableCollection<DashboardFeatureByCountViewModel> MostUsedFeatures => this.Dashboard.MostUsedFeatures;
-		public ObservableCollection<DashboardFeatureByTimeViewModel> SlowestFeatures => this.Dashboard.SlowestFeatures;
+		public ObservableCollection<DashboardUserViewModel> Users = new ObservableCollection<DashboardUserViewModel>();
+		public ObservableCollection<DashboardVersionViewModel> Versions = new ObservableCollection<DashboardVersionViewModel>();
+		public ObservableCollection<DashboardExceptionViewModel> Exceptions = new ObservableCollection<DashboardExceptionViewModel>();
+		public ObservableCollection<DashboardFeatureByCountViewModel> MostUsedFeatures = new ObservableCollection<DashboardFeatureByCountViewModel>();
+		public ObservableCollection<DashboardFeatureByCountViewModel> LeastUsedFeatures = new ObservableCollection<DashboardFeatureByCountViewModel>();
+		public ObservableCollection<DashboardFeatureByTimeViewModel> SlowestFeatures = new ObservableCollection<DashboardFeatureByTimeViewModel>();
 
 		public string UsersCaption { get; }
 		public string StatsCaption { get; }
@@ -23,7 +24,7 @@ namespace Cchbc.Features.Admin.DashboardModule
 		public string ExceptionsCaptions { get; }
 		public string UsageCaption { get; }
 
-		// TODO : Load from database
+		// TODO : Load from database, Define a class = DashboardStats with this as properties
 		public int TotalUsers { get; } = 123;
 		public int TotalVersions { get; } = 7;
 		public int TotalExceptions { get; } = 138457;
@@ -35,7 +36,7 @@ namespace Cchbc.Features.Admin.DashboardModule
 
 			this.Dashboard = dashboard;
 
-			// TODO : Load captions !!!!
+			// TODO : Load captions !!!! from a dictionary by key ???
 			this.UsersCaption = @"Users";
 			this.StatsCaption = @"Statistics";
 			this.VersionStatsReportCaption = @"By Version statistics";
@@ -43,7 +44,7 @@ namespace Cchbc.Features.Admin.DashboardModule
 			this.ExceptionsCaptions = @"Exceptions for the last 24 hours";
 		}
 
-		public Task LoadAsync(CoreContext coreContext, Func<CoreContext, Task<DashboardSettings>> settingsProvider,
+		public async Task LoadAsync(CoreContext coreContext, Func<CoreContext, Task<DashboardSettings>> settingsProvider,
 			Func<CoreContext, Task<DashboardCommonData>> commonDataProvider,
 			Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider, Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider,
 			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider,
@@ -58,7 +59,23 @@ namespace Cchbc.Features.Admin.DashboardModule
 			if (slowestFeaturesProvider == null) throw new ArgumentNullException(nameof(slowestFeaturesProvider));
 			if (settingsProvider == null) throw new ArgumentNullException(nameof(settingsProvider));
 
-			return this.Dashboard.LoadAsync(coreContext, settingsProvider, commonDataProvider, usersProvider, versionsProvider, exceptionsProvider, mostUsedFeaturesProvider, leastUsedFeaturesProvider, slowestFeaturesProvider);
+			await this.Dashboard.LoadAsync(coreContext, settingsProvider, commonDataProvider, usersProvider, versionsProvider, exceptionsProvider, mostUsedFeaturesProvider, leastUsedFeaturesProvider, slowestFeaturesProvider);
+
+			LoadData(this.Dashboard.Users, this.Users, v => new DashboardUserViewModel(v));
+			LoadData(this.Dashboard.Versions, this.Versions, v => new DashboardVersionViewModel(v));
+			LoadData(this.Dashboard.Exceptions, this.Exceptions, v => new DashboardExceptionViewModel(v));
+			LoadData(this.Dashboard.MostUsedFeatures, this.MostUsedFeatures, u => new DashboardFeatureByCountViewModel(u));
+			LoadData(this.Dashboard.LeastUsedFeatures, this.LeastUsedFeatures, u => new DashboardFeatureByCountViewModel(u));
+			LoadData(this.Dashboard.SlowestFeatures, this.SlowestFeatures, u => new DashboardFeatureByTimeViewModel(u));
+		}
+
+		private static void LoadData<T, TV>(List<T> values, ObservableCollection<TV> viewModels, Func<T, TV> creator)
+		{
+			viewModels.Clear();
+			foreach (var value in values)
+			{
+				viewModels.Add(creator(value));
+			}
 		}
 	}
 }

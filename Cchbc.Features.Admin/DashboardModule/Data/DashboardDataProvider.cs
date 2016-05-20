@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cchbc.Common;
 using Cchbc.Data;
-using Cchbc.Features.Admin.Objects;
-using Cchbc.Features.Admin.Replication;
+using Cchbc.Features.DashboardModule.Objects;
 using Cchbc.Features.Db.Adapters;
 using Cchbc.Logs;
 
-namespace Cchbc.Features.Admin.DashboardModule
+namespace Cchbc.Features.DashboardModule.Data
 {
 	public static class DashboardDataProvider
 	{
@@ -60,12 +59,10 @@ namespace Cchbc.Features.Admin.DashboardModule
 			coreContext.Feature.AddStep(nameof(GetCommonDataAsync));
 
 			var dbContext = coreContext.DbContext;
-			var users = await DbFeatureServerAdapter.GetUsersAsync(dbContext);
-			var versions = await DbFeatureServerAdapter.GetVersionsAsync(dbContext);
 			var contexts = await DbFeatureAdapter.GetContextsMappedByIdAsync(dbContext);
 			var features = await DbFeatureAdapter.GetFeaturesMappedByIdAsync(dbContext);
 
-			return new DashboardCommonData(users, versions, contexts, features);
+			return new DashboardCommonData(contexts, features);
 		}
 
 		public static Task<List<DashboardUser>> GetUsersAsync(DashboarLoadParams loadParams)
@@ -74,20 +71,15 @@ namespace Cchbc.Features.Admin.DashboardModule
 
 			loadParams.CoreContext.Feature.AddStep(nameof(GetUsersAsync));
 
-			var statement = @"SELECT ID, NAME, REPLICATED_AT, VERSION_ID FROM FEATURE_USERS ORDER BY REPLICATED_AT DESC LIMIT @MAXUSERS";
-			var sqlParams = new[]
-			{
-				new QueryParameter(@"@MAXUSERS", loadParams.Settings.MaxUsers),
-			};
-			var query = new Query<DbFeatureUserRow>(statement, r => new DbFeatureUserRow(r.GetInt64(0), r.GetString(1), r.GetDateTime(2), r.GetInt64(3)), sqlParams);
+			var query = new Query<DashboardUser>(
+				@"SELECT U.ID, U.NAME UNAME, U.REPLICATED_AT, V.NAME VNAME FROM FEATURE_USERS U INNER JOIN FEATURE_VERSIONS V ON U.VERSION_ID = V.ID ORDER BY REPLICATED_AT DESC LIMIT @MAXUSERS",
+				r => new DashboardUser(r.GetInt64(0), r.GetString(1), r.GetDateTime(2), r.GetString(3)),
+				new[]
+				{
+					new QueryParameter(@"@MAXUSERS", loadParams.Settings.MaxUsers),
+				});
 
-			var users = new List<DashboardUser>();
-			var versions = loadParams.Data.Versions;
-
-			foreach (var userRow in loadParams.CoreContext.DbContext.Execute(query))
-			{
-				users.Add(new DashboardUser(userRow.Id, userRow.Name, versions[userRow.VersionId].Name, userRow.ReplicatedAt));
-			}
+			var users = loadParams.CoreContext.DbContext.Execute(query);
 
 			return Task.FromResult(users);
 		}
@@ -96,24 +88,35 @@ namespace Cchbc.Features.Admin.DashboardModule
 		{
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			var dbContext = loadParams.CoreContext.DbContext;
 			loadParams.CoreContext.Feature.AddStep(nameof(GetVersionsAsync));
-			var versions = loadParams.Data.Versions;
+
+			var maxVersions = loadParams.Settings.MaxVersions;
+
+			var query = new Query<DbFeatureVersionRow>(
+				@"SELECT V.ID, V.NAME FROM FEATURE_VERSIONS V INNER JOIN FEATURE_USERS U ON V.ID = U.VERSION_ID ORDER BY REPLICATED_AT DESC LIMIT @MAXVERSIONS",
+				r => new DbFeatureVersionRow(r.GetInt64(0), r.GetString(1)),
+				new[]
+				{
+					new QueryParameter(@"@MAXVERSIONS", maxVersions),
+				});
+
+			var dbContext = loadParams.CoreContext.DbContext;
+			var versions = dbContext.Execute(query);
+
 			var dashboardVersions = new List<DashboardVersion>(versions.Count);
 
-			var exceptions = CountExceptionsByVersion(dbContext, versions);
-			var users = CountUsersByVersion(dbContext, versions);
+			var exceptionsByVersion = CountExceptionsByVersion(dbContext, versions);
+			var usersByVersion = CountUsersByVersion(dbContext, versions);
 
-			foreach (var versionPair in versions)
+			foreach (var version in versions)
 			{
-				var versionId = versionPair.Key;
-				var version = versionPair.Value;
+				var versionId = version.Id;
 
 				int usersCount;
-				users.TryGetValue(versionId, out usersCount);
+				usersByVersion.TryGetValue(versionId, out usersCount);
 
 				int exceptionsCount;
-				exceptions.TryGetValue(versionId, out exceptionsCount);
+				exceptionsByVersion.TryGetValue(versionId, out exceptionsCount);
 
 				dashboardVersions.Add(new DashboardVersion(version, usersCount, exceptionsCount));
 			}
@@ -131,6 +134,7 @@ namespace Cchbc.Features.Admin.DashboardModule
 		{
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
+			var dbContext = loadParams.CoreContext.DbContext;
 			var settings = loadParams.Settings;
 			var relativeTimePeriod = settings.ExceptionsRelativeTimePeriod;
 			var samples = settings.ExceptionsChartEntries;
@@ -148,7 +152,7 @@ namespace Cchbc.Features.Admin.DashboardModule
 
 			var map = new int[samples];
 
-			var dbContext = loadParams.CoreContext.DbContext;
+
 			dbContext.Fill(new Dictionary<long, int>(0), (r, m) =>
 			{
 				var delta = ((long)(r.GetDateTime(0) - baseDate).TotalMilliseconds) / step;
@@ -169,34 +173,37 @@ namespace Cchbc.Features.Admin.DashboardModule
 		{
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			var query = @"SELECT FEATURE_ID, COUNT(*) CNT FROM FEATURE_ENTRIES GROUP BY FEATURE_ID ORDER BY CNT DESC LIMIT @MAXFEATURES";
-			var sqlParams = new[]
+			// TODO : Add ability to exclude features - Sync Data for example
+			return GetUsedFeaturesAsync(loadParams, @"SELECT FEATURE_ID, COUNT(*) CNT FROM FEATURE_ENTRIES GROUP BY FEATURE_ID ORDER BY CNT DESC LIMIT @MAXFEATURES", new[]
 			{
 				new QueryParameter(@"@MAXFEATURES", loadParams.Settings.MaxMostUsedFeatures),
-			};
-			var dbContext = loadParams.CoreContext.DbContext;
-			var result = dbContext.Execute(new Query<Tuple<long, int>>(query, r => Tuple.Create(r.GetInt64(0), r.GetInt32(1)), sqlParams));
-
-			var features = loadParams.Data.Features;
-			var mostUsedFeatures = new List<DashboardFeatureByCount>(result.Count);
-
-			foreach (var tuple in result)
-			{
-				var featureId = tuple.Item1;
-				var count = tuple.Item2;
-				mostUsedFeatures.Add(new DashboardFeatureByCount(featureId, features[featureId].Name, count));
-			}
-
-			return Task.FromResult(mostUsedFeatures);
+			});
 		}
 
 		public static Task<List<DashboardFeatureByCount>> GetLeastUsedFeaturesAsync(DashboarLoadParams loadParams)
 		{
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			var mostUsedFeatures = new List<DashboardFeatureByCount>();
+			// TODO : Add ability to exclude features - View Params for example
+			return GetUsedFeaturesAsync(loadParams, @"SELECT FEATURE_ID, COUNT(*) CNT FROM FEATURE_ENTRIES GROUP BY FEATURE_ID ORDER BY CNT ASC LIMIT @MAXFEATURES", new[]
+			{
+				new QueryParameter(@"@MAXFEATURES", loadParams.Settings.MaxLeastUsedFeatures),
+			});
+		}
 
-			mostUsedFeatures.Add(new DashboardFeatureByCount(3, @"Delete Activity", 3));
+		private static Task<List<DashboardFeatureByCount>> GetUsedFeaturesAsync(DashboarLoadParams loadParams, string query, QueryParameter[] sqlParams)
+		{
+			var dbContext = loadParams.CoreContext.DbContext;
+			var features = loadParams.Data.Features;
+			var contexts = loadParams.Data.Contexts;
+
+			var mostUsedFeatures = dbContext.Execute(new Query<DashboardFeatureByCount>(query, r =>
+			{
+				var featureId = r.GetInt64(0);
+				var feature = features[featureId];
+				var context = contexts[feature.ContextId];
+				return new DashboardFeatureByCount(context, feature, r.GetInt32(1));
+			}, sqlParams));
 
 			return Task.FromResult(mostUsedFeatures);
 		}
@@ -208,52 +215,34 @@ namespace Cchbc.Features.Admin.DashboardModule
 			return Task.FromResult(new List<DashboardFeatureByTime>(0));
 		}
 
-		private static Dictionary<long, int> CountExceptionsByVersion(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
+		private static Dictionary<long, int> CountExceptionsByVersion(ITransactionContext context, List<DbFeatureVersionRow> versions)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (versions == null) throw new ArgumentNullException(nameof(versions));
-
-			var map = new Dictionary<long, int>(versions.Count);
-
-			foreach (var row in versions)
-			{
-				map.Add(row.Key, 0);
-			}
-
-			context.Fill(map, (r, m) =>
-			{
-				var versionId = r.GetInt64(0);
-				var count = r.GetInt32(1);
-
-				m[versionId] = count;
-
-			}, new Query(@"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTIONS GROUP BY VERSION_ID"));
-
-			return map;
+			return CountByVersion(context, versions, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTIONS GROUP BY VERSION_ID");
 		}
 
-		private static Dictionary<long, int> CountUsersByVersion(ITransactionContext context, Dictionary<long, DbFeatureVersionRow> versions)
+		private static Dictionary<long, int> CountUsersByVersion(ITransactionContext context, List<DbFeatureVersionRow> versions)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (versions == null) throw new ArgumentNullException(nameof(versions));
+			return CountByVersion(context, versions, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_USERS GROUP BY VERSION_ID");
+		}
 
-			var map = new Dictionary<long, int>(versions.Count);
+		private static Dictionary<long, int> CountByVersion(ITransactionContext context, List<DbFeatureVersionRow> versions, string query)
+		{
+			var result = new Dictionary<long, int>(versions.Count);
 
-			foreach (var row in versions)
+			foreach (var version in versions)
 			{
-				map.Add(row.Key, 0);
+				result.Add(version.Id, 0);
 			}
 
-			context.Fill(map, (r, m) =>
+			context.Fill(result, (r, map) =>
 			{
 				var versionId = r.GetInt64(0);
 				var count = r.GetInt32(1);
 
-				m[versionId] = count;
+				map[versionId] = count;
+			}, new Query(query));
 
-			}, new Query(@"SELECT VERSION_ID, COUNT(*) FROM FEATURE_USERS GROUP BY VERSION_ID"));
-
-			return map;
+			return result;
 		}
 	}
 }

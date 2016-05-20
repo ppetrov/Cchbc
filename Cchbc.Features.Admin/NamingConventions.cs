@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace Cchbc.Features.Admin
+namespace Cchbc.Features
 {
     public static class NamingConventions
     {

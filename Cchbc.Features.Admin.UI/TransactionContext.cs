@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.SQLite;
 using Cchbc.Data;
 
-namespace Cchbc.Features.Admin.UI
+namespace Cchbc.Features.DashboardModule.UI
 {
 	public sealed class TransactionContext : ITransactionContext
 	{

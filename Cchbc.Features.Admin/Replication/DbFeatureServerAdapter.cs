@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cchbc.Data;
-using Cchbc.Features.Admin.Objects;
 using Cchbc.Features.Db.Adapters;
 
-namespace Cchbc.Features.Admin.Replication
+namespace Cchbc.Features.Replication
 {
 	public static class DbFeatureServerAdapter
 	{
@@ -80,9 +78,6 @@ namespace Cchbc.Features.Admin.Replication
 			{
 				new QueryParameter(@"NAME", string.Empty),
 			});
-
-		private static readonly Query<DbFeatureVersionRow> GetVersionsQuery = new Query<DbFeatureVersionRow>(@"SELECT ID, NAME FROM FEATURE_VERSIONS", DbFeatureVersionCreator);
-		private static readonly Query<DbFeatureUserRow> GetUsersQuery = new Query<DbFeatureUserRow>(@"SELECT ID, NAME, REPLICATED_AT, VERSION_ID FROM FEATURE_USERS", DbFeatureUserRowCreator);
 
 		public static Task CreateSchemaAsync(ITransactionContext context)
 		{
@@ -220,36 +215,6 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			return Task.FromResult(true);
 		}
 
-		public static Task<Dictionary<long, DbFeatureVersionRow>> GetVersionsAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var result = new Dictionary<long, DbFeatureVersionRow>();
-
-			context.Fill(result, (r, map) =>
-			{
-				var row = GetVersionsQuery.Creator(r);
-				map.Add(row.Id, row);
-			}, new Query(GetVersionsQuery.Statement));
-
-			return Task.FromResult(result);
-		}
-
-		public static Task<Dictionary<long, DbFeatureUserRow>> GetUsersAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var result = new Dictionary<long, DbFeatureUserRow>();
-
-			context.Fill(result, (r, map) =>
-			{
-				var row = GetUsersQuery.Creator(r);
-				map.Add(row.Id, row);
-			}, new Query(GetUsersQuery.Statement));
-
-			return Task.FromResult(result);
-		}
-
 		public static Task<long> GetOrCreateVersionAsync(ITransactionContext context, string version)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -340,16 +305,6 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 			context.Execute(InsertExceptionQuery);
 
 			return Task.FromResult(true);
-		}
-
-		private static DbFeatureVersionRow DbFeatureVersionCreator(IFieldDataReader r)
-		{
-			return new DbFeatureVersionRow(r.GetInt64(0), r.GetString(1));
-		}
-
-		private static DbFeatureUserRow DbFeatureUserRowCreator(IFieldDataReader r)
-		{
-			return new DbFeatureUserRow(r.GetInt64(0), r.GetString(1), r.GetDateTime(2), r.GetInt64(3));
 		}
 
 		private static long ReadLong(IFieldDataReader r)

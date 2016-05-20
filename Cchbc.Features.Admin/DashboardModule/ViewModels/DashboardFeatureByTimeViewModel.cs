@@ -1,7 +1,7 @@
 using System;
 using Cchbc.Objects;
 
-namespace Cchbc.Features.Admin.DashboardModule
+namespace Cchbc.Features.DashboardModule.ViewModels
 {
 	public sealed class DashboardFeatureByTimeViewModel : ViewModel
 	{

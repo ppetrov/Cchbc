@@ -8,8 +8,8 @@
     <ProjectGuid>{7611601A-80E1-43FA-ADE0-4F25245DA724}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cchbc.Features.Admin</RootNamespace>
-    <AssemblyName>Cchbc.Features.Admin</AssemblyName>
+    <RootNamespace>Cchbc.Features</RootNamespace>
+    <AssemblyName>Cchbc.Features</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -43,24 +43,22 @@
   <ItemGroup>
     <Compile Include="DashboardModule\DashboardCommonData.cs" />
     <Compile Include="DashboardModule\Dashboard.cs" />
-    <Compile Include="DashboardModule\DashboardDataProvider.cs" />
+    <Compile Include="DashboardModule\Data\DashboardDataProvider.cs" />
     <Compile Include="DashboardModule\DashboardException.cs" />
-    <Compile Include="DashboardModule\DashboardExceptionViewModel.cs" />
+    <Compile Include="DashboardModule\ViewModels\DashboardExceptionViewModel.cs" />
     <Compile Include="DashboardModule\DashboardFeatureByCount.cs" />
-    <Compile Include="DashboardModule\DashboardFeatureByCountViewModel.cs" />
+    <Compile Include="DashboardModule\ViewModels\DashboardFeatureByCountViewModel.cs" />
     <Compile Include="DashboardModule\DashboardFeatureByTime.cs" />
-    <Compile Include="DashboardModule\DashboardFeatureByTimeViewModel.cs" />
+    <Compile Include="DashboardModule\ViewModels\DashboardFeatureByTimeViewModel.cs" />
     <Compile Include="DashboardModule\DashboardSettings.cs" />
     <Compile Include="DashboardModule\DashboardUser.cs" />
-    <Compile Include="DashboardModule\DashboardUserViewModel.cs" />
+    <Compile Include="DashboardModule\ViewModels\DashboardUserViewModel.cs" />
     <Compile Include="DashboardModule\DashboardVersion.cs" />
-    <Compile Include="DashboardModule\DashboardVersionViewModel.cs" />
-    <Compile Include="DashboardModule\DashboardViewModel.cs" />
+    <Compile Include="DashboardModule\ViewModels\DashboardVersionViewModel.cs" />
+    <Compile Include="DashboardModule\ViewModels\DashboardViewModel.cs" />
     <Compile Include="DashboardModule\DashboarLoadParams.cs" />
-    <Compile Include="Helpers\TimePeriodHelper.cs" />
     <Compile Include="NamingConventions.cs" />
-    <Compile Include="Objects\DbFeatureUserRow.cs" />
-    <Compile Include="Objects\DbFeatureVersionRow.cs" />
+    <Compile Include="DashboardModule\Objects\DbFeatureVersionRow.cs" />
     <Compile Include="Objects\RelativeTimePeriod.cs" />
     <Compile Include="Objects\RelativeTimeType.cs" />
     <Compile Include="Replication\DbFeatureServerManager.cs" />

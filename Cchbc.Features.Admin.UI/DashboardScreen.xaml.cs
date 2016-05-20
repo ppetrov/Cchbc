@@ -5,10 +5,11 @@ using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Input;
 using Cchbc.Common;
-using Cchbc.Features.Admin.DashboardModule;
+using Cchbc.Features.DashboardModule.Data;
+using Cchbc.Features.DashboardModule.ViewModels;
 using Cchbc.Logs;
 
-namespace Cchbc.Features.Admin.UI
+namespace Cchbc.Features.DashboardModule.UI
 {
 	public sealed partial class DashboardScreen
 	{
@@ -34,13 +35,12 @@ namespace Cchbc.Features.Admin.UI
 				var fm = new FeatureManager { ContextCreator = contextCreator };
 				await fm.LoadAsync();
 
-				var f = fm.StartNew(@"Dashboard", @"Load");
+				var feature = fm.StartNew(@"Dashboard", @"Load");
 
 				var w = Stopwatch.StartNew();
 				using (var ctx = contextCreator.Create())
 				{
-
-					var coreContext = new CoreContext(ctx, log, f);
+					var coreContext = new CoreContext(ctx, log, feature);
 
 					await this.ViewModel.LoadAsync(coreContext,
 						DashboardDataProvider.GetSettingsAsync,
@@ -55,7 +55,7 @@ namespace Cchbc.Features.Admin.UI
 
 				log(string.Empty + w.Elapsed.TotalMilliseconds, LogLevel.Info);
 
-				foreach (var s in f.Steps)
+				foreach (var s in feature.Steps)
 				{
 					log(@" - " + s.Name + @": " + s.TimeSpent.TotalMilliseconds + " ms", LogLevel.Info);
 				}

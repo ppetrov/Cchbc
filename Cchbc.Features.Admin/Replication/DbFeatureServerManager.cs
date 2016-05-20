@@ -5,7 +5,7 @@ using Cchbc.Data;
 using Cchbc.Features.Db.Adapters;
 using Cchbc.Features.Db.Objects;
 
-namespace Cchbc.Features.Admin.Replication
+namespace Cchbc.Features.Replication
 {
 	public static class DbFeatureServerManager
 	{

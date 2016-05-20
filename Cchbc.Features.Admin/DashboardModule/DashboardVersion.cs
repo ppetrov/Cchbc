@@ -1,7 +1,7 @@
 using System;
-using Cchbc.Features.Admin.Objects;
+using Cchbc.Features.DashboardModule.Objects;
 
-namespace Cchbc.Features.Admin.DashboardModule
+namespace Cchbc.Features.DashboardModule
 {
 	public sealed class DashboardVersion
 	{

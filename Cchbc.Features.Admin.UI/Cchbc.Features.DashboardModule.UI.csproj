@@ -7,8 +7,8 @@
     <ProjectGuid>{3763062F-B096-4304-8F1E-147081C92BE9}</ProjectGuid>
     <OutputType>AppContainerExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cchbc.Features.Admin.UI</RootNamespace>
-    <AssemblyName>Cchbc.Features.Admin.UI</AssemblyName>
+    <RootNamespace>Cchbc.Features.DashboardModule.UI</RootNamespace>
+    <AssemblyName>Cchbc.Features.DashboardModule.UI</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion>10.0.10586.0</TargetPlatformVersion>
@@ -99,9 +99,6 @@
       <DependentUpon>DashboardScreen.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SearchUsersContentDialog.xaml.cs">
-      <DependentUpon>SearchUsersContentDialog.xaml</DependentUpon>
-    </Compile>
     <Compile Include="SQLite\SQLiteColumnType.cs" />
     <Compile Include="SQLite\SQLiteCommand.cs" />
     <Compile Include="SQLite\SQLiteConfigOption.cs" />
@@ -144,15 +141,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="SearchUsersContentDialog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cchbc.Features.Admin\Cchbc.Features.Admin.csproj">
+    <ProjectReference Include="..\Cchbc.Features.Admin\Cchbc.Features.csproj">
       <Project>{7611601A-80E1-43FA-ADE0-4F25245DA724}</Project>
-      <Name>Cchbc.Features.Admin</Name>
+      <Name>Cchbc.Features</Name>
     </ProjectReference>
     <ProjectReference Include="..\Cchbc\Cchbc.csproj">
       <Project>{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}</Project>

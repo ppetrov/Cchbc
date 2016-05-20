@@ -12,9 +12,9 @@ using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
 using Cchbc.Dialog;
 using Cchbc.Features;
-using Cchbc.Features.Admin.Replication;
 using Cchbc.Features.Db.Adapters;
 using Cchbc.Features.Db.Objects;
+using Cchbc.Features.Replication;
 
 namespace Cchbc.ConsoleClient
 {
@@ -68,7 +68,7 @@ namespace Cchbc.ConsoleClient
 			var w = Stopwatch.StartNew();
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
-				DbFeatureServerManager.ReplicateAsync(@"ppetrov", @"4.8.4.2157", server, data).Wait();
+				DbFeatureServerManager.ReplicateAsync(@"ppetrov", @"5.18.9.27", server, data).Wait();
 				server.Complete();
 			}
 
@@ -98,7 +98,7 @@ namespace Cchbc.ConsoleClient
 				return;
 
 
-				
+
 
 
 

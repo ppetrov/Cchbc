@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features.Admin.Objects
+namespace Cchbc.Features.Objects
 {
     public sealed class RangeTimePeriod
     {

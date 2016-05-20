@@ -5,7 +5,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 
-namespace Cchbc.Features.Admin.UI
+namespace Cchbc.Features.DashboardModule.UI
 {
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.
@@ -63,7 +63,7 @@ namespace Cchbc.Features.Admin.UI
                     // When the navigation stack isn't restored navigate to the first page,
                     // configuring the new page by passing required information as a navigation
                     // parameter
-                    rootFrame.Navigate(typeof(DashboardScreen), e.Arguments);
+                    rootFrame.Navigate(typeof(DashboardModule.UI.DashboardScreen), e.Arguments);
                 }
                 // Ensure the current window is active
                 Window.Current.Activate();
