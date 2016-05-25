@@ -15,9 +15,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cchbc.AppBuilder", "Cchbc.A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoginModule", "LoginModule\LoginModule.csproj", "{221F4E8E-6BB9-43C8-BE8B-64070B77CF4C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cchbc.Features", "Cchbc.Features.Admin\Cchbc.Features.csproj", "{7611601A-80E1-43FA-ADE0-4F25245DA724}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cchbc.Features", "Cchbc.Features\Cchbc.Features.csproj", "{7611601A-80E1-43FA-ADE0-4F25245DA724}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cchbc.Features.DashboardModule.UI", "Cchbc.Features.Admin.UI\Cchbc.Features.DashboardModule.UI.csproj", "{3763062F-B096-4304-8F1E-147081C92BE9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cchbc.Features.DashboardUI", "Cchbc.Features.DashboardUI\Cchbc.Features.DashboardUI.csproj", "{3763062F-B096-4304-8F1E-147081C92BE9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

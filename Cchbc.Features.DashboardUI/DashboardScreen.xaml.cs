@@ -5,11 +5,12 @@ using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Input;
 using Cchbc.Common;
+using Cchbc.Features.DashboardModule;
 using Cchbc.Features.DashboardModule.Data;
 using Cchbc.Features.DashboardModule.ViewModels;
 using Cchbc.Logs;
 
-namespace Cchbc.Features.DashboardModule.UI
+namespace Cchbc.Features.DashboardUI
 {
 	public sealed partial class DashboardScreen
 	{

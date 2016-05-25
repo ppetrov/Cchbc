@@ -2,7 +2,7 @@ using System;
 using System.SQLite;
 using Cchbc.Data;
 
-namespace Cchbc.Features.DashboardModule.UI
+namespace Cchbc.Features.DashboardUI
 {
 	public sealed class SqlLiteDelegateDataReader : IFieldDataReader
 	{

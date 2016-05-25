@@ -1,7 +1,7 @@
 ﻿using System;
 using Cchbc.Data;
 
-namespace Cchbc.Features.DashboardModule.UI
+namespace Cchbc.Features.DashboardUI
 {
 	public sealed class TransactionContextCreator : ITransactionContextCreator
 	{

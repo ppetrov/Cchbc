@@ -7,8 +7,8 @@
     <ProjectGuid>{3763062F-B096-4304-8F1E-147081C92BE9}</ProjectGuid>
     <OutputType>AppContainerExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cchbc.Features.DashboardModule.UI</RootNamespace>
-    <AssemblyName>Cchbc.Features.DashboardModule.UI</AssemblyName>
+    <RootNamespace>Cchbc.Features.DashboardUI</RootNamespace>
+    <AssemblyName>Cchbc.Features.DashboardUI</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion>10.0.10586.0</TargetPlatformVersion>
@@ -143,7 +143,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cchbc.Features.Admin\Cchbc.Features.csproj">
+    <ProjectReference Include="..\Cchbc.Features\Cchbc.Features.csproj">
       <Project>{7611601A-80E1-43FA-ADE0-4F25245DA724}</Project>
       <Name>Cchbc.Features</Name>
     </ProjectReference>
