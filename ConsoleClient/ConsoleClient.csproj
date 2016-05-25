@@ -7,8 +7,8 @@
     <ProjectGuid>{0A39F071-B190-4087-8CD4-F7F54E9C3527}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cchbc.ConsoleClient</RootNamespace>
-    <AssemblyName>Cchbc.ConsoleClient</AssemblyName>
+    <RootNamespace>ConsoleClient</RootNamespace>
+    <AssemblyName>ConsoleClient</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -56,10 +56,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cchbc.App\Cchbc.App.csproj">
-      <Project>{919da720-c69f-4b94-ae62-7004f8ccb0b3}</Project>
-      <Name>Cchbc.App</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Cchbc.AppBuilder\Cchbc.AppBuilder.csproj">
       <Project>{C925111E-12CE-4D75-93F8-348C5FD44EFD}</Project>
       <Name>Cchbc.AppBuilder</Name>

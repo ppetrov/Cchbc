@@ -155,10 +155,6 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cchbc.App\Cchbc.App.csproj">
-      <Project>{919DA720-C69F-4B94-AE62-7004F8CCB0B3}</Project>
-      <Name>Cchbc.App</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Cchbc.AppBuilder\Cchbc.AppBuilder.csproj">
       <Project>{C925111E-12CE-4D75-93F8-348C5FD44EFD}</Project>
       <Name>Cchbc.AppBuilder</Name>

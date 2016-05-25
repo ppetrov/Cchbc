@@ -41,9 +41,22 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArticlesModule\Adapters\ArticleAdapter.cs" />
+    <Compile Include="ArticlesModule\Adapters\BrandAdapter.cs" />
+    <Compile Include="ArticlesModule\Adapters\FlavorAdapter.cs" />
+    <Compile Include="ArticlesModule\ArticlesReadOnlyModule.cs" />
+    <Compile Include="ArticlesModule\Helpers\ArticleHelper.cs" />
+    <Compile Include="ArticlesModule\Helpers\BrandHelper.cs" />
+    <Compile Include="ArticlesModule\Helpers\FlavorHelper.cs" />
+    <Compile Include="ArticlesModule\Objects\Article.cs" />
+    <Compile Include="ArticlesModule\Objects\Brand.cs" />
+    <Compile Include="ArticlesModule\Objects\Flavor.cs" />
+    <Compile Include="ArticlesModule\ViewModels\ArticlesViewModel.cs" />
+    <Compile Include="ArticlesModule\ViewModels\ArticleViewModel.cs" />
     <Compile Include="Objects\Login.cs" />
     <Compile Include="Adapter\LoginAdapter.cs" />
     <Compile Include="LoginsModule.cs" />
+    <Compile Include="OrderModule\Orders.cs" />
     <Compile Include="ViewModels\LoginsViewModel.cs" />
     <Compile Include="ViewModels\LoginViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
