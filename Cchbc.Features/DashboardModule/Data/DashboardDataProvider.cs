@@ -93,7 +93,7 @@ namespace Cchbc.Features.DashboardModule.Data
 			var maxVersions = loadParams.Settings.MaxVersions;
 
 			var query = new Query<DbFeatureVersionRow>(
-				@"SELECT V.ID, V.NAME FROM FEATURE_VERSIONS V INNER JOIN FEATURE_USERS U ON V.ID = U.VERSION_ID ORDER BY REPLICATED_AT DESC LIMIT @MAXVERSIONS",
+				@"SELECT ID, NAME FROM FEATURE_VERSIONS ORDER BY ID DESC LIMIT @MAXVERSIONS",
 				r => new DbFeatureVersionRow(r.GetInt64(0), r.GetString(1)),
 				new[]
 				{

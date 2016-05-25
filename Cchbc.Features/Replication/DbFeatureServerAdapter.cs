@@ -166,7 +166,7 @@ CREATE TABLE [FEATURE_ENTRIES] (
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE [FEATURE_ENTRY_STEPS] (
+CREATE TABLE [FEATURE_STEP_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
 	[Details] nvarchar(254) NULL, 
@@ -187,7 +187,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			context.Execute(new Query(@"DROP TABLE FEATURE_ENTRY_STEPS"));
+			context.Execute(new Query(@"DROP TABLE FEATURE_STEP_ENTRIES"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_EXCEPTIONS"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_ENTRIES"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_USERS"));

@@ -48,13 +48,13 @@ namespace Cchbc.Features.Db.Adapters
 		private static readonly Query InsertFeatureQuery = new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", InsertFeatureSqlParams);
 		private static readonly Query InsertClientFeatureEntryQuery = new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATED_AT, @FEATURE)", InsertFeatureEntrySqlParams);
 		private static readonly Query InsertExceptionQuery = new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATED_AT, @FEATURE)", InsertExcetionEntrySqlParams);
-		private static readonly Query InsertStepEntryQuery = new Query(@"INSERT INTO FEATURE_ENTRY_STEPS(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", InsertFeatureStepEntrySqlParams);
+		private static readonly Query InsertStepEntryQuery = new Query(@"INSERT INTO FEATURE_STEP_ENTRIES(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", InsertFeatureStepEntrySqlParams);
 
 		private static readonly Query<DbFeatureContextRow> GetContextsQuery = new Query<DbFeatureContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextCreator);
 		private static readonly Query<DbFeatureStepRow> GetStepsQuery = new Query<DbFeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator);
 		private static readonly Query<DbFeatureRow> GetFeaturesQuery = new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
 		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
-		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_ENTRY_STEPS", EntryStepRowCreator);
+		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);
 		private static readonly Query<DbFeatureExceptionRow> GetExceptionsQuery = new Query<DbFeatureExceptionRow>(@"SELECT MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTIONS", DbExceptionRowCreator);
 
 		public static Task CreateSchemaAsync(ITransactionContext context)
@@ -108,7 +108,7 @@ CREATE TABLE [FEATURE_EXCEPTIONS] (
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE [FEATURE_ENTRY_STEPS] (
+CREATE TABLE [FEATURE_STEP_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
 	[Details] nvarchar(254) NULL, 
@@ -129,7 +129,7 @@ CREATE TABLE [FEATURE_ENTRY_STEPS] (
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			context.Execute(new Query(@"DROP TABLE FEATURE_ENTRY_STEPS"));
+			context.Execute(new Query(@"DROP TABLE FEATURE_STEP_ENTRIES"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_EXCEPTIONS"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_ENTRIES"));
 			context.Execute(new Query(@"DROP TABLE FEATURES"));
