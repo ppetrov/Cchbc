@@ -67,7 +67,12 @@ namespace Cchbc.Features.Replication
 
 		private static async Task<Dictionary<long, long>> ReplicateContextsAsync(ITransactionContext serverContext, List<DbFeatureContextRow> clientContextRows)
 		{
-			var serverContexts = await DbFeatureAdapter.GetContextsMappedByNameAsync(serverContext);
+			var contexts = await DbFeatureAdapter.GetContextsAsync(serverContext);
+			var serverContexts = new Dictionary<string, DbFeatureContextRow>(contexts.Count);
+			foreach (var row in contexts)
+			{
+				serverContexts.Add(row.Name, row);
+			}
 
 			var map = new Dictionary<long, long>(clientContextRows.Count);
 
@@ -95,7 +100,12 @@ namespace Cchbc.Features.Replication
 
 		private static async Task<Dictionary<long, long>> ReplicateStepsAsync(ITransactionContext context, List<DbFeatureStepRow> clientStepRows)
 		{
-			var serverSteps = await DbFeatureAdapter.GetStepsMappedByNameAsync(context);
+			var steps = await DbFeatureAdapter.GetStepsAsync(context);
+			var serverSteps = new Dictionary<string, DbFeatureStepRow>(steps.Count);
+			foreach (var row in steps)
+			{
+				serverSteps.Add(row.Name, row);
+			}
 
 			var map = new Dictionary<long, long>(clientStepRows.Count);
 
@@ -123,7 +133,12 @@ namespace Cchbc.Features.Replication
 
 		private static async Task<Dictionary<long, long>> ReplicateExceptionsAsync(ITransactionContext context, List<DbFeatureExceptionRow> clientExceptionRows)
 		{
-			var serverExceptions = await DbFeatureAdapter.GetExceptionsMappedByContentsAsync(context);
+			var exceptions = await DbFeatureAdapter.GetExceptionsAsync(context);
+			var serverExceptions = new Dictionary<string, DbFeatureExceptionRow>(exceptions.Count);
+			foreach (var row in exceptions)
+			{
+				serverExceptions.Add(row.Contents, row);
+			}
 
 			var map = new Dictionary<long, long>(clientExceptionRows.Count);
 

@@ -212,9 +212,6 @@ namespace Cchbc.ConsoleClient
 			//}
 		}
 
-
-
-
 		private static void GenerateProject(DbProject project, string directoryPath)
 		{
 			var buffer = new StringBuilder(1024 * 80);

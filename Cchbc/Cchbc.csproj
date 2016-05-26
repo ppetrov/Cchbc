@@ -54,6 +54,7 @@
     <Compile Include="Features\Db\Adapters\DbFeatureAdapter.cs" />
     <Compile Include="Features\Db\Objects\DbFeatureEntryRow.cs" />
     <Compile Include="Features\Db\Objects\DbFeatureEntryStepRow.cs" />
+    <Compile Include="Features\Db\Objects\DbFeatureExceptionEntryRow.cs" />
     <Compile Include="Features\Db\Objects\DbFeatureExceptionRow.cs" />
     <Compile Include="Features\Db\Objects\DbFeatureRow.cs" />
     <Compile Include="Features\Db\Objects\DbFeatureContextRow.cs" />

@@ -43,10 +43,10 @@ namespace Cchbc.Features.Db.Adapters
 
 		private static readonly Query<DbFeatureContextRow> GetContextsQuery = new Query<DbFeatureContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextCreator);
 		private static readonly Query<DbFeatureStepRow> GetStepsQuery = new Query<DbFeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator);
+		private static readonly Query<DbFeatureExceptionRow> GetDbFeatureExceptionsRowQuery = new Query<DbFeatureExceptionRow>(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS", DbFeatureExceptionRowCreator);
 		private static readonly Query<DbFeatureRow> GetFeaturesQuery = new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
 		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
-		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);
-		private static readonly Query<DbFeatureExceptionRow> GetDbFeatureExceptionsRowQuery = new Query<DbFeatureExceptionRow>(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS", DbFeatureExceptionRowCreator);
+		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);		
 		private static readonly Query<DbFeatureExceptionEntryRow> GetDbFeatureExceptionEntryRowQuery = new Query<DbFeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
 
 		public static Task CreateSchemaAsync(ITransactionContext context)
@@ -146,13 +146,13 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 
 			var contextRows = await GetContextsAsync(context);
 			var stepRows = await GetStepsAsync(context);
+			var exceptionRows = await GetExceptionsAsync(context);
 			var featureRows = await GetFeaturesAsync(context);
 			var featureEntryRows = await GetFeatureEntryRowsAsync(context);
 			var entryStepRows = await GetEntryStepRowsAsync(context);
-			var exceptionRows = await GetExceptionsAsync(context);
 			var exceptionEntryRows = await GetExceptionEntriesAsync(context);
 
-			return new FeatureClientData(contextRows, stepRows, featureRows, featureEntryRows, entryStepRows, exceptionRows, exceptionEntryRows);
+			return new FeatureClientData(contextRows, stepRows, exceptionRows, featureRows, featureEntryRows, entryStepRows, exceptionEntryRows);
 		}
 
 		public static Task<List<DbFeatureContextRow>> GetContextsAsync(ITransactionContext context)
@@ -162,36 +162,6 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(context.Execute(GetContextsQuery));
 		}
 
-		public static Task<Dictionary<long, DbFeatureContextRow>> GetContextsMappedByIdAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var result = new Dictionary<long, DbFeatureContextRow>();
-
-			context.Fill(result, (r, map) =>
-			{
-				var row = GetContextsQuery.Creator(r);
-				map.Add(row.Id, row);
-			}, new Query(GetContextsQuery.Statement));
-
-			return Task.FromResult(result);
-		}
-
-		public static Task<Dictionary<string, DbFeatureContextRow>> GetContextsMappedByNameAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var result = new Dictionary<string, DbFeatureContextRow>();
-
-			context.Fill(new Dictionary<long, DbFeatureContextRow>(0), (r, map) =>
-			{
-				var row = GetContextsQuery.Creator(r);
-				result.Add(row.Name, row);
-			}, new Query(GetContextsQuery.Statement));
-
-			return Task.FromResult(result);
-		}
-
 		public static Task<List<DbFeatureStepRow>> GetStepsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -199,34 +169,11 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(context.Execute(GetStepsQuery));
 		}
 
-		//public static Task<Dictionary<long, DbFeatureStepRow>> GetStepsMappedByIdAsync(ITransactionContext context)
-		//{
-		//	if (context == null) throw new ArgumentNullException(nameof(context));
-
-		//	var result = new Dictionary<long, DbFeatureStepRow>();
-
-		//	context.Fill(result, (r, map) =>
-		//	{
-		//		var row = GetStepsQuery.Creator(r);
-		//		map.Add(row.Id, row);
-		//	}, new Query(GetStepsQuery.Statement));
-
-		//	return Task.FromResult(result);
-		//}
-
-		public static Task<Dictionary<string, DbFeatureStepRow>> GetStepsMappedByNameAsync(ITransactionContext context)
+		public static Task<List<DbFeatureExceptionRow>> GetExceptionsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			var result = new Dictionary<string, DbFeatureStepRow>();
-
-			context.Fill(new Dictionary<long, DbFeatureStepRow>(0), (r, map) =>
-			{
-				var row = GetStepsQuery.Creator(r);
-				result.Add(row.Name, row);
-			}, new Query(GetStepsQuery.Statement));
-
-			return Task.FromResult(result);
+			return Task.FromResult(context.Execute(GetDbFeatureExceptionsRowQuery));
 		}
 
 		public static Task<List<DbFeatureRow>> GetFeaturesAsync(ITransactionContext context)
@@ -234,21 +181,6 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return Task.FromResult(context.Execute(GetFeaturesQuery));
-		}
-
-		public static Task<Dictionary<long, DbFeatureRow>> GetFeaturesMappedByIdAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var result = new Dictionary<long, DbFeatureRow>();
-
-			context.Fill(result, (r, map) =>
-			{
-				var row = GetFeaturesQuery.Creator(r);
-				map.Add(row.Id, row);
-			}, new Query(GetFeaturesQuery.Statement));
-
-			return Task.FromResult(result);
 		}
 
 		public static Task<List<DbFeatureEntryRow>> GetFeatureEntryRowsAsync(ITransactionContext context)
@@ -263,28 +195,6 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return Task.FromResult(context.Execute(GetFeatureEntryStepsQuery));
-		}
-
-		public static Task<List<DbFeatureExceptionRow>> GetExceptionsAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			return Task.FromResult(context.Execute(GetDbFeatureExceptionsRowQuery));
-		}
-
-		public static Task<Dictionary<string, DbFeatureExceptionRow>> GetExceptionsMappedByContentsAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var result = new Dictionary<string, DbFeatureExceptionRow>();
-
-			context.Fill(new Dictionary<long, DbFeatureExceptionRow>(0), (r, map) =>
-			{
-				var row = GetDbFeatureExceptionsRowQuery.Creator(r);
-				result.Add(row.Contents, row);
-			}, new Query(GetDbFeatureExceptionsRowQuery.Statement));
-
-			return Task.FromResult(result);
 		}
 
 		public static Task<List<DbFeatureExceptionEntryRow>> GetExceptionEntriesAsync(ITransactionContext context)

@@ -5,6 +5,7 @@ using Cchbc.Common;
 using Cchbc.Data;
 using Cchbc.Features.DashboardModule.Objects;
 using Cchbc.Features.Db.Adapters;
+using Cchbc.Features.Db.Objects;
 using Cchbc.Logs;
 
 namespace Cchbc.Features.DashboardModule.Data
@@ -59,10 +60,40 @@ namespace Cchbc.Features.DashboardModule.Data
 			coreContext.Feature.AddStep(nameof(GetCommonDataAsync));
 
 			var dbContext = coreContext.DbContext;
-			var contexts = await DbFeatureAdapter.GetContextsMappedByIdAsync(dbContext);
-			var features = await DbFeatureAdapter.GetFeaturesMappedByIdAsync(dbContext);
+			var contexts = await GetContextsMappedByIdAsync(dbContext);
+			var features = await GetFeaturesMappedByIdAsync(dbContext);
 
 			return new DashboardCommonData(contexts, features);
+		}
+
+		private static Task<Dictionary<long, DbFeatureContextRow>> GetContextsMappedByIdAsync(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			var result = new Dictionary<long, DbFeatureContextRow>();
+
+			context.Fill(result, (r, map) =>
+			{
+				var row = new DbFeatureContextRow(r.GetInt64(0), r.GetString(1));
+				map.Add(row.Id, row);
+			}, new Query(@"SELECT ID, NAME FROM FEATURE_CONTEXTS"));
+
+			return Task.FromResult(result);
+		}
+
+		public static Task<Dictionary<long, DbFeatureRow>> GetFeaturesMappedByIdAsync(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			var result = new Dictionary<long, DbFeatureRow>();
+
+			context.Fill(result, (r, map) =>
+			{
+				var row = new DbFeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
+				map.Add(row.Id, row);
+			}, new Query(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES"));
+
+			return Task.FromResult(result);
 		}
 
 		public static Task<List<DashboardUser>> GetUsersAsync(DashboarLoadParams loadParams)
