@@ -91,13 +91,14 @@ namespace Cchbc.Features
 
 		private async Task<long> SaveExceptionAsync(ITransactionContext context, Exception exception)
 		{
-			var message = (exception.Message ?? string.Empty).Trim();
-			var stackTrace = (exception.StackTrace ?? string.Empty).Trim();
-			var exceptionId = await DbFeatureAdapter.GetExceptionAsync(context, message, stackTrace);
+			var contents = (exception.ToString() ?? string.Empty).Trim();
+
+			var exceptionId = await DbFeatureAdapter.GetExceptionAsync(context, contents);
 			if (exceptionId <= 0)
 			{
-				exceptionId = await DbFeatureAdapter.InsertExceptionAsync(context, message, stackTrace);
+				exceptionId = await DbFeatureAdapter.InsertExceptionAsync(context, contents);
 			}
+
 			return exceptionId;
 		}
 

@@ -5,17 +5,14 @@ namespace Cchbc.Features.Db.Objects
 	public sealed class DbFeatureExceptionRow
 	{
 		public readonly long Id;
-		public readonly string Message;
-		public readonly string StackTrace;
+		public readonly string Contents;
 
-		public DbFeatureExceptionRow(long id, string message, string stackTrace)
+		public DbFeatureExceptionRow(long id, string contents)
 		{
-			if (message == null) throw new ArgumentNullException(nameof(message));
-			if (stackTrace == null) throw new ArgumentNullException(nameof(stackTrace));
+			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
 			this.Id = id;
-			this.Message = message;
-			this.StackTrace = stackTrace;
+			this.Contents = contents;
 		}
 	}
 

@@ -44,7 +44,7 @@ namespace Cchbc.ConsoleClient
 			}
 			catch (Exception e)
 			{
-
+				Console.WriteLine(e);
 			}
 
 			using (var serverContext = creator.Create())
@@ -86,12 +86,20 @@ namespace Cchbc.ConsoleClient
 			var userName = clientDb.Substring(si, ei - si);
 			try
 			{
-				//CreateSchemaAsync(serverDb);
+				//CreateSchema(serverDb);
+				//return;
+
+				//using (var client = new TransactionContextCreator(clientDb).Create())
+				//{
+				//	DbFeatureAdapter.DropSchemaAsync(client).Wait();
+				//	DbFeatureAdapter.CreateSchemaAsync(client).Wait();
+				//	client.Complete();
+				//}
 				//return;
 
 				//var fm = new FeatureManager { ContextCreator = new TransactionContextCreator(clientDb) };
 				//fm.LoadAsync().Wait();
-				//fm.LogExceptionAsync(Feature.StartNew(@"Agenda", @"Load Data"), new Exception(@"PPP exception from console.")).Wait();
+				//fm.LogExceptionAsync(Feature.StartNew(@"Outlets", @"Load Data"), new NullReferenceException()).Wait();
 				//return;
 
 

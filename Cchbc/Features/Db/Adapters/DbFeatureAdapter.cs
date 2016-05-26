@@ -46,7 +46,7 @@ namespace Cchbc.Features.Db.Adapters
 		private static readonly Query<DbFeatureRow> GetFeaturesQuery = new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
 		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
 		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);
-		private static readonly Query<DbFeatureExceptionRow> GetDbFeatureExceptionsRowQuery = new Query<DbFeatureExceptionRow>(@"SELECT ID, MESSAGE, STACKTRACE FROM FEATURE_EXCEPTIONS", DbFeatureExceptionRowCreator);
+		private static readonly Query<DbFeatureExceptionRow> GetDbFeatureExceptionsRowQuery = new Query<DbFeatureExceptionRow>(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS", DbFeatureExceptionRowCreator);
 		private static readonly Query<DbFeatureExceptionEntryRow> GetDbFeatureExceptionEntryRowQuery = new Query<DbFeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
 
 		public static Task CreateSchemaAsync(ITransactionContext context)
@@ -68,8 +68,7 @@ CREATE TABLE[FEATURE_STEPS] (
 			context.Execute(new Query(@"
 CREATE TABLE[FEATURE_EXCEPTIONS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	[Message] nvarchar(254) NOT NULL,
-	[StackTrace] nvarchar(254) NOT NULL
+	[Contents] nvarchar(254) NOT NULL
 )"));
 
 			context.Execute(new Query(@"
@@ -200,20 +199,20 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(context.Execute(GetStepsQuery));
 		}
 
-		public static Task<Dictionary<long, DbFeatureStepRow>> GetStepsMappedByIdAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+		//public static Task<Dictionary<long, DbFeatureStepRow>> GetStepsMappedByIdAsync(ITransactionContext context)
+		//{
+		//	if (context == null) throw new ArgumentNullException(nameof(context));
 
-			var result = new Dictionary<long, DbFeatureStepRow>();
+		//	var result = new Dictionary<long, DbFeatureStepRow>();
 
-			context.Fill(result, (r, map) =>
-			{
-				var row = GetStepsQuery.Creator(r);
-				map.Add(row.Id, row);
-			}, new Query(GetStepsQuery.Statement));
+		//	context.Fill(result, (r, map) =>
+		//	{
+		//		var row = GetStepsQuery.Creator(r);
+		//		map.Add(row.Id, row);
+		//	}, new Query(GetStepsQuery.Statement));
 
-			return Task.FromResult(result);
-		}
+		//	return Task.FromResult(result);
+		//}
 
 		public static Task<Dictionary<string, DbFeatureStepRow>> GetStepsMappedByNameAsync(ITransactionContext context)
 		{
@@ -273,6 +272,21 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(context.Execute(GetDbFeatureExceptionsRowQuery));
 		}
 
+		public static Task<Dictionary<string, DbFeatureExceptionRow>> GetExceptionsMappedByContentsAsync(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			var result = new Dictionary<string, DbFeatureExceptionRow>();
+
+			context.Fill(new Dictionary<long, DbFeatureExceptionRow>(0), (r, map) =>
+			{
+				var row = GetDbFeatureExceptionsRowQuery.Creator(r);
+				result.Add(row.Contents, row);
+			}, new Query(GetDbFeatureExceptionsRowQuery.Statement));
+
+			return Task.FromResult(result);
+		}
+
 		public static Task<List<DbFeatureExceptionEntryRow>> GetExceptionEntriesAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -280,18 +294,16 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(context.Execute(GetDbFeatureExceptionEntryRowQuery));
 		}
 
-		public static Task<long> GetExceptionAsync(ITransactionContext context, string message, string stackTrace)
+		public static Task<long> GetExceptionAsync(ITransactionContext context, string contents)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (message == null) throw new ArgumentNullException(nameof(message));
-			if (stackTrace == null) throw new ArgumentNullException(nameof(stackTrace));
+			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
 			var query =
-				new Query<long>(@"SELECT Id FROM FEATURE_EXCEPTIONS WHERE MESSAGE = @MESSAGE AND STACKTRACE = @STACKTRACE",
+				new Query<long>(@"SELECT Id FROM FEATURE_EXCEPTIONS WHERE CONTENTS = @CONTENTS",
 					r => r.GetInt64(0), new[]
 					{
-						new QueryParameter(@"@MESSAGE", message),
-						new QueryParameter(@"@STACKTRACE", stackTrace),
+						new QueryParameter(@"@CONTENTS", contents),
 					});
 
 			var exceptionId = -1L;
@@ -353,16 +365,14 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return ExecureInsertAsync(context, InsertClientFeatureEntryQuery);
 		}
 
-		public static Task<long> InsertExceptionAsync(ITransactionContext context, string message, string stackTrace)
+		public static Task<long> InsertExceptionAsync(ITransactionContext context, string contents)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (message == null) throw new ArgumentNullException(nameof(message));
-			if (stackTrace == null) throw new ArgumentNullException(nameof(stackTrace));
+			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
-			var query = new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE) VALUES (@MESSAGE, @STACKTRACE)", new[]
+			var query = new Query(@"INSERT INTO FEATURE_EXCEPTIONS(CONTENTS) VALUES (@CONTENTS)", new[]
 					{
-						new QueryParameter(@"@MESSAGE", message),
-						new QueryParameter(@"@STACKTRACE", stackTrace),
+						new QueryParameter(@"@CONTENTS", contents),
 					});
 
 			return ExecureInsertAsync(context, query);
@@ -425,7 +435,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 
 		private static DbFeatureExceptionRow DbFeatureExceptionRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureExceptionRow(r.GetInt64(0), r.GetString(1), r.GetString(2));
+			return new DbFeatureExceptionRow(r.GetInt64(0), r.GetString(1));
 		}
 
 		private static DbFeatureExceptionEntryRow DbFeatureExceptionEntryRowCreator(IFieldDataReader r)

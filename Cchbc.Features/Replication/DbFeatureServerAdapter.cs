@@ -56,12 +56,11 @@ namespace Cchbc.Features.Replication
 					new QueryParameter(@"@VERSION", 0L),
 				});
 
-		private static readonly Query InsertExceptionQuery =
-			new Query(@"INSERT INTO FEATURE_EXCEPTIONS(MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID ) VALUES (@MESSAGE, @STACKTRACE, @CREATED_AT, @FEATURE, @USER, @VERSION)",
+		private static readonly Query InsertExceptionEntryQuery =
+			new Query(@"INSERT INTO FEATURE_EXCEPTION_ENTRIES(EXCEPTION_ID, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID ) VALUES (@EXCEPTION, @CREATED_AT, @FEATURE, @USER, @VERSION)",
 				new[]
 				{
-					new QueryParameter(@"@MESSAGE", string.Empty),
-					new QueryParameter(@"@STACKTRACE", string.Empty),
+					new QueryParameter(@"@EXCEPTION", 0L),
 					new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
 					new QueryParameter(@"@FEATURE", 0L),
 					new QueryParameter(@"@USER", 0L),
@@ -104,8 +103,7 @@ CREATE TABLE[FEATURE_STEPS] (
 			context.Execute(new Query(@"
 CREATE TABLE[FEATURE_EXCEPTIONS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	[Message] nvarchar(254) NOT NULL,
-	[StackTrace] nvarchar(254) NOT NULL
+	[Contents] nvarchar(254) NOT NULL
 )"));
 
 			context.Execute(new Query(@"
@@ -295,24 +293,21 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return DbFeatureAdapter.ExecureInsertAsync(context, InsertServerFeatureEntryQuery);
 		}
 
-		public static Task InsertExceptionEntryAsync(ITransactionContext context, long userId, long versionId, long featureId, string message, string stackTrace, DateTime createdAt)
+		public static Task InsertExceptionEntryAsync(ITransactionContext context, long exceptionId, DateTime createdAt, long featureId, long userId, long versionId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (message == null) throw new ArgumentNullException(nameof(message));
-			if (stackTrace == null) throw new ArgumentNullException(nameof(stackTrace));
 
-			var query = InsertExceptionQuery;
+			var query = InsertExceptionEntryQuery;
 
 			// Set parameters values
-			query.Parameters[0].Value = message;
-			query.Parameters[1].Value = stackTrace;
-			query.Parameters[2].Value = createdAt;
-			query.Parameters[3].Value = featureId;
-			query.Parameters[4].Value = userId;
-			query.Parameters[5].Value = versionId;
+			query.Parameters[0].Value = exceptionId;
+			query.Parameters[1].Value = createdAt;
+			query.Parameters[2].Value = featureId;
+			query.Parameters[3].Value = userId;
+			query.Parameters[4].Value = versionId;
 
 			// Insert the record
-			context.Execute(InsertExceptionQuery);
+			context.Execute(InsertExceptionEntryQuery);
 
 			return Task.FromResult(true);
 		}
