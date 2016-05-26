@@ -39,6 +39,7 @@ namespace Cchbc.Features.Replication
 			var clientFeatureEntryRows = clientData.FeatureEntryRows;
 			var clientFeatureEntryStepRows = clientData.EntryStepRows;
 			var clientFeatureExceptionRows = clientData.ExceptionRows;
+			var clientFeatureExceptionEntryRows = clientData.ExceptionEntryRows;
 
 			var contextsMap = await ReplicateContextsAsync(serverContext, clientContextRows);
 			var stepsMap = await ReplicateStepsAsync(serverContext, clientStepRows);
@@ -52,11 +53,12 @@ namespace Cchbc.Features.Replication
 				await DbFeatureAdapter.InsertStepEntryAsync(serverContext, mappedFeatureEntryId, mappedStepId, row.TimeSpent, row.Details);
 			}
 
-			foreach (var row in clientFeatureExceptionRows)
-			{
-				var mappedFeatureId = featuresMap[row.FeatureId];
-				await DbFeatureServerAdapter.InsertExceptionEntryAsync(serverContext, userId, versionId, mappedFeatureId, row.Message, row.StackTrace, row.CreatedAt);
-			}
+			// TODO : !!!! Map exceptions !!!
+			//foreach (var row in clientFeatureExceptionRows)
+			//{
+			//	var mappedFeatureId = featuresMap[row.FeatureId];
+			//	await DbFeatureServerAdapter.InsertExceptionEntryAsync(serverContext, userId, versionId, mappedFeatureId, row.Message, row.StackTrace, row.CreatedAt);
+			//}
 
 			await DbFeatureServerAdapter.UpdateLastChangedFlagAsync(serverContext);
 		}

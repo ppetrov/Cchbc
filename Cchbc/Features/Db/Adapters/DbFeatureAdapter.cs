@@ -46,6 +46,8 @@ namespace Cchbc.Features.Db.Adapters
 		private static readonly Query<DbFeatureRow> GetFeaturesQuery = new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
 		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
 		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);
+		private static readonly Query<DbFeatureExceptionRow> GetDbFeatureExceptionsRowQuery = new Query<DbFeatureExceptionRow>(@"SELECT ID, MESSAGE, STACKTRACE FROM FEATURE_EXCEPTIONS", DbFeatureExceptionRowCreator);
+		private static readonly Query<DbFeatureExceptionEntryRow> GetDbFeatureExceptionEntryRowQuery = new Query<DbFeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
 
 		public static Task CreateSchemaAsync(ITransactionContext context)
 		{
@@ -143,14 +145,15 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			var clientContextRows = await GetContextsAsync(context);
-			var clientStepRows = await GetStepsAsync(context);
-			var clientFeatureRows = await GetFeaturesAsync(context);
-			var clientFeatureEntryRows = await GetFeatureEntryRowsAsync(context);
-			var clientEntryStepRows = await GetEntryStepRowsAsync(context);
-			var clientExceptionRows = await GetExceptionsAsync(context);
+			var contextRows = await GetContextsAsync(context);
+			var stepRows = await GetStepsAsync(context);
+			var featureRows = await GetFeaturesAsync(context);
+			var featureEntryRows = await GetFeatureEntryRowsAsync(context);
+			var entryStepRows = await GetEntryStepRowsAsync(context);
+			var exceptionRows = await GetExceptionsAsync(context);
+			var exceptionEntryRows = await GetExceptionEntriesAsync(context);
 
-			return new FeatureClientData(clientContextRows, clientStepRows, clientFeatureRows, clientFeatureEntryRows, clientEntryStepRows, clientExceptionRows);
+			return new FeatureClientData(contextRows, stepRows, featureRows, featureEntryRows, entryStepRows, exceptionRows, exceptionEntryRows);
 		}
 
 		public static Task<List<DbFeatureContextRow>> GetContextsAsync(ITransactionContext context)
@@ -267,9 +270,14 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			// TODO : !!!
-			var query = new Query<DbFeatureExceptionRow>(@"SELECT MESSAGE, STACKTRACE, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTIONS", DbExceptionRowCreator);
-			return Task.FromResult(context.Execute(query));
+			return Task.FromResult(context.Execute(GetDbFeatureExceptionsRowQuery));
+		}
+
+		public static Task<List<DbFeatureExceptionEntryRow>> GetExceptionEntriesAsync(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			return Task.FromResult(context.Execute(GetDbFeatureExceptionEntryRowQuery));
 		}
 
 		public static Task<long> GetExceptionAsync(ITransactionContext context, string message, string stackTrace)
@@ -410,14 +418,19 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return new DbFeatureEntryRow(r.GetInt64(0), r.GetDecimal(1), r.GetString(2), r.GetDateTime(3), r.GetInt64(4));
 		}
 
-		private static DbFeatureExceptionRow DbExceptionRowCreator(IFieldDataReader r)
-		{
-			return new DbFeatureExceptionRow(r.GetString(0), r.GetString(1), r.GetDateTime(2), r.GetInt64(3));
-		}
-
 		private static DbFeatureEntryStepRow EntryStepRowCreator(IFieldDataReader r)
 		{
 			return new DbFeatureEntryStepRow(r.GetDecimal(0), r.GetString(1), r.GetInt64(2), r.GetInt64(3));
+		}
+
+		private static DbFeatureExceptionRow DbFeatureExceptionRowCreator(IFieldDataReader r)
+		{
+			return new DbFeatureExceptionRow(r.GetInt64(0), r.GetString(1), r.GetString(2));
+		}
+
+		private static DbFeatureExceptionEntryRow DbFeatureExceptionEntryRowCreator(IFieldDataReader r)
+		{
+			return new DbFeatureExceptionEntryRow(r.GetInt64(0), r.GetDateTime(1), r.GetInt64(2));
 		}
 
 		public static Task<long> ExecureInsertAsync(ITransactionContext context, Query query)
