@@ -18,11 +18,20 @@ namespace Cchbc.Features
 
 		private Stopwatch Stopwatch { get; }
 
-		public Feature(string context, string name)
+		public static Feature StartNew(string context, string name)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
+			var feature = new Feature(context, name);
+
+			feature.Start();
+
+			return feature;
+		}
+
+		private Feature(string context, string name)
+		{
 			this.Context = context;
 			this.Name = name;
 			this.Stopwatch = new Stopwatch();

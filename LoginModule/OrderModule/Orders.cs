@@ -400,9 +400,7 @@ namespace Cchbc.App.OrderModule
 		public async Task LoadDataAsync()
 		{
 			var cache = this.Core.DataCache;
-
-			var featureManager = this.Core.FeatureManager;
-			var feature = featureManager.StartNew(nameof(OrderManager), nameof(LoadDataAsync));
+			var feature = Feature.StartNew(nameof(OrderManager), nameof(LoadDataAsync));
 
 			feature.AddStep(nameof(LoadOrderTypes));
 			this.LoadOrderTypes(cache);
@@ -428,7 +426,7 @@ namespace Cchbc.App.OrderModule
 			feature.AddStep(nameof(LoadOrderDetails));
 			await this.LoadOrderDetails();
 
-			featureManager.StopAsync(feature);
+			this.Core.FeatureManager.StopAsync(feature);
 		}
 
 		private async Task LoadOrderDetails()

@@ -34,7 +34,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 			{
 				this.SetField(ref _textSearch, value);
 
-				var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByText));
+				var feature = Feature.StartNew(this.Context, nameof(SearchByText));
 				this.SearchByText();
 				this.FeatureManager.StopAsync(feature);
 			}
@@ -47,7 +47,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 			set
 			{
 				this.SetField(ref _searchOption, value);
-				var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByOption));
+				var feature = Feature.StartNew(this.Context, nameof(SearchByOption));
 				this.SearchByOption();
 				this.FeatureManager.StopAsync(feature, value?.Name ?? string.Empty);
 			}
@@ -60,7 +60,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 			set
 			{
 				this.SetField(ref _sortOption, value);
-				var feature = this.FeatureManager.StartNew(this.Context, nameof(SortBy));
+				var feature = Feature.StartNew(this.Context, nameof(SortBy));
 				this.SortBy();
 				this.FeatureManager.StopAsync(feature);
 			}
@@ -90,7 +90,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 
 		public void LoadData()
 		{
-			var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadData));
+			var feature = Feature.StartNew(this.Context, nameof(LoadData));
 
 			var articlesHelper = this.Core.DataCache.Get<Article>();
 			var viewModels = articlesHelper.Items.Values.Select(v => new ArticleViewModel(v)).ToArray();

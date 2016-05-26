@@ -36,7 +36,7 @@ namespace Cchbc.Features.DashboardUI
 				var fm = new FeatureManager { ContextCreator = contextCreator };
 				await fm.LoadAsync();
 
-				var feature = fm.StartNew(@"Dashboard", @"Load");
+				var feature = Feature.StartNew(@"Dashboard", @"Load");
 
 				var w = Stopwatch.StartNew();
 				using (var ctx = contextCreator.Create())

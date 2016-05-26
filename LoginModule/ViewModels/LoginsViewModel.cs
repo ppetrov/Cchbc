@@ -45,7 +45,7 @@ namespace LoginModule.ViewModels
 			{
 				this.SetField(ref _textSearch, value);
 
-				var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByText));
+				var feature = Feature.StartNew(this.Context, nameof(SearchByText));
 				this.SearchByText();
 				this.FeatureManager.StopAsync(feature);
 			}
@@ -58,7 +58,7 @@ namespace LoginModule.ViewModels
 			set
 			{
 				this.SetField(ref _searchOption, value);
-				var feature = this.FeatureManager.StartNew(this.Context, nameof(SearchByOption));
+				var feature = Feature.StartNew(this.Context, nameof(SearchByOption));
 				this.SearchByOption();
 				this.FeatureManager.StopAsync(feature, value?.Name ?? string.Empty);
 			}
@@ -71,7 +71,7 @@ namespace LoginModule.ViewModels
 			set
 			{
 				this.SetField(ref _sortOption, value);
-				var feature = this.FeatureManager.StartNew(this.Context, nameof(SortBy));
+				var feature = Feature.StartNew(this.Context, nameof(SortBy));
 				this.SortBy();
 				this.FeatureManager.StopAsync(feature);
 			}
@@ -91,7 +91,7 @@ namespace LoginModule.ViewModels
 
 			this.Module.OperationStart += (sender, args) =>
 			{
-				this.FeatureManager.Start(args.Feature);
+				//this.FeatureManager.Start(args.Feature);
 			};
 			this.Module.OperationEnd += (sender, args) =>
 			{
@@ -99,7 +99,7 @@ namespace LoginModule.ViewModels
 			};
 			this.Module.OperationError += (sender, args) =>
 			{
-				this.FeatureManager.LogException(args.Feature, args.Exception);
+				this.FeatureManager.LogExceptionAsync(args.Feature, args.Exception);
 			};
 
 			this.Module.ItemInserted += ModuleOnItemInserted;
@@ -111,7 +111,7 @@ namespace LoginModule.ViewModels
 		{
 			if (login == null) throw new ArgumentNullException(nameof(login));
 
-			var feature = new Feature(this.Context, nameof(this.InsertAsync));
+			var feature = Feature.StartNew(this.Context, nameof(this.InsertAsync));
 			try
 			{
 				var viewModel = new LoginViewModel(login);
@@ -120,13 +120,13 @@ namespace LoginModule.ViewModels
 			}
 			catch (Exception ex)
 			{
-				this.FeatureManager.LogException(feature, ex);
+				this.FeatureManager.LogExceptionAsync(feature, ex);
 			}
 		}
 
 		public async Task LoadDataAsync()
 		{
-			var feature = this.FeatureManager.StartNew(this.Context, nameof(LoadDataAsync));
+			var feature = Feature.StartNew(this.Context, nameof(LoadDataAsync));
 			try
 			{
 				feature.AddStep(nameof(GetLoginsFromDbAsync));
@@ -139,7 +139,7 @@ namespace LoginModule.ViewModels
 			}
 			catch (Exception ex)
 			{
-				this.FeatureManager.LogException(feature, ex);
+				this.FeatureManager.LogExceptionAsync(feature, ex);
 			}
 		}
 
@@ -163,7 +163,7 @@ namespace LoginModule.ViewModels
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.UpdateAsync(viewModel, dialog, this.AddProgressDisplay(new Feature(this.Context, nameof(UpdateAsync))));
+			return this.Module.UpdateAsync(viewModel, dialog, this.AddProgressDisplay(Feature.StartNew(this.Context, nameof(UpdateAsync))));
 		}
 
 		public Task DeleteAsync(LoginViewModel viewModel, IModalDialog dialog)
@@ -171,7 +171,7 @@ namespace LoginModule.ViewModels
 			if (dialog == null) throw new ArgumentNullException(nameof(dialog));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
-			return this.Module.DeleteAsync(viewModel, dialog, this.AddProgressDisplay(new Feature(this.Context, nameof(DeleteAsync))));
+			return this.Module.DeleteAsync(viewModel, dialog, this.AddProgressDisplay(Feature.StartNew(this.Context, nameof(DeleteAsync))));
 		}
 
 		private void ModuleOnItemInserted(object sender, ObjectEventArgs<LoginViewModel> args)
@@ -191,7 +191,7 @@ namespace LoginModule.ViewModels
 
 		private void DisplayLogins(LoginViewModel[] viewModels, Feature feature)
 		{
-			
+
 
 			this.Module.SetupViewModels(viewModels);
 			this.ApplySearch();

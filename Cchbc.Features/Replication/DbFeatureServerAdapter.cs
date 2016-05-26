@@ -102,6 +102,13 @@ CREATE TABLE[FEATURE_STEPS] (
 )"));
 
 			context.Execute(new Query(@"
+CREATE TABLE[FEATURE_EXCEPTIONS] (
+	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	[Message] nvarchar(254) NOT NULL,
+	[StackTrace] nvarchar(254) NOT NULL
+)"));
+
+			context.Execute(new Query(@"
 CREATE TABLE[FEATURE_VERSIONS] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	[Name] nvarchar(254) NOT NULL
@@ -126,10 +133,9 @@ CREATE TABLE[FEATURE_USERS] (
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE [FEATURE_EXCEPTIONS] (
+CREATE TABLE [FEATURE_EXCEPTION_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
-	[Message] nvarchar(254) NOT NULL, 
-	[StackTrace] nvarchar(254) NOT NULL, 
+	[Exception_Id] integer NOT NULL, 
 	[Created_At] datetime NOT NULL, 
 	[Feature_Id] integer NOT NULL, 
 	[User_Id] integer NOT NULL, 
@@ -142,6 +148,9 @@ CREATE TABLE [FEATURE_EXCEPTIONS] (
 		ON UPDATE CASCADE ON DELETE CASCADE
 	FOREIGN KEY ([Version_Id])
 		REFERENCES [FEATURE_VERSIONS] ([Id])
+		ON UPDATE CASCADE ON DELETE CASCADE
+	FOREIGN KEY ([Exception_Id])
+		REFERENCES [FEATURE_EXCEPTIONS] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
 
@@ -188,7 +197,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			context.Execute(new Query(@"DROP TABLE FEATURE_STEP_ENTRIES"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_EXCEPTIONS"));
+			context.Execute(new Query(@"DROP TABLE FEATURE_EXCEPTION_ENTRIES"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_ENTRIES"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_USERS"));
 			context.Execute(new Query(@"DROP TABLE FEATURES"));
@@ -196,6 +205,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			context.Execute(new Query(@"DROP TABLE FEATURE_CONTEXTS"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_VERSIONS"));
 			context.Execute(new Query(@"DROP TABLE FEATURE_CHANGES"));
+			context.Execute(new Query(@"DROP TABLE FEATURE_EXCEPTIONS"));
 
 			return Task.FromResult(true);
 		}

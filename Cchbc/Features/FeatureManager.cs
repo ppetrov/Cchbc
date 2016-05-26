@@ -9,6 +9,8 @@ namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
+		private bool _isLoaded;
+
 		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }
 		private Dictionary<string, DbFeatureStepRow> Steps { get; set; }
 		private Dictionary<long, Dictionary<string, DbFeatureRow>> Features { get; set; }
@@ -45,27 +47,15 @@ namespace Cchbc.Features
 
 				context.Complete();
 			}
-		}
 
-		public void Start(Feature feature)
-		{
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			feature.Start();
-		}
-
-		public Feature StartNew(string context, string name)
-		{
-			var feature = new Feature(context, name);
-
-			feature.Start();
-
-			return feature;
+			_isLoaded = true;
 		}
 
 		public async Task StopAsync(Feature feature, string details = null)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			this.ValidateIsLoaded();
 
 			// Stop the feature
 			feature.Stop();
@@ -81,19 +71,34 @@ namespace Cchbc.Features
 			}
 		}
 
-		public async Task LogException(Feature feature, Exception exception)
+		public async Task LogExceptionAsync(Feature feature, Exception exception)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
+			this.ValidateIsLoaded();
+
 			using (var context = this.ContextCreator.Create())
 			{
-				var featureRow = this.SaveAsync(context, feature);
+				var featureRow = await this.SaveAsync(context, feature);
+				var exceptionId = await this.SaveExceptionAsync(context, exception);
 
-				await DbFeatureAdapter.InsertExceptionEntryAsync(context, featureRow.Id, exception);
+				await DbFeatureAdapter.InsertExceptionEntryAsync(context, featureRow.Id, exceptionId);
 
 				context.Complete();
 			}
+		}
+
+		private async Task<long> SaveExceptionAsync(ITransactionContext context, Exception exception)
+		{
+			var message = (exception.Message ?? string.Empty).Trim();
+			var stackTrace = (exception.StackTrace ?? string.Empty).Trim();
+			var exceptionId = await DbFeatureAdapter.GetExceptionAsync(context, message, stackTrace);
+			if (exceptionId <= 0)
+			{
+				exceptionId = await DbFeatureAdapter.InsertExceptionAsync(context, message, stackTrace);
+			}
+			return exceptionId;
 		}
 
 		private async Task<DbFeatureRow> SaveAsync(ITransactionContext context, Feature feature)
@@ -201,6 +206,12 @@ namespace Cchbc.Features
 			}
 
 			return featuresByContext;
+		}
+
+		private void ValidateIsLoaded()
+		{
+			if (!_isLoaded)
+				throw new InvalidOperationException(nameof(FeatureManager) + " isn't loaded. Call " + nameof(LoadAsync) + " first.");
 		}
 	}
 }

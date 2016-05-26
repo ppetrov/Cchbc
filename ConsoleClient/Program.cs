@@ -89,10 +89,17 @@ namespace Cchbc.ConsoleClient
 				//CreateSchemaAsync(serverDb);
 				//return;
 
+				var fm = new FeatureManager { ContextCreator = new TransactionContextCreator(clientDb) };
+				//fm.LoadAsync().Wait();
+				fm.LogExceptionAsync(Feature.StartNew(@"Agenda", @"Load Data"), new Exception(@"PPP exception from console.")).Wait();
+				return;
+
+
+
 				for (var i = 0; i < 1; i++)
 				{
 					//DateTime.Now.ToString(@"")
-					Replicate(serverDb, clientDb);
+					//Replicate(serverDb, clientDb);
 				}
 
 				return;

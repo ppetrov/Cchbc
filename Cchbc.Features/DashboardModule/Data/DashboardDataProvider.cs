@@ -141,7 +141,7 @@ namespace Cchbc.Features.DashboardModule.Data
 
 			var rangeTimePeriod = relativeTimePeriod.ToRange(DateTime.Now);
 
-			var query = new Query(@"SELECT CREATED_AT FROM FEATURE_EXCEPTIONS WHERE @FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE", new[]
+			var query = new Query(@"SELECT CREATED_AT FROM FEATURE_EXCEPTION_ENTRIES WHERE @FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE", new[]
 			{
 				new QueryParameter(@"@FROMDATE", rangeTimePeriod.FromDate),
 				new QueryParameter(@"@TODATE", rangeTimePeriod.ToDate),
@@ -217,12 +217,12 @@ namespace Cchbc.Features.DashboardModule.Data
 
 		private static Dictionary<long, int> CountExceptionsByVersion(ITransactionContext context, List<DbFeatureVersionRow> versions)
 		{
-			return CountByVersion(context, versions, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTIONS GROUP BY VERSION_ID");
+			return CountByVersion(context, versions, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTION_ENTRIES GROUP BY VERSION_ID");
 		}
 
 		private static Dictionary<long, int> CountUsersByVersion(ITransactionContext context, List<DbFeatureVersionRow> versions)
 		{
-			return CountByVersion(context, versions, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_USERS GROUP BY VERSION_ID");
+			return CountByVersion(context, versions, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTION_ENTRIES GROUP BY VERSION_ID");
 		}
 
 		private static Dictionary<long, int> CountByVersion(ITransactionContext context, List<DbFeatureVersionRow> versions, string query)
