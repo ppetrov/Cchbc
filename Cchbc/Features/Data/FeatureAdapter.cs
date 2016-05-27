@@ -315,6 +315,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 		public static Task InsertStepEntryAsync(ITransactionContext context, long featureEntryId, long stepId, decimal timeSpent, string details)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (details == null) throw new ArgumentNullException(nameof(details));
 
 			// Set parameters values
 			InsertStepEntryQuery.Parameters[0].Value = featureEntryId;

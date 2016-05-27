@@ -276,20 +276,18 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return FeatureAdapter.ExecuteInsertAsync(context, InserUserQuery);
 		}
 
-		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, long userId, long versionId, long featureId, string details, decimal timeSpent, DateTime createdAt)
+		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, decimal timeSpent, string details, DateTime createdAt, long featureId, long userId, long versionId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (details == null) throw new ArgumentNullException(nameof(details));
 
-			var query = InsertServerFeatureEntryQuery;
-
 			// Set parameters values
-			query.Parameters[0].Value = timeSpent;
-			query.Parameters[1].Value = details;
-			query.Parameters[2].Value = createdAt;
-			query.Parameters[3].Value = featureId;
-			query.Parameters[4].Value = userId;
-			query.Parameters[5].Value = versionId;
+			InsertServerFeatureEntryQuery.Parameters[0].Value = timeSpent;
+			InsertServerFeatureEntryQuery.Parameters[1].Value = details;
+			InsertServerFeatureEntryQuery.Parameters[2].Value = createdAt;
+			InsertServerFeatureEntryQuery.Parameters[3].Value = featureId;
+			InsertServerFeatureEntryQuery.Parameters[4].Value = userId;
+			InsertServerFeatureEntryQuery.Parameters[5].Value = versionId;
 
 			return FeatureAdapter.ExecuteInsertAsync(context, InsertServerFeatureEntryQuery);
 		}
@@ -298,14 +296,12 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			var query = InsertExceptionEntryQuery;
-
 			// Set parameters values
-			query.Parameters[0].Value = exceptionId;
-			query.Parameters[1].Value = createdAt;
-			query.Parameters[2].Value = featureId;
-			query.Parameters[3].Value = userId;
-			query.Parameters[4].Value = versionId;
+			InsertExceptionEntryQuery.Parameters[0].Value = exceptionId;
+			InsertExceptionEntryQuery.Parameters[1].Value = createdAt;
+			InsertExceptionEntryQuery.Parameters[2].Value = featureId;
+			InsertExceptionEntryQuery.Parameters[3].Value = userId;
+			InsertExceptionEntryQuery.Parameters[4].Value = versionId;
 
 			// Insert the record
 			context.Execute(InsertExceptionEntryQuery);
@@ -343,9 +339,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 		{
 			var result = new Dictionary<string, long>(32);
 
-			var query = new Query(statement);
-
-			context.Fill(result, (r, map) => { map.Add(r.GetString(1), r.GetInt64(0)); }, query);
+			context.Fill(result, (r, map) => { map.Add(r.GetString(1), r.GetInt64(0)); }, new Query(statement));
 
 			return Task.FromResult(result);
 		}

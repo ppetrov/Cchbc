@@ -152,11 +152,10 @@ namespace Cchbc.Features.Replication
 
 			foreach (var feature in clientFeatureRows)
 			{
-				var contextId = contextsMap[feature.ContextId];
 				var name = feature.Name;
+				var contextId = contextsMap[feature.ContextId];
 
 				long featureId;
-
 				Dictionary<string, long> byContext;
 
 				// Entirely New feature or New feature in the context
@@ -178,7 +177,7 @@ namespace Cchbc.Features.Replication
 			foreach (var row in featureEntryRows)
 			{
 				var mappedFeatureId = featuresMap[row.FeatureId];
-				map.Add(row.Id, await FeatureServerAdapter.InsertFeatureEntryAsync(context, userId, versionId, mappedFeatureId, row.Details, row.TimeSpent, row.CreatedAt));
+				map.Add(row.Id, await FeatureServerAdapter.InsertFeatureEntryAsync(context, row.TimeSpent, row.Details, row.CreatedAt, mappedFeatureId, userId, versionId));
 			}
 
 			return map;

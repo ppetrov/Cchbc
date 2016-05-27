@@ -1,3 +1,5 @@
+using System;
+
 namespace Cchbc.Features.Data
 {
 	public sealed class DbFeatureEntryStepRow
@@ -9,6 +11,8 @@ namespace Cchbc.Features.Data
 
 		public DbFeatureEntryStepRow(decimal timeSpent, string details, long featureEntryId, long featureStepId)
 		{
+			if (details == null) throw new ArgumentNullException(nameof(details));
+
 			this.TimeSpent = timeSpent;
 			this.Details = details;
 			this.FeatureEntryId = featureEntryId;
