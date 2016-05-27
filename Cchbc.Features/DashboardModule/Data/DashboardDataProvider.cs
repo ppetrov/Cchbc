@@ -52,47 +52,28 @@ namespace Cchbc.Features.DashboardModule.Data
 			return Task.FromResult(DashboardSettings.Default);
 		}
 
-		public static async Task<DashboardCommonData> GetCommonDataAsync(CoreContext coreContext)
+		public static Task<DashboardCommonData> GetCommonDataAsync(CoreContext coreContext)
 		{
 			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
 
 			coreContext.Feature.AddStep(nameof(GetCommonDataAsync));
 
-			var dbContext = coreContext.DbContext;
-			var contexts = await GetContextsMappedByIdAsync(dbContext);
-			var features = await GetFeaturesMappedByIdAsync(dbContext);
+			var contexts = new Dictionary<long, DbFeatureContextRow>();
+			var features = new Dictionary<long, DbFeatureRow>();
 
-			return new DashboardCommonData(contexts, features);
-		}
-
-		private static Task<Dictionary<long, DbFeatureContextRow>> GetContextsMappedByIdAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var result = new Dictionary<long, DbFeatureContextRow>();
-
-			context.Fill(result, (r, map) =>
+			coreContext.DbContext.Fill(contexts, (r, map) =>
 			{
 				var row = new DbFeatureContextRow(r.GetInt64(0), r.GetString(1));
 				map.Add(row.Id, row);
 			}, new Query(@"SELECT ID, NAME FROM FEATURE_CONTEXTS"));
 
-			return Task.FromResult(result);
-		}
-
-		public static Task<Dictionary<long, DbFeatureRow>> GetFeaturesMappedByIdAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			var result = new Dictionary<long, DbFeatureRow>();
-
-			context.Fill(result, (r, map) =>
+			coreContext.DbContext.Fill(features, (r, map) =>
 			{
 				var row = new DbFeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
 				map.Add(row.Id, row);
 			}, new Query(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES"));
 
-			return Task.FromResult(result);
+			return Task.FromResult(new DashboardCommonData(contexts, features));
 		}
 
 		public static Task<List<DashboardUser>> GetUsersAsync(DashboarLoadParams loadParams)
@@ -132,12 +113,10 @@ namespace Cchbc.Features.DashboardModule.Data
 
 			var dbContext = loadParams.CoreContext.DbContext;
 			var versions = dbContext.Execute(query);
+			var exceptionsByVersion = CountExceptionsByVersion(dbContext);
+			var usersByVersion = CountUsersByVersion(dbContext);
 
 			var dashboardVersions = new List<DashboardVersion>(versions.Count);
-
-			var exceptionsByVersion = CountExceptionsByVersion(dbContext, versions);
-			var usersByVersion = CountUsersByVersion(dbContext, versions);
-
 			foreach (var version in versions)
 			{
 				var versionId = version.Id;
@@ -163,6 +142,8 @@ namespace Cchbc.Features.DashboardModule.Data
 		public static Task<List<DashboardException>> GetExceptionsAsync(DashboarLoadParams loadParams)
 		{
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
+
+			loadParams.CoreContext.Feature.AddStep(nameof(GetExceptionsAsync));
 
 			var dbContext = loadParams.CoreContext.DbContext;
 			var settings = loadParams.Settings;
@@ -245,24 +226,19 @@ namespace Cchbc.Features.DashboardModule.Data
 			return Task.FromResult(new List<DashboardFeatureByTime>(0));
 		}
 
-		private static Dictionary<long, int> CountExceptionsByVersion(ITransactionContext context, List<DbFeatureVersionRow> versions)
+		private static Dictionary<long, int> CountExceptionsByVersion(ITransactionContext context)
 		{
-			return CountByVersion(context, versions, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTION_ENTRIES GROUP BY VERSION_ID");
+			return CountByVersion(context, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTION_ENTRIES GROUP BY VERSION_ID");
 		}
 
-		private static Dictionary<long, int> CountUsersByVersion(ITransactionContext context, List<DbFeatureVersionRow> versions)
+		private static Dictionary<long, int> CountUsersByVersion(ITransactionContext context)
 		{
-			return CountByVersion(context, versions, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTION_ENTRIES GROUP BY VERSION_ID");
+			return CountByVersion(context, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_USERS GROUP BY VERSION_ID");
 		}
 
-		private static Dictionary<long, int> CountByVersion(ITransactionContext context, List<DbFeatureVersionRow> versions, string query)
+		private static Dictionary<long, int> CountByVersion(ITransactionContext context, string query)
 		{
-			var result = new Dictionary<long, int>(versions.Count);
-
-			foreach (var version in versions)
-			{
-				result.Add(version.Id, 0);
-			}
+			var result = new Dictionary<long, int>();
 
 			context.Fill(result, (r, map) =>
 			{

@@ -53,8 +53,12 @@ namespace Cchbc.Features.DashboardUI
 
 					ctx.Complete();
 				}
+				w.Stop();
+				feature.Stop();
 
 				log(string.Empty + w.Elapsed.TotalMilliseconds, LogLevel.Info);
+
+				
 
 				foreach (var s in feature.Steps)
 				{

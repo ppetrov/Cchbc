@@ -66,7 +66,7 @@ namespace Cchbc.ConsoleClient
 			var w = Stopwatch.StartNew();
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
-				FeatureServerManager.ReplicateAsync(@"ppetrov", @"7.28.79.927", server, data).Wait();
+				FeatureServerManager.ReplicateAsync(@"iandonov", @"8.28.79.927", server, data).Wait();
 				server.Complete();
 			}
 
@@ -102,7 +102,7 @@ namespace Cchbc.ConsoleClient
 
 
 
-				for (var i = 0; i < 1; i++)
+				for (var i = 0; i < 10; i++)
 				{
 					//DateTime.Now.ToString(@"")
 					Replicate(serverDb, clientDb);
