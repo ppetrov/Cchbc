@@ -10,8 +10,8 @@ namespace Cchbc.Features
 	{
 		private bool _isLoaded;
 
-		private Dictionary<string, DbFeatureContextRow> Contexts { get; } = new Dictionary<string, DbFeatureContextRow>();
-		private Dictionary<string, DbFeatureStepRow> Steps { get; } = new Dictionary<string, DbFeatureStepRow>();
+		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }
+		private Dictionary<string, DbFeatureStepRow> Steps { get; set; }
 		private Dictionary<long, Dictionary<string, DbFeatureRow>> Features { get; set; }
 
 		public ITransactionContextCreator ContextCreator { get; set; }
@@ -40,16 +40,8 @@ namespace Cchbc.Features
 		{
 			using (var context = this.ContextCreator.Create())
 			{
-				this.Contexts.Clear();
-				foreach (var row in await FeatureAdapter.GetContextsAsync(context))
-				{
-					this.Contexts.Add(row.Name, row);
-				}
-				this.Steps.Clear();
-				foreach (var row in await FeatureAdapter.GetStepsAsync(context))
-				{
-					this.Steps.Add(row.Name, row);
-				}
+				this.Contexts = await FeatureAdapter.GetContextsAsync(context);
+				this.Steps = await FeatureAdapter.GetStepsAsync(context);
 				this.Features = await this.GetFeaturesAsync(context);
 
 				context.Complete();

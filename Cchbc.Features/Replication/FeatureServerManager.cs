@@ -132,22 +132,21 @@ namespace Cchbc.Features.Replication
 
 		private static async Task<Dictionary<long, long>> ReplicateFeaturesAsync(ITransactionContext context, List<DbFeatureRow> clientFeatureRows, Dictionary<long, long> contextsMap)
 		{
-			var serverFeatures = new Dictionary<long, Dictionary<string, long>>();
+			var serverFeaturesByContext = new Dictionary<long, Dictionary<string, long>>();
 
 			foreach (var feature in await FeatureAdapter.GetFeaturesAsync(context))
 			{
 				Dictionary<string, long> byContext;
 
 				var contextId = feature.ContextId;
-				if (!serverFeatures.TryGetValue(contextId, out byContext))
+				if (!serverFeaturesByContext.TryGetValue(contextId, out byContext))
 				{
 					byContext = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
-					serverFeatures.Add(contextId, byContext);
+					serverFeaturesByContext.Add(contextId, byContext);
 				}
 
 				byContext.Add(feature.Name, feature.Id);
 			}
-
 
 			var featuresMap = new Dictionary<long, long>(clientFeatureRows.Count);
 
@@ -161,7 +160,7 @@ namespace Cchbc.Features.Replication
 				Dictionary<string, long> byContext;
 
 				// Entirely New feature or New feature in the context
-				if (!serverFeatures.TryGetValue(contextId, out byContext) || !byContext.TryGetValue(name, out featureId))
+				if (!serverFeaturesByContext.TryGetValue(contextId, out byContext) || !byContext.TryGetValue(name, out featureId))
 				{
 					featureId = await FeatureAdapter.InsertFeatureAsync(context, name, contextId);
 				}
