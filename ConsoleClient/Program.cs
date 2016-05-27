@@ -25,7 +25,6 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-
 	public class Program
 	{
 		private static void CreateSchema(string connectionString)
@@ -67,7 +66,7 @@ namespace Cchbc.ConsoleClient
 			var w = Stopwatch.StartNew();
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
-				FeatureServerManager.ReplicateAsync(@"vsimeonov", @"6.28.79.927", server, data).Wait();
+				FeatureServerManager.ReplicateAsync(@"ppetrov", @"7.28.79.927", server, data).Wait();
 				server.Complete();
 			}
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Features.Data;
@@ -315,6 +316,22 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 		private static long ReadLong(IFieldDataReader r)
 		{
 			return r.GetInt64(0);
+		}
+
+		public static Task<Dictionary<string, long>> GetContextsAsync(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			var result = new Dictionary<string, long>(32);
+
+			var query = new Query(@"SELECT ID, NAME FROM FEATURE_CONTEXTS");
+
+			context.Fill(result, (r, map) =>
+			{
+				map.Add(r.GetString(1), r.GetInt64(0));
+			}, query);
+
+			return Task.FromResult(result);
 		}
 	}
 }

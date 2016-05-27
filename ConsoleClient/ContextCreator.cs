@@ -1,5 +1,6 @@
 using System;
 using Cchbc.Data;
+using ConsoleClient;
 
 namespace Cchbc.ConsoleClient
 {

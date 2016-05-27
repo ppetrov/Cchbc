@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Text.RegularExpressions;
+using Cchbc.ConsoleClient;
 using Cchbc.Data;
 
-namespace Cchbc.ConsoleClient
+namespace ConsoleClient
 {
 	public sealed class TransactionContext : ITransactionContext
 	{
@@ -108,7 +109,7 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		public void Fill<T>(Dictionary<long, T> items, Action<IFieldDataReader, Dictionary<long, T>> filler, Query query)
+		public void Fill<TK, TV>(Dictionary<TK, TV> items, Action<IFieldDataReader, Dictionary<TK, TV>> filler, Query query)
 		{
 			items.Clear();
 

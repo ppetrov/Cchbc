@@ -66,26 +66,15 @@ namespace Cchbc.Features.Replication
 
 		private static async Task<Dictionary<long, long>> ReplicateContextsAsync(ITransactionContext serverContext, List<DbFeatureContextRow> clientContextRows)
 		{
-			var contexts = await FeatureAdapter.GetContextsAsync(serverContext);
-			var serverContexts = new Dictionary<string, DbFeatureContextRow>(contexts.Count);
-			foreach (var row in contexts)
-			{
-				serverContexts.Add(row.Name, row);
-			}
-
 			var map = new Dictionary<long, long>(clientContextRows.Count);
 
+			var serverContexts = await FeatureServerAdapter.GetContextsAsync(serverContext);
 			foreach (var context in clientContextRows)
 			{
-				long serverContextId;
 				var name = context.Name;
 
-				DbFeatureContextRow serverContextRow;
-				if (serverContexts.TryGetValue(name, out serverContextRow))
-				{
-					serverContextId = serverContextRow.Id;
-				}
-				else
+				long serverContextId;
+				if (!serverContexts.TryGetValue(name, out serverContextId))
 				{
 					serverContextId = await FeatureAdapter.InsertContextAsync(serverContext, name);
 				}
