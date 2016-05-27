@@ -51,7 +51,7 @@
     <Compile Include="Data\ITransactionContext.cs" />
     <Compile Include="Dialog\DialogResult.cs" />
     <Compile Include="Dialog\IModalDialog.cs" />
-    <Compile Include="Features\Data\DbFeatureAdapter.cs" />
+    <Compile Include="Features\Data\FeatureAdapter.cs" />
     <Compile Include="Features\Data\DbFeatureEntryRow.cs" />
     <Compile Include="Features\Data\DbFeatureEntryStepRow.cs" />
     <Compile Include="Features\Data\DbFeatureExceptionEntryRow.cs" />

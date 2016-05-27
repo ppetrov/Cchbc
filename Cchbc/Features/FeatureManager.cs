@@ -20,7 +20,7 @@ namespace Cchbc.Features
 		{
 			using (var context = this.ContextCreator.Create())
 			{
-				await DbFeatureAdapter.CreateSchemaAsync(context);
+				await FeatureAdapter.CreateSchemaAsync(context);
 
 				context.Complete();
 			}
@@ -30,7 +30,7 @@ namespace Cchbc.Features
 		{
 			using (var context = this.ContextCreator.Create())
 			{
-				await DbFeatureAdapter.DropSchemaAsync(context);
+				await FeatureAdapter.DropSchemaAsync(context);
 
 				context.Complete();
 			}
@@ -41,12 +41,12 @@ namespace Cchbc.Features
 			using (var context = this.ContextCreator.Create())
 			{
 				this.Contexts.Clear();
-				foreach (var row in await DbFeatureAdapter.GetContextsAsync(context))
+				foreach (var row in await FeatureAdapter.GetContextsAsync(context))
 				{
 					this.Contexts.Add(row.Name, row);
 				}
 				this.Steps.Clear();
-				foreach (var row in await DbFeatureAdapter.GetStepsAsync(context))
+				foreach (var row in await FeatureAdapter.GetStepsAsync(context))
 				{
 					this.Steps.Add(row.Name, row);
 				}
@@ -71,7 +71,7 @@ namespace Cchbc.Features
 			{
 				var featureRow = await this.SaveAsync(context, feature);
 
-				var featureEntryId = await DbFeatureAdapter.InsertFeatureEntryAsync(context, featureRow.Id, feature, details ?? string.Empty);
+				var featureEntryId = await FeatureAdapter.InsertFeatureEntryAsync(context, featureRow.Id, feature, details ?? string.Empty);
 				await this.SaveStepsAsync(context, featureEntryId, feature.Steps);
 
 				context.Complete();
@@ -90,7 +90,7 @@ namespace Cchbc.Features
 				var featureRow = await this.SaveAsync(context, feature);
 				var exceptionId = await this.SaveExceptionAsync(context, exception);
 
-				await DbFeatureAdapter.InsertExceptionEntryAsync(context, featureRow.Id, exceptionId);
+				await FeatureAdapter.InsertExceptionEntryAsync(context, featureRow.Id, exceptionId);
 
 				context.Complete();
 			}
@@ -100,10 +100,10 @@ namespace Cchbc.Features
 		{
 			var contents = (exception.ToString() ?? string.Empty).Trim();
 
-			var exceptionId = await DbFeatureAdapter.GetExceptionAsync(context, contents);
+			var exceptionId = await FeatureAdapter.GetExceptionAsync(context, contents);
 			if (exceptionId <= 0)
 			{
-				exceptionId = await DbFeatureAdapter.InsertExceptionAsync(context, contents);
+				exceptionId = await FeatureAdapter.InsertExceptionAsync(context, contents);
 			}
 
 			return exceptionId;
@@ -121,7 +121,7 @@ namespace Cchbc.Features
 			if (!this.Contexts.TryGetValue(name, out featureContextRow))
 			{
 				// Insert into database
-				var newContextId = await DbFeatureAdapter.InsertContextAsync(transactionContext, name);
+				var newContextId = await FeatureAdapter.InsertContextAsync(transactionContext, name);
 
 				featureContextRow = new DbFeatureContextRow(newContextId, name);
 
@@ -147,7 +147,7 @@ namespace Cchbc.Features
 			if (feature == null)
 			{
 				// Insert into database
-				var newFeatureId = await DbFeatureAdapter.InsertFeatureAsync(transactionContext, name, contextId);
+				var newFeatureId = await FeatureAdapter.InsertFeatureAsync(transactionContext, name, contextId);
 
 				feature = new DbFeatureRow(newFeatureId, name, contextId);
 
@@ -174,7 +174,7 @@ namespace Cchbc.Features
 				if (!this.Steps.TryGetValue(name, out current))
 				{
 					// Inser step
-					var newStepId = await DbFeatureAdapter.InsertStepAsync(context, name);
+					var newStepId = await FeatureAdapter.InsertStepAsync(context, name);
 
 					current = new DbFeatureStepRow(newStepId, name);
 
@@ -185,7 +185,7 @@ namespace Cchbc.Features
 			// Inser step entries
 			foreach (var step in steps)
 			{
-				await DbFeatureAdapter.InsertStepEntryAsync(context,
+				await FeatureAdapter.InsertStepEntryAsync(context,
 					featureEntryId,
 					this.Steps[step.Name].Id,
 					Convert.ToDecimal(step.TimeSpent.TotalMilliseconds),
@@ -198,7 +198,7 @@ namespace Cchbc.Features
 			var featuresByContext = new Dictionary<long, Dictionary<string, DbFeatureRow>>(this.Contexts.Count);
 
 			// Fetch & add new values
-			foreach (var feature in await DbFeatureAdapter.GetFeaturesAsync(context))
+			foreach (var feature in await FeatureAdapter.GetFeaturesAsync(context))
 			{
 				var contextId = feature.ContextId;
 

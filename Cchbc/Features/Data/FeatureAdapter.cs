@@ -5,7 +5,7 @@ using Cchbc.Data;
 
 namespace Cchbc.Features.Data
 {
-	public static class DbFeatureAdapter
+	public static class FeatureAdapter
 	{
 		private static readonly Query InsertContext = new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)",
 			new[]
