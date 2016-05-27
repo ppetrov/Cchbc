@@ -7,38 +7,62 @@ namespace Cchbc.Features.Data
 {
 	public static class DbFeatureAdapter
 	{
-		private static readonly QueryParameter[] NameSqlParams =
-		{
-			new QueryParameter(@"@NAME", string.Empty)
-		};
+		private static readonly Query InsertContext = new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)",
+			new[]
+			{
+				new QueryParameter(@"@NAME", string.Empty)
+			});
 
-		private static readonly QueryParameter[] InsertFeatureSqlParams =
-		{
-			new QueryParameter(@"@NAME", string.Empty),
-			new QueryParameter(@"@CONTEXT", 0L)
-		};
+		private static readonly Query InsertStepQuery = new Query(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)",
+			new[]
+			{
+				new QueryParameter(@"@NAME", string.Empty)
+			});
 
-		private static readonly QueryParameter[] InsertFeatureEntrySqlParams =
-		{
-			new QueryParameter(@"@TIMESPENT", 0M),
-			new QueryParameter(@"@DETAILS", string.Empty),
-			new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
-			new QueryParameter(@"@FEATURE", 0L)
-		};
+		private static readonly Query InsertFeatureQuery =
+			new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", new[]
+			{
+				new QueryParameter(@"@NAME", string.Empty),
+				new QueryParameter(@"@CONTEXT", 0L)
+			});
 
-		private static readonly QueryParameter[] InsertFeatureStepEntrySqlParams =
-		{
-			new QueryParameter(@"@ENTRY", 0L),
-			new QueryParameter(@"@STEP", 0L),
-			new QueryParameter(@"@TIMESPENT", 0M),
-			new QueryParameter(@"@DETAILS", string.Empty)
-		};
+		private static readonly Query InsertClientFeatureEntryQuery =
+			new Query(
+				@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATED_AT, @FEATURE)",
+				new[]
+				{
+					new QueryParameter(@"@TIMESPENT", 0M),
+					new QueryParameter(@"@DETAILS", string.Empty),
+					new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
+					new QueryParameter(@"@FEATURE", 0L)
+				});
 
-		private static readonly Query InsertContextQuery = new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)", NameSqlParams);
-		private static readonly Query InsertStepQuery = new Query(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)", NameSqlParams);
-		private static readonly Query InsertFeatureQuery = new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", InsertFeatureSqlParams);
-		private static readonly Query InsertClientFeatureEntryQuery = new Query(@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATED_AT, @FEATURE)", InsertFeatureEntrySqlParams);
-		private static readonly Query InsertStepEntryQuery = new Query(@"INSERT INTO FEATURE_STEP_ENTRIES(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)", InsertFeatureStepEntrySqlParams);
+		private static readonly Query InsertStepEntryQuery =
+			new Query(
+				@"INSERT INTO FEATURE_STEP_ENTRIES(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)",
+				new[]
+				{
+					new QueryParameter(@"@ENTRY", 0L),
+					new QueryParameter(@"@STEP", 0L),
+					new QueryParameter(@"@TIMESPENT", 0M),
+					new QueryParameter(@"@DETAILS", string.Empty)
+				});
+
+		private static readonly Query InsertExceptionQuery =
+			new Query(@"INSERT INTO FEATURE_EXCEPTIONS(CONTENTS) VALUES (@CONTENTS)", new[]
+			{
+				new QueryParameter(@"@CONTENTS", string.Empty)
+			});
+
+		private static readonly Query InsertExceptionEntryQuery =
+			new Query(
+				@"INSERT INTO FEATURE_EXCEPTION_ENTRIES(EXCEPTION_ID, CREATED_AT, FEATURE_ID) VALUES (@EXCEPTION, @CREATEAT, @FEATURE)",
+				new[]
+				{
+					new QueryParameter(@"@EXCEPTION", 0L),
+					new QueryParameter(@"@CREATEAT", DateTime.Now),
+					new QueryParameter(@"@FEATURE", 0L)
+				});
 
 		private static readonly Query<DbFeatureContextRow> GetContextsQuery = new Query<DbFeatureContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextCreator);
 		private static readonly Query<DbFeatureStepRow> GetStepsQuery = new Query<DbFeatureStepRow>(@"SELECT ID, NAME FROM FEATURE_STEPS", DbFeatureStepCreator);
@@ -47,6 +71,12 @@ namespace Cchbc.Features.Data
 		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
 		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);
 		private static readonly Query<DbFeatureExceptionEntryRow> GetDbFeatureExceptionEntryRowQuery = new Query<DbFeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
+
+		private static readonly Query<long> GetExceptionQuery =
+			new Query<long>(@"SELECT ID FROM FEATURE_EXCEPTIONS WHERE CONTENTS = @CONTENTS", IdCreator, new[]
+			{
+				new QueryParameter(@"@CONTENTS", string.Empty)
+			});
 
 		public static Task CreateSchemaAsync(ITransactionContext context)
 		{
@@ -139,7 +169,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
-		public static async Task<FeatureClientData> GetDataAsync(ITransactionContext context)
+		public static async Task<ClientData> GetDataAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -151,7 +181,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			var entryStepRows = await Task.FromResult(context.Execute(GetFeatureEntryStepsQuery));
 			var exceptionEntryRows = await Task.FromResult(context.Execute(GetDbFeatureExceptionEntryRowQuery));
 
-			return new FeatureClientData(contextRows, stepRows, exceptionRows, featureRows, featureEntryRows, entryStepRows, exceptionEntryRows);
+			return new ClientData(contextRows, stepRows, exceptionRows, featureRows, featureEntryRows, entryStepRows, exceptionEntryRows);
 		}
 
 		public static Task<List<DbFeatureContextRow>> GetContextsAsync(ITransactionContext context)
@@ -187,15 +217,10 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
-			var query =
-				new Query<long>(@"SELECT Id FROM FEATURE_EXCEPTIONS WHERE CONTENTS = @CONTENTS",
-					r => r.GetInt64(0), new[]
-					{
-						new QueryParameter(@"@CONTENTS", contents),
-					});
+			GetExceptionQuery.Parameters[0].Value = contents;
 
 			var exceptionId = -1L;
-			var exceptions = context.Execute(query);
+			var exceptions = context.Execute(GetExceptionQuery);
 			if (exceptions.Count > 0)
 			{
 				exceptionId = exceptions[0];
@@ -209,9 +234,9 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			// Set parameters values
-			NameSqlParams[0].Value = name;
+			InsertContext.Parameters[0].Value = name;
 
-			return ExecureInsertAsync(context, InsertContextQuery);
+			return ExecuteInsertAsync(context, InsertContext);
 		}
 
 		public static Task<long> InsertStepAsync(ITransactionContext context, string name)
@@ -220,9 +245,9 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			// Set parameters values
-			NameSqlParams[0].Value = name;
+			InsertStepQuery.Parameters[0].Value = name;
 
-			return ExecureInsertAsync(context, InsertStepQuery);
+			return ExecuteInsertAsync(context, InsertStepQuery);
 		}
 
 		public static Task<long> InsertFeatureAsync(ITransactionContext context, string name, long contextId)
@@ -231,11 +256,11 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			// Set parameters values
-			InsertFeatureSqlParams[0].Value = name;
-			InsertFeatureSqlParams[1].Value = contextId;
+			InsertFeatureQuery.Parameters[0].Value = name;
+			InsertFeatureQuery.Parameters[1].Value = contextId;
 
 			// Insert the record
-			return ExecureInsertAsync(context, InsertFeatureQuery);
+			return ExecuteInsertAsync(context, InsertFeatureQuery);
 		}
 
 		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, long featureId, Feature feature, string details)
@@ -245,12 +270,12 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (details == null) throw new ArgumentNullException(nameof(details));
 
 			// Set parameters values
-			InsertFeatureEntrySqlParams[0].Value = Convert.ToDecimal(feature.TimeSpent.TotalMilliseconds);
-			InsertFeatureEntrySqlParams[1].Value = details;
-			InsertFeatureEntrySqlParams[2].Value = DateTime.Now;
-			InsertFeatureEntrySqlParams[3].Value = featureId;
+			InsertClientFeatureEntryQuery.Parameters[0].Value = Convert.ToDecimal(feature.TimeSpent.TotalMilliseconds);
+			InsertClientFeatureEntryQuery.Parameters[1].Value = details;
+			InsertClientFeatureEntryQuery.Parameters[2].Value = DateTime.Now;
+			InsertClientFeatureEntryQuery.Parameters[3].Value = featureId;
 
-			return ExecureInsertAsync(context, InsertClientFeatureEntryQuery);
+			return ExecuteInsertAsync(context, InsertClientFeatureEntryQuery);
 		}
 
 		public static Task<long> InsertExceptionAsync(ITransactionContext context, string contents)
@@ -258,26 +283,20 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
-			var query = new Query(@"INSERT INTO FEATURE_EXCEPTIONS(CONTENTS) VALUES (@CONTENTS)", new[]
-					{
-						new QueryParameter(@"@CONTENTS", contents),
-					});
+			InsertExceptionQuery.Parameters[0].Value = contents;
 
-			return ExecureInsertAsync(context, query);
+			return ExecuteInsertAsync(context, InsertExceptionQuery);
 		}
 
 		public static Task<long> InsertExceptionEntryAsync(ITransactionContext context, long featureId, long exceptionId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			var query = new Query(@"INSERT INTO FEATURE_EXCEPTION_ENTRIES(EXCEPTION_ID, CREATED_AT, FEATURE_ID) VALUES (@EXCEPTION, @CREATEAT, @FEATURE)", new[]
-					{
-						new QueryParameter(@"@EXCEPTION", exceptionId),
-						new QueryParameter(@"@CREATEAT", DateTime.Now),
-						new QueryParameter(@"@FEATURE", featureId),
-					});
+			InsertExceptionEntryQuery.Parameters[0].Value = exceptionId;
+			InsertExceptionEntryQuery.Parameters[1].Value = DateTime.Now;
+			InsertExceptionEntryQuery.Parameters[2].Value = featureId;
 
-			return ExecureInsertAsync(context, query);
+			return ExecuteInsertAsync(context, InsertExceptionEntryQuery);
 		}
 
 		public static Task InsertStepEntryAsync(ITransactionContext context, long featureEntryId, long stepId, decimal timeSpent, string details)
@@ -285,15 +304,20 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			// Set parameters values
-			InsertFeatureStepEntrySqlParams[0].Value = featureEntryId;
-			InsertFeatureStepEntrySqlParams[1].Value = stepId;
-			InsertFeatureStepEntrySqlParams[2].Value = timeSpent;
-			InsertFeatureStepEntrySqlParams[3].Value = details;
+			InsertStepEntryQuery.Parameters[0].Value = featureEntryId;
+			InsertStepEntryQuery.Parameters[1].Value = stepId;
+			InsertStepEntryQuery.Parameters[2].Value = timeSpent;
+			InsertStepEntryQuery.Parameters[3].Value = details;
 
 			// Insert the record
 			context.Execute(InsertStepEntryQuery);
 
 			return Task.FromResult(true);
+		}
+
+		private static long IdCreator(IFieldDataReader r)
+		{
+			return r.GetInt64(0);
 		}
 
 		private static DbFeatureContextRow DbContextCreator(IFieldDataReader r)
@@ -331,7 +355,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return new DbFeatureExceptionEntryRow(r.GetInt64(0), r.GetDateTime(1), r.GetInt64(2));
 		}
 
-		public static Task<long> ExecureInsertAsync(ITransactionContext context, Query query)
+		public static Task<long> ExecuteInsertAsync(ITransactionContext context, Query query)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (query == null) throw new ArgumentNullException(nameof(query));

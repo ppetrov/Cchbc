@@ -59,7 +59,7 @@
     <Compile Include="Features\Data\DbFeatureRow.cs" />
     <Compile Include="Features\Data\DbFeatureContextRow.cs" />
     <Compile Include="Features\Data\DbFeatureStepRow.cs" />
-    <Compile Include="Features\Data\FeatureClientData.cs" />
+    <Compile Include="Features\Data\ClientData.cs" />
     <Compile Include="Features\Feature.cs" />
     <Compile Include="Features\FeatureManager.cs" />
     <Compile Include="Features\FeatureStep.cs" />
