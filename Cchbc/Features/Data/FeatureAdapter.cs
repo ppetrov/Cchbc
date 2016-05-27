@@ -190,21 +190,21 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(new ClientData(contextRows, stepRows, exceptionRows, featureRows, featureEntryRows, entryStepRows, exceptionEntryRows));
 		}
 
-		public static Task<List<DbFeatureContextRow>> GetContextsAsync(ITransactionContext context)
+		internal static Task<List<DbFeatureContextRow>> GetContextsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return Task.FromResult(context.Execute(GetContextsQuery));
 		}
 
-		public static Task<List<DbFeatureStepRow>> GetStepsAsync(ITransactionContext context)
+		internal static Task<List<DbFeatureStepRow>> GetStepsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return Task.FromResult(context.Execute(GetStepsQuery));
 		}
 
-		public static Task<List<DbFeatureExceptionRow>> GetExceptionsAsync(ITransactionContext context)
+		internal static Task<List<DbFeatureExceptionRow>> GetExceptionsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 

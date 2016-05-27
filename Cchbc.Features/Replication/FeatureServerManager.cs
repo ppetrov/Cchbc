@@ -88,26 +88,15 @@ namespace Cchbc.Features.Replication
 
 		private static async Task<Dictionary<long, long>> ReplicateStepsAsync(ITransactionContext context, List<DbFeatureStepRow> clientStepRows)
 		{
-			var steps = await FeatureAdapter.GetStepsAsync(context);
-			var serverSteps = new Dictionary<string, DbFeatureStepRow>(steps.Count);
-			foreach (var row in steps)
-			{
-				serverSteps.Add(row.Name, row);
-			}
-
 			var map = new Dictionary<long, long>(clientStepRows.Count);
 
+			var serverSteps = await FeatureServerAdapter.GetStepsAsync(context);
 			foreach (var step in clientStepRows)
 			{
-				long serverStepId;
 				var name = step.Name;
 
-				DbFeatureStepRow serverStepRow;
-				if (serverSteps.TryGetValue(name, out serverStepRow))
-				{
-					serverStepId = serverStepRow.Id;
-				}
-				else
+				long serverStepId;
+				if (!serverSteps.TryGetValue(name, out serverStepId))
 				{
 					serverStepId = await FeatureAdapter.InsertStepAsync(context, name);
 				}
@@ -121,26 +110,15 @@ namespace Cchbc.Features.Replication
 
 		private static async Task<Dictionary<long, long>> ReplicateExceptionsAsync(ITransactionContext context, List<DbFeatureExceptionRow> clientExceptionRows)
 		{
-			var exceptions = await FeatureAdapter.GetExceptionsAsync(context);
-			var serverExceptions = new Dictionary<string, DbFeatureExceptionRow>(exceptions.Count);
-			foreach (var row in exceptions)
-			{
-				serverExceptions.Add(row.Contents, row);
-			}
-
 			var map = new Dictionary<long, long>(clientExceptionRows.Count);
 
+			var serverExceptions = await FeatureServerAdapter.GetExceptionsAsync(context);
 			foreach (var exception in clientExceptionRows)
 			{
-				long serverExceptionId;
 				var contents = exception.Contents;
 
-				DbFeatureExceptionRow serverExceptionRow;
-				if (serverExceptions.TryGetValue(contents, out serverExceptionRow))
-				{
-					serverExceptionId = serverExceptionRow.Id;
-				}
-				else
+				long serverExceptionId;
+				if (!serverExceptions.TryGetValue(contents, out serverExceptionId))
 				{
 					serverExceptionId = await FeatureAdapter.InsertExceptionAsync(context, contents);
 				}
