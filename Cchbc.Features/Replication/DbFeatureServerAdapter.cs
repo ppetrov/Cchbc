@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Cchbc.Data;
-using Cchbc.Features.Db.Adapters;
+using Cchbc.Features.Data;
 
 namespace Cchbc.Features.Replication
 {

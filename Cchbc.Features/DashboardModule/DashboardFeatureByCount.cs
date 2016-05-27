@@ -1,5 +1,5 @@
 using System;
-using Cchbc.Features.Db.Objects;
+using Cchbc.Features.Data;
 
 namespace Cchbc.Features.DashboardModule
 {

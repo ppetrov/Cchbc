@@ -1,20 +1,18 @@
 using System;
 
-namespace Cchbc.Features.Db.Objects
+namespace Cchbc.Features.Data
 {
-	public sealed class DbFeatureRow
+	public sealed class DbFeatureContextRow
 	{
 		public readonly long Id;
 		public readonly string Name;
-		public readonly long ContextId;
 
-		public DbFeatureRow(long id, string name, long contextId)
+		public DbFeatureContextRow(long id, string name)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			this.Id = id;
 			this.Name = name;
-			this.ContextId = contextId;
 		}
 	}
 }

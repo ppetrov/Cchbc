@@ -12,8 +12,7 @@ using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
 using Cchbc.Dialog;
 using Cchbc.Features;
-using Cchbc.Features.Db.Adapters;
-using Cchbc.Features.Db.Objects;
+using Cchbc.Features.Data;
 using Cchbc.Features.Replication;
 
 namespace Cchbc.ConsoleClient

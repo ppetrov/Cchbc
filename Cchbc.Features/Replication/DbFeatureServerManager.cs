@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cchbc.Data;
-using Cchbc.Features.Db.Adapters;
-using Cchbc.Features.Db.Objects;
+using Cchbc.Features.Data;
 
 namespace Cchbc.Features.Replication
 {

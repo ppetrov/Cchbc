@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Cchbc.Features.Db.Objects
+namespace Cchbc.Features.Data
 {
 	public sealed class FeatureClientData
 	{

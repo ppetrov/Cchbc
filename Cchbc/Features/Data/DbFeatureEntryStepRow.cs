@@ -1,4 +1,4 @@
-namespace Cchbc.Features.Db.Objects
+namespace Cchbc.Features.Data
 {
 	public sealed class DbFeatureEntryStepRow
 	{

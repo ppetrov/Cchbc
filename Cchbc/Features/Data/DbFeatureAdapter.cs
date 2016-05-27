@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cchbc.Data;
-using Cchbc.Features.Db.Objects;
 
-namespace Cchbc.Features.Db.Adapters
+namespace Cchbc.Features.Data
 {
 	public static class DbFeatureAdapter
 	{

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cchbc.Features.Db.Objects;
+using Cchbc.Features.Data;
 
 namespace Cchbc.Features.DashboardModule
 {

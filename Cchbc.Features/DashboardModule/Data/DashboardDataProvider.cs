@@ -4,8 +4,7 @@ using System.Threading.Tasks;
 using Cchbc.Common;
 using Cchbc.Data;
 using Cchbc.Features.DashboardModule.Objects;
-using Cchbc.Features.Db.Adapters;
-using Cchbc.Features.Db.Objects;
+using Cchbc.Features.Data;
 using Cchbc.Logs;
 
 namespace Cchbc.Features.DashboardModule.Data
