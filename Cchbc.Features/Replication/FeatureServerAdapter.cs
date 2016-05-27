@@ -209,21 +209,6 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
-		public static Task UpdateLastChangedFlagAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			UpdateChangeQuery.Parameters[0].Value = InserChangeQuery.Parameters[0].Value = DateTime.Now;
-
-			var isUpdated = Convert.ToBoolean(context.Execute(UpdateChangeQuery));
-			if (!isUpdated)
-			{
-				context.Execute(InserChangeQuery);
-			}
-
-			return Task.FromResult(true);
-		}
-
 		public static Task<long> GetOrCreateVersionAsync(ITransactionContext context, string version)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -276,6 +261,27 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return FeatureAdapter.ExecuteInsertAsync(context, InserUserQuery);
 		}
 
+		public static Task<Dictionary<string, long>> GetContextsAsync(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_CONTEXTS");
+		}
+
+		public static Task<Dictionary<string, long>> GetStepsAsync(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_STEPS");
+		}
+
+		public static Task<Dictionary<string, long>> GetExceptionsAsync(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			return GetDataMapped(context, @"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS");
+		}
+
 		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, decimal timeSpent, string details, DateTime createdAt, long featureId, long userId, long versionId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -309,30 +315,24 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
+		public static Task UpdateLastChangedFlagAsync(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			UpdateChangeQuery.Parameters[0].Value = InserChangeQuery.Parameters[0].Value = DateTime.Now;
+
+			var isUpdated = Convert.ToBoolean(context.Execute(UpdateChangeQuery));
+			if (!isUpdated)
+			{
+				context.Execute(InserChangeQuery);
+			}
+
+			return Task.FromResult(true);
+		}
+
 		private static long ReadLong(IFieldDataReader r)
 		{
 			return r.GetInt64(0);
-		}
-
-		public static Task<Dictionary<string, long>> GetContextsAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_CONTEXTS");
-		}
-
-		public static Task<Dictionary<string, long>> GetStepsAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_STEPS");
-		}
-
-		public static Task<Dictionary<string, long>> GetExceptionsAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			return GetDataMapped(context, @"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS");
 		}
 
 		private static Task<Dictionary<string, long>> GetDataMapped(ITransactionContext context, string statement)
