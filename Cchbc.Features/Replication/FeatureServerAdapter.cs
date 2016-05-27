@@ -5,7 +5,7 @@ using Cchbc.Features.Data;
 
 namespace Cchbc.Features.Replication
 {
-	public static class DbFeatureServerAdapter
+	public static class FeatureServerAdapter
 	{
 		private static readonly Query InserChangeQuery =
 			new Query(@"INSERT INTO FEATURE_CHANGES(LAST_CHANGED_AT) VALUES (@CHANGED_AT)", new[]
@@ -240,7 +240,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 
 			InserVersionQuery.Parameters[0].Value = version;
 
-			return DbFeatureAdapter.ExecureInsertAsync(context, InserVersionQuery);
+			return FeatureAdapter.ExecuteInsertAsync(context, InserVersionQuery);
 		}
 
 		public static Task<long> GetOrCreateUserAsync(ITransactionContext context, string userName, long versionId)
@@ -272,7 +272,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			InserUserQuery.Parameters[1].Value = currentTime;
 			InserUserQuery.Parameters[2].Value = versionId;
 
-			return DbFeatureAdapter.ExecureInsertAsync(context, InserUserQuery);
+			return FeatureAdapter.ExecuteInsertAsync(context, InserUserQuery);
 		}
 
 		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, long userId, long versionId, long featureId, string details, decimal timeSpent, DateTime createdAt)
@@ -290,7 +290,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			query.Parameters[4].Value = userId;
 			query.Parameters[5].Value = versionId;
 
-			return DbFeatureAdapter.ExecureInsertAsync(context, InsertServerFeatureEntryQuery);
+			return FeatureAdapter.ExecuteInsertAsync(context, InsertServerFeatureEntryQuery);
 		}
 
 		public static Task InsertExceptionEntryAsync(ITransactionContext context, long exceptionId, DateTime createdAt, long featureId, long userId, long versionId)

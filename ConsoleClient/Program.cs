@@ -35,7 +35,7 @@ namespace Cchbc.ConsoleClient
 			{
 				using (var serverContext = creator.Create())
 				{
-					DbFeatureServerManager.DropSchemaAsync(serverContext);
+					FeatureServerManager.DropSchemaAsync(serverContext);
 					serverContext.Complete();
 
 					Console.WriteLine(@"Drop schema");
@@ -48,7 +48,7 @@ namespace Cchbc.ConsoleClient
 
 			using (var serverContext = creator.Create())
 			{
-				DbFeatureServerManager.CreateSchemaAsync(serverContext);
+				FeatureServerManager.CreateSchemaAsync(serverContext);
 				serverContext.Complete();
 
 				Console.WriteLine(@"Schema created");
@@ -57,17 +57,17 @@ namespace Cchbc.ConsoleClient
 
 		private static void Replicate(string serverDb, string clientDb)
 		{
-			FeatureClientData data;
+			ClientData data;
 			using (var client = new TransactionContextCreator(clientDb).Create())
 			{
-				data = DbFeatureAdapter.GetDataAsync(client).Result;
+				data = FeatureAdapter.GetDataAsync(client).Result;
 				client.Complete();
 			}
 
 			var w = Stopwatch.StartNew();
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
-				DbFeatureServerManager.ReplicateAsync(@"vsimeonov", @"6.28.79.927", server, data).Wait();
+				FeatureServerManager.ReplicateAsync(@"vsimeonov", @"6.28.79.927", server, data).Wait();
 				server.Complete();
 			}
 
@@ -123,7 +123,7 @@ namespace Cchbc.ConsoleClient
 
 				//using (var serverContext = new TransactionContextCreator(serverDb).Create())
 				//{
-				//	var server = new DbFeatureServerManager();
+				//	var server = new FeatureServerManager();
 				//	server.Load(serverContext);
 
 				//	List<FeatureEntryRow> rows;

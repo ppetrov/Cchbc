@@ -158,30 +158,36 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			context.Execute(new Query(@"DROP TABLE FEATURE_STEP_ENTRIES"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_EXCEPTION_ENTRIES"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_ENTRIES"));
-			context.Execute(new Query(@"DROP TABLE FEATURES"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_STEPS"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_CONTEXTS"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_EXCEPTIONS"));
+			foreach (var table in new[]
+			{
+				@"FEATURE_STEP_ENTRIES",
+				@"FEATURE_EXCEPTION_ENTRIES",
+				@"FEATURE_ENTRIES",
+				@"FEATURES",
+				@"FEATURE_STEPS",
+				@"FEATURE_CONTEXTS",
+				@"FEATURE_EXCEPTIONS"
+			})
+			{
+				context.Execute(new Query(@"DROP TABLE " + table));
+			}
 
 			return Task.FromResult(true);
 		}
 
-		public static async Task<ClientData> GetDataAsync(ITransactionContext context)
+		public static Task<ClientData> GetDataAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			var contextRows = await GetContextsAsync(context);
-			var stepRows = await GetStepsAsync(context);
-			var exceptionRows = await GetExceptionsAsync(context);
-			var featureRows = await GetFeaturesAsync(context);
-			var featureEntryRows = await Task.FromResult(context.Execute(GetFeatureEntriesQuery));
-			var entryStepRows = await Task.FromResult(context.Execute(GetFeatureEntryStepsQuery));
-			var exceptionEntryRows = await Task.FromResult(context.Execute(GetDbFeatureExceptionEntryRowQuery));
+			var contextRows = context.Execute(GetContextsQuery);
+			var stepRows = context.Execute(GetStepsQuery);
+			var exceptionRows = context.Execute(GetDbFeatureExceptionsRowQuery);
+			var featureRows = context.Execute(GetFeaturesQuery);
+			var featureEntryRows = context.Execute(GetFeatureEntriesQuery);
+			var entryStepRows = context.Execute(GetFeatureEntryStepsQuery);
+			var exceptionEntryRows = context.Execute(GetDbFeatureExceptionEntryRowQuery);
 
-			return new ClientData(contextRows, stepRows, exceptionRows, featureRows, featureEntryRows, entryStepRows, exceptionEntryRows);
+			return Task.FromResult(new ClientData(contextRows, stepRows, exceptionRows, featureRows, featureEntryRows, entryStepRows, exceptionEntryRows));
 		}
 
 		public static Task<List<DbFeatureContextRow>> GetContextsAsync(ITransactionContext context)
@@ -212,20 +218,19 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(context.Execute(GetFeaturesQuery));
 		}
 
-		public static Task<long> GetExceptionAsync(ITransactionContext context, string contents)
+		public static Task<long> GetOrCreateExceptionAsync(ITransactionContext context, string contents)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
 			GetExceptionQuery.Parameters[0].Value = contents;
 
-			var exceptionId = -1L;
 			var exceptions = context.Execute(GetExceptionQuery);
 			if (exceptions.Count > 0)
 			{
-				exceptionId = exceptions[0];
+				return Task.FromResult(exceptions[0]);
 			}
-			return Task.FromResult(exceptionId);
+			return InsertExceptionAsync(context, contents);
 		}
 
 		public static Task<long> InsertContextAsync(ITransactionContext context, string name)
@@ -250,6 +255,16 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return ExecuteInsertAsync(context, InsertStepQuery);
 		}
 
+		public static Task<long> InsertExceptionAsync(ITransactionContext context, string contents)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (contents == null) throw new ArgumentNullException(nameof(contents));
+
+			InsertExceptionQuery.Parameters[0].Value = contents;
+
+			return ExecuteInsertAsync(context, InsertExceptionQuery);
+		}
+
 		public static Task<long> InsertFeatureAsync(ITransactionContext context, string name, long contextId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -263,29 +278,18 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return ExecuteInsertAsync(context, InsertFeatureQuery);
 		}
 
-		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, long featureId, Feature feature, string details)
+		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, long featureId, TimeSpan timeSpent, string details)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (details == null) throw new ArgumentNullException(nameof(details));
 
 			// Set parameters values
-			InsertClientFeatureEntryQuery.Parameters[0].Value = Convert.ToDecimal(feature.TimeSpent.TotalMilliseconds);
+			InsertClientFeatureEntryQuery.Parameters[0].Value = Convert.ToDecimal(timeSpent.TotalMilliseconds);
 			InsertClientFeatureEntryQuery.Parameters[1].Value = details;
 			InsertClientFeatureEntryQuery.Parameters[2].Value = DateTime.Now;
 			InsertClientFeatureEntryQuery.Parameters[3].Value = featureId;
 
 			return ExecuteInsertAsync(context, InsertClientFeatureEntryQuery);
-		}
-
-		public static Task<long> InsertExceptionAsync(ITransactionContext context, string contents)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (contents == null) throw new ArgumentNullException(nameof(contents));
-
-			InsertExceptionQuery.Parameters[0].Value = contents;
-
-			return ExecuteInsertAsync(context, InsertExceptionQuery);
 		}
 
 		public static Task<long> InsertExceptionEntryAsync(ITransactionContext context, long featureId, long exceptionId)

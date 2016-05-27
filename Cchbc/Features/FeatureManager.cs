@@ -71,7 +71,7 @@ namespace Cchbc.Features
 			{
 				var featureRow = await this.SaveAsync(context, feature);
 
-				var featureEntryId = await FeatureAdapter.InsertFeatureEntryAsync(context, featureRow.Id, feature, details ?? string.Empty);
+				var featureEntryId = await FeatureAdapter.InsertFeatureEntryAsync(context, featureRow.Id, feature.TimeSpent, details ?? string.Empty);
 				await this.SaveStepsAsync(context, featureEntryId, feature.Steps);
 
 				context.Complete();
@@ -88,25 +88,12 @@ namespace Cchbc.Features
 			using (var context = this.ContextCreator.Create())
 			{
 				var featureRow = await this.SaveAsync(context, feature);
-				var exceptionId = await this.SaveExceptionAsync(context, exception);
+				var exceptionId = await FeatureAdapter.GetOrCreateExceptionAsync(context, exception.ToString());
 
 				await FeatureAdapter.InsertExceptionEntryAsync(context, featureRow.Id, exceptionId);
 
 				context.Complete();
 			}
-		}
-
-		private async Task<long> SaveExceptionAsync(ITransactionContext context, Exception exception)
-		{
-			var contents = (exception.ToString() ?? string.Empty).Trim();
-
-			var exceptionId = await FeatureAdapter.GetExceptionAsync(context, contents);
-			if (exceptionId <= 0)
-			{
-				exceptionId = await FeatureAdapter.InsertExceptionAsync(context, contents);
-			}
-
-			return exceptionId;
 		}
 
 		private async Task<DbFeatureRow> SaveAsync(ITransactionContext context, Feature feature)
@@ -159,6 +146,7 @@ namespace Cchbc.Features
 				}
 				features.Add(name, feature);
 			}
+
 			return feature;
 		}
 

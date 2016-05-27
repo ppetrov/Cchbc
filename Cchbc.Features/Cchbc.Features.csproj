@@ -61,8 +61,8 @@
     <Compile Include="DashboardModule\Objects\DbFeatureVersionRow.cs" />
     <Compile Include="Objects\RelativeTimePeriod.cs" />
     <Compile Include="Objects\RelativeTimeType.cs" />
-    <Compile Include="Replication\DbFeatureServerManager.cs" />
-    <Compile Include="Replication\DbFeatureServerAdapter.cs" />
+    <Compile Include="Replication\FeatureServerManager.cs" />
+    <Compile Include="Replication\FeatureServerAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Objects\RangeTimePeriod.cs" />
     <Compile Include="ViewModels\TimePeriodViewModel.cs" />
