@@ -282,13 +282,13 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return GetDataMapped(context, @"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS");
 		}
 
-		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, decimal timeSpent, string details, DateTime createdAt, long featureId, long userId, long versionId)
+		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, double timeSpent, string details, DateTime createdAt, long featureId, long userId, long versionId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (details == null) throw new ArgumentNullException(nameof(details));
 
 			// Set parameters values
-			InsertServerFeatureEntryQuery.Parameters[0].Value = timeSpent;
+			InsertServerFeatureEntryQuery.Parameters[0].Value = Convert.ToDecimal(timeSpent);
 			InsertServerFeatureEntryQuery.Parameters[1].Value = details;
 			InsertServerFeatureEntryQuery.Parameters[2].Value = createdAt;
 			InsertServerFeatureEntryQuery.Parameters[3].Value = featureId;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -74,8 +75,75 @@ namespace Cchbc.ConsoleClient
 			Console.WriteLine(w.ElapsedMilliseconds);
 		}
 
+
+
+		public static void Unpack(byte[] input)
+		{
+			using (var ms = new MemoryStream(input))
+			{
+				//var id = 12L;
+				//var name = "P";
+				var buffer = BitConverter.GetBytes(0L);
+				ms.Read(buffer, 0, buffer.Length);
+
+				Console.WriteLine(BitConverter.ToInt64(buffer, 0));
+
+				var len = 0;
+				buffer = BitConverter.GetBytes(len);
+				ms.Read(buffer, 0, buffer.Length);
+
+				len = BitConverter.ToInt32(buffer, 0);
+				Console.WriteLine(len);
+
+				buffer = new byte[len * 2];
+				ms.Read(buffer, 0, buffer.Length);
+
+				Console.WriteLine(Encoding.Unicode.GetString(buffer));
+			}
+		}
+
 		static void Main(string[] args)
 		{
+			var c = @"Data Source = C:\Users\PetarPetrov\Desktop\ifsa.sqlite; Version = 3;";
+
+			ClientData data;
+			using (var client = new TransactionContextCreator(c).Create())
+			{
+				data = FeatureAdapter.GetDataAsync(client).Result;
+				client.Complete();
+			}
+
+			data.StepRows.Add(new DbFeatureStepRow(23, @"Apply filter"));
+
+			data.FeatureEntryRows.Add(new DbFeatureEntryRow(17, 123.456, @"#", DateTime.Today.AddDays(-1), -4));
+			data.EntryStepRows.Add(new DbFeatureEntryStepRow(55.66, "***", -1, -2));
+
+			var s = Stopwatch.StartNew();
+			var result = ClientDataPacker.Pack(data);
+
+			s.Stop();
+			Console.WriteLine(s.ElapsedMilliseconds);
+
+			s.Restart();
+			var back = ClientDataPacker.Unpack(result);
+			s.Stop();
+			Console.WriteLine(s.ElapsedMilliseconds);
+			Console.WriteLine(back);
+
+			Console.WriteLine();
+			Console.WriteLine();
+			Console.WriteLine();
+
+			Console.WriteLine(result.Length);
+
+
+
+			return;
+
+
+
+			return;
+
 			var serverDb = @"Data Source = C:\Users\PetarPetrov\Desktop\server.sqlite; Version = 3;";
 			var clientDb = @"Data Source = C:\Users\PetarPetrov\Desktop\ifsa.sqlite; Version = 3;";
 

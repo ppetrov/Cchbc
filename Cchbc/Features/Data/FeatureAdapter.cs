@@ -312,7 +312,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return ExecuteInsertAsync(context, InsertExceptionEntryQuery);
 		}
 
-		public static Task InsertStepEntryAsync(ITransactionContext context, long featureEntryId, long stepId, decimal timeSpent, string details)
+		public static Task InsertStepEntryAsync(ITransactionContext context, long featureEntryId, long stepId, double timeSpent, string details)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (details == null) throw new ArgumentNullException(nameof(details));
@@ -320,7 +320,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			// Set parameters values
 			InsertStepEntryQuery.Parameters[0].Value = featureEntryId;
 			InsertStepEntryQuery.Parameters[1].Value = stepId;
-			InsertStepEntryQuery.Parameters[2].Value = timeSpent;
+			InsertStepEntryQuery.Parameters[2].Value = Convert.ToDecimal(timeSpent);
 			InsertStepEntryQuery.Parameters[3].Value = details;
 
 			// Insert the record
@@ -351,12 +351,12 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 
 		private static DbFeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureEntryRow(r.GetInt64(0), r.GetDecimal(1), r.GetString(2), r.GetDateTime(3), r.GetInt64(4));
+			return new DbFeatureEntryRow(r.GetInt64(0), Convert.ToDouble(r.GetDecimal(1)), r.GetString(2), r.GetDateTime(3), r.GetInt64(4));
 		}
 
 		private static DbFeatureEntryStepRow EntryStepRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureEntryStepRow(r.GetDecimal(0), r.GetString(1), r.GetInt64(2), r.GetInt64(3));
+			return new DbFeatureEntryStepRow(Convert.ToDouble(r.GetDecimal(0)), r.GetString(1), r.GetInt64(2), r.GetInt64(3));
 		}
 
 		private static DbFeatureExceptionRow DbFeatureExceptionRowCreator(IFieldDataReader r)
