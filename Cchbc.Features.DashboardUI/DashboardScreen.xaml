@@ -197,7 +197,32 @@
                 </charts:SfChart>
             </Grid>
 
-            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource CchbcDataTemplateGrid}">
+            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource CchbcDataTemplateGrid}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
+                    <TextBlock Text="{x:Bind ViewModel.UsageCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
+                </Grid>
+                <charts:SfChart Grid.Row="1" Margin="5" AreaBackground="#202130" Palette="PurpleChrome" Background="#202130" Foreground="#fefefe">
+                    <charts:SfChart.PrimaryAxis>
+                        <charts:CategoryAxis FontSize="14" PlotOffset="35" ShowGridLines="False" Foreground="#F4B569" AxisLineStyle="{StaticResource AxisLineStyle}" />
+                    </charts:SfChart.PrimaryAxis>
+                    <charts:SfChart.SecondaryAxis>
+                        <charts:NumericalAxis FontSize="14" Minimum="0" RangePadding="Normal" Foreground="#F4B569" MajorGridLineStyle="{StaticResource MajorTickLineStyle}" AxisLineStyle="{StaticResource AxisLineStyle}"/>
+                    </charts:SfChart.SecondaryAxis>
+                    <charts:SfChart.Series>
+                        <charts:BarSeries EnableAnimation="True" AnimationDuration="00:00:01"
+                         ItemsSource="{x:Bind ViewModel.MostUsedFeatures}" XBindingPath="Name" YBindingPath="Count" >
+
+                        </charts:BarSeries>
+
+                    </charts:SfChart.Series>
+                </charts:SfChart>
+            </Grid>
+
+            <Grid Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3" Style="{StaticResource CchbcDataTemplateGrid}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"></RowDefinition>
                     <RowDefinition Height="*"></RowDefinition>
@@ -207,7 +232,7 @@
                 </Grid>
             </Grid>
 
-            <Grid Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Style="{StaticResource CchbcDataTemplateGrid}">
+            <!--<Grid Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="2" Style="{StaticResource CchbcDataTemplateGrid}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"></RowDefinition>
                     <RowDefinition Height="*"></RowDefinition>
@@ -215,17 +240,7 @@
                 <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
                     <TextBlock Text="{x:Bind ViewModel.UsageCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
                 </Grid>
-            </Grid>
-
-            <Grid Grid.Row="2" Grid.Column="4" Grid.ColumnSpan="2" Style="{StaticResource CchbcDataTemplateGrid}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"></RowDefinition>
-                    <RowDefinition Height="*"></RowDefinition>
-                </Grid.RowDefinitions>
-                <Grid Grid.Row="0" Style="{StaticResource CchbcDataTemplateHeaderGrid}">
-                    <TextBlock Text="{x:Bind ViewModel.UsageCaption}" Style="{StaticResource HeaderTextStyle}"></TextBlock>
-                </Grid>
-            </Grid>
+            </Grid>-->
 
         </Grid>
     </Grid>

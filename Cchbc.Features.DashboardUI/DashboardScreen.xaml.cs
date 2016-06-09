@@ -58,8 +58,6 @@ namespace Cchbc.Features.DashboardUI
 
 				log(string.Empty + w.Elapsed.TotalMilliseconds, LogLevel.Info);
 
-				
-
 				foreach (var s in feature.Steps)
 				{
 					log(@" - " + s.Name + @": " + s.TimeSpent.TotalMilliseconds + " ms", LogLevel.Info);

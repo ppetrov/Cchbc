@@ -184,6 +184,23 @@ namespace Cchbc.Features.DashboardModule.Data
 		{
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
+			var tmp = new List<DashboardFeatureByCount>();
+
+			var ctxs = loadParams.Data.Contexts;
+			var fs = loadParams.Data.Features;
+
+			var f = fs[1];
+			var c = ctxs[f.ContextId];
+
+			tmp.Add(new DashboardFeatureByCount(c, f, 7));
+			tmp.Add(new DashboardFeatureByCount(c, f, 11));
+			tmp.Add(new DashboardFeatureByCount(c, f, 13));
+			tmp.Add(new DashboardFeatureByCount(c, f, 15));
+			tmp.Add(new DashboardFeatureByCount(c, f, 17));
+			tmp.Add(new DashboardFeatureByCount(c, f, 23));
+
+			return Task.FromResult(tmp);
+
 			// TODO : Add ability to exclude features - Sync Data for example
 			return GetUsedFeaturesAsync(loadParams, @"SELECT FEATURE_ID, COUNT(*) CNT FROM FEATURE_ENTRIES GROUP BY FEATURE_ID ORDER BY CNT DESC LIMIT @MAXFEATURES", new[]
 			{

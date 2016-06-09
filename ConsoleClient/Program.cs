@@ -15,6 +15,8 @@ using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Data;
 using Cchbc.Features.Replication;
+using Cchbc.Weather;
+using Cchbc.Weather.Objects;
 
 namespace Cchbc.ConsoleClient
 {
@@ -104,6 +106,19 @@ namespace Cchbc.ConsoleClient
 
 		static void Main(string[] args)
 		{
+			try
+			{
+				var forecastData = new ForecastClient(@"87f3b3402228bff038c4f69cbeebb484").GetByCoordinatesAsync(new Coordinates(42.7, 23.33)).Result;
+
+				Console.WriteLine(forecastData.Location.Country);
+				Console.WriteLine(forecastData.Location.Name);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex);
+			}
+			return;
+
 			var c = @"Data Source = C:\Users\PetarPetrov\Desktop\ifsa.sqlite; Version = 3;";
 
 			ClientData data;
