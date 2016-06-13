@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Cchbc.Weather.Objects;
 
 namespace Cchbc.Weather
 {

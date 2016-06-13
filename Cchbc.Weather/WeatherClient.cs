@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
-using Cchbc.Weather.Objects;
 
 namespace Cchbc.Weather
 {
@@ -61,7 +60,7 @@ namespace Cchbc.Weather
 			var uri = new Uri(@"http://api.openweathermap.org/data/2.5/" + this.Module);
 			if (daily)
 			{
-				uri = new Uri(uri.OriginalString + @"/" + "daily");
+				uri = new Uri(uri.OriginalString + @"/daily");
 			}
 
 			this.Parameters.Add(@"mode", @"xml");

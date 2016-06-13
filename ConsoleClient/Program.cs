@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
@@ -16,7 +17,6 @@ using Cchbc.Features;
 using Cchbc.Features.Data;
 using Cchbc.Features.Replication;
 using Cchbc.Weather;
-using Cchbc.Weather.Objects;
 
 namespace Cchbc.ConsoleClient
 {
