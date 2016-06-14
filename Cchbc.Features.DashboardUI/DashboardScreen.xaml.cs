@@ -60,7 +60,7 @@ namespace Cchbc.Features.DashboardUI
 
 				foreach (var s in feature.Steps)
 				{
-					log(@" - " + s.Name + @": " + s.TimeSpent.TotalMilliseconds + " ms", LogLevel.Info);
+					log(@" - " + s.Name + @" [" + s.Details + @"]" + @": " + s.TimeSpent.TotalMilliseconds + " ms", LogLevel.Info);
 				}
 			}
 			catch (Exception ex)

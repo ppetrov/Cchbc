@@ -89,22 +89,22 @@ namespace LoginModule.ViewModels
 				new SortOption<LoginViewModel>(string.Empty, (x, y) => 0)
 			}), new Searcher<LoginViewModel>((v, s) => false));
 
-			this.Module.OperationStart += (sender, args) =>
+			this.Module.OperationStart = feature =>
 			{
 				//this.FeatureManager.Start(args.Feature);
 			};
-			this.Module.OperationEnd += (sender, args) =>
+			this.Module.OperationEnd = feature =>
 			{
-				this.FeatureManager.StopAsync(args.Feature);
+				this.FeatureManager.StopAsync(feature);
 			};
-			this.Module.OperationError += (sender, args) =>
+			this.Module.OperationError = (feature, ex) =>
 			{
-				this.FeatureManager.LogExceptionAsync(args.Feature, args.Exception);
+				this.FeatureManager.LogExceptionAsync(feature, ex);
 			};
 
-			this.Module.ItemInserted += ModuleOnItemInserted;
-			this.Module.ItemUpdated += ModuleOnItemUpdated;
-			this.Module.ItemDeleted += ModuleOnItemDeleted;
+			this.Module.ItemInserted = ModuleOnItemInserted;
+			this.Module.ItemUpdated = ModuleOnItemUpdated;
+			this.Module.ItemDeleted = ModuleOnItemDeleted;
 		}
 
 		public async Task InsertAsync(Login login)
@@ -174,17 +174,17 @@ namespace LoginModule.ViewModels
 			return this.Module.DeleteAsync(viewModel, dialog, this.AddProgressDisplay(Feature.StartNew(this.Context, nameof(DeleteAsync))));
 		}
 
-		private void ModuleOnItemInserted(object sender, ObjectEventArgs<LoginViewModel> args)
+		private void ModuleOnItemInserted(ObjectEventArgs<LoginViewModel> args)
 		{
 			this.Module.Insert(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
 		}
 
-		private void ModuleOnItemUpdated(object sender, ObjectEventArgs<LoginViewModel> args)
+		private void ModuleOnItemUpdated(ObjectEventArgs<LoginViewModel> args)
 		{
 			this.Module.Update(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
 		}
 
-		private void ModuleOnItemDeleted(object sender, ObjectEventArgs<LoginViewModel> args)
+		private void ModuleOnItemDeleted(ObjectEventArgs<LoginViewModel> args)
 		{
 			this.Module.Delete(this.Logins, args.ViewModel);
 		}
@@ -225,7 +225,7 @@ namespace LoginModule.ViewModels
 		{
 			feature.Started = _ => { this.IsWorking = true; };
 			feature.Stopped = _ => { this.IsWorking = false; };
-			feature.StepAdded = f => this.WorkProgress = f.Step.Name;
+			feature.StepAdded = _ => this.WorkProgress = _.Name;
 
 			return feature;
 		}

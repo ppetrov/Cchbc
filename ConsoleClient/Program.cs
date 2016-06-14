@@ -30,88 +30,65 @@ namespace Cchbc.ConsoleClient
 
 	public class Program
 	{
-		private static void CreateSchema(string connectionString)
-		{
-			var creator = new TransactionContextCreator(connectionString);
-			try
-			{
-				using (var serverContext = creator.Create())
-				{
-					FeatureServerManager.DropSchemaAsync(serverContext);
-					serverContext.Complete();
-
-					Console.WriteLine(@"Drop schema");
-				}
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-			}
-
-			using (var serverContext = creator.Create())
-			{
-				FeatureServerManager.CreateSchemaAsync(serverContext);
-				serverContext.Complete();
-
-				Console.WriteLine(@"Schema created");
-			}
-		}
-
-		private static void Replicate(string serverDb, string clientDb)
-		{
-			ClientData data;
-			using (var client = new TransactionContextCreator(clientDb).Create())
-			{
-				data = FeatureAdapter.GetDataAsync(client).Result;
-				client.Complete();
-			}
-
-			var w = Stopwatch.StartNew();
-			using (var server = new TransactionContextCreator(serverDb).Create())
-			{
-				FeatureServerManager.ReplicateAsync(@"iandonov", @"8.28.79.927", server, data).Wait();
-				server.Complete();
-			}
-
-			w.Stop();
-			Console.WriteLine(w.ElapsedMilliseconds);
-		}
-
-
-
-		public static void Unpack(byte[] input)
-		{
-			using (var ms = new MemoryStream(input))
-			{
-				//var id = 12L;
-				//var name = "P";
-				var buffer = BitConverter.GetBytes(0L);
-				ms.Read(buffer, 0, buffer.Length);
-
-				Console.WriteLine(BitConverter.ToInt64(buffer, 0));
-
-				var len = 0;
-				buffer = BitConverter.GetBytes(len);
-				ms.Read(buffer, 0, buffer.Length);
-
-				len = BitConverter.ToInt32(buffer, 0);
-				Console.WriteLine(len);
-
-				buffer = new byte[len * 2];
-				ms.Read(buffer, 0, buffer.Length);
-
-				Console.WriteLine(Encoding.Unicode.GetString(buffer));
-			}
-		}
-
 		static void Main(string[] args)
 		{
 			try
 			{
-				var forecastData = new ForecastClient(@"87f3b3402228bff038c4f69cbeebb484").GetByCoordinatesAsync(new Coordinates(42.7, 23.33)).Result;
+				var sourceCode = new StringBuilder(1024 * 4);
 
-				Console.WriteLine(forecastData.Location.Country);
-				Console.WriteLine(forecastData.Location.Name);
+				sourceCode.AppendLine(@"using System;");
+				sourceCode.AppendLine(@"using System.Collections.Generic;");
+				sourceCode.AppendLine(@"using System.Globalization;");
+				sourceCode.AppendLine(@"using System.Net.Http;");
+				sourceCode.AppendLine(@"using System.Text;");
+				sourceCode.AppendLine(@"using System.Threading.Tasks;");
+				sourceCode.AppendLine(@"using System.Xml;");
+				sourceCode.AppendLine(@"using System.Xml.Serialization;");
+				sourceCode.AppendLine();
+				sourceCode.AppendLine(@"namespace iFSA.Weather");
+				sourceCode.Append(@"{");
+
+				foreach (var file in Directory.EnumerateFiles(@"C:\Sources\Cchbc\Cchbc.Weather", @"*.cs"))
+				{
+					var local = new StringBuilder(1024);
+
+					var usingsRemoved = false;
+					foreach (var line in File.ReadAllLines(file))
+					{
+						var value = line.Trim();
+						if (value != string.Empty)
+						{
+							// Skip usings
+							if (value.StartsWith(@"using ") && !usingsRemoved)
+							{
+								continue;
+							}
+							if (value.StartsWith(@"namespace "))
+							{
+								usingsRemoved = true;
+								continue;
+							}
+							local.AppendLine(line);
+						}
+					}
+
+					local.Remove(0, 1);
+					local.Remove(local.Length - 1 - Environment.NewLine.Length, 1 + Environment.NewLine.Length);
+					Console.WriteLine(local);
+
+					sourceCode.Append(local);
+
+					////Console.WriteLine(file);
+				}
+
+				sourceCode.AppendLine(@"}");
+
+				File.WriteAllText(@"C:\Cchbc\PhoenixClient\Phoenix SFA SAP\SFA 5.5\SFA.BusinessLogic\Common\Weather.cs", sourceCode.ToString());
+
+				//var forecastData = new ForecastClient(@"87f3b3402228bff038c4f69cbeebb484").GetByCoordinatesAsync(new Coordinates(42.7, 23.33)).Result;
+
+				//Console.WriteLine(forecastData.Location.Country);
+				//Console.WriteLine(forecastData.Location.Name);
 			}
 			catch (Exception ex)
 			{
@@ -291,6 +268,78 @@ namespace Cchbc.ConsoleClient
 			//{
 			//	Console.WriteLine(e);
 			//}
+		}
+
+		private static void CreateSchema(string connectionString)
+		{
+			var creator = new TransactionContextCreator(connectionString);
+			try
+			{
+				using (var serverContext = creator.Create())
+				{
+					FeatureServerManager.DropSchemaAsync(serverContext);
+					serverContext.Complete();
+
+					Console.WriteLine(@"Drop schema");
+				}
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e);
+			}
+
+			using (var serverContext = creator.Create())
+			{
+				FeatureServerManager.CreateSchemaAsync(serverContext);
+				serverContext.Complete();
+
+				Console.WriteLine(@"Schema created");
+			}
+		}
+
+		private static void Replicate(string serverDb, string clientDb)
+		{
+			ClientData data;
+			using (var client = new TransactionContextCreator(clientDb).Create())
+			{
+				data = FeatureAdapter.GetDataAsync(client).Result;
+				client.Complete();
+			}
+
+			var w = Stopwatch.StartNew();
+			using (var server = new TransactionContextCreator(serverDb).Create())
+			{
+				FeatureServerManager.ReplicateAsync(@"iandonov", @"8.28.79.927", server, data).Wait();
+				server.Complete();
+			}
+
+			w.Stop();
+			Console.WriteLine(w.ElapsedMilliseconds);
+		}
+
+		public static void Unpack(byte[] input)
+		{
+			using (var ms = new MemoryStream(input))
+			{
+				//var id = 12L;
+				//var name = "P";
+				var buffer = BitConverter.GetBytes(0L);
+				ms.Read(buffer, 0, buffer.Length);
+
+				Console.WriteLine(BitConverter.ToInt64(buffer, 0));
+
+				var len = 0;
+				buffer = BitConverter.GetBytes(len);
+				ms.Read(buffer, 0, buffer.Length);
+
+				len = BitConverter.ToInt32(buffer, 0);
+				Console.WriteLine(len);
+
+				buffer = new byte[len * 2];
+				ms.Read(buffer, 0, buffer.Length);
+
+				Console.WriteLine(Encoding.Unicode.GetString(buffer));
+			}
 		}
 
 		private static void GenerateProject(DbProject project, string directoryPath)
@@ -747,8 +796,17 @@ using System.Data;
 		private async Task<BrandHelper> LoadBrandsAsync(Feature feature)
 		{
 			var step = feature.AddStep(nameof(LoadBrandsAsync));
+
 			var brandHelper = new BrandHelper();
-			step.Details = brandHelper.Items.Count.ToString();
+			try
+			{
+				// TODO : Load the brand helper
+			}
+			finally
+			{
+				feature.EndStep(step, brandHelper.Items.Count.ToString());
+			}
+
 			return brandHelper;
 		}
 
@@ -756,7 +814,14 @@ using System.Data;
 		{
 			var step = feature.AddStep(nameof(LoadFlavorsAsync));
 			var flavorHelper = new FlavorHelper();
-			step.Details = flavorHelper.Items.Count.ToString();
+			try
+			{
+				// TODO : Load the flavor helper
+			}
+			finally
+			{
+				feature.EndStep(step, flavorHelper.Items.Count.ToString());
+			}
 			return flavorHelper;
 		}
 
@@ -764,7 +829,14 @@ using System.Data;
 		{
 			var step = feature.AddStep(nameof(LoadArticlesAsync));
 			var articleHelper = new ArticleHelper();
-			step.Details = articleHelper.Items.Count.ToString();
+			try
+			{
+				// TODO : Load the articles helper
+			}
+			finally
+			{
+				feature.EndStep(step, articleHelper.Items.Count.ToString());
+			}
 			return articleHelper;
 		}
 

@@ -12,9 +12,10 @@ namespace Cchbc.Features
 		public string Name { get; }
 		public TimeSpan TimeSpent => this.Stopwatch.Elapsed;
 		public List<FeatureStep> Steps { get; } = new List<FeatureStep>();
-		public Action<FeatureStepEventArgs> StepAdded;
-		public Action<FeatureEventArgs> Started;
-		public Action<FeatureEventArgs> Stopped;
+		public Action<FeatureStep> StepAdded;
+		public Action<FeatureStep> StepEnded;
+		public Action<Feature> Started;
+		public Action<Feature> Stopped;
 
 		private Stopwatch Stopwatch { get; }
 
@@ -39,32 +40,23 @@ namespace Cchbc.Features
 
 		public void Start()
 		{
-			this.Resume();
-
-			// Fire the "event"
-			this.Started?.Invoke(new FeatureEventArgs(this));
+			this.Stopwatch.Start();
+			this.Started?.Invoke(this);
 		}
 
 		public void Stop()
 		{
-			this.Pause();
-
-			// End previous step, if any
-			this.EndPreviousStep();
-
-			// Fire the "event"
-			this.Stopped?.Invoke(new FeatureEventArgs(this));
+			this.Stopwatch.Stop();
+			this.Stopped?.Invoke(this);
 		}
 
 		public void Pause()
 		{
-			// Stop the stopwatch
 			this.Stopwatch.Stop();
 		}
 
 		public void Resume()
 		{
-			// Start the stopwatch
 			this.Stopwatch.Start();
 		}
 
@@ -72,32 +64,26 @@ namespace Cchbc.Features
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
-			// End previous step, if any
-			this.EndPreviousStep();
-
 			// Create new feature step
-			var step = new FeatureStep(name) { TimeSpent = this.Stopwatch.Elapsed };
-
-			// Add to feature steps
-			this.Steps.Add(step);
+			var step = new FeatureStep(name, this.Stopwatch.Elapsed);
 
 			// Fire the "event"
-			this.StepAdded?.Invoke(new FeatureStepEventArgs(step));
+			this.StepAdded?.Invoke(step);
 
 			return step;
 		}
 
-		private void EndPreviousStep()
+		public void EndStep(FeatureStep step, string details = null)
 		{
-			// Has any steps
-			if (this.Steps.Count > 0)
-			{
-				// Take the last one
-				var previous = this.Steps[this.Steps.Count - 1];
+			if (step == null) throw new ArgumentNullException(nameof(step));
 
-				// Set the TimeSpent to the delta end - start
-				previous.TimeSpent = this.Stopwatch.Elapsed - previous.TimeSpent;
-			}
+			step.TimeSpent = this.Stopwatch.Elapsed - step.TimeSpent;
+			step.Details = details ?? string.Empty;
+
+			// Add to feature steps
+			this.Steps.Add(step);
+
+			this.StepEnded?.Invoke(step);
 		}
 	}
 }

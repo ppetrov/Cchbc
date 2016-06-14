@@ -15,38 +15,46 @@ namespace Cchbc.Features.DashboardModule.Data
 		{
 			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
 
-			coreContext.Feature.AddStep(nameof(GetSettingsAsync));
-
-			var maxUsers = default(int?);
-			var maxMostUsedFeatures = default(int?);
-
-			var log = coreContext.Log;
-			// TODO : Load settings from db for the context
-			var contextForSettings = nameof(Dashboard);
-			foreach (var setting in new List<Setting>())
+			var feature = coreContext.Feature;
+			var step = feature.AddStep(nameof(GetSettingsAsync));
+			try
 			{
-				var name = setting.Name;
-				var value = setting.Value;
+				var maxUsers = default(int?);
+				var maxMostUsedFeatures = default(int?);
 
-				if (name.Equals(nameof(DashboardSettings.MaxUsers), StringComparison.OrdinalIgnoreCase))
+				var log = coreContext.Log;
+				// TODO : Load settings from db for the context
+				var contextForSettings = nameof(Dashboard);
+				var settings = new List<Setting>();
+				foreach (var setting in settings)
 				{
-					maxUsers = ValueParser.ParseInt(value, log);
-					break;
+					var name = setting.Name;
+					var value = setting.Value;
+
+					if (name.Equals(nameof(DashboardSettings.MaxUsers), StringComparison.OrdinalIgnoreCase))
+					{
+						maxUsers = ValueParser.ParseInt(value, log);
+						break;
+					}
+					if (name.Equals(nameof(DashboardSettings.MaxMostUsedFeatures), StringComparison.OrdinalIgnoreCase))
+					{
+						maxMostUsedFeatures = ValueParser.ParseInt(value, log);
+						break;
+					}
 				}
-				if (name.Equals(nameof(DashboardSettings.MaxMostUsedFeatures), StringComparison.OrdinalIgnoreCase))
+
+				if (maxUsers == null)
 				{
-					maxMostUsedFeatures = ValueParser.ParseInt(value, log);
-					break;
+					log($@"Unable to find value for '{nameof(DashboardSettings.MaxUsers)}'", LogLevel.Warn);
+				}
+				if (maxMostUsedFeatures == null)
+				{
+					log($@"Unable to find value for '{nameof(DashboardSettings.MaxMostUsedFeatures)}'", LogLevel.Warn);
 				}
 			}
-
-			if (maxUsers == null)
+			finally
 			{
-				log($@"Unable to find value for '{nameof(DashboardSettings.MaxUsers)}'", LogLevel.Warn);
-			}
-			if (maxMostUsedFeatures == null)
-			{
-				log($@"Unable to find value for '{nameof(DashboardSettings.MaxMostUsedFeatures)}'", LogLevel.Warn);
+				feature.EndStep(step);
 			}
 
 			return Task.FromResult(DashboardSettings.Default);
@@ -56,6 +64,7 @@ namespace Cchbc.Features.DashboardModule.Data
 		{
 			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
 
+			// TODO : Add end step in a finally
 			coreContext.Feature.AddStep(nameof(GetCommonDataAsync));
 
 			var contexts = new Dictionary<long, DbFeatureContextRow>();
