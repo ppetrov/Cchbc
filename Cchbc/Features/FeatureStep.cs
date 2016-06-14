@@ -2,18 +2,26 @@ using System;
 
 namespace Cchbc.Features
 {
-	public sealed class FeatureStep
-	{
-		public string Name { get; }
-		public TimeSpan TimeSpent { get; internal set; }
-		public string Details { get; internal set; }
+    public sealed class FeatureStep : IDisposable
+    {
+        public Feature Feature { get; }
+        public string Name { get; }
+        public TimeSpan TimeSpent { get; internal set; }
+        public string Details { get; internal set; }
 
-		public FeatureStep(string name, TimeSpan timeSpent)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
+        public FeatureStep(Feature feature, string name, TimeSpan timeSpent)
+        {
+            if (feature == null) throw new ArgumentNullException(nameof(feature));
+            if (name == null) throw new ArgumentNullException(nameof(name));
 
-			this.Name = name;
-			this.TimeSpent = timeSpent;
-		}
-	}
+            this.Feature = feature;
+            this.Name = name;
+            this.TimeSpent = timeSpent;
+        }
+
+        public void Dispose()
+        {
+            this.Feature.EndStep(this);
+        }
+    }
 }

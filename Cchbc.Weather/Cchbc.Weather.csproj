@@ -54,6 +54,7 @@
     <Compile Include="Location.cs" />
     <Compile Include="Meta.cs" />
     <Compile Include="MetricSystem.cs" />
+    <Compile Include="MsnModule.cs" />
     <Compile Include="Precipitation.cs" />
     <Compile Include="Pressure.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

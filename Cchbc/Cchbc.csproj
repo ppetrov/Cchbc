@@ -64,7 +64,6 @@
     <Compile Include="Features\Feature.cs" />
     <Compile Include="Features\FeatureManager.cs" />
     <Compile Include="Features\FeatureStep.cs" />
-    <Compile Include="Features\FeatureStepEventArgs.cs" />
     <Compile Include="Localization\LocalizationManager.cs" />
     <Compile Include="Logs\LogLevel.cs" />
     <Compile Include="ReadOnlyModule.cs" />

@@ -55,7 +55,7 @@ namespace LoginModule
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.AddStep(nameof(ValidateProperties));
+			feature.StartStep(nameof(ValidateProperties));
 
 			var model = viewModel.Model;
 			var name = (model.Name ?? string.Empty).Trim();
@@ -82,7 +82,7 @@ namespace LoginModule
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.AddStep(nameof(CanInsertAsync));
+			feature.StartStep(nameof(CanInsertAsync));
 
 			if (!this.IsAvailable(viewModel))
 			{
@@ -97,7 +97,7 @@ namespace LoginModule
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.AddStep(nameof(CanUpdateAsync));
+			feature.StartStep(nameof(CanUpdateAsync));
 			return Task.FromResult(PermissionResult.Deny(string.Empty));
 		}
 
@@ -106,7 +106,7 @@ namespace LoginModule
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.AddStep(nameof(CanDeleteAsync));
+			feature.StartStep(nameof(CanDeleteAsync));
 			return Task.FromResult(PermissionResult.Deny(string.Empty));
 		}
 
@@ -115,7 +115,7 @@ namespace LoginModule
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.AddStep(nameof(CanChangePassword));
+			feature.StartStep(nameof(CanChangePassword));
 			return PermissionResult.Allow;
 		}
 	}

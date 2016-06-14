@@ -129,10 +129,10 @@ namespace LoginModule.ViewModels
 			var feature = Feature.StartNew(this.Context, nameof(LoadDataAsync));
 			try
 			{
-				feature.AddStep(nameof(GetLoginsFromDbAsync));
+				feature.StartStep(nameof(GetLoginsFromDbAsync));
 				var viewModels = await GetLoginsFromDbAsync();
 
-				feature.AddStep(nameof(DisplayLogins));
+				feature.StartStep(nameof(DisplayLogins));
 				this.DisplayLogins(viewModels, feature);
 
 				this.FeatureManager.StopAsync(feature, viewModels.Length.ToString());
@@ -225,7 +225,7 @@ namespace LoginModule.ViewModels
 		{
 			feature.Started = _ => { this.IsWorking = true; };
 			feature.Stopped = _ => { this.IsWorking = false; };
-			feature.StepAdded = _ => this.WorkProgress = _.Name;
+			feature.StepStarted = _ => this.WorkProgress = _.Name;
 
 			return feature;
 		}

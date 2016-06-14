@@ -9,272 +9,298 @@ using Cchbc.Logs;
 
 namespace Cchbc.Features.DashboardModule.Data
 {
-	public static class DashboardDataProvider
-	{
-		public static Task<DashboardSettings> GetSettingsAsync(CoreContext coreContext)
-		{
-			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
+    public static class DashboardDataProvider
+    {
+        public static Task<DashboardSettings> GetSettingsAsync(CoreContext coreContext)
+        {
+            if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
 
-			var feature = coreContext.Feature;
-			var step = feature.AddStep(nameof(GetSettingsAsync));
-			try
-			{
-				var maxUsers = default(int?);
-				var maxMostUsedFeatures = default(int?);
+            var feature = coreContext.Feature;
 
-				var log = coreContext.Log;
-				// TODO : Load settings from db for the context
-				var contextForSettings = nameof(Dashboard);
-				var settings = new List<Setting>();
-				foreach (var setting in settings)
-				{
-					var name = setting.Name;
-					var value = setting.Value;
+            using (feature.StartStep(nameof(GetSettingsAsync)))
+            {
+                var maxUsers = default(int?);
+                var maxMostUsedFeatures = default(int?);
 
-					if (name.Equals(nameof(DashboardSettings.MaxUsers), StringComparison.OrdinalIgnoreCase))
-					{
-						maxUsers = ValueParser.ParseInt(value, log);
-						break;
-					}
-					if (name.Equals(nameof(DashboardSettings.MaxMostUsedFeatures), StringComparison.OrdinalIgnoreCase))
-					{
-						maxMostUsedFeatures = ValueParser.ParseInt(value, log);
-						break;
-					}
-				}
+                var log = coreContext.Log;
+                // TODO : Load settings from db for the context
+                var contextForSettings = nameof(Dashboard);
+                var settings = new List<Setting>();
+                foreach (var setting in settings)
+                {
+                    var name = setting.Name;
+                    var value = setting.Value;
 
-				if (maxUsers == null)
-				{
-					log($@"Unable to find value for '{nameof(DashboardSettings.MaxUsers)}'", LogLevel.Warn);
-				}
-				if (maxMostUsedFeatures == null)
-				{
-					log($@"Unable to find value for '{nameof(DashboardSettings.MaxMostUsedFeatures)}'", LogLevel.Warn);
-				}
-			}
-			finally
-			{
-				feature.EndStep(step);
-			}
+                    if (name.Equals(nameof(DashboardSettings.MaxUsers), StringComparison.OrdinalIgnoreCase))
+                    {
+                        maxUsers = ValueParser.ParseInt(value, log);
+                        break;
+                    }
+                    if (name.Equals(nameof(DashboardSettings.MaxMostUsedFeatures), StringComparison.OrdinalIgnoreCase))
+                    {
+                        maxMostUsedFeatures = ValueParser.ParseInt(value, log);
+                        break;
+                    }
+                }
+                if (maxUsers == null)
+                {
+                    log($@"Unable to find value for '{nameof(DashboardSettings.MaxUsers)}'", LogLevel.Warn);
+                }
+                if (maxMostUsedFeatures == null)
+                {
+                    log($@"Unable to find value for '{nameof(DashboardSettings.MaxMostUsedFeatures)}'", LogLevel.Warn);
+                }
+                return Task.FromResult(DashboardSettings.Default);
+            }
+        }
 
-			return Task.FromResult(DashboardSettings.Default);
-		}
+        public static Task<DashboardCommonData> GetCommonDataAsync(CoreContext coreContext)
+        {
+            if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
 
-		public static Task<DashboardCommonData> GetCommonDataAsync(CoreContext coreContext)
-		{
-			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
+            var feature = coreContext.Feature;
+            var step = feature.StartStep(nameof(GetCommonDataAsync));
+            try
+            {
+                var contexts = new Dictionary<long, DbFeatureContextRow>();
+                var features = new Dictionary<long, DbFeatureRow>();
 
-			// TODO : Add end step in a finally
-			coreContext.Feature.AddStep(nameof(GetCommonDataAsync));
+                var context = coreContext.DbContext;
+                context.Fill(contexts, (r, map) =>
+                {
+                    var row = new DbFeatureContextRow(r.GetInt64(0), r.GetString(1));
+                    map.Add(row.Id, row);
+                }, new Query(@"SELECT ID, NAME FROM FEATURE_CONTEXTS"));
 
-			var contexts = new Dictionary<long, DbFeatureContextRow>();
-			var features = new Dictionary<long, DbFeatureRow>();
+                context.Fill(features, (r, map) =>
+                {
+                    var row = new DbFeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
+                    map.Add(row.Id, row);
+                }, new Query(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES"));
 
-			coreContext.DbContext.Fill(contexts, (r, map) =>
-			{
-				var row = new DbFeatureContextRow(r.GetInt64(0), r.GetString(1));
-				map.Add(row.Id, row);
-			}, new Query(@"SELECT ID, NAME FROM FEATURE_CONTEXTS"));
+                return Task.FromResult(new DashboardCommonData(contexts, features));
+            }
+            finally
+            {
+                feature.EndStep(step);
+            }
+        }
 
-			coreContext.DbContext.Fill(features, (r, map) =>
-			{
-				var row = new DbFeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
-				map.Add(row.Id, row);
-			}, new Query(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES"));
+        public static Task<List<DashboardUser>> GetUsersAsync(DashboarLoadParams loadParams)
+        {
+            if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			return Task.FromResult(new DashboardCommonData(contexts, features));
-		}
+            var context = loadParams.CoreContext;
+            var feature = context.Feature;
+            var step = feature.StartStep(nameof(GetUsersAsync));
+            try
+            {
+                var statement = @"SELECT U.ID, U.NAME UNAME, U.REPLICATED_AT, V.NAME VNAME FROM FEATURE_USERS U INNER JOIN FEATURE_VERSIONS V ON U.VERSION_ID = V.ID ORDER BY REPLICATED_AT DESC LIMIT @MAXUSERS";
 
-		public static Task<List<DashboardUser>> GetUsersAsync(DashboarLoadParams loadParams)
-		{
-			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
+                var sqlParams = new[]
+                {
+                    new QueryParameter(@"@MAXUSERS", loadParams.Settings.MaxUsers),
+                };
 
-			loadParams.CoreContext.Feature.AddStep(nameof(GetUsersAsync));
+                var query = new Query<DashboardUser>(statement, r => new DashboardUser(r.GetInt64(0), r.GetString(1), r.GetDateTime(2), r.GetString(3)), sqlParams);
+                var users = context.DbContext.Execute(query);
 
-			var query = new Query<DashboardUser>(
-				@"SELECT U.ID, U.NAME UNAME, U.REPLICATED_AT, V.NAME VNAME FROM FEATURE_USERS U INNER JOIN FEATURE_VERSIONS V ON U.VERSION_ID = V.ID ORDER BY REPLICATED_AT DESC LIMIT @MAXUSERS",
-				r => new DashboardUser(r.GetInt64(0), r.GetString(1), r.GetDateTime(2), r.GetString(3)),
-				new[]
-				{
-					new QueryParameter(@"@MAXUSERS", loadParams.Settings.MaxUsers),
-				});
+                return Task.FromResult(users);
+            }
+            finally
+            {
+                feature.EndStep(step);
+            }
+        }
 
-			var users = loadParams.CoreContext.DbContext.Execute(query);
+        public static Task<List<DashboardVersion>> GetVersionsAsync(DashboarLoadParams loadParams)
+        {
+            if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			return Task.FromResult(users);
-		}
+            var context = loadParams.CoreContext;
+            var feature = context.Feature;
+            var step = feature.StartStep(nameof(GetVersionsAsync));
+            try
+            {
+                var maxVersions = loadParams.Settings.MaxVersions;
 
-		public static Task<List<DashboardVersion>> GetVersionsAsync(DashboarLoadParams loadParams)
-		{
-			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
+                var statement = @"SELECT ID, NAME FROM FEATURE_VERSIONS ORDER BY ID DESC LIMIT @MAXVERSIONS";
 
-			loadParams.CoreContext.Feature.AddStep(nameof(GetVersionsAsync));
+                var sqlParams = new[]
+                {
+                    new QueryParameter(@"@MAXVERSIONS", maxVersions),
+                };
 
-			var maxVersions = loadParams.Settings.MaxVersions;
+                var query = new Query<DbFeatureVersionRow>(statement, r => new DbFeatureVersionRow(r.GetInt64(0), r.GetString(1)), sqlParams);
 
-			var query = new Query<DbFeatureVersionRow>(
-				@"SELECT ID, NAME FROM FEATURE_VERSIONS ORDER BY ID DESC LIMIT @MAXVERSIONS",
-				r => new DbFeatureVersionRow(r.GetInt64(0), r.GetString(1)),
-				new[]
-				{
-					new QueryParameter(@"@MAXVERSIONS", maxVersions),
-				});
+                var dbContext = context.DbContext;
+                var versions = dbContext.Execute(query);
+                var exceptionsByVersion = CountExceptionsByVersion(dbContext);
+                var usersByVersion = CountUsersByVersion(dbContext);
 
-			var dbContext = loadParams.CoreContext.DbContext;
-			var versions = dbContext.Execute(query);
-			var exceptionsByVersion = CountExceptionsByVersion(dbContext);
-			var usersByVersion = CountUsersByVersion(dbContext);
+                var dashboardVersions = new List<DashboardVersion>(versions.Count);
+                foreach (var version in versions)
+                {
+                    var versionId = version.Id;
 
-			var dashboardVersions = new List<DashboardVersion>(versions.Count);
-			foreach (var version in versions)
-			{
-				var versionId = version.Id;
+                    int usersCount;
+                    usersByVersion.TryGetValue(versionId, out usersCount);
 
-				int usersCount;
-				usersByVersion.TryGetValue(versionId, out usersCount);
+                    int exceptionsCount;
+                    exceptionsByVersion.TryGetValue(versionId, out exceptionsCount);
 
-				int exceptionsCount;
-				exceptionsByVersion.TryGetValue(versionId, out exceptionsCount);
+                    dashboardVersions.Add(new DashboardVersion(version, usersCount, exceptionsCount));
+                }
 
-				dashboardVersions.Add(new DashboardVersion(version, usersCount, exceptionsCount));
-			}
+                dashboardVersions.Sort((x, y) =>
+                {
+                    var cmp = string.Compare(x.Version.Name, y.Version.Name, StringComparison.OrdinalIgnoreCase);
+                    return cmp;
+                });
 
-			dashboardVersions.Sort((x, y) =>
-			{
-				var cmp = string.Compare(x.Version.Name, y.Version.Name, StringComparison.OrdinalIgnoreCase);
-				return cmp;
-			});
+                return Task.FromResult(dashboardVersions);
+            }
+            finally
+            {
+                feature.EndStep(step);
+            }
+        }
 
-			return Task.FromResult(dashboardVersions);
-		}
+        public static Task<List<DashboardException>> GetExceptionsAsync(DashboarLoadParams loadParams)
+        {
+            if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-		public static Task<List<DashboardException>> GetExceptionsAsync(DashboarLoadParams loadParams)
-		{
-			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
+            var feature = loadParams.CoreContext.Feature;
+            var step = feature.StartStep(nameof(GetExceptionsAsync));
+            try
+            {
+                var dbContext = loadParams.CoreContext.DbContext;
+                var settings = loadParams.Settings;
+                var relativeTimePeriod = settings.ExceptionsRelativeTimePeriod;
+                var samples = settings.ExceptionsChartEntries;
 
-			loadParams.CoreContext.Feature.AddStep(nameof(GetExceptionsAsync));
+                var rangeTimePeriod = relativeTimePeriod.ToRange(DateTime.Now);
+                var unit = ((long)relativeTimePeriod.TimeOffset.TotalMilliseconds) / samples;
+                var baseDate = rangeTimePeriod.FromDate;
 
-			var dbContext = loadParams.CoreContext.DbContext;
-			var settings = loadParams.Settings;
-			var relativeTimePeriod = settings.ExceptionsRelativeTimePeriod;
-			var samples = settings.ExceptionsChartEntries;
+                var map = new int[samples];
 
-			var rangeTimePeriod = relativeTimePeriod.ToRange(DateTime.Now);
+                var statement = @"SELECT CREATED_AT FROM FEATURE_EXCEPTION_ENTRIES WHERE @FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE";
 
-			var query = new Query(@"SELECT CREATED_AT FROM FEATURE_EXCEPTION_ENTRIES WHERE @FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE", new[]
-			{
-				new QueryParameter(@"@FROMDATE", rangeTimePeriod.FromDate),
-				new QueryParameter(@"@TODATE", rangeTimePeriod.ToDate),
-			});
+                var sqlParams = new[]
+                {
+                    new QueryParameter(@"@FROMDATE", rangeTimePeriod.FromDate),
+                    new QueryParameter(@"@TODATE", rangeTimePeriod.ToDate),
+                };
 
-			var step = ((long)relativeTimePeriod.TimeOffset.TotalMilliseconds) / samples;
-			var baseDate = rangeTimePeriod.FromDate;
+                var query = new Query(statement, sqlParams);
+                dbContext.Fill(new Dictionary<long, int>(0), (r, m) =>
+                {
+                    var delta = ((long)(r.GetDateTime(0) - baseDate).TotalMilliseconds) / unit;
+                    map[delta]++;
+                }, query);
 
-			var map = new int[samples];
+                var result = new List<DashboardException>(samples);
 
+                for (var i = 0; i < map.Length; i++)
+                {
+                    result.Add(new DashboardException(baseDate.AddMilliseconds(unit * i), map[i]));
+                }
 
-			dbContext.Fill(new Dictionary<long, int>(0), (r, m) =>
-			{
-				var delta = ((long)(r.GetDateTime(0) - baseDate).TotalMilliseconds) / step;
-				map[delta]++;
-			}, query);
+                return Task.FromResult(result);
+            }
+            finally
+            {
+                feature.EndStep(step);
+            }
+        }
 
-			var result = new List<DashboardException>(samples);
+        public static Task<List<DashboardFeatureByCount>> GetMostUsedFeaturesAsync(DashboarLoadParams loadParams)
+        {
+            if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			for (var i = 0; i < map.Length; i++)
-			{
-				result.Add(new DashboardException(baseDate.AddMilliseconds(step * i), map[i]));
-			}
+            var tmp = new List<DashboardFeatureByCount>();
 
-			return Task.FromResult(result);
-		}
+            var ctxs = loadParams.Data.Contexts;
+            var fs = loadParams.Data.Features;
 
-		public static Task<List<DashboardFeatureByCount>> GetMostUsedFeaturesAsync(DashboarLoadParams loadParams)
-		{
-			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
+            var f = fs[1];
+            var c = ctxs[f.ContextId];
 
-			var tmp = new List<DashboardFeatureByCount>();
+            tmp.Add(new DashboardFeatureByCount(c, f, 7));
+            tmp.Add(new DashboardFeatureByCount(c, f, 11));
+            tmp.Add(new DashboardFeatureByCount(c, f, 13));
+            tmp.Add(new DashboardFeatureByCount(c, f, 15));
+            tmp.Add(new DashboardFeatureByCount(c, f, 17));
+            tmp.Add(new DashboardFeatureByCount(c, f, 23));
 
-			var ctxs = loadParams.Data.Contexts;
-			var fs = loadParams.Data.Features;
+            return Task.FromResult(tmp);
 
-			var f = fs[1];
-			var c = ctxs[f.ContextId];
+            // TODO : Add ability to exclude features - Sync Data for example
+            return GetUsedFeaturesAsync(loadParams, @"SELECT FEATURE_ID, COUNT(*) CNT FROM FEATURE_ENTRIES GROUP BY FEATURE_ID ORDER BY CNT DESC LIMIT @MAXFEATURES", new[]
+            {
+                new QueryParameter(@"@MAXFEATURES", loadParams.Settings.MaxMostUsedFeatures),
+            });
+        }
 
-			tmp.Add(new DashboardFeatureByCount(c, f, 7));
-			tmp.Add(new DashboardFeatureByCount(c, f, 11));
-			tmp.Add(new DashboardFeatureByCount(c, f, 13));
-			tmp.Add(new DashboardFeatureByCount(c, f, 15));
-			tmp.Add(new DashboardFeatureByCount(c, f, 17));
-			tmp.Add(new DashboardFeatureByCount(c, f, 23));
+        public static Task<List<DashboardFeatureByCount>> GetLeastUsedFeaturesAsync(DashboarLoadParams loadParams)
+        {
+            if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			return Task.FromResult(tmp);
+            // TODO : Add ability to exclude features - View Params for example
+            return GetUsedFeaturesAsync(loadParams, @"SELECT FEATURE_ID, COUNT(*) CNT FROM FEATURE_ENTRIES GROUP BY FEATURE_ID ORDER BY CNT ASC LIMIT @MAXFEATURES", new[]
+            {
+                new QueryParameter(@"@MAXFEATURES", loadParams.Settings.MaxLeastUsedFeatures),
+            });
+        }
 
-			// TODO : Add ability to exclude features - Sync Data for example
-			return GetUsedFeaturesAsync(loadParams, @"SELECT FEATURE_ID, COUNT(*) CNT FROM FEATURE_ENTRIES GROUP BY FEATURE_ID ORDER BY CNT DESC LIMIT @MAXFEATURES", new[]
-			{
-				new QueryParameter(@"@MAXFEATURES", loadParams.Settings.MaxMostUsedFeatures),
-			});
-		}
+        private static Task<List<DashboardFeatureByCount>> GetUsedFeaturesAsync(DashboarLoadParams loadParams, string query, QueryParameter[] sqlParams)
+        {
+            var dbContext = loadParams.CoreContext.DbContext;
+            var features = loadParams.Data.Features;
+            var contexts = loadParams.Data.Contexts;
 
-		public static Task<List<DashboardFeatureByCount>> GetLeastUsedFeaturesAsync(DashboarLoadParams loadParams)
-		{
-			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
+            var mostUsedFeatures = dbContext.Execute(new Query<DashboardFeatureByCount>(query, r =>
+            {
+                var featureId = r.GetInt64(0);
+                var feature = features[featureId];
+                var context = contexts[feature.ContextId];
+                return new DashboardFeatureByCount(context, feature, r.GetInt32(1));
+            }, sqlParams));
 
-			// TODO : Add ability to exclude features - View Params for example
-			return GetUsedFeaturesAsync(loadParams, @"SELECT FEATURE_ID, COUNT(*) CNT FROM FEATURE_ENTRIES GROUP BY FEATURE_ID ORDER BY CNT ASC LIMIT @MAXFEATURES", new[]
-			{
-				new QueryParameter(@"@MAXFEATURES", loadParams.Settings.MaxLeastUsedFeatures),
-			});
-		}
+            return Task.FromResult(mostUsedFeatures);
+        }
 
-		private static Task<List<DashboardFeatureByCount>> GetUsedFeaturesAsync(DashboarLoadParams loadParams, string query, QueryParameter[] sqlParams)
-		{
-			var dbContext = loadParams.CoreContext.DbContext;
-			var features = loadParams.Data.Features;
-			var contexts = loadParams.Data.Contexts;
+        public static Task<List<DashboardFeatureByTime>> GetSlowestFeaturesAsync(DashboarLoadParams loadParams)
+        {
+            if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			var mostUsedFeatures = dbContext.Execute(new Query<DashboardFeatureByCount>(query, r =>
-			{
-				var featureId = r.GetInt64(0);
-				var feature = features[featureId];
-				var context = contexts[feature.ContextId];
-				return new DashboardFeatureByCount(context, feature, r.GetInt32(1));
-			}, sqlParams));
+            return Task.FromResult(new List<DashboardFeatureByTime>(0));
+        }
 
-			return Task.FromResult(mostUsedFeatures);
-		}
+        private static Dictionary<long, int> CountExceptionsByVersion(ITransactionContext context)
+        {
+            return CountByVersion(context, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTION_ENTRIES GROUP BY VERSION_ID");
+        }
 
-		public static Task<List<DashboardFeatureByTime>> GetSlowestFeaturesAsync(DashboarLoadParams loadParams)
-		{
-			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
+        private static Dictionary<long, int> CountUsersByVersion(ITransactionContext context)
+        {
+            return CountByVersion(context, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_USERS GROUP BY VERSION_ID");
+        }
 
-			return Task.FromResult(new List<DashboardFeatureByTime>(0));
-		}
+        private static Dictionary<long, int> CountByVersion(ITransactionContext context, string query)
+        {
+            var result = new Dictionary<long, int>();
 
-		private static Dictionary<long, int> CountExceptionsByVersion(ITransactionContext context)
-		{
-			return CountByVersion(context, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTION_ENTRIES GROUP BY VERSION_ID");
-		}
+            context.Fill(result, (r, map) =>
+            {
+                var versionId = r.GetInt64(0);
+                var count = r.GetInt32(1);
 
-		private static Dictionary<long, int> CountUsersByVersion(ITransactionContext context)
-		{
-			return CountByVersion(context, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_USERS GROUP BY VERSION_ID");
-		}
+                map[versionId] = count;
+            }, new Query(query));
 
-		private static Dictionary<long, int> CountByVersion(ITransactionContext context, string query)
-		{
-			var result = new Dictionary<long, int>();
-
-			context.Fill(result, (r, map) =>
-			{
-				var versionId = r.GetInt64(0);
-				var count = r.GetInt32(1);
-
-				map[versionId] = count;
-			}, new Query(query));
-
-			return result;
-		}
-	}
+            return result;
+        }
+    }
 }

@@ -4,86 +4,88 @@ using System.Diagnostics;
 
 namespace Cchbc.Features
 {
-	public sealed class Feature
-	{
-		public static readonly Feature None = new Feature(string.Empty, string.Empty);
+    public sealed class Feature
+    {
+        public static readonly Feature None = new Feature(string.Empty, string.Empty, null, null);
 
-		public string Context { get; }
-		public string Name { get; }
-		public TimeSpan TimeSpent => this.Stopwatch.Elapsed;
-		public List<FeatureStep> Steps { get; } = new List<FeatureStep>();
-		public Action<FeatureStep> StepAdded;
-		public Action<FeatureStep> StepEnded;
-		public Action<Feature> Started;
-		public Action<Feature> Stopped;
+        public string Context { get; }
+        public string Name { get; }
+        public TimeSpan TimeSpent => this._stopwatch.Elapsed;
+        public List<FeatureStep> Steps => _steps ?? (_steps = new List<FeatureStep>());
+        public Action<Feature> Started;
+        public Action<Feature> Stopped;
+        public Action<FeatureStep> StepStarted;
+        public Action<FeatureStep> StepEnded;
 
-		private Stopwatch Stopwatch { get; }
+        private readonly Stopwatch _stopwatch;
+        private List<FeatureStep> _steps;
 
-		public static Feature StartNew(string context, string name)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (name == null) throw new ArgumentNullException(nameof(name));
+        public static Feature StartNew(string context, string name)
+        {
+            if (context == null) throw new ArgumentNullException(nameof(context));
+            if (name == null) throw new ArgumentNullException(nameof(name));
 
-			var feature = new Feature(context, name);
+            var feature = new Feature(context, name, new Stopwatch(), null);
 
-			feature.Start();
+            feature.Start();
 
-			return feature;
-		}
+            return feature;
+        }
 
-		private Feature(string context, string name)
-		{
-			this.Context = context;
-			this.Name = name;
-			this.Stopwatch = new Stopwatch();
-		}
+        private Feature(string context, string name, Stopwatch stopwatch, List<FeatureStep> steps)
+        {
+            this.Context = context;
+            this.Name = name;
 
-		public void Start()
-		{
-			this.Stopwatch.Start();
-			this.Started?.Invoke(this);
-		}
+            _stopwatch = stopwatch;
+            _steps = steps;
+        }
 
-		public void Stop()
-		{
-			this.Stopwatch.Stop();
-			this.Stopped?.Invoke(this);
-		}
+        public FeatureStep StartStep(string name)
+        {
+            if (name == null) throw new ArgumentNullException(nameof(name));
 
-		public void Pause()
-		{
-			this.Stopwatch.Stop();
-		}
+            // Create new feature step
+            var step = new FeatureStep(this, name, _stopwatch.Elapsed);
 
-		public void Resume()
-		{
-			this.Stopwatch.Start();
-		}
+            this.StepStarted?.Invoke(step);
 
-		public FeatureStep AddStep(string name)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
+            return step;
+        }
 
-			// Create new feature step
-			var step = new FeatureStep(name, this.Stopwatch.Elapsed);
+        public void EndStep(FeatureStep step, string details = null)
+        {
+            if (step == null) throw new ArgumentNullException(nameof(step));
 
-			// Fire the "event"
-			this.StepAdded?.Invoke(step);
+            step.TimeSpent = this._stopwatch.Elapsed - step.TimeSpent;
+            step.Details = details ?? string.Empty;
 
-			return step;
-		}
+            // Add to feature steps
+            this.Steps.Add(step);
 
-		public void EndStep(FeatureStep step, string details = null)
-		{
-			if (step == null) throw new ArgumentNullException(nameof(step));
+            this.StepEnded?.Invoke(step);
+        }
 
-			step.TimeSpent = this.Stopwatch.Elapsed - step.TimeSpent;
-			step.Details = details ?? string.Empty;
+        public void Start()
+        {
+            this._stopwatch.Start();
+            this.Started?.Invoke(this);
+        }
 
-			// Add to feature steps
-			this.Steps.Add(step);
+        public void Stop()
+        {
+            this._stopwatch.Stop();
+            this.Stopped?.Invoke(this);
+        }
 
-			this.StepEnded?.Invoke(step);
-		}
-	}
+        public void Pause()
+        {
+            this._stopwatch.Stop();
+        }
+
+        public void Resume()
+        {
+            this._stopwatch.Start();
+        }
+    }
 }
