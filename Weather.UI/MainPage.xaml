@@ -32,7 +32,7 @@
                         <TextBlock Text="{x:Bind Temperature}" HorizontalAlignment="Center"></TextBlock>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <TextBlock Text="{x:Bind ChanceOfRain}" HorizontalAlignment="Center"></TextBlock>
-                            <Image Source="Assets/Drop-01.png" Width="24" Height="24"></Image>
+                            <Image Source="Assets/Drop-01.png" Width="16" Height="16"></Image>
                         </StackPanel>
                         <TextBlock Text="{x:Bind Description}" HorizontalAlignment="Center"></TextBlock>
                     </StackPanel>

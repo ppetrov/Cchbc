@@ -107,7 +107,15 @@
     <None Include="Weather.UI_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\01x.png" />
+    <Content Include="Assets\02x.png" />
+    <Content Include="Assets\03x.png" />
+    <Content Include="Assets\04x.png" />
+    <Content Include="Assets\09x.png" />
     <Content Include="Assets\10.jpg" />
+    <Content Include="Assets\10x.png" />
+    <Content Include="Assets\11x.png" />
+    <Content Include="Assets\13x.png" />
     <Content Include="Assets\clear sky.png" />
     <Content Include="Assets\clouds.png" />
     <Content Include="Assets\Drop-01.png" />

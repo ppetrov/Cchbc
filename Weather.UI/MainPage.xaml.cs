@@ -118,27 +118,15 @@ namespace Weather.UI
         {
             this.ForcastDays.Clear();
 
-            var iconsMap = new Dictionary<string, string>
-            {
-                {@"01x", @"clear sky"},
-                {@"02x", @"few clouds"},
-                {@"03x", @"clouds"},
-                {@"04x", @"clouds"},
-                {@"09x", @"shower rain"},
-                {@"10x", @"rain"},
-                {@"11x", @"thunderstorm"},
-                {@"13x", @"snow"},
-            };
-
             this.CurrentStep = @"Calling the weather service ...";
 
-            var weather = await MsnWeather.GetWeatherAsync(@"Sofia");
+            var weather = await MsnWeather.GetWeatherAsync(new MsnCityLocation(42.7, 23.33));
 
             this.CurrentStep = @"Data downloaded. Parse data & load images";
 
             foreach (var entry in weather.First().Forecasts)
             {
-                var src = new Uri(string.Format("ms-appx:///Assets/{0}.png", iconsMap[entry.IconCode]));
+                var src = new Uri(string.Format("ms-appx:///Assets/{0}.png", entry.IconCode));
                 var file = await StorageFile.GetFileFromApplicationUriAsync(src);
 
                 using (var ms = new InMemoryRandomAccessStream())

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -22,9 +22,13 @@ namespace Cchbc.Weather
             this.Forecasts = forecasts;
         }
 
-        public static async Task<List<MsnWeather>> GetWeatherAsync(string city)
+        public static async Task<List<MsnWeather>> GetWeatherAsync(MsnCityLocation cityLocation)
         {
-            var uri = new Uri($@"http://weather.service.msn.com/data.aspx?weasearchstr={city}&weadegreetype=C&src=msn");
+            if (cityLocation == null) throw new ArgumentNullException(nameof(cityLocation));
+
+            var latitude = cityLocation.Latitude.ToString(CultureInfo.InvariantCulture);
+            var longitude = cityLocation.Longitude.ToString(CultureInfo.InvariantCulture);
+            var uri = new Uri($@"http://weather.service.msn.com/data.aspx?weasearchstr={latitude},{longitude}&weadegreetype=C&src=msn");
 
             using (var request = new HttpRequestMessage(HttpMethod.Get, uri))
             {
@@ -68,52 +72,56 @@ namespace Cchbc.Weather
         {
             var current = new MsnCurrentWeather();
 
-            foreach (var attribute in input.Descendants(XName.Get(@"current")).Single().Attributes())
+            foreach (var element in input.Descendants(XName.Get(@"current")))
             {
-                var value = (attribute.Value ?? string.Empty).Trim();
+                foreach (var attribute in element.Attributes())
+                {
+                    var value = attribute.Value.Trim();
 
-                var name = attribute.Name.LocalName;
-                if (name.Equals(@"temperature", StringComparison.OrdinalIgnoreCase))
-                {
-                    current.Temperature = GetDouble(value);
-                    continue;
+                    var name = attribute.Name.LocalName;
+                    if (name.Equals(@"temperature", StringComparison.OrdinalIgnoreCase))
+                    {
+                        current.Temperature = GetDouble(value);
+                        continue;
+                    }
+                    if (name.Equals(@"skycode", StringComparison.OrdinalIgnoreCase))
+                    {
+                        current.IconCode = GetIconCode(value);
+                        continue;
+                    }
+                    if (name.Equals(@"skytext", StringComparison.OrdinalIgnoreCase))
+                    {
+                        current.Description = value;
+                        continue;
+                    }
+                    if (name.Equals(@"date", StringComparison.OrdinalIgnoreCase))
+                    {
+                        current.Date = GetDate(value);
+                        continue;
+                    }
+                    if (name.Equals(@"observationtime", StringComparison.OrdinalIgnoreCase))
+                    {
+                        current.Date = current.Date.Add(GetTimeSpan(value));
+                        continue;
+                    }
+                    if (name.Equals(@"observationpoint", StringComparison.OrdinalIgnoreCase))
+                    {
+                        current.Point = value;
+                        continue;
+                    }
+                    if (name.Equals(@"feelslike", StringComparison.OrdinalIgnoreCase))
+                    {
+                        current.Feelslike = GetDouble(value);
+                        continue;
+                    }
+                    if (name.Equals(@"humidity", StringComparison.OrdinalIgnoreCase))
+                    {
+                        current.Humidity = GetDouble(value);
+                    }
                 }
-                if (name.Equals(@"skycode", StringComparison.OrdinalIgnoreCase))
-                {
-                    current.IconCode = GetIconCode(value);
-                    continue;
-                }
-                if (name.Equals(@"skytext", StringComparison.OrdinalIgnoreCase))
-                {
-                    current.Description = value;
-                    continue;
-                }
-                if (name.Equals(@"date", StringComparison.OrdinalIgnoreCase))
-                {
-                    current.Date = GetDate(value);
-                    continue;
-                }
-                if (name.Equals(@"observationtime", StringComparison.OrdinalIgnoreCase))
-                {
-                    current.Date = current.Date.Add(GetTimeSpan(value));
-                    continue;
-                }
-                if (name.Equals(@"observationpoint", StringComparison.OrdinalIgnoreCase))
-                {
-                    current.Point = value;
-                    continue;
-                }
-                if (name.Equals(@"feelslike", StringComparison.OrdinalIgnoreCase))
-                {
-                    current.Feelslike = GetDouble(value);
-                    continue;
-                }
-                if (name.Equals(@"humidity", StringComparison.OrdinalIgnoreCase))
-                {
-                    current.Humidity = GetDouble(value);
-                    continue;
-                }
+                break;
             }
+
 
             return current;
         }
@@ -124,7 +132,7 @@ namespace Cchbc.Weather
 
             foreach (var attribute in input.Attributes())
             {
-                var value = (attribute.Value ?? string.Empty).Trim();
+                var value = (attribute.Value).Trim();
 
                 var name = attribute.Name.LocalName;
                 if (name.Equals(@"low", StringComparison.OrdinalIgnoreCase))
@@ -155,7 +163,6 @@ namespace Cchbc.Weather
                 if (name.Equals(@"precip", StringComparison.OrdinalIgnoreCase))
                 {
                     forecast.Precipitation = GetDouble(value);
-                    continue;
                 }
             }
 
@@ -271,6 +278,18 @@ namespace Cchbc.Weather
             }
 
             return string.Empty;
+        }
+    }
+
+    public sealed class MsnCityLocation
+    {
+        public double Latitude { get; }
+        public double Longitude { get; }
+
+        public MsnCityLocation(double latitude, double longitude)
+        {
+            this.Longitude = longitude;
+            this.Latitude = latitude;
         }
     }
 

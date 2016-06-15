@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -37,6 +38,8 @@ namespace Cchbc.ConsoleClient
         {
             try
             {
+                var latitude = (2.23).ToString(new CultureInfo(@"bg-BG"));
+                Console.WriteLine(latitude);
                 //http://weather.service.msn.com/data.aspx?weasearchstr=Sofia,Bulgaria&weadegreetype=C&src=msn
 
                 //var forecastClient = new ForecastClient(@"87f3b3402228bff038c4f69cbeebb484");
