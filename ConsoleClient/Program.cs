@@ -19,6 +19,7 @@ using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Data;
 using Cchbc.Features.Replication;
+using Cchbc.Validation;
 
 namespace Cchbc.ConsoleClient
 {
@@ -38,9 +39,42 @@ namespace Cchbc.ConsoleClient
         {
             try
             {
-                var latitude = (2.23).ToString(new CultureInfo(@"bg-BG"));
-                Console.WriteLine(latitude);
-                //http://weather.service.msn.com/data.aspx?weasearchstr=Sofia,Bulgaria&weadegreetype=C&src=msn
+                var activity = "";
+                var f = Feature.StartNew(@"Agenda", @"Copy Activity");
+                CopyActivity(f, activity);
+
+                f = Feature.StartNew(@"Agenda", @"Copy Activity");
+                CopyActivity(f, activity);
+
+                f = Feature.StartNew(@"Agenda", @"Create Activity");
+                CreateActivity(f, "");
+
+
+                Console.WriteLine(f.Name.PadRight(45) + f.TimeSpent.TotalMilliseconds.ToString(@"F3") + @"ms");
+
+                var max = f.Steps.Select(v => v.TimeSpent.TotalMilliseconds).Max();
+                var percent = max / 100;
+
+                foreach (var step in f.Steps)
+                {
+                    var offset = string.Empty;
+                    for (int i = 0; i < step.Level; i++)
+                    {
+                        offset += @"    ";
+                    }
+
+                    var value = offset + step.Name;
+                    var ms = step.TimeSpent.TotalMilliseconds;
+                    var times = (int)(ms / percent) / 2;
+                    Console.WriteLine(value.PadRight(45) + ms.ToString(@"F3") + " ms " + new string('-', times));
+                }
+
+                Console.WriteLine();
+                Console.WriteLine();
+                Console.WriteLine();
+                Console.WriteLine();
+
+
 
                 //var forecastClient = new ForecastClient(@"87f3b3402228bff038c4f69cbeebb484");
                 //var forecastData = forecastClient.GetByCoordinatesAsync(new Coordinates(42.7, 23.33)).Result;
@@ -226,6 +260,146 @@ namespace Cchbc.ConsoleClient
             //{
             //	Console.WriteLine(e);
             //}
+        }
+
+        private static void CopyActivity(Feature feature, string activity)
+        {
+            var date = SelectDateFromDialog(feature);
+            if (date == null) return;
+
+            var days = GetDays(feature, date.Value);
+
+            var isDayActive = IsDayActive(feature, days);
+            if (!isDayActive) return;
+
+            var isDayInThePast = IsDayInThePast(feature, days);
+            if (isDayInThePast) return;
+
+            var copyActivity = activity + @"*";
+            CreateActivity(feature, copyActivity);
+        }
+
+        private static void CreateActivity(Feature feature, string activity)
+        {
+            using (feature.StartNestedStep(nameof(CreateActivity)))
+            {
+                var visit = CreateVisit(feature);
+                if (visit == null) return;
+
+                InsertActivity(feature, visit, activity);
+            }
+        }
+
+        private static void InsertActivity(Feature feature, string visit, string activity)
+        {
+            using (feature.StartStep(nameof(InsertActivity)))
+            {
+                var copy = activity + @"+" + visit;
+            }
+        }
+
+
+        private static DateTime? SelectDateFromDialog(Feature feature)
+        {
+            using (feature.StartStep(nameof(SelectDateFromDialog)))
+            {
+                // TODO : !!! Get from the UI
+                return DateTime.Today.AddDays(1);
+            }
+        }
+
+        private static List<object> GetDays(Feature feature, DateTime value)
+        {
+            using (feature.StartStep(nameof(GetDays)))
+            {
+                Thread.Sleep(17);
+                return new List<object>();
+            }
+        }
+
+        private static bool IsDayActive(Feature feature, List<object> days)
+        {
+            using (feature.StartStep(nameof(IsDayActive)))
+            {
+                //Thread.Sleep(100);
+                // TODO : Query the db
+                return true;
+            }
+        }
+
+        private static bool IsDayInThePast(Feature feature, List<object> days)
+        {
+            using (feature.StartStep(nameof(IsDayInThePast)))
+            {
+                // TODO : Query the db
+                //Thread.Sleep(100);
+                return false;
+            }
+        }
+
+
+
+
+
+        private static string CreateVisit(Feature f)
+        {
+            var canCreateActivityForOutlet = CanCreateActivityForOutlet(f);
+            if (canCreateActivityForOutlet.Type != PermissionType.Allow) return null;
+
+            using (f.StartNestedStep(nameof(CreateVisit)))
+            {
+                var visit = GetVisit(f);
+                if (visit != null) return visit;
+
+                return InsertVisit(f);
+            }
+        }
+
+        private static PermissionResult CanCreateActivityForOutlet(Feature f)
+        {
+            using (f.StartNestedStep(nameof(CanCreateActivityForOutlet)))
+            {
+                using (f.StartStep(@"IsOutletAssignmentValid"))
+                {
+                    var assignment = "From the for outlet";
+                    if (assignment == null)
+                    {
+                        // TODO : Display message
+                        return PermissionResult.Deny("No outlet assignment");
+                    }
+                    var hasAssignment = assignment.Length > 0;
+                    if (!hasAssignment)
+                    {
+                        // TODO : Display message
+                        return PermissionResult.Deny("Invalid assignment");
+                    }
+                }
+                //Is R E D Activities Allowed
+                using (f.StartStep(@"IsREDActivitiesAllowed"))
+                {
+                    // TODO : !!!
+                    return PermissionResult.Allow.Result;
+                }
+            }
+        }
+
+        private static string InsertVisit(Feature f)
+        {
+            using (f.StartStep(nameof(InsertVisit)))
+            {
+                // TODO : !!!
+                return @"new visit";
+            }
+        }
+
+        private static string GetVisit(Feature f)
+        {
+            using (f.StartStep(nameof(GetVisit)))
+            {
+                // TODO : !!!
+                return null;
+                return "Get from db";
+            }
         }
 
         private static void CreateSchema(string connectionString)
@@ -802,19 +976,19 @@ using System.Data;
         {
             //var buffer = new StringBuilder();
 
-            //var ctxName = f.Context + "(" + f.Name + ")";
+            //var ctxName = feature.Context + "(" + feature.Name + ")";
             //buffer.Append(ctxName.PadRight(25));
             //buffer.Append(' ');
-            //buffer.Append(f.Details.PadRight(12));
+            //buffer.Append(feature.Details.PadRight(12));
             //buffer.Append(' ');
-            //buffer.AppendLine(f.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture).PadRight(6));
+            //buffer.AppendLine(feature.TimeSpent.TotalMilliseconds.ToString(CultureInfo.InvariantCulture).PadRight(6));
 
-            //if (f.Steps.Any())
+            //if (feature.Steps.Any())
             //{
-            //	var totalMilliseconds = f.TimeSpent.TotalMilliseconds;
-            //	var remaingTime = totalMilliseconds - (f.Steps.Select(v => v.TimeSpent.TotalMilliseconds).Sum());
+            //	var totalMilliseconds = feature.TimeSpent.TotalMilliseconds;
+            //	var remaingTime = totalMilliseconds - (feature.Steps.Select(v => v.TimeSpent.TotalMilliseconds).Sum());
 
-            //	foreach (var s in f.Steps.Concat(new[] { new FeatureEntryStep(@"Other", TimeSpan.FromMilliseconds(remaingTime), string.Empty) }))
+            //	foreach (var s in feature.Steps.Concat(new[] { new FeatureEntryStep(@"Other", TimeSpan.FromMilliseconds(remaingTime), string.Empty) }))
             //	{
             //		buffer.Append('\t');
 

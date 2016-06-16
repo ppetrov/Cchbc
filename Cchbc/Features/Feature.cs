@@ -17,6 +17,8 @@ namespace Cchbc.Features
         public Action<FeatureStep> StepStarted;
         public Action<FeatureStep> StepEnded;
 
+        private int _stepLevel = 1;
+
         private Stopwatch _stopwatch;
         private Stopwatch Stopwatch => _stopwatch ?? (_stopwatch = new Stopwatch());
 
@@ -44,14 +46,34 @@ namespace Cchbc.Features
             this.Name = name;
         }
 
+        public FeatureStep StartNestedStep(string name)
+        {
+            if (name == null) throw new ArgumentNullException(nameof(name));
+
+            return StartNewStep(name, true);
+        }
+
         public FeatureStep StartStep(string name)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
 
+            return StartNewStep(name, false);
+        }
+
+        private FeatureStep StartNewStep(string name, bool isParent)
+        {
             // Create new feature step
-            var step = new FeatureStep(this, name, this.Stopwatch.Elapsed);
+            var step = new FeatureStep(this, name, _stepLevel, isParent, this.Stopwatch.Elapsed);
 
             this.StepStarted?.Invoke(step);
+
+            // Add to feature steps
+            this.Steps.Add(step);
+
+            if (step.IsParent)
+            {
+                _stepLevel++;
+            }
 
             return step;
         }
@@ -63,10 +85,12 @@ namespace Cchbc.Features
             step.TimeSpent = this.Stopwatch.Elapsed - step.TimeSpent;
             step.Details = details ?? string.Empty;
 
-            // Add to feature steps
-            this.Steps.Add(step);
-
             this.StepEnded?.Invoke(step);
+
+            if (step.IsParent)
+            {
+                _stepLevel--;
+            }
         }
 
         public void Start()
