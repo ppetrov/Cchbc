@@ -316,9 +316,9 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			// Set parameters values
-			InsertStepEntryQuery.Parameters[0].Value = featureEntryId;
-			InsertStepEntryQuery.Parameters[1].Value = stepId;
-			InsertStepEntryQuery.Parameters[2].Value = Convert.ToDecimal(timeSpent);
+			InsertStepEntryQuery.Parameters[0].Value = Convert.ToDecimal(timeSpent);
+			InsertStepEntryQuery.Parameters[1].Value = featureEntryId;
+			InsertStepEntryQuery.Parameters[2].Value = stepId;
 
 			// Insert the record
 			context.Execute(InsertStepEntryQuery);

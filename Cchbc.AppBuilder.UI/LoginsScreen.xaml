@@ -9,7 +9,7 @@
     mc:Ignorable="d">
 
     <StackPanel Background="#414052" Margin="20" Orientation="Vertical">
-        <ListView ItemsSource="{x:Bind ViewModel.Logins}" Margin="10" HorizontalAlignment="Stretch" Foreground="Orange"></ListView>
-        <Button Margin="10" HorizontalAlignment="Stretch" Foreground="Orange" Tapped="AddLoginTapped">Add Login</Button>
+        <Button Margin="25" HorizontalAlignment="Stretch" Foreground="Orange" Tapped="CreateActivityTapped">Create Activity</Button>
+        <Button Margin="25" HorizontalAlignment="Stretch" Foreground="Orange" Tapped="CopyActivityTapped">Copy Activity</Button>
     </StackPanel>
 </Page>

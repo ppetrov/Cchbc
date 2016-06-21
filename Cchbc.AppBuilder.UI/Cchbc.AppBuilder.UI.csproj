@@ -68,7 +68,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NETFX_CORE;WINDOWS_UWP;CODE_ANALYSIS;SQLITE</DefineConstants>
     <NoWarn>;2008</NoWarn>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -99,6 +99,21 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Context.cs" />
+    <Compile Include="SQLite\SQLiteColumnType.cs" />
+    <Compile Include="SQLite\SQLiteCommand.cs" />
+    <Compile Include="SQLite\SQLiteConfigOption.cs" />
+    <Compile Include="SQLite\SQLiteConnection.cs" />
+    <Compile Include="SQLite\SQLiteDataParameterCollection.cs" />
+    <Compile Include="SQLite\SQLiteDataReader.cs" />
+    <Compile Include="SQLite\SQLiteException.cs" />
+    <Compile Include="SQLite\SQLiteNative.cs" />
+    <Compile Include="SQLite\SQLiteParameter.cs" />
+    <Compile Include="SQLite\SQLiteResult.cs" />
+    <Compile Include="SQLite\SystemDataInterface.cs" />
+    <Compile Include="SqlLiteDelegateDataReader.cs" />
+    <Compile Include="TransactionContext.cs" />
+    <Compile Include="TransactionContextCreator.cs" />
     <Compile Include="LoginsScreen.xaml.cs">
       <DependentUpon>LoginsScreen.xaml</DependentUpon>
     </Compile>
@@ -167,6 +182,14 @@
       <Project>{221F4E8E-6BB9-43C8-BE8B-64070B77CF4C}</Project>
       <Name>LoginModule</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <SDKReference Include="Microsoft.VCLibs, Version=14.0">
+      <Name>Visual C++ 2015 Runtime for Universal Windows Platform Apps</Name>
+    </SDKReference>
+    <SDKReference Include="SQLite.UWP.2015, Version=3.13.0">
+      <Name>SQLite for Universal Windows Platform</Name>
+    </SDKReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.ObjectModel
 using System.Threading.Tasks;
 using Cchbc.App.ArticlesModule.Objects;
 using Cchbc.Data;
@@ -322,13 +322,7 @@ namespace Cchbc.App.OrderModule
 		public List<OrderDetail> Details { get; } = new List<OrderDetail>();
 	}
 
-	public sealed class ContextCreator : ITransactionContextCreator
-	{
-		public ITransactionContext Create()
-		{
-			throw new NotImplementedException();
-		}
-	}
+
 
 	public sealed class OrderManager
 	{
