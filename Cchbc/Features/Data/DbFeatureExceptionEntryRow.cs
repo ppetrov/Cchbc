@@ -4,13 +4,13 @@ namespace Cchbc.Features.Data
 {
 	public sealed class DbFeatureExceptionEntryRow
 	{
-		public readonly long ExceptionRowId;
+		public readonly long Id;
 		public readonly DateTime CreatedAt;
-		public readonly long FeatureId;
+		public readonly int FeatureId;
 
-		public DbFeatureExceptionEntryRow(long exceptionRowId, DateTime createdAt, long featureId)
+		public DbFeatureExceptionEntryRow(long id, DateTime createdAt, int featureId)
 		{
-			this.ExceptionRowId = exceptionRowId;
+			this.Id = id;
 			this.CreatedAt = createdAt;
 			this.FeatureId = featureId;
 		}

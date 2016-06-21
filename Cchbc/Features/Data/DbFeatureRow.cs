@@ -4,11 +4,11 @@ namespace Cchbc.Features.Data
 {
 	public sealed class DbFeatureRow
 	{
-		public readonly long Id;
+		public readonly int Id;
 		public readonly string Name;
-		public readonly long ContextId;
+		public readonly int ContextId;
 
-		public DbFeatureRow(long id, string name, long contextId)
+		public DbFeatureRow(int id, string name, int contextId)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 

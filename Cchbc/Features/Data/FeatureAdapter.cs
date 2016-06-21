@@ -72,8 +72,8 @@ namespace Cchbc.Features.Data
 		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);
 		private static readonly Query<DbFeatureExceptionEntryRow> GetDbFeatureExceptionEntryRowQuery = new Query<DbFeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
 
-		private static readonly Query<long> GetExceptionQuery =
-			new Query<long>(@"SELECT ID FROM FEATURE_EXCEPTIONS WHERE CONTENTS = @CONTENTS", IdCreator, new[]
+		private static readonly Query<int> GetExceptionQuery =
+			new Query<int>(@"SELECT ID FROM FEATURE_EXCEPTIONS WHERE CONTENTS = @CONTENTS", IdCreator, new[]
 			{
 				new QueryParameter(@"@CONTENTS", string.Empty)
 			});
@@ -226,7 +226,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(context.Execute(GetFeaturesQuery));
 		}
 
-		public static Task<long> GetOrCreateExceptionAsync(ITransactionContext context, string contents)
+		public static Task<int> GetOrCreateExceptionAsync(ITransactionContext context, string contents)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
@@ -241,7 +241,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return InsertExceptionAsync(context, contents);
 		}
 
-		public static Task<long> InsertContextAsync(ITransactionContext context, string name)
+		public static Task<int> InsertContextAsync(ITransactionContext context, string name)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
@@ -249,10 +249,10 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			// Set parameters values
 			InsertContext.Parameters[0].Value = name;
 
-			return ExecuteInsertAsync(context, InsertContext);
+			return ExecuteInsertIntIdAsync(context, InsertContext);
 		}
 
-		public static Task<long> InsertStepAsync(ITransactionContext context, string name)
+		public static Task<int> InsertStepAsync(ITransactionContext context, string name)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
@@ -260,20 +260,20 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			// Set parameters values
 			InsertStepQuery.Parameters[0].Value = name;
 
-			return ExecuteInsertAsync(context, InsertStepQuery);
+			return ExecuteInsertIntIdAsync(context, InsertStepQuery);
 		}
 
-		public static Task<long> InsertExceptionAsync(ITransactionContext context, string contents)
+		public static Task<int> InsertExceptionAsync(ITransactionContext context, string contents)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
 			InsertExceptionQuery.Parameters[0].Value = contents;
 
-			return ExecuteInsertAsync(context, InsertExceptionQuery);
+			return ExecuteInsertIntIdAsync(context, InsertExceptionQuery);
 		}
 
-		public static Task<long> InsertFeatureAsync(ITransactionContext context, string name, long contextId)
+		public static Task<int> InsertFeatureAsync(ITransactionContext context, string name, int contextId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
@@ -283,7 +283,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			InsertFeatureQuery.Parameters[1].Value = contextId;
 
 			// Insert the record
-			return ExecuteInsertAsync(context, InsertFeatureQuery);
+			return ExecuteInsertIntIdAsync(context, InsertFeatureQuery);
 		}
 
 		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, long featureId, TimeSpan timeSpent, string details)
@@ -326,44 +326,44 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
-		private static long IdCreator(IFieldDataReader r)
+		private static int IdCreator(IFieldDataReader r)
 		{
-			return r.GetInt64(0);
+			return r.GetInt32(0);
 		}
 
 		private static DbFeatureContextRow DbContextCreator(IFieldDataReader r)
 		{
-			return new DbFeatureContextRow(r.GetInt64(0), r.GetString(1));
+			return new DbFeatureContextRow(r.GetInt32(0), r.GetString(1));
 		}
 
 		private static DbFeatureStepRow DbFeatureStepCreator(IFieldDataReader r)
 		{
-			return new DbFeatureStepRow(r.GetInt64(0), r.GetString(1));
+			return new DbFeatureStepRow(r.GetInt32(0), r.GetString(1));
 		}
 
 		private static DbFeatureRow DbFeatureRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
+			return new DbFeatureRow(r.GetInt32(0), r.GetString(1), r.GetInt32(2));
 		}
 
 		private static DbFeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureEntryRow(r.GetInt64(0), Convert.ToDouble(r.GetDecimal(1)), r.GetString(2), r.GetDateTime(3), r.GetInt64(4));
+			return new DbFeatureEntryRow(r.GetInt64(0), Convert.ToDouble(r.GetDecimal(1)), r.GetString(2), r.GetDateTime(3), r.GetInt32(4));
 		}
 
 		private static DbFeatureEntryStepRow EntryStepRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureEntryStepRow(Convert.ToDouble(r.GetDecimal(0)), r.GetInt64(1), r.GetInt64(2));
+			return new DbFeatureEntryStepRow(Convert.ToDouble(r.GetDecimal(0)), r.GetInt64(1), r.GetInt32(2));
 		}
 
 		private static DbFeatureExceptionRow DbFeatureExceptionRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureExceptionRow(r.GetInt64(0), r.GetString(1));
+			return new DbFeatureExceptionRow(r.GetInt32(0), r.GetString(1));
 		}
 
 		private static DbFeatureExceptionEntryRow DbFeatureExceptionEntryRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureExceptionEntryRow(r.GetInt64(0), r.GetDateTime(1), r.GetInt64(2));
+			return new DbFeatureExceptionEntryRow(r.GetInt64(0), r.GetDateTime(1), r.GetInt32(2));
 		}
 
 		public static Task<long> ExecuteInsertAsync(ITransactionContext context, Query query)
@@ -376,6 +376,15 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 
 			// Get new Id back
 			return Task.FromResult(context.GetNewId());
+		}
+
+		public static Task<int> ExecuteInsertIntIdAsync(ITransactionContext context, Query query)
+		{
+			// Insert the record
+			context.Execute(query);
+
+			// Get new Id back
+			return Task.FromResult((int)context.GetNewId());
 		}
 	}
 }

@@ -4,9 +4,9 @@ namespace Cchbc.Features.Data
 	{
 		public readonly double TimeSpent;
 		public readonly long FeatureEntryId;
-		public readonly long FeatureStepId;
+		public readonly int FeatureStepId;
 
-		public DbFeatureEntryStepRow(double timeSpent, long featureEntryId, long featureStepId)
+		public DbFeatureEntryStepRow(double timeSpent, long featureEntryId, int featureStepId)
 		{
 			this.TimeSpent = timeSpent;
 			this.FeatureEntryId = featureEntryId;

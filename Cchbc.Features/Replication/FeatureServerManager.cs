@@ -55,7 +55,7 @@ namespace Cchbc.Features.Replication
 
 			foreach (var row in clientFeatureExceptionEntryRows)
 			{
-				var mappedExceptionId = exceptionsMap[row.ExceptionRowId];
+				var mappedExceptionId = exceptionsMap[row.Id];
 				var mappedFeatureId = featuresMap[row.FeatureId];
 
 				await FeatureServerAdapter.InsertExceptionEntryAsync(serverContext, mappedExceptionId, row.CreatedAt, mappedFeatureId, userId, versionId);
@@ -64,16 +64,16 @@ namespace Cchbc.Features.Replication
 			await FeatureServerAdapter.UpdateLastChangedFlagAsync(serverContext);
 		}
 
-		private static async Task<Dictionary<long, long>> ReplicateContextsAsync(ITransactionContext serverContext, List<DbFeatureContextRow> clientContextRows)
+		private static async Task<Dictionary<int, int>> ReplicateContextsAsync(ITransactionContext serverContext, List<DbFeatureContextRow> clientContextRows)
 		{
-			var map = new Dictionary<long, long>(clientContextRows.Count);
+			var map = new Dictionary<int, int>(clientContextRows.Count);
 
 			var serverContexts = await FeatureServerAdapter.GetContextsAsync(serverContext);
 			foreach (var context in clientContextRows)
 			{
 				var name = context.Name;
 
-				long serverContextId;
+				int serverContextId;
 				if (!serverContexts.TryGetValue(name, out serverContextId))
 				{
 					serverContextId = await FeatureAdapter.InsertContextAsync(serverContext, name);
@@ -95,7 +95,7 @@ namespace Cchbc.Features.Replication
 			{
 				var name = step.Name;
 
-				long serverStepId;
+				int serverStepId;
 				if (!serverSteps.TryGetValue(name, out serverStepId))
 				{
 					serverStepId = await FeatureAdapter.InsertStepAsync(context, name);
@@ -117,7 +117,7 @@ namespace Cchbc.Features.Replication
 			{
 				var contents = exception.Contents;
 
-				long serverExceptionId;
+				int serverExceptionId;
 				if (!serverExceptions.TryGetValue(contents, out serverExceptionId))
 				{
 					serverExceptionId = await FeatureAdapter.InsertExceptionAsync(context, contents);
@@ -130,7 +130,7 @@ namespace Cchbc.Features.Replication
 			return map;
 		}
 
-		private static async Task<Dictionary<long, long>> ReplicateFeaturesAsync(ITransactionContext context, List<DbFeatureRow> clientFeatureRows, Dictionary<long, long> contextsMap)
+		private static async Task<Dictionary<long, long>> ReplicateFeaturesAsync(ITransactionContext context, List<DbFeatureRow> clientFeatureRows, Dictionary<int, int> contextsMap)
 		{
 			var serverFeaturesByContext = new Dictionary<long, Dictionary<string, long>>();
 

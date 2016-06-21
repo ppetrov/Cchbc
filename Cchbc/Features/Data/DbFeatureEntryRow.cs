@@ -8,9 +8,9 @@ namespace Cchbc.Features.Data
 		public readonly double TimeSpent;
 		public readonly string Details;
 		public readonly DateTime CreatedAt;
-		public readonly long FeatureId;
+		public readonly int FeatureId;
 
-		public DbFeatureEntryRow(long id, double timeSpent, string details, DateTime createdAt, long featureId)
+		public DbFeatureEntryRow(long id, double timeSpent, string details, DateTime createdAt, int featureId)
 		{
 			this.Id = id;
 			this.TimeSpent = timeSpent;

@@ -69,12 +69,12 @@ namespace Cchbc.Features.Replication
 				});
 
 
-		private static readonly Query<long> GetUserQuery = new Query<long>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", ReadLong, new[]
+		private static readonly Query<int> GetUserQuery = new Query<int>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", ReadInt, new[]
 			{
 				new QueryParameter(@"NAME", string.Empty),
 			});
 
-		private static readonly Query<long> GetVersionQuery = new Query<long>(@"SELECT ID FROM FEATURE_VERSIONS WHERE NAME = @NAME", ReadLong, new[]
+		private static readonly Query<int> GetVersionQuery = new Query<int>(@"SELECT ID FROM FEATURE_VERSIONS WHERE NAME = @NAME", ReadInt, new[]
 			{
 				new QueryParameter(@"NAME", string.Empty),
 			});
@@ -214,7 +214,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
-		public static Task<long> GetOrCreateVersionAsync(ITransactionContext context, string version)
+		public static Task<int> GetOrCreateVersionAsync(ITransactionContext context, string version)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (version == null) throw new ArgumentNullException(nameof(version));
@@ -231,10 +231,10 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 
 			InserVersionQuery.Parameters[0].Value = version;
 
-			return FeatureAdapter.ExecuteInsertAsync(context, InserVersionQuery);
+			return FeatureAdapter.ExecuteInsertIntIdAsync(context, InserVersionQuery);
 		}
 
-		public static Task<long> GetOrCreateUserAsync(ITransactionContext context, string userName, long versionId)
+		public static Task<int> GetOrCreateUserAsync(ITransactionContext context, string userName, long versionId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (userName == null) throw new ArgumentNullException(nameof(userName));
@@ -263,24 +263,24 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			InserUserQuery.Parameters[1].Value = currentTime;
 			InserUserQuery.Parameters[2].Value = versionId;
 
-			return FeatureAdapter.ExecuteInsertAsync(context, InserUserQuery);
+			return FeatureAdapter.ExecuteInsertIntIdAsync(context, InserUserQuery);
 		}
 
-		public static Task<Dictionary<string, long>> GetContextsAsync(ITransactionContext context)
+		public static Task<Dictionary<string, int>> GetContextsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_CONTEXTS");
 		}
 
-		public static Task<Dictionary<string, long>> GetStepsAsync(ITransactionContext context)
+		public static Task<Dictionary<string, int>> GetStepsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_STEPS");
 		}
 
-		public static Task<Dictionary<string, long>> GetExceptionsAsync(ITransactionContext context)
+		public static Task<Dictionary<string, int>> GetExceptionsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -335,16 +335,16 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
-		private static long ReadLong(IFieldDataReader r)
+		private static int ReadInt(IFieldDataReader r)
 		{
-			return r.GetInt64(0);
+			return r.GetInt32(0);
 		}
 
-		private static Task<Dictionary<string, long>> GetDataMapped(ITransactionContext context, string statement)
+		private static Task<Dictionary<string, int>> GetDataMapped(ITransactionContext context, string statement)
 		{
-			var result = new Dictionary<string, long>(32);
+			var result = new Dictionary<string, int>(32);
 
-			context.Fill(result, (r, map) => { map.Add(r.GetString(1), r.GetInt64(0)); }, new Query(statement));
+			context.Fill(result, (r, map) => { map.Add(r.GetString(1), r.GetInt32(0)); }, new Query(statement));
 
 			return Task.FromResult(result);
 		}
