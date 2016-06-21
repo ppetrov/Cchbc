@@ -17,7 +17,7 @@ namespace Cchbc.Features.DashboardModule.Data
 
             var feature = coreContext.Feature;
 
-            using (feature.StartStep(nameof(GetSettingsAsync)))
+            using (feature.NewStep(nameof(GetSettingsAsync)))
             {
                 var maxUsers = default(int?);
                 var maxMostUsedFeatures = default(int?);
@@ -58,9 +58,7 @@ namespace Cchbc.Features.DashboardModule.Data
         {
             if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
 
-            var feature = coreContext.Feature;
-            var step = feature.StartStep(nameof(GetCommonDataAsync));
-            try
+            using (coreContext.Feature.NewStep(nameof(GetCommonDataAsync)))
             {
                 var contexts = new Dictionary<long, DbFeatureContextRow>();
                 var features = new Dictionary<long, DbFeatureRow>();
@@ -80,10 +78,6 @@ namespace Cchbc.Features.DashboardModule.Data
 
                 return Task.FromResult(new DashboardCommonData(contexts, features));
             }
-            finally
-            {
-                feature.EndStep(step);
-            }
         }
 
         public static Task<List<DashboardUser>> GetUsersAsync(DashboarLoadParams loadParams)
@@ -91,9 +85,7 @@ namespace Cchbc.Features.DashboardModule.Data
             if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
             var context = loadParams.CoreContext;
-            var feature = context.Feature;
-            var step = feature.StartStep(nameof(GetUsersAsync));
-            try
+            using (context.Feature.NewStep(nameof(GetUsersAsync)))
             {
                 var statement = @"SELECT U.ID, U.NAME UNAME, U.REPLICATED_AT, V.NAME VNAME FROM FEATURE_USERS U INNER JOIN FEATURE_VERSIONS V ON U.VERSION_ID = V.ID ORDER BY REPLICATED_AT DESC LIMIT @MAXUSERS";
 
@@ -107,10 +99,6 @@ namespace Cchbc.Features.DashboardModule.Data
 
                 return Task.FromResult(users);
             }
-            finally
-            {
-                feature.EndStep(step);
-            }
         }
 
         public static Task<List<DashboardVersion>> GetVersionsAsync(DashboarLoadParams loadParams)
@@ -119,8 +107,7 @@ namespace Cchbc.Features.DashboardModule.Data
 
             var context = loadParams.CoreContext;
             var feature = context.Feature;
-            var step = feature.StartStep(nameof(GetVersionsAsync));
-            try
+            using (feature.NewStep(nameof(GetVersionsAsync)))
             {
                 var maxVersions = loadParams.Settings.MaxVersions;
 
@@ -160,10 +147,6 @@ namespace Cchbc.Features.DashboardModule.Data
 
                 return Task.FromResult(dashboardVersions);
             }
-            finally
-            {
-                feature.EndStep(step);
-            }
         }
 
         public static Task<List<DashboardException>> GetExceptionsAsync(DashboarLoadParams loadParams)
@@ -171,8 +154,7 @@ namespace Cchbc.Features.DashboardModule.Data
             if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
             var feature = loadParams.CoreContext.Feature;
-            var step = feature.StartStep(nameof(GetExceptionsAsync));
-            try
+            using (feature.NewStep(nameof(GetExceptionsAsync)))
             {
                 var dbContext = loadParams.CoreContext.DbContext;
                 var settings = loadParams.Settings;
@@ -208,10 +190,6 @@ namespace Cchbc.Features.DashboardModule.Data
                 }
 
                 return Task.FromResult(result);
-            }
-            finally
-            {
-                feature.EndStep(step);
             }
         }
 

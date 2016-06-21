@@ -50,7 +50,7 @@ namespace Cchbc.Features.Replication
 			{
 				var mappedFeatureEntryId = featureEntriesMap[row.FeatureEntryId];
 				var mappedStepId = stepsMap[row.FeatureStepId];
-				await FeatureAdapter.InsertStepEntryAsync(serverContext, mappedFeatureEntryId, mappedStepId, row.TimeSpent, row.Details);
+				await FeatureAdapter.InsertStepEntryAsync(serverContext, mappedFeatureEntryId, mappedStepId, row.TimeSpent);
 			}
 
 			foreach (var row in clientFeatureExceptionEntryRows)

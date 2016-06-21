@@ -177,7 +177,6 @@ CREATE TABLE [FEATURE_ENTRIES] (
 CREATE TABLE [FEATURE_STEP_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
-	[Details] nvarchar(254) NULL, 
 	[Feature_Entry_Id] integer NOT NULL, 
 	[Feature_Step_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Entry_Id])
@@ -195,16 +194,22 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			context.Execute(new Query(@"DROP TABLE FEATURE_STEP_ENTRIES"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_EXCEPTION_ENTRIES"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_ENTRIES"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_USERS"));
-			context.Execute(new Query(@"DROP TABLE FEATURES"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_STEPS"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_CONTEXTS"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_VERSIONS"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_CHANGES"));
-			context.Execute(new Query(@"DROP TABLE FEATURE_EXCEPTIONS"));
+			foreach (var name in new[]
+			{
+				@"FEATURE_STEP_ENTRIES",
+				@"FEATURE_EXCEPTION_ENTRIES",
+				@"FEATURE_ENTRIES",
+				@"FEATURE_USERS",
+				@"FEATURES",
+				@"FEATURE_STEPS",
+				@"FEATURE_CONTEXTS",
+				@"FEATURE_VERSIONS",
+				@"FEATURE_CHANGES",
+				@"FEATURE_EXCEPTIONS"
+			})
+			{
+				context.Execute(new Query(@"DROP TABLE " + name));
+			}
 
 			return Task.FromResult(true);
 		}

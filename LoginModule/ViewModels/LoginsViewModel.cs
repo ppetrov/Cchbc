@@ -129,17 +129,23 @@ namespace LoginModule.ViewModels
 			var feature = Feature.StartNew(this.Context, nameof(LoadDataAsync));
 			try
 			{
-				feature.StartStep(nameof(GetLoginsFromDbAsync));
-				var viewModels = await GetLoginsFromDbAsync();
+				LoginViewModel[] viewModels;
 
-				feature.StartStep(nameof(DisplayLogins));
-				this.DisplayLogins(viewModels, feature);
+				using (feature.NewStep(nameof(GetLoginsFromDbAsync)))
+				{
+					viewModels = await GetLoginsFromDbAsync();
 
-				this.FeatureManager.StopAsync(feature, viewModels.Length.ToString());
+					using (feature.NewStep(nameof(DisplayLogins)))
+					{
+						this.DisplayLogins(viewModels, feature);
+					}
+				}
+
+				await this.FeatureManager.StopAsync(feature, viewModels.Length.ToString());
 			}
 			catch (Exception ex)
 			{
-				this.FeatureManager.LogExceptionAsync(feature, ex);
+				await this.FeatureManager.LogExceptionAsync(feature, ex);
 			}
 		}
 

@@ -16,7 +16,7 @@ namespace Cchbc.Helpers
 
 			this.Items.Clear();
 
-            adapter.Fill(context, this.Items, selector);
+			adapter.Fill(context, this.Items, selector);
 		}
 	}
 }

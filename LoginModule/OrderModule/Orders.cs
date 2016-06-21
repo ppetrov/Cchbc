@@ -402,28 +402,20 @@ namespace Cchbc.App.OrderModule
 			var cache = this.Core.DataCache;
 			var feature = Feature.StartNew(nameof(OrderManager), nameof(LoadDataAsync));
 
-			feature.StartStep(nameof(LoadOrderTypes));
 			this.LoadOrderTypes(cache);
 
-			feature.StartStep(nameof(LoadVendors));
 			this.LoadVendors(cache);
 
-			feature.StartStep(nameof(LoadWholesaler));
 			this.LoadWholesaler(cache);
 
-			feature.StartStep(nameof(LoadAddresses));
 			await this.LoadAddresses();
 
-			feature.StartStep(nameof(LoadAssortments));
 			await this.LoadAssortments();
 
-			feature.StartStep(nameof(LoadOrderHeader));
 			await this.LoadOrderHeader();
 
-			feature.StartStep(nameof(LoadOrderNotes));
 			await this.LoadOrderNotes();
 
-			feature.StartStep(nameof(LoadOrderDetails));
 			await this.LoadOrderDetails();
 
 			this.Core.FeatureManager.StopAsync(feature);

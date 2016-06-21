@@ -39,13 +39,13 @@ namespace Cchbc.Features.Data
 
 		private static readonly Query InsertStepEntryQuery =
 			new Query(
-				@"INSERT INTO FEATURE_STEP_ENTRIES(FEATURE_ENTRY_ID, FEATURE_STEP_ID, TIMESPENT, DETAILS) VALUES (@ENTRY, @STEP, @TIMESPENT, @DETAILS)",
+				@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES (@TIMESPENT, @ENTRY, @STEP)",
 				new[]
 				{
+					new QueryParameter(@"@TIMESPENT", 0M),
 					new QueryParameter(@"@ENTRY", 0L),
 					new QueryParameter(@"@STEP", 0L),
-					new QueryParameter(@"@TIMESPENT", 0M),
-					new QueryParameter(@"@DETAILS", string.Empty)
+
 				});
 
 		private static readonly Query InsertExceptionQuery =
@@ -69,7 +69,7 @@ namespace Cchbc.Features.Data
 		private static readonly Query<DbFeatureExceptionRow> GetDbFeatureExceptionsRowQuery = new Query<DbFeatureExceptionRow>(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS", DbFeatureExceptionRowCreator);
 		private static readonly Query<DbFeatureRow> GetFeaturesQuery = new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
 		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
-		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, DETAILS, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);
+		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);
 		private static readonly Query<DbFeatureExceptionEntryRow> GetDbFeatureExceptionEntryRowQuery = new Query<DbFeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
 
 		private static readonly Query<long> GetExceptionQuery =
@@ -140,7 +140,6 @@ CREATE TABLE [FEATURE_EXCEPTION_ENTRIES] (
 CREATE TABLE [FEATURE_STEP_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
-	[Details] nvarchar(254) NULL, 
 	[Feature_Entry_Id] integer NOT NULL, 
 	[Feature_Step_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Entry_Id])
@@ -312,16 +311,14 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return ExecuteInsertAsync(context, InsertExceptionEntryQuery);
 		}
 
-		public static Task InsertStepEntryAsync(ITransactionContext context, long featureEntryId, long stepId, double timeSpent, string details)
+		public static Task InsertStepEntryAsync(ITransactionContext context, long featureEntryId, long stepId, double timeSpent)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (details == null) throw new ArgumentNullException(nameof(details));
 
 			// Set parameters values
 			InsertStepEntryQuery.Parameters[0].Value = featureEntryId;
 			InsertStepEntryQuery.Parameters[1].Value = stepId;
 			InsertStepEntryQuery.Parameters[2].Value = Convert.ToDecimal(timeSpent);
-			InsertStepEntryQuery.Parameters[3].Value = details;
 
 			// Insert the record
 			context.Execute(InsertStepEntryQuery);
@@ -356,7 +353,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 
 		private static DbFeatureEntryStepRow EntryStepRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureEntryStepRow(Convert.ToDouble(r.GetDecimal(0)), r.GetString(1), r.GetInt64(2), r.GetInt64(3));
+			return new DbFeatureEntryStepRow(Convert.ToDouble(r.GetDecimal(0)), r.GetInt64(1), r.GetInt64(2));
 		}
 
 		private static DbFeatureExceptionRow DbFeatureExceptionRowCreator(IFieldDataReader r)

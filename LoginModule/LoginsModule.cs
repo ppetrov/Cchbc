@@ -55,8 +55,6 @@ namespace LoginModule
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.StartStep(nameof(ValidateProperties));
-
 			var model = viewModel.Model;
 			var name = (model.Name ?? string.Empty).Trim();
 			if (name == string.Empty)
@@ -82,8 +80,6 @@ namespace LoginModule
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.StartStep(nameof(CanInsertAsync));
-
 			if (!this.IsAvailable(viewModel))
 			{
 				return Task.FromResult(PermissionResult.Deny(@"Login with the same username already exists"));
@@ -97,7 +93,6 @@ namespace LoginModule
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.StartStep(nameof(CanUpdateAsync));
 			return Task.FromResult(PermissionResult.Deny(string.Empty));
 		}
 
@@ -106,7 +101,6 @@ namespace LoginModule
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.StartStep(nameof(CanDeleteAsync));
 			return Task.FromResult(PermissionResult.Deny(string.Empty));
 		}
 
@@ -115,7 +109,6 @@ namespace LoginModule
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			feature.StartStep(nameof(CanChangePassword));
 			return PermissionResult.Allow;
 		}
 	}

@@ -101,9 +101,11 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 
 		private void DisplayArticles(Feature feature, ArticleViewModel[] viewModels)
 		{
-			feature.StartStep(nameof(DisplayArticles));
-			this.Module.SetupViewModels(viewModels);
-			this.ApplySearch();
+			using (feature.NewStep(nameof(DisplayArticles)))
+			{
+				this.Module.SetupViewModels(viewModels);
+				this.ApplySearch();
+			}
 		}
 
 		private void SearchByText() => this.ApplySearch();

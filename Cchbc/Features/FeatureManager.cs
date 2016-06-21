@@ -168,8 +168,7 @@ namespace Cchbc.Features
 				await FeatureAdapter.InsertStepEntryAsync(context,
 					featureEntryId,
 					this.Steps[step.Name].Id,
-					step.TimeSpent.TotalMilliseconds,
-					step.Details);
+					step.TimeSpent.TotalMilliseconds);
 			}
 		}
 

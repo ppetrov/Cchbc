@@ -14,7 +14,7 @@ namespace Cchbc.Validation
 			if (errorMessage == null) throw new ArgumentNullException(nameof(errorMessage));
 
 			this.ErrorMessage = errorMessage;
-		    this.Property = property ?? string.Empty;
+			this.Property = property ?? string.Empty;
 		}
 	}
 }

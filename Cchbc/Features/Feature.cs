@@ -4,115 +4,93 @@ using System.Diagnostics;
 
 namespace Cchbc.Features
 {
-    public sealed class Feature
-    {
-        public static readonly Feature None = new Feature(string.Empty, string.Empty);
+	public sealed class Feature
+	{
+		public static readonly Feature None = new Feature(string.Empty, string.Empty);
 
-        public string Context { get; }
-        public string Name { get; }
-        public TimeSpan TimeSpent => _stopwatch == null ? TimeSpan.Zero : this.Stopwatch.Elapsed;
+		public string Context { get; }
+		public string Name { get; }
+		public TimeSpan TimeSpent => _stopwatch == null ? TimeSpan.Zero : this.Stopwatch.Elapsed;
 
-        public Action<Feature> Started;
-        public Action<Feature> Stopped;
-        public Action<FeatureStep> StepStarted;
-        public Action<FeatureStep> StepEnded;
+		public Action<Feature> Started;
+		public Action<Feature> Stopped;
+		public Action<FeatureStep> StepStarted;
+		public Action<FeatureStep> StepEnded;
 
-        private int _stepLevel = 1;
+		private int _level;
 
-        private Stopwatch _stopwatch;
-        private Stopwatch Stopwatch => _stopwatch ?? (_stopwatch = new Stopwatch());
+		private Stopwatch _stopwatch;
+		private Stopwatch Stopwatch => _stopwatch ?? (_stopwatch = new Stopwatch());
 
-        private List<FeatureStep> _steps;
-        public List<FeatureStep> Steps => _steps ?? (_steps = new List<FeatureStep>());
+		public TimeSpan Elapsed => this.Stopwatch.Elapsed;
 
-        public static Feature StartNew(string context, string name)
-        {
-            if (context == null) throw new ArgumentNullException(nameof(context));
-            if (name == null) throw new ArgumentNullException(nameof(name));
+		private List<FeatureStep> _steps;
+		public List<FeatureStep> Steps => _steps ?? (_steps = new List<FeatureStep>());
 
-            var feature = new Feature(context, name);
+		public static Feature StartNew(string context, string name)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (name == null) throw new ArgumentNullException(nameof(name));
 
-            feature.Start();
+			var feature = new Feature(context, name);
 
-            return feature;
-        }
+			feature.Start();
 
-        public Feature(string context, string name)
-        {
-            if (context == null) throw new ArgumentNullException(nameof(context));
-            if (name == null) throw new ArgumentNullException(nameof(name));
+			return feature;
+		}
 
-            this.Context = context;
-            this.Name = name;
-        }
+		public Feature(string context, string name)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (name == null) throw new ArgumentNullException(nameof(name));
 
-        public FeatureStep StartNestedStep(string name)
-        {
-            if (name == null) throw new ArgumentNullException(nameof(name));
+			this.Context = context;
+			this.Name = name;
+		}
 
-            return StartNewStep(name, true);
-        }
+		public FeatureStep NewStep(string name)
+		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
 
-        public FeatureStep StartStep(string name)
-        {
-            if (name == null) throw new ArgumentNullException(nameof(name));
+			// Create new feature step
+			var step = new FeatureStep(this, name, ++_level, this.Stopwatch.Elapsed);
 
-            return StartNewStep(name, false);
-        }
+			this.StepStarted?.Invoke(step);
 
-        private FeatureStep StartNewStep(string name, bool isParent)
-        {
-            // Create new feature step
-            var step = new FeatureStep(this, name, _stepLevel, isParent, this.Stopwatch.Elapsed);
+			// Add to feature steps
+			this.Steps.Add(step);
 
-            this.StepStarted?.Invoke(step);
+			return step;
+		}
 
-            // Add to feature steps
-            this.Steps.Add(step);
+		public void EndStep(FeatureStep step)
+		{
+			if (step == null) throw new ArgumentNullException(nameof(step));
 
-            if (step.IsParent)
-            {
-                _stepLevel++;
-            }
+			this.StepEnded?.Invoke(step);
+			_level--;
+		}
 
-            return step;
-        }
+		public void Start()
+		{
+			this.Stopwatch.Start();
+			this.Started?.Invoke(this);
+		}
 
-        public void EndStep(FeatureStep step, string details = null)
-        {
-            if (step == null) throw new ArgumentNullException(nameof(step));
+		public void Stop()
+		{
+			this.Stopwatch.Stop();
+			this.Stopped?.Invoke(this);
+		}
 
-            step.TimeSpent = this.Stopwatch.Elapsed - step.TimeSpent;
-            step.Details = details ?? string.Empty;
+		public void Pause()
+		{
+			this.Stopwatch.Stop();
+		}
 
-            this.StepEnded?.Invoke(step);
-
-            if (step.IsParent)
-            {
-                _stepLevel--;
-            }
-        }
-
-        public void Start()
-        {
-            this.Stopwatch.Start();
-            this.Started?.Invoke(this);
-        }
-
-        public void Stop()
-        {
-            this.Stopwatch.Stop();
-            this.Stopped?.Invoke(this);
-        }
-
-        public void Pause()
-        {
-            this.Stopwatch.Stop();
-        }
-
-        public void Resume()
-        {
-            this.Stopwatch.Start();
-        }
-    }
+		public void Resume()
+		{
+			this.Stopwatch.Start();
+		}
+	}
 }
