@@ -214,7 +214,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
-		public static Task<int> GetOrCreateVersionAsync(ITransactionContext context, string version)
+		public static Task<long> GetOrCreateVersionAsync(ITransactionContext context, string version)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (version == null) throw new ArgumentNullException(nameof(version));
@@ -226,15 +226,15 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			var ids = context.Execute(GetVersionQuery);
 			if (ids.Count > 0)
 			{
-				return Task.FromResult(ids[0]);
+				return Task.FromResult(Convert.ToInt64(ids[0]));
 			}
 
 			InserVersionQuery.Parameters[0].Value = version;
 
-			return FeatureAdapter.ExecuteInsertIntIdAsync(context, InserVersionQuery);
+			return FeatureAdapter.ExecuteInsertAsync(context, InserVersionQuery);
 		}
 
-		public static Task<int> GetOrCreateUserAsync(ITransactionContext context, string userName, long versionId)
+		public static Task<long> GetOrCreateUserAsync(ITransactionContext context, string userName, int versionId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (userName == null) throw new ArgumentNullException(nameof(userName));
@@ -256,14 +256,14 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 
 				context.Execute(UpdateUserQuery);
 
-				return Task.FromResult(userId);
+				return Task.FromResult(Convert.ToInt64(userId));
 			}
 
 			InserUserQuery.Parameters[0].Value = userName;
 			InserUserQuery.Parameters[1].Value = currentTime;
 			InserUserQuery.Parameters[2].Value = versionId;
 
-			return FeatureAdapter.ExecuteInsertIntIdAsync(context, InserUserQuery);
+			return FeatureAdapter.ExecuteInsertAsync(context, InserUserQuery);
 		}
 
 		public static Task<Dictionary<string, int>> GetContextsAsync(ITransactionContext context)
@@ -287,7 +287,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return GetDataMapped(context, @"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS");
 		}
 
-		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, double timeSpent, string details, DateTime createdAt, long featureId, long userId, long versionId)
+		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, double timeSpent, string details, DateTime createdAt, int featureId, int userId, int versionId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (details == null) throw new ArgumentNullException(nameof(details));

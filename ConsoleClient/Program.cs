@@ -37,7 +37,8 @@ namespace Cchbc.ConsoleClient
 		{
 			try
 			{
-				var activity = "";
+				var activity = @"";
+
 				var f = Feature.StartNew(@"Agenda", @"Copy Activity");
 				CopyActivity(f, activity);
 

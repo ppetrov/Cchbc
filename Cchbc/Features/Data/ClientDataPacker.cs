@@ -66,7 +66,7 @@ namespace Cchbc.Features.Data
 			Write(buffer, ref offset, (short)clientData.ExceptionEntryRows.Count);
 			foreach (var row in clientData.ExceptionEntryRows)
 			{
-				Write(buffer, ref offset, row.Id);
+				Write(buffer, ref offset, row.ExceptionId);
 				Write(buffer, ref offset, row.CreatedAt.ToBinary());
 				Write(buffer, ref offset, row.FeatureId);
 			}
@@ -144,7 +144,7 @@ namespace Cchbc.Features.Data
 			var dbFeatureExceptionEntryRows = new List<DbFeatureExceptionEntryRow>(count);
 			for (var i = 0; i < count; i++)
 			{
-				var exceptionRowId = ReadLong(buffer, ref offset);
+				var exceptionRowId = ReadInt(buffer, ref offset);
 				var createdAt = DateTime.FromBinary(ReadLong(buffer, ref offset));
 				var featureId = ReadInt(buffer, ref offset);
 				dbFeatureExceptionEntryRows.Add(new DbFeatureExceptionEntryRow(exceptionRowId, createdAt, featureId));
@@ -171,10 +171,10 @@ namespace Cchbc.Features.Data
 			return BitConverter.ToInt16(buffer, offset - ShortSize);
 		}
 
-		private static short ReadInt(byte[] buffer, ref int offset)
+		private static int ReadInt(byte[] buffer, ref int offset)
 		{
 			offset += IntSize;
-			return BitConverter.ToInt16(buffer, offset - ShortSize);
+			return BitConverter.ToInt32(buffer, offset - ShortSize);
 		}
 
 		private static long ReadLong(byte[] buffer, ref int offset)
