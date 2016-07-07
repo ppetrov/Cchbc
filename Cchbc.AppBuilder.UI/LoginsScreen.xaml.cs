@@ -40,35 +40,35 @@ namespace Cchbc.AppBuilder.UI
 		private async void CreateActivityTapped(object sender, TappedRoutedEventArgs e)
 		{
 			var r = new Random(0);
-			var manager = Context.Core.FeatureManager;
-			var f = Feature.StartNew(@"Agenda", @"CreateActivity");
+			var featureManager = Context.Core.FeatureManager;
+			var feature = Feature.StartNew(@"Agenda", @"CreateActivity");
 			try
 			{
-				using (f.NewStep(@"Select type/outlet"))
+				using (feature.NewStep(@"Select type/outlet"))
 				{
 					await Task.Delay(r.Next(20));
-				}
-				using (f.NewStep(@"Check outlet"))
-				{
-					await Task.Delay(r.Next(20));
-				}
-				using (f.NewStep(@"Check type"))
-				{
-					await Task.Delay(r.Next(20));
-				}
-				using (f.NewStep(@"Create visit"))
-				{
-					await Task.Delay(r.Next(20));
-
-					using (f.NewStep(@"Insert activity"))
+					using (feature.NewStep(@"Check outlet"))
 					{
 						await Task.Delay(r.Next(20));
+						using (feature.NewStep(@"Check type"))
+						{
+							await Task.Delay(r.Next(20));
+							using (feature.NewStep(@"Create visit"))
+							{
+								await Task.Delay(r.Next(20));
+								using (feature.NewStep(@"Insert activity"))
+								{
+									await Task.Delay(r.Next(20));
+								}
+							}
+						}
 					}
 				}
+				await featureManager.LogAsync(feature);
 			}
-			finally
+			catch (Exception ex)
 			{
-				await manager.StopAsync(f);
+				await featureManager.LogExceptionAsync(feature, ex);
 			}
 		}
 
@@ -103,7 +103,7 @@ namespace Cchbc.AppBuilder.UI
 			}
 			finally
 			{
-				await manager.StopAsync(f);
+				await manager.LogAsync(f);
 			}
 		}
 	}

@@ -8,8 +8,6 @@ namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
-		private bool _isLoaded;
-
 		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }
 		private Dictionary<string, DbFeatureStepRow> Steps { get; set; }
 		private Dictionary<long, Dictionary<string, DbFeatureRow>> Features { get; set; }
@@ -46,15 +44,11 @@ namespace Cchbc.Features
 
 				context.Complete();
 			}
-
-			_isLoaded = true;
 		}
 
-		public async Task StopAsync(Feature feature, string details = null)
+		public async Task LogAsync(Feature feature, string details = null)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			this.ValidateIsLoaded();
 
 			// Stop the feature
 			feature.Stop();
@@ -74,8 +68,6 @@ namespace Cchbc.Features
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
-
-			this.ValidateIsLoaded();
 
 			using (var context = this.ContextCreator.Create())
 			{
@@ -193,12 +185,6 @@ namespace Cchbc.Features
 			}
 
 			return featuresByContext;
-		}
-
-		private void ValidateIsLoaded()
-		{
-			if (!_isLoaded)
-				throw new InvalidOperationException(nameof(FeatureManager) + " isn't loaded. Call " + nameof(LoadAsync) + " first.");
 		}
 	}
 }

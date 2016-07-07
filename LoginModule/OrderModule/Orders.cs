@@ -412,7 +412,7 @@ namespace Cchbc.App.OrderModule
 
 			await this.LoadOrderDetails();
 
-			this.Core.FeatureManager.StopAsync(feature);
+			this.Core.FeatureManager.LogAsync(feature);
 		}
 
 		private async Task LoadOrderDetails()

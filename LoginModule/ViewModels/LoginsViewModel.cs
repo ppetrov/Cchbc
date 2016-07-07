@@ -47,7 +47,7 @@ namespace LoginModule.ViewModels
 
 				var feature = Feature.StartNew(this.Context, nameof(SearchByText));
 				this.SearchByText();
-				this.FeatureManager.StopAsync(feature);
+				this.FeatureManager.LogAsync(feature);
 			}
 		}
 
@@ -60,7 +60,7 @@ namespace LoginModule.ViewModels
 				this.SetField(ref _searchOption, value);
 				var feature = Feature.StartNew(this.Context, nameof(SearchByOption));
 				this.SearchByOption();
-				this.FeatureManager.StopAsync(feature, value?.Name ?? string.Empty);
+				this.FeatureManager.LogAsync(feature, value?.Name ?? string.Empty);
 			}
 		}
 
@@ -73,7 +73,7 @@ namespace LoginModule.ViewModels
 				this.SetField(ref _sortOption, value);
 				var feature = Feature.StartNew(this.Context, nameof(SortBy));
 				this.SortBy();
-				this.FeatureManager.StopAsync(feature);
+				this.FeatureManager.LogAsync(feature);
 			}
 		}
 
@@ -95,7 +95,7 @@ namespace LoginModule.ViewModels
 			};
 			this.Module.OperationEnd = feature =>
 			{
-				this.FeatureManager.StopAsync(feature);
+				this.FeatureManager.LogAsync(feature);
 			};
 			this.Module.OperationError = (feature, ex) =>
 			{
@@ -141,7 +141,7 @@ namespace LoginModule.ViewModels
 					}
 				}
 
-				await this.FeatureManager.StopAsync(feature, viewModels.Length.ToString());
+				await this.FeatureManager.LogAsync(feature, viewModels.Length.ToString());
 			}
 			catch (Exception ex)
 			{

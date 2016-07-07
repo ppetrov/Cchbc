@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,12 +32,48 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
+	public sealed class HotPathFinder
+	{
+		public void FindHotPath()
+		{
+			// TODO : !!! We need data mine & analyze
+		}
+	}
+
+	public sealed class ServerProfiler
+	{
+
+	}
+
+	public sealed class Profiler
+	{
+		public void Analyze(Feature feature)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			// By version - latest
+			// By date - last day
+
+			// Create report by user
+
+			// PPetrov Top 5 slowest features
+			// PPetrov Top 5 most used features
+		}
+	}
+
+	public sealed class ProfilerReport
+	{
+
+	}
+
 	public class Program
 	{
 		static void Main(string[] args)
 		{
 			try
 			{
+				var featureManager = new FeatureManager();
+
 				var activity = @"";
 
 				var f = Feature.StartNew(@"Agenda", @"Copy Activity");
@@ -47,7 +84,6 @@ namespace Cchbc.ConsoleClient
 
 				//f = Feature.StartNew(@"Agenda", @"Create Activity");
 				//CreateActivity(f, "");
-
 
 				Console.WriteLine(f.Name.PadRight(45) + f.TimeSpent.TotalMilliseconds.ToString(@"F3") + @"ms");
 
@@ -261,6 +297,27 @@ namespace Cchbc.ConsoleClient
 			//}
 		}
 
+		private static void SearchDirectory()
+		{
+			var inDir = @"C:\Cchbc\PhoenixClient\iOS\SFA.iOS7";
+
+			foreach (var file in Directory.GetFiles(inDir, @"*.*", SearchOption.AllDirectories))
+			{
+				var name = Path.GetFileName(file);
+				if (name.EndsWith(@".xib", StringComparison.OrdinalIgnoreCase) ||
+					name.EndsWith(@".dll", StringComparison.OrdinalIgnoreCase) ||
+					name.EndsWith(@".png", StringComparison.OrdinalIgnoreCase))
+				{
+					continue;
+				}
+				var contents = File.ReadAllText(file);
+				if (contents.IndexOf(@"RedActivityIndexManager", StringComparison.OrdinalIgnoreCase) >= 0)
+				{
+					Console.WriteLine(file);
+				}
+			}
+		}
+
 		private static void CopyActivity(Feature feature, string activity)
 		{
 			var date = SelectDateFromDialog(feature);
@@ -289,7 +346,6 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-
 		private static void InsertActivity(Feature feature, string visit, string activity)
 		{
 			using (feature.NewStep(nameof(InsertActivity)))
@@ -297,7 +353,6 @@ namespace Cchbc.ConsoleClient
 				var copy = activity + @"+" + visit;
 			}
 		}
-
 
 		private static DateTime? SelectDateFromDialog(Feature feature)
 		{
@@ -336,6 +391,11 @@ namespace Cchbc.ConsoleClient
 				return false;
 			}
 		}
+
+
+
+
+
 
 
 
