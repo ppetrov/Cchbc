@@ -10,7 +10,7 @@ namespace Cchbc.Features
 	{
 		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }
 		private Dictionary<string, DbFeatureStepRow> Steps { get; set; }
-		private Dictionary<long, Dictionary<string, DbFeatureRow>> Features { get; set; }
+		private Dictionary<long, List<DbFeatureRow>> Features { get; set; }
 
 		public ITransactionContextCreator ContextCreator { get; set; }
 
@@ -109,10 +109,24 @@ namespace Cchbc.Features
 			DbFeatureRow feature = null;
 
 			var contextId = featureContextRow.Id;
-			Dictionary<string, DbFeatureRow> features;
+			List<DbFeatureRow> features;
 			if (this.Features.TryGetValue(contextId, out features))
 			{
-				features.TryGetValue(name, out feature);
+				foreach (var f in features)
+				{
+					if (f.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+					{
+						feature = f;
+						break;
+					}
+				}
+			}
+
+			// Create feature collection for this context
+			if (features == null)
+			{
+				features = new List<DbFeatureRow>();
+				this.Features.Add(contextId, features);
 			}
 
 			if (feature == null)
@@ -122,13 +136,8 @@ namespace Cchbc.Features
 
 				feature = new DbFeatureRow(newFeatureId, name, contextId);
 
-				// Insert the new feature into the collection
-				if (!this.Features.TryGetValue(contextId, out features))
-				{
-					features = new Dictionary<string, DbFeatureRow>(StringComparer.OrdinalIgnoreCase);
-					this.Features.Add(contextId, features);
-				}
-				features.Add(name, feature);
+				//Insert the new feature into the collection
+				features.Add(feature);
 			}
 
 			return feature;
@@ -164,9 +173,9 @@ namespace Cchbc.Features
 			}
 		}
 
-		private async Task<Dictionary<long, Dictionary<string, DbFeatureRow>>> GetFeaturesAsync(ITransactionContext context)
+		private async Task<Dictionary<long, List<DbFeatureRow>>> GetFeaturesAsync(ITransactionContext context)
 		{
-			var featuresByContext = new Dictionary<long, Dictionary<string, DbFeatureRow>>(this.Contexts.Count);
+			var featuresByContext = new Dictionary<long, List<DbFeatureRow>>(this.Contexts.Count);
 
 			// Fetch & add new values
 			foreach (var feature in await FeatureAdapter.GetFeaturesAsync(context))
@@ -174,14 +183,14 @@ namespace Cchbc.Features
 				var contextId = feature.ContextId;
 
 				// Find features by context
-				Dictionary<string, DbFeatureRow> byContext;
+				List<DbFeatureRow> byContext;
 				if (!featuresByContext.TryGetValue(contextId, out byContext))
 				{
-					byContext = new Dictionary<string, DbFeatureRow>(StringComparer.OrdinalIgnoreCase);
+					byContext = new List<DbFeatureRow>();
 					featuresByContext.Add(contextId, byContext);
 				}
 
-				byContext.Add(feature.Name, feature);
+				byContext.Add(feature);
 			}
 
 			return featuresByContext;
