@@ -26,6 +26,15 @@ namespace Cchbc.Features.Data
 				new QueryParameter(@"@CONTEXT", 0L)
 			});
 
+		private static readonly Query InsertClientFeatureUsageQuery =
+			new Query(
+				@"INSERT INTO FEATURE_USAGES(CREATED_AT, FEATURE_ID) VALUES (@CREATED_AT, @FEATURE)",
+				new[]
+				{
+					new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
+					new QueryParameter(@"@FEATURE", 0L)
+				});
+
 		private static readonly Query InsertClientFeatureEntryQuery =
 			new Query(
 				@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATED_AT, @FEATURE)",
@@ -69,6 +78,7 @@ namespace Cchbc.Features.Data
 		private static readonly Query<DbFeatureExceptionRow> GetDbFeatureExceptionsRowQuery = new Query<DbFeatureExceptionRow>(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS", DbFeatureExceptionRowCreator);
 		private static readonly Query<DbFeatureRow> GetFeaturesQuery = new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
 		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
+		private static readonly Query<DbFeatureUsageRow> GetFeatureUsagesQuery = new Query<DbFeatureUsageRow>(@"SELECT CREATED_AT, FEATURE_ID FROM FEATURE_USAGES", DbFeatureUsageRowCreator);
 		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);
 		private static readonly Query<DbFeatureExceptionEntryRow> GetDbFeatureExceptionEntryRowQuery = new Query<DbFeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
 
@@ -107,6 +117,16 @@ CREATE TABLE [FEATURES] (
 	[Context_Id] integer NOT NULL, 
 	FOREIGN KEY ([Context_Id])
 		REFERENCES [FEATURE_CONTEXTS] ([Id])
+		ON UPDATE CASCADE ON DELETE CASCADE
+)"));
+
+			context.Execute(new Query(@"
+CREATE TABLE [FEATURE_USAGES] (
+	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	[Created_At] datetime NOT NULL, 
+	[Feature_Id] integer NOT NULL, 
+	FOREIGN KEY ([Feature_Id])
+		REFERENCES [FEATURES] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
 
@@ -162,6 +182,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 				@"FEATURE_STEP_ENTRIES",
 				@"FEATURE_EXCEPTION_ENTRIES",
 				@"FEATURE_ENTRIES",
+				@"FEATURE_USAGES",
 				@"FEATURES",
 				@"FEATURE_STEPS",
 				@"FEATURE_CONTEXTS",
@@ -183,10 +204,11 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			var exceptionRows = context.Execute(GetDbFeatureExceptionsRowQuery);
 			var featureRows = context.Execute(GetFeaturesQuery);
 			var featureEntryRows = context.Execute(GetFeatureEntriesQuery);
+			var featureUsagesRows = context.Execute(GetFeatureUsagesQuery);
 			var entryStepRows = context.Execute(GetFeatureEntryStepsQuery);
 			var exceptionEntryRows = context.Execute(GetDbFeatureExceptionEntryRowQuery);
 
-			return Task.FromResult(new ClientData(contextRows, stepRows, exceptionRows, featureRows, featureEntryRows, entryStepRows, exceptionEntryRows));
+			return Task.FromResult(new ClientData(contextRows, stepRows, exceptionRows, featureRows, featureUsagesRows, featureEntryRows, entryStepRows, exceptionEntryRows));
 		}
 
 		public static Task<Dictionary<string, DbFeatureContextRow>> GetContextsAsync(ITransactionContext context)
@@ -307,6 +329,19 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return ExecuteInsertAsync(context, InsertClientFeatureEntryQuery);
 		}
 
+		public static Task InsertFeatureUsageAsync(ITransactionContext context, int featureId)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			// Set parameters values
+			InsertClientFeatureUsageQuery.Parameters[0].Value = DateTime.Now;
+			InsertClientFeatureUsageQuery.Parameters[1].Value = featureId;
+
+			context.Execute(InsertClientFeatureUsageQuery);
+
+			return Task.FromResult(true);
+		}
+
 		public static Task InsertExceptionEntryAsync(ITransactionContext context, int featureId, int exceptionId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -365,6 +400,11 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 		private static DbFeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
 		{
 			return new DbFeatureEntryRow(r.GetInt64(0), Convert.ToDouble(r.GetDecimal(1)), r.GetString(2), r.GetDateTime(3), r.GetInt32(4));
+		}
+
+		private static DbFeatureUsageRow DbFeatureUsageRowCreator(IFieldDataReader r)
+		{
+			return new DbFeatureUsageRow(r.GetDateTime(0), r.GetInt32(1));
 		}
 
 		private static DbFeatureEntryStepRow EntryStepRowCreator(IFieldDataReader r)

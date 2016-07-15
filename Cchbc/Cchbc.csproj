@@ -52,6 +52,7 @@
     <Compile Include="Dialog\DialogResult.cs" />
     <Compile Include="Dialog\IModalDialog.cs" />
     <Compile Include="Features\Data\ClientDataPacker.cs" />
+    <Compile Include="Features\Data\DbFeatureUsageRow.cs" />
     <Compile Include="Features\Data\FeatureAdapter.cs" />
     <Compile Include="Features\Data\DbFeatureEntryRow.cs" />
     <Compile Include="Features\Data\DbFeatureEntryStepRow.cs" />

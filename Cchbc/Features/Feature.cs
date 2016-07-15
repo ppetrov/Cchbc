@@ -67,6 +67,23 @@ namespace Cchbc.Features
 		{
 			if (step == null) throw new ArgumentNullException(nameof(step));
 
+			var adjustment = TimeSpan.Zero;
+			var currentLevel = step.Level;
+			for (var i = this.Steps.Count - 1; i >= 0; i--)
+			{
+				var s = this.Steps[i];
+				if (s.Level > currentLevel)
+				{
+					adjustment += s.TimeSpent;
+					continue;
+				}
+				break;
+			}
+			if (adjustment != TimeSpan.Zero)
+			{
+				step.TimeSpent -= adjustment;
+			}
+
 			this.StepEnded?.Invoke(step);
 			_level--;
 		}

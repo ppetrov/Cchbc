@@ -7,7 +7,7 @@ namespace Cchbc.Features
 		public Feature Feature { get; }
 		public string Name { get; }
 		public int Level { get; }
-		public TimeSpan TimeSpent { get; private set; }
+		public TimeSpan TimeSpent { get; set; }
 
 		public FeatureStep(Feature feature, string name, int level, TimeSpan timeSpent)
 		{

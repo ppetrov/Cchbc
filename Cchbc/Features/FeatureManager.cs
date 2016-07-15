@@ -46,7 +46,21 @@ namespace Cchbc.Features
 			}
 		}
 
-		public async Task LogAsync(Feature feature, string details = null)
+		public async Task MarkUsageAsync(Feature feature)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			using (var context = this.ContextCreator.Create())
+			{
+				var featureRow = await this.SaveAsync(context, feature);
+
+				await FeatureAdapter.InsertFeatureUsageAsync(context, featureRow.Id);
+
+				context.Complete();
+			}
+		}
+
+		public async Task WriteAsync(Feature feature, string details = null)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
@@ -64,7 +78,7 @@ namespace Cchbc.Features
 			}
 		}
 
-		public async Task LogExceptionAsync(Feature feature, Exception exception)
+		public async Task WriteExceptionAsync(Feature feature, Exception exception)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
@@ -105,40 +119,32 @@ namespace Cchbc.Features
 
 		private async Task<DbFeatureRow> SaveFeatureAsync(ITransactionContext transactionContext, DbFeatureContextRow featureContextRow, string name)
 		{
-			// Check if the context exists
-			DbFeatureRow feature = null;
-
 			var contextId = featureContextRow.Id;
 			List<DbFeatureRow> features;
 			if (this.Features.TryGetValue(contextId, out features))
 			{
-				foreach (var f in features)
+				foreach (var featureRow in features)
 				{
-					if (f.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+					if (featureRow.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
 					{
-						feature = f;
-						break;
+						return featureRow;
 					}
 				}
 			}
-
-			// Create feature collection for this context
-			if (features == null)
+			else
 			{
+				// Create feature collection for this context
 				features = new List<DbFeatureRow>();
 				this.Features.Add(contextId, features);
 			}
 
-			if (feature == null)
-			{
-				// Insert into database
-				var newFeatureId = await FeatureAdapter.InsertFeatureAsync(transactionContext, name, contextId);
+			// Insert into database
+			var newFeatureId = await FeatureAdapter.InsertFeatureAsync(transactionContext, name, contextId);
 
-				feature = new DbFeatureRow(newFeatureId, name, contextId);
+			var feature = new DbFeatureRow(newFeatureId, name, contextId);
 
-				//Insert the new feature into the collection
-				features.Add(feature);
-			}
+			//Insert the new feature into the collection
+			features.Add(feature);
 
 			return feature;
 		}

@@ -39,13 +39,14 @@ namespace Cchbc.AppBuilder.UI
 
 		private async void CreateActivityTapped(object sender, TappedRoutedEventArgs e)
 		{
-			var r = new Random(0);
 			var featureManager = Context.Core.FeatureManager;
+
 			var feature = Feature.StartNew(@"Agenda", @"CreateActivity");
 			try
 			{
 				using (feature.NewStep(@"Select type/outlet"))
 				{
+					var r = new Random(0);
 					await Task.Delay(r.Next(20));
 					using (feature.NewStep(@"Check outlet"))
 					{
@@ -64,11 +65,12 @@ namespace Cchbc.AppBuilder.UI
 						}
 					}
 				}
-				await featureManager.LogAsync(feature);
+
+				await featureManager.WriteAsync(feature);
 			}
 			catch (Exception ex)
 			{
-				await featureManager.LogExceptionAsync(feature, ex);
+				await featureManager.WriteExceptionAsync(feature, ex);
 			}
 		}
 
@@ -103,7 +105,7 @@ namespace Cchbc.AppBuilder.UI
 			}
 			finally
 			{
-				await manager.LogAsync(f);
+				await manager.WriteAsync(f);
 			}
 		}
 	}
