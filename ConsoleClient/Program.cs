@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Security.Policy;
 using System.Text;
@@ -22,6 +23,7 @@ using Cchbc.Features;
 using Cchbc.Features.Data;
 using Cchbc.Features.Replication;
 using Cchbc.Validation;
+using Cchbc.Weather;
 
 namespace Cchbc.ConsoleClient
 {
@@ -81,14 +83,14 @@ namespace Cchbc.ConsoleClient
     {
         static void Main(string[] args)
         {
-            //var a = DateTime.Parse(@"08-Jul-16 1:38:17 PM");
-            //var b = DateTime.Parse(@"08-Jul-16 4:23:53 PM");
-            //var def = b - a;
-            //Console.WriteLine(((int)def.TotalSeconds) / 4000.0);
-            //return;
-
             try
             {
+                var r = WorldWeather.GetWeatherAsync(@"a3e45adc96e947ec9a570615160208", new WorldCityLocation(42.7, 23.33)).Result;
+                Console.WriteLine(r[0]);
+
+
+                return;
+
                 //SearchText();
                 //return;
                 //DisplayHistogram();
