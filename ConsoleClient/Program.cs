@@ -18,12 +18,14 @@ using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
+using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Data;
 using Cchbc.Features.Replication;
 using Cchbc.Validation;
 using Cchbc.Weather;
+using ConsoleClient;
 
 namespace Cchbc.ConsoleClient
 {
@@ -54,11 +56,12 @@ namespace Cchbc.ConsoleClient
         {
             if (feature == null) throw new ArgumentNullException(nameof(feature));
 
+            
             // By version - latest
-            // By date - last day
+            // By steps
+            // * By date - last day
 
-            // Create report by user
-
+            // Create report by user on the server
             // PPetrov Top 5 slowest features
             // PPetrov Top 5 most used features
         }
@@ -68,6 +71,10 @@ namespace Cchbc.ConsoleClient
     {
 
     }
+
+
+
+
 
     public sealed class TimeEntry
     {
@@ -81,73 +88,65 @@ namespace Cchbc.ConsoleClient
 
     public class Program
     {
+        public static void GenerateReport(string path)
+        {
+            var contextCreator = new TransactionContextCreator($@"Data Source = {path}; Version = 3;");
+
+            using (var context = contextCreator.Create())
+            {
+                var settings = new DayAnalyzeSettings { SlowestFeatures = 3, MostUsedFeatures = 3, LeastUsedFeatures = 3 };
+
+                var sw = Stopwatch.StartNew();
+                var report = FeatureAnalyzer.GetFeatureReportAsync(context, DateTime.Today, settings).Result;
+                Console.WriteLine(sw.ElapsedMilliseconds);
+                Console.WriteLine();
+                Console.WriteLine();
+                Console.WriteLine();
+                sw.Stop();
+
+                Console.WriteLine(@"SlowestFeatures");
+                foreach (var featureTime in report.SlowestFeatures)
+                {
+                    Console.WriteLine(featureTime.Id + " : " + featureTime.Avg + '\t' + featureTime.Count);
+                }
+
+                Console.WriteLine();
+                Console.WriteLine(@"MostUsedFeatures");
+                foreach (var featureTime in report.MostUsedFeatures)
+                {
+                    Console.WriteLine(featureTime.Id + " : " + '\t' + featureTime.Count);
+                }
+
+                Console.WriteLine();
+                Console.WriteLine(@"LeastUsedFeatures");
+                foreach (var featureTime in report.LeastUsedFeatures)
+                {
+                    Console.WriteLine(featureTime.Id + " : " + '\t' + featureTime.Count);
+                }
+
+                context.Complete();
+            }
+        }
+
         static void Main(string[] args)
         {
             try
             {
-                var r = WorldWeather.GetWeatherAsync(@"a3e45adc96e947ec9a570615160208", new WorldCityLocation(42.7, 23.33)).Result;
-                Console.WriteLine(r[0]);
-
-
-                return;
-
-                //SearchText();
+                //SearchSourceCode();
                 //return;
                 //DisplayHistogram();
                 //return;
 
-                var path = @"C:\Users\PetarPetrov\Desktop\features.sqlite";
+                var dbPath = @"C:\Users\PetarPetrov\Desktop\features.sqlite";
+                GenerateReport(dbPath);
 
-                var contextCreator = new TransactionContextCreator($@"Data Source = {path}; Version = 3;");
-                var featureManager = new FeatureManager { ContextCreator = contextCreator };
+                //ReplicateData();
 
-                if (!File.Exists(path))
-                {
-                    // Create the schema
-                    featureManager.CreateSchemaAsync().Wait();
-                }
+                return;
 
-                // Load the manager
-                featureManager.LoadAsync().Wait();
-
-                var w = Stopwatch.StartNew();
-                for (var i = 0; i < 20 * 1; i++)
-                {
-                    UploadImageAsync(featureManager).Wait();
-                    DownloadImageAsync(featureManager).Wait();
-                    LoadImagesAsync(featureManager).Wait();
-                    DeleteImageAsync(featureManager).Wait();
-                    SetAsDefaultAsync(featureManager).Wait();
-                }
-                w.Stop();
-                Console.WriteLine(w.ElapsedMilliseconds);
-
-                //var activity = @"";
-
-                //var feature = Feature.StartNew(@"Agenda", @"Copy Activity");
-                //CopyActivity(feature, activity);
-
-                //feature = Feature.StartNew(@"Agenda", @"Copy Activity");
-                //CopyActivity(feature, activity);
-
-                //f = Feature.StartNew(@"Agenda", @"Create Activity");
-                //CreateActivity(f, "");
-
-                //featureManager.WriteAsync(null).Wait();
-
-                //DisplayFeature(feature);
-
-                Console.WriteLine();
-                Console.WriteLine();
-                Console.WriteLine();
+                GenerateData(dbPath);
 
 
-
-                //var forecastClient = new ForecastClient(@"87f3b3402228bff038c4f69cbeebb484");
-                //var forecastData = forecastClient.GetByCoordinatesAsync(new Coordinates(42.7, 23.33)).Result;
-
-                //Console.WriteLine(forecastData.Location.Country);
-                //Console.WriteLine(forecastData.Location.Name);
             }
             catch (Exception ex)
             {
@@ -193,76 +192,6 @@ namespace Cchbc.ConsoleClient
 
 
 
-            return;
-
-            var serverDb = @"Data Source = C:\Users\PetarPetrov\Desktop\server.sqlite; Version = 3;";
-            var clientDb = @"Data Source = C:\Users\PetarPetrov\Desktop\ifsa.sqlite; Version = 3;";
-
-            var si = clientDb.LastIndexOf('\\') + 1;
-            var ei = clientDb.IndexOf('.', si);
-            var userName = clientDb.Substring(si, ei - si);
-            try
-            {
-                //CreateSchema(serverDb);
-                //return;
-
-                //using (var client = new TransactionContextCreator(clientDb).Create())
-                //{
-                //	DbFeatureAdapter.DropSchemaAsync(client).Wait();
-                //	DbFeatureAdapter.CreateSchemaAsync(client).Wait();
-                //	client.Complete();
-                //}
-                //return;
-
-                //var fm = new FeatureManager { ContextCreator = new TransactionContextCreator(clientDb) };
-                //fm.LoadAsync().Wait();
-                //fm.WriteExceptionAsync(Feature.StartNew(@"Outlets", @"Load Data"), new NullReferenceException()).Wait();
-                //return;
-
-
-
-                for (var i = 0; i < 10; i++)
-                {
-                    //DateTime.Now.ToString(@"")
-                    Replicate(serverDb, clientDb);
-                }
-
-                return;
-
-
-
-
-
-
-
-
-
-                //var client = GetClient(clientDb);
-
-                //using (var serverContext = new TransactionContextCreator(serverDb).Create())
-                //{
-                //	var server = new FeatureServerManager();
-                //	server.Load(serverContext);
-
-                //	List<FeatureEntryRow> rows;
-                //	List<FeatureEntryStepRow> rows2;
-                //	using (var context = new TransactionContextCreator(clientDb).Create())
-                //	{
-                //		rows = client.GetFeautureEntries(context);
-                //		rows2 = client.GetFeatureEntrySteps(context);
-                //	}
-
-                //	server.SaveClientData(serverContext, userName, client, rows, rows2);
-                //	serverContext.Complete();
-
-                //	Console.WriteLine(@"Done");
-                //}
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-            return;
 
 
 
@@ -327,6 +256,54 @@ namespace Cchbc.ConsoleClient
             //{
             //	Console.WriteLine(e);
             //}
+        }
+
+        private static void ReplicateData()
+        {
+            var serverDb = @"Data Source = C:\Users\PetarPetrov\Desktop\server.sqlite; Version = 3;";
+            var clientDb = @"Data Source = C:\Users\PetarPetrov\Desktop\features.sqlite; Version = 3;";
+
+            try
+            {
+                //CreateSchema(serverDb);
+                //return;
+
+                Replicate(serverDb, clientDb, @"ppetrov", @"8.28.79.927");
+                Replicate(serverDb, clientDb, @"vsimeonov", @"6.18.29.392");
+                Replicate(serverDb, clientDb, @"iandonov", @"3.8.109.23");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        private static void GenerateData(string dbPath)
+        {
+            var contextCreator = new TransactionContextCreator($@"Data Source = {dbPath}; Version = 3;");
+            var featureManager = new FeatureManager { ContextCreator = contextCreator };
+
+            if (!File.Exists(dbPath))
+            {
+                // Create the schema
+                featureManager.CreateSchemaAsync().Wait();
+            }
+
+            // Load the manager
+            featureManager.LoadAsync().Wait();
+
+            var s = Stopwatch.StartNew();
+            for (var i = 0; i < 20 * 15; i++)
+            {
+                UploadImageAsync(featureManager).Wait();
+                DownloadImageAsync(featureManager).Wait();
+                LoadImagesAsync(featureManager).Wait();
+                DeleteImageAsync(featureManager).Wait();
+                SetAsDefaultAsync(featureManager).Wait();
+            }
+            s.Stop();
+
+            Console.WriteLine(s.ElapsedMilliseconds);
         }
 
         static Random _r = new Random();
@@ -487,7 +464,7 @@ namespace Cchbc.ConsoleClient
             }
         }
 
-        private static void SearchText()
+        private static void SearchSourceCode()
         {
             foreach (var f in Directory.GetFiles(@"C:\Cchbc\PhoenixClient\iOS\SFA.iOS7\", @"*.*", SearchOption.AllDirectories))
             {
@@ -810,8 +787,10 @@ namespace Cchbc.ConsoleClient
             }
         }
 
-        private static void Replicate(string serverDb, string clientDb)
+        private static void Replicate(string serverDb, string clientDb, string user, string version)
         {
+            Console.WriteLine($@"Replicate '{user}' & {version}");
+
             ClientData data;
             using (var client = new TransactionContextCreator(clientDb).Create())
             {
@@ -819,15 +798,16 @@ namespace Cchbc.ConsoleClient
                 client.Complete();
             }
 
-            var w = Stopwatch.StartNew();
+            var s = Stopwatch.StartNew();
+
             using (var server = new TransactionContextCreator(serverDb).Create())
             {
-                FeatureServerManager.ReplicateAsync(@"iandonov", @"8.28.79.927", server, data).Wait();
+                FeatureServerManager.ReplicateAsync(user, version, server, data).Wait();
                 server.Complete();
             }
 
-            w.Stop();
-            Console.WriteLine(w.ElapsedMilliseconds);
+            s.Stop();
+            Console.WriteLine(s.ElapsedMilliseconds);
         }
 
         public static void Unpack(byte[] input)

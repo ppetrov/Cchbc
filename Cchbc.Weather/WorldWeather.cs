@@ -16,8 +16,8 @@ namespace Cchbc.Weather
 
         public WorldWeather(WorldCurrentWeather currentWeather, List<WorldForecastWeather> forecasts)
         {
-            //if (currentWeather == null) throw new ArgumentNullException(nameof(currentWeather));
-            //if (forecasts == null) throw new ArgumentNullException(nameof(forecasts));
+            if (currentWeather == null) throw new ArgumentNullException(nameof(currentWeather));
+            if (forecasts == null) throw new ArgumentNullException(nameof(forecasts));
 
             this.CurrentWeather = currentWeather;
             this.Forecasts = forecasts;
@@ -30,7 +30,7 @@ namespace Cchbc.Weather
 
             var latitude = cityLocation.Latitude.ToString(CultureInfo.InvariantCulture);
             var longitude = cityLocation.Longitude.ToString(CultureInfo.InvariantCulture);
-            var uri = new Uri($@"http://api.worldweatheronline.com/premium/v1/weather.ashx?key={appKey}&q={latitude},{longitude}&format=xml&num_of_days={days}");
+            var uri = new Uri($@"http://api.worldweatheronline.com/premium/v1/weather.ashx?key={appKey}&q={latitude},{longitude}&format=xml&num_of_days={days}&includelocation=yes");
 
             using (var request = new HttpRequestMessage(HttpMethod.Get, uri))
             {
@@ -59,8 +59,8 @@ namespace Cchbc.Weather
             foreach (var d in document.Descendants(XName.Get(@"weather")))
             {
                 var date = DateTime.Parse(d.Descendants(@"date").Single().Value);
-                var min = double.Parse(d.Descendants(@"mintempC").Single().Value);
-                var max = double.Parse(d.Descendants(@"maxtempC").Single().Value);
+                var min = GetDoubleValue(d.Descendants(@"mintempC").Single().Value);
+                var max = GetDoubleValue(d.Descendants(@"maxtempC").Single().Value);
 
                 var forecastOffset = int.MaxValue;
                 var bestForcast = default(WorldForecastHourly);
@@ -84,7 +84,7 @@ namespace Cchbc.Weather
                             Date = currentTime,
                             IconUrl = iconUrl.Value,
                             Description = description.Value,
-                            Precipitation = double.Parse(precipitation.Value)
+                            Precipitation = GetDoubleValue(precipitation.Value)
                         };
                     }
                 }
@@ -109,17 +109,35 @@ namespace Cchbc.Weather
         private static WorldCurrentWeather ParseCurrent(XDocument document)
         {
             var current = document.Descendants(@"current_condition").Single();
+            var area = document.Descendants(@"nearest_area").Single();
+            var country = area.Descendants(@"country").Single().Value;
+            var region = area.Descendants(@"region").Single().Value;
 
             return new WorldCurrentWeather
             {
-                Temperature = double.Parse(current.Descendants(@"temp_C").Single().Value),
+                Temperature = GetDoubleValue(current.Descendants(@"temp_C").Single().Value),
                 IconCode = ParseIcon(current.Descendants(@"weatherIconUrl").Single().Value),
                 Description = current.Descendants(@"weatherDesc").Single().Value,
                 Date = DateTime.Parse(current.Descendants(@"observation_time").Single().Value),
-                Point = document.Descendants(@"request").Single().Descendants(@"query").Single().Value,
-                Feelslike = double.Parse(current.Descendants(@"FeelsLikeC").Single().Value),
-                Humidity = double.Parse(current.Descendants(@"humidity").Single().Value)
+                Point = region + @", " + country,
+                Feelslike = GetDoubleValue(current.Descendants(@"FeelsLikeC").Single().Value),
+                Humidity = GetDoubleValue(current.Descendants(@"humidity").Single().Value)
             };
+        }
+
+        private static double GetDoubleValue(string input)
+        {
+            var value = (input ?? string.Empty).Trim();
+            if (value != string.Empty)
+            {
+                double number;
+                if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out number))
+                {
+                    return number;
+                }
+            }
+
+            return 0;
         }
 
         private static string ParseIcon(string iconUrl)
