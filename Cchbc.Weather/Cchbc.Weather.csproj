@@ -48,6 +48,7 @@
     <Compile Include="ForecastData.cs" />
     <Compile Include="ForecastPrecipitation.cs" />
     <Compile Include="ForecastEntry.cs" />
+    <Compile Include="ForecaWeather.cs" />
     <Compile Include="Humidity.cs" />
     <Compile Include="Language.cs" />
     <Compile Include="LastUpdate.cs" />

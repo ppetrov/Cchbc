@@ -1,44 +1,62 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cchbc.Data;
 
 namespace ConsoleClient
 {
-    public sealed class FeatureUser
+    public sealed class FeatureVersion
     {
+        public long Id { get; }
         public string Name { get; }
 
-        public FeatureUser(string name)
+        public FeatureVersion(long id, string name)
         {
-            if (name == null) throw new ArgumentNullException(nameof(name));
-
+            this.Id = id;
             this.Name = name;
         }
     }
 
-    public sealed class DayAnalyzeSettings
+    public sealed class FeatureUser
     {
-        public int SlowestFeatures { get; set; }
-        public int MostUsedFeatures { get; set; }
-        public int LeastUsedFeatures { get; set; }
-    }
+        public long Id { get; }
+        public string Name { get; set; }
 
-    public sealed class FeatureTimeEntry
-    {
-        public readonly long FeatureId;
-        public readonly double TimeSpent;
-
-        public FeatureTimeEntry(long featureId, double timeSpent)
+        public FeatureUser(long id, string name)
         {
-            this.FeatureId = featureId;
-            this.TimeSpent = timeSpent;
+            this.Id = id;
+            this.Name = name;
         }
     }
 
-    public static class DayAnalyzerDataProvider
+    public static class FeatureReportDataProvider
     {
-        public static Task<List<FeatureTimeEntry>> GetFeatureTimeEntriesAsync(ITransactionContext context, DateTime date)
+        public static FeatureUser GetFeatureUser(ITransactionContext context, long userId)
+        {
+            if (context == null) throw new ArgumentNullException(nameof(context));
+
+            var sqlParams = new[]
+            {
+                new QueryParameter(@"@USER", userId),
+            };
+
+            var query = new Query<FeatureUser>(@"SELECT ID, NAME FROM FEATURE_USERS WHERE ID = @USER", FeatureUserCreator, sqlParams);
+
+            var users = context.Execute(query);
+            return users.Count > 0 ? users[0] : null;
+        }
+
+        public static Dictionary<long, FeatureUser> GetFeatureUsers(ITransactionContext context)
+        {
+            if (context == null) throw new ArgumentNullException(nameof(context));
+
+            var query = new Query<FeatureUser>(@"SELECT ID, NAME FROM FEATURE_USERS", FeatureUserCreator);
+
+            var users = new Dictionary<long, FeatureUser>();
+            context.Fill(users, r => r.Id, query);
+            return users;
+        }
+
+        public static List<FeatureTimeEntry> GetFeatureTimeEntries(ITransactionContext context, DateTime date, long versionId)
         {
             if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -48,13 +66,164 @@ namespace ConsoleClient
             {
                 new QueryParameter(@"@LOWER", value.AddDays(-1)),
                 new QueryParameter(@"@UPPER", value.AddDays(1)),
+                new QueryParameter(@"@VERSION", versionId),
             };
 
-            var query = new Query<FeatureTimeEntry>(@"SELECT TIMESPENT, FEATURE_ID FROM FEATURE_ENTRIES WHERE @LOWER < CREATED_AT and CREATED_AT < @UPPER", r => new FeatureTimeEntry(r.GetInt64(1), Convert.ToDouble(r.GetDecimal(0))), sqlParams);
+            var query = new Query<FeatureTimeEntry>(@"SELECT TIMESPENT, FEATURE_ID, USER_ID, VERSION_ID FROM FEATURE_ENTRIES WHERE @LOWER < CREATED_AT and CREATED_AT < @UPPER AND VERSION_ID = @VERSION", FeatureTimeEntryCreator, sqlParams);
 
-            return Task.FromResult(context.Execute(query));
+            return context.Execute(query);
+        }
+
+        public static List<FeatureTimeEntry> GetFeatureTimeEntries(ITransactionContext context, DateTime date, long versionId, long userId)
+        {
+            if (context == null) throw new ArgumentNullException(nameof(context));
+
+            var value = date.Date;
+
+            var sqlParams = new[]
+            {
+                new QueryParameter(@"@LOWER", value.AddDays(-1)),
+                new QueryParameter(@"@UPPER", value.AddDays(1)),
+                new QueryParameter(@"@VERSION", versionId),
+                new QueryParameter(@"@USER", userId),
+            };
+
+            var query = new Query<FeatureTimeEntry>(@"SELECT TIMESPENT, FEATURE_ID, USER_ID, VERSION_ID FROM FEATURE_ENTRIES WHERE @LOWER < CREATED_AT and CREATED_AT < @UPPER AND VERSION_ID = @VERSION AND USER_ID = @USER", FeatureTimeEntryCreator, sqlParams);
+
+            return context.Execute(query);
+        }
+
+        private static FeatureTimeEntry FeatureTimeEntryCreator(IFieldDataReader r)
+        {
+            return new FeatureTimeEntry(Convert.ToDouble(r.GetDecimal(0)), r.GetInt64(1), r.GetInt64(2), r.GetInt64(3));
+        }
+
+        public static long GetLatestVersionId(ITransactionContext context)
+        {
+            if (context == null) throw new ArgumentNullException(nameof(context));
+
+            // TODO : Find the latest version
+            var query = @"SELECT ID, NAME FROM FEATURE_VERSIONS";
+
+            var versions = context.Execute(new Query<FeatureVersion>(query, r => new FeatureVersion(r.GetInt64(0), r.GetString(1))));
+
+            var tmp = new Version[versions.Count];
+            for (var i = 0; i < versions.Count; i++)
+            {
+                var version = versions[i];
+                var numbers = version.Name.Split('.');
+
+                var index = 0;
+                var major = GetValueAt(numbers, index++);
+                var minor = GetValueAt(numbers, index++);
+                var revision = GetValueAt(numbers, index++);
+                var build = GetValueAt(numbers, index);
+
+                tmp[i] = new Version(version.Id, major, minor, revision, build);
+            }
+
+            Array.Sort(tmp, (x, y) =>
+            {
+                var cmp = x.Major.CompareTo(y.Major);
+                if (cmp == 0)
+                {
+                    cmp = x.Minor.CompareTo(y.Minor);
+                    if (cmp == 0)
+                    {
+                        cmp = x.Revision.CompareTo(y.Revision);
+                        if (cmp == 0)
+                        {
+                            cmp = x.Build.CompareTo(y.Build);
+                        }
+                    }
+                }
+                return cmp;
+            });
+
+            return tmp[tmp.Length - 1].Id;
+        }
+
+        private static int GetValueAt(string[] numbers, int index)
+        {
+            if (index < numbers.Length)
+            {
+                int value;
+                if (int.TryParse(numbers[index], out value))
+                {
+                    return value;
+                }
+            }
+            return 0;
+        }
+
+        private static FeatureUser FeatureUserCreator(IFieldDataReader r)
+        {
+            return new FeatureUser(r.GetInt64(0), r.GetString(1));
+        }
+
+        private sealed class Version
+        {
+            public readonly long Id;
+            public readonly int Major;
+            public readonly int Minor;
+            public readonly int Revision;
+            public readonly int Build;
+
+            public Version(long id, int major, int minor, int revision, int build)
+            {
+                this.Id = id;
+                this.Major = major;
+                this.Minor = minor;
+                this.Revision = revision;
+                this.Build = build;
+            }
         }
     }
+
+    public sealed class FeatureTimeEntry
+    {
+        public readonly double TimeSpent;
+        public readonly long FeatureId;
+        public readonly long UserId;
+        public readonly long VersionId;
+
+        public FeatureTimeEntry(double timeSpent, long featureId, long userId, long versionId)
+        {
+            this.TimeSpent = timeSpent;
+            this.FeatureId = featureId;
+            this.UserId = userId;
+            this.VersionId = versionId;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public sealed class FeatureReportSettings
+    {
+        public int SlowestFeatures { get; set; }
+        public int MostUsedFeatures { get; set; }
+        public int LeastUsedFeatures { get; set; }
+    }
+
+
+
+
+
+
+
+
 
     public sealed class FeatureTimes
     {
@@ -77,12 +246,11 @@ namespace ConsoleClient
     public sealed class FeatureReport
     {
         public FeatureUser User { get; }
-        public DateTime Date { get; }
         public FeatureTimes[] SlowestFeatures { get; }
         public FeatureTimes[] MostUsedFeatures { get; }
         public FeatureTimes[] LeastUsedFeatures { get; }
 
-        public FeatureReport(FeatureUser user, DateTime date, FeatureTimes[] slowestFeatures, FeatureTimes[] mostUsedFeatures, FeatureTimes[] leastUsedFeatures)
+        public FeatureReport(FeatureUser user, FeatureTimes[] slowestFeatures, FeatureTimes[] mostUsedFeatures, FeatureTimes[] leastUsedFeatures)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
             if (slowestFeatures == null) throw new ArgumentNullException(nameof(slowestFeatures));
@@ -90,7 +258,6 @@ namespace ConsoleClient
             if (leastUsedFeatures == null) throw new ArgumentNullException(nameof(leastUsedFeatures));
 
             this.User = user;
-            this.Date = date;
             this.SlowestFeatures = slowestFeatures;
             this.MostUsedFeatures = mostUsedFeatures;
             this.LeastUsedFeatures = leastUsedFeatures;
@@ -99,33 +266,87 @@ namespace ConsoleClient
 
     public static class FeatureAnalyzer
     {
-        // TODO : !!! Generate a report for the latest version for all users
-
-        public static async Task<FeatureReport> GetFeatureReportAsync(ITransactionContext context, DateTime date, DayAnalyzeSettings settings)
+        public static List<FeatureReport> GetFeatureReport(ITransactionContext context, FeatureReportSettings settings, DateTime date)
         {
             if (context == null) throw new ArgumentNullException(nameof(context));
             if (settings == null) throw new ArgumentNullException(nameof(settings));
 
-            var entries = await DayAnalyzerDataProvider.GetFeatureTimeEntriesAsync(context, date);
+            var versionId = FeatureReportDataProvider.GetLatestVersionId(context);
 
-            entries.Sort((x, y) => x.FeatureId.CompareTo(y.FeatureId));
+            return GetFeatureReport(context, settings, date, versionId);
+        }
 
-            var featureUser = new FeatureUser(@"N/A");
-            var featureTimes = new List<FeatureTimes>();
+        public static List<FeatureReport> GetFeatureReport(ITransactionContext context, FeatureReportSettings settings, DateTime date, long versionId)
+        {
+            if (context == null) throw new ArgumentNullException(nameof(context));
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
+
+            var users = FeatureReportDataProvider.GetFeatureUsers(context);
+            var entries = FeatureReportDataProvider.GetFeatureTimeEntries(context, date, versionId);
+
+            entries.Sort((x, y) =>
+            {
+                var cmp = x.UserId.CompareTo(y.UserId);
+                if (cmp == 0)
+                {
+                    cmp = x.FeatureId.CompareTo(y.FeatureId);
+                }
+                return cmp;
+            });
+
+            var reports = new List<FeatureReport>();
 
             var index = 0;
             while (index < entries.Count)
             {
-                var x = entries[index];
+                var currentUserId = entries[index].UserId;
+
+                var count = index + 1;
+                while (count < entries.Count && currentUserId == entries[count].UserId)
+                {
+                    count++;
+                }
+
+                var report = ExtractFeatureReport(users[currentUserId], settings, entries, index, count);
+                reports.Add(report);
+
+                index += count;
+            }
+
+            return reports;
+        }
+
+        public static FeatureReport GetFeatureReport(ITransactionContext context, FeatureReportSettings settings, DateTime date, long versionId, long userId)
+        {
+            if (context == null) throw new ArgumentNullException(nameof(context));
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
+
+            var featureUser = FeatureReportDataProvider.GetFeatureUser(context, userId);
+            var entries = FeatureReportDataProvider.GetFeatureTimeEntries(context, date, versionId, userId);
+
+            // Sort features to be able to "group" them by FeatureId
+            entries.Sort((x, y) => x.FeatureId.CompareTo(y.FeatureId));
+
+            return ExtractFeatureReport(featureUser, settings, entries, 0, entries.Count);
+        }
+
+        private static FeatureReport ExtractFeatureReport(FeatureUser featureUser, FeatureReportSettings settings, List<FeatureTimeEntry> entries, int startIndex, int endIndex)
+        {
+            var featureTimes = new List<FeatureTimes>(16);
+
+            while (startIndex < endIndex)
+            {
+                var x = entries[startIndex];
 
                 var timeSpent = x.TimeSpent;
                 var min = timeSpent;
                 var max = timeSpent;
-                var total = timeSpent;
+                var totalTimeSpent = timeSpent;
                 var count = 1;
 
                 var current = x.FeatureId;
-                for (var j = index + 1; j < entries.Count; j++)
+
+                for (var j = startIndex + 1; j < endIndex; j++)
                 {
                     var y = entries[j];
                     if (y.FeatureId == current)
@@ -134,7 +355,7 @@ namespace ConsoleClient
 
                         min = Math.Min(min, value);
                         max = Math.Max(max, value);
-                        total += value;
+                        totalTimeSpent += value;
                         count++;
 
                         continue;
@@ -142,9 +363,9 @@ namespace ConsoleClient
                     break;
                 }
 
-                featureTimes.Add(new FeatureTimes(x.FeatureId, count, total / count, min, max));
+                featureTimes.Add(new FeatureTimes(x.FeatureId, count, totalTimeSpent / count, min, max));
 
-                index += count;
+                startIndex += count;
             }
 
             // Sort descending by Avg
@@ -169,8 +390,12 @@ namespace ConsoleClient
                 leastUsed[i] = featureTimes[featureTimes.Count - 1 - i];
             }
 
-
-            return new FeatureReport(featureUser, date, slowest, mostUsed, leastUsed);
+            return new FeatureReport(featureUser, slowest, mostUsed, leastUsed);
         }
+    }
+
+    public sealed class FeatureReportUser
+    {
+        
     }
 }
