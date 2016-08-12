@@ -1,19 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
 using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
@@ -172,24 +165,97 @@ namespace Cchbc.ConsoleClient
 
 		static void Main(string[] args)
 		{
+			var clientDbPath = @"C:\Users\PetarPetrov\Desktop\features.sqlite";
+			var serverDbPath = @"C:\Users\PetarPetrov\Desktop\server.sqlite";
+
 			try
 			{
-				var forecaAppKey = @"p4ktTTTHknRT9ZbQTROIuwnfw";
-				var weathers = ForecaWeather.GetWeatherAsync(forecaAppKey, new ForecaCityLocation(42.7, 23.32)).Result;
+				//WeatherTest();
 
-				foreach (var weather in weathers)
+				var viewModel = new FeatureExceptionsViewModel(
+					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)),
+					new FeatureExceptionsSettings()
+					);
+
+				Func<IEnumerable<TimePeriod>> timePeriodsProvider = (() =>
 				{
-					Console.WriteLine(weather);
+					try
+					{
+						viewModel.IsTimePeriodsLoading = true;
+
+						return FeatureExceptionsDataProvider.GetTimePeriods();
+					}
+					finally
+					{
+						viewModel.IsTimePeriodsLoading = false;
+					}
+				});
+				Func<ITransactionContext, IEnumerable<FeatureVersion>> versionsProvider = ctx =>
+				{
+					try
+					{
+						viewModel.IsVersionsLoading = true;
+
+						return FeatureExceptionsDataProvider.GetVersions(ctx);
+					}
+					finally
+					{
+						viewModel.IsVersionsLoading = false;
+					}
+				};
+				Func<ExceptionsDataLoadParams, IEnumerable<FeatureException>> exceptionsProvider = loadParams =>
+				{
+					try
+					{
+						viewModel.IsExceptionsLoading = true;
+
+						var w = Stopwatch.StartNew();
+						var tmp = FeatureExceptionsDataProvider.GetExceptions(loadParams);
+						w.Stop();
+						Console.WriteLine(w.ElapsedMilliseconds);
+						return tmp;
+					}
+					finally
+					{
+						viewModel.IsExceptionsLoading = false;
+					}
+				};
+				Func<ExceptionsDataLoadParams, IEnumerable<ExceptionsCount>> exceptionsCountProvider = loadParams =>
+				{
+					try
+					{
+						viewModel.IsExceptionsCountsLoading = true;
+
+						return FeatureExceptionsDataProvider.GetExceptionsCounts(loadParams);
+					}
+					finally
+					{
+						viewModel.IsExceptionsCountsLoading = false;
+					}
+				};
+				viewModel.Load(timePeriodsProvider, versionsProvider, exceptionsProvider, exceptionsCountProvider);
+
+				Console.WriteLine(@"Time Periods");
+				foreach (var vm in viewModel.TimePeriods)
+				{
+					Console.WriteLine('\t' + string.Empty + vm.Name);
 				}
-				
+				Console.WriteLine();
+
+				Console.WriteLine(@"Versions");
+				foreach (var vm in viewModel.Versions)
+				{
+					Console.WriteLine('\t' + string.Empty + vm.Name);
+				}
+				Console.WriteLine();
+
 				return;
 				//SearchSourceCode();
 				//return;
 				//DisplayHistogram();
 				//return;
 
-				var clientDbPath = @"C:\Users\PetarPetrov\Desktop\features.sqlite";
-				var serverDbPath = @"C:\Users\PetarPetrov\Desktop\server.sqlite";
+
 
 				GenerateDayReport(serverDbPath);
 
@@ -308,6 +374,17 @@ namespace Cchbc.ConsoleClient
 			//{
 			//	Console.WriteLine(e);
 			//}
+		}
+
+		private static void WeatherTest()
+		{
+			var forecaAppKey = @"p4ktTTTHknRT9ZbQTROIuwnfw";
+			var weathers = ForecaWeather.GetWeatherAsync(forecaAppKey, new ForecaCityLocation(42.7, 23.32)).Result;
+
+			foreach (var weather in weathers)
+			{
+				Console.WriteLine(weather);
+			}
 		}
 
 		private static void ReplicateData(string clientDb, string serverDb)

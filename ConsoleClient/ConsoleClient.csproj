@@ -47,7 +47,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ContextCreator.cs" />
-    <Compile Include="DayanalyzerModule.cs" />
+    <Compile Include="DayAnalyzerModule.cs" />
+    <Compile Include="FeatureExceptionsModule.cs" />
     <Compile Include="Objects.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
