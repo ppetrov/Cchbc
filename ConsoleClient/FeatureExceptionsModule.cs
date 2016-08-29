@@ -9,6 +9,24 @@ namespace ConsoleClient
 {
 	public static class FeatureExceptionsDataProvider
 	{
+		private sealed class FeatureExceptionRow
+		{
+			public readonly long Id;
+			public readonly long Exception;
+			public readonly DateTime CreatedAt;
+			public readonly long User;
+			public readonly long Version;
+
+			public FeatureExceptionRow(long id, long exception, DateTime createdAt, long user, long version)
+			{
+				this.Id = id;
+				this.Exception = exception;
+				this.CreatedAt = createdAt;
+				this.User = user;
+				this.Version = version;
+			}
+		}
+
 		public static IEnumerable<TimePeriod> GetTimePeriods()
 		{
 			return new[]
@@ -36,29 +54,6 @@ namespace ConsoleClient
 
 			var context = dataLoadParams.Context;
 
-			// ~ 10 items
-			var exceptions = new Dictionary<long, string>();
-			context.Fill(exceptions, (r, m) =>
-			{
-				m.Add(r.GetInt64(0), r.GetString(1));
-			}, new Query(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS"));
-
-			// ~ 10 items
-			var users = new Dictionary<long, FeatureUser>();
-			context.Fill(users, (r, m) =>
-			{
-				var id = r.GetInt64(0);
-				m.Add(id, new FeatureUser(id, r.GetString(1)));
-			}, new Query(@"SELECT ID, NAME FROM FEATURE_USERS"));
-
-			// ~ 1,2
-			var versions = new Dictionary<long, FeatureVersion>();
-			context.Fill(versions, (r, m) =>
-			{
-				var id = r.GetInt64(0);
-				m.Add(id, new FeatureVersion(id, r.GetString(1)));
-			}, new Query(@"SELECT ID, NAME FROM FEATURE_VERSIONS"));
-
 			var query = @"SELECT ID, EXCEPTION_ID, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID FROM FEATURE_EXCEPTION_ENTRIES ORDER BY CREATED_AT DESC LIMIT @maxEntries";
 
 			var sqlParams = new[]
@@ -66,10 +61,41 @@ namespace ConsoleClient
 				new QueryParameter(@"@maxEntries", dataLoadParams.MaxEntries)
 			};
 
-			var tmp =
-				context.Execute(new Query<Tuple<long, long, DateTime, long, long>>(query,
-					r => Tuple.Create(r.GetInt64(0), r.GetInt64(1), r.GetDateTime(2), r.GetInt64(3), r.GetInt64(4)), sqlParams));
-			return null;
+			var rows =
+				context.Execute(new Query<FeatureExceptionRow>(query,
+					r => new FeatureExceptionRow(r.GetInt64(0), r.GetInt64(1), r.GetDateTime(2), r.GetInt64(3), r.GetInt64(4)), sqlParams));
+
+			// ~ 10 items
+			var exceptions = new Dictionary<long, string>();
+			context.Fill(exceptions, (r, m) =>
+			{
+				m.Add(r.GetInt64(0), r.GetString(1));
+			}, new Query(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS"));
+
+			// ~ 10 entries only Max entries (distict) users
+			var users = new Dictionary<long, FeatureUser>();
+			context.Fill(users, (r, m) =>
+			{
+				var id = r.GetInt64(0);
+				m.Add(id, new FeatureUser(id, r.GetString(1)));
+			}, new Query(@"SELECT ID, NAME FROM FEATURE_USERS"));
+
+			// ~ 10 Max entries (distict) versions
+			var versions = new Dictionary<long, FeatureVersion>();
+			context.Fill(versions, (r, m) =>
+			{
+				var id = r.GetInt64(0);
+				m.Add(id, new FeatureVersion(id, r.GetString(1)));
+			}, new Query(@"SELECT ID, NAME FROM FEATURE_VERSIONS"));
+
+			var featureExceptions = new FeatureException[rows.Count];
+			for (var i = 0; i < rows.Count; i++)
+			{
+				var r = rows[i];
+				featureExceptions[i] = new FeatureException(r.Id, exceptions[r.Exception], r.CreatedAt, users[r.User], versions[r.Version]);
+			}
+
+			return featureExceptions;
 		}
 
 		public static IEnumerable<ExceptionsCount> GetExceptionsCounts(ExceptionsDataLoadParams dataLoadParams)
@@ -179,7 +205,8 @@ namespace ConsoleClient
 			this.Settings = settings;
 		}
 
-		public void Load(Func<IEnumerable<TimePeriod>> timePeriodsProvider,
+		public void Load(
+			Func<IEnumerable<TimePeriod>> timePeriodsProvider,
 			Func<ITransactionContext, IEnumerable<FeatureVersion>> versionsProvider,
 			Func<ExceptionsDataLoadParams, IEnumerable<FeatureException>> exceptionsProvider,
 			Func<ExceptionsDataLoadParams, IEnumerable<ExceptionsCount>> exceptionsCountProvider)

@@ -23,14 +23,13 @@ namespace Cchbc.Weather
 			this.Forecasts = forecasts;
 		}
 
-		public static async Task<List<ForecaWeather>> GetWeatherAsync(string appKey, ForecaCityLocation cityLocation, int days = 14)
+		public static async Task<List<ForecaWeather>> GetWeatherAsync(ForecaCityLocation cityLocation, int days = 14)
 		{
-			if (appKey == null) throw new ArgumentNullException(nameof(appKey));
 			if (cityLocation == null) throw new ArgumentNullException(nameof(cityLocation));
 
-			var latitude = cityLocation.Latitude.ToString(CultureInfo.InvariantCulture);
-			var longitude = cityLocation.Longitude.ToString(CultureInfo.InvariantCulture);
-			var uri = new Uri($@"http://apitest.foreca.net/?lat={latitude}&lon={longitude}&key={appKey}&format=xml");
+			var latitude = Math.Round(cityLocation.Latitude, 2).ToString(CultureInfo.InvariantCulture);
+			var longitude = Math.Round(cityLocation.Longitude, 2).ToString(CultureInfo.InvariantCulture);
+			var uri = new Uri($@"http://feed.foreca.com/cocacola-aug16gr/cocacola-data.php?lon={longitude}&lat={latitude}&products=daily");
 
 			using (var request = new HttpRequestMessage(HttpMethod.Get, uri))
 			{
@@ -50,22 +49,23 @@ namespace Cchbc.Weather
 
 		private static List<ForecaWeather> Parse(XDocument document)
 		{
-			var root = document.Descendants(XName.Get(@"loc")).Single();
+			var current = ParseCurrent(document.Descendants(XName.Get(@"loc")).Single());
+			var forecast = new List<ForecaForecastWeather>(16);
 
-			var current = ParseCurrent(root);
-			var forecast = new List<ForecaForecastWeather>(8);
-
-			foreach (var d in root.Descendants(XName.Get(@"fcd")))
+			foreach (var weather in document.Descendants(XName.Get(@"weather")))
 			{
-				var item = new ForecaForecastWeather { Description = @"N/A" };
+				foreach (var forecastNode in weather.Descendants(XName.Get(@"fc")))
+				{
+					var item = new ForecaForecastWeather();
 
-				item.Low = GetDoubleValue(d.Attribute(XName.Get(@"tn")).Value);
-				item.High = GetDoubleValue(d.Attribute(XName.Get(@"tx")).Value);
-				item.IconCode = ParseIcon(d.Attribute(XName.Get(@"s")).Value);
-				item.Date = DateTime.Parse(d.Attribute(XName.Get(@"dt")).Value);
-				item.Precipitation = GetDoubleValue(d.Attribute(XName.Get(@"p")).Value);
+					item.Low = GetDoubleValue(forecastNode.Attribute(XName.Get(@"tn")).Value);
+					item.High = GetDoubleValue(forecastNode.Attribute(XName.Get(@"tx")).Value);
+					item.IconCode = ParseIcon(forecastNode.Attribute(XName.Get(@"s")).Value);
+					item.Date = DateTime.Parse(forecastNode.Attribute(XName.Get(@"dt")).Value);
+					item.Description = forecastNode.Attribute(XName.Get(@"sT")).Value;
 
-				forecast.Add(item);
+					forecast.Add(item);
+				}
 			}
 
 			return new List<ForecaWeather> { new ForecaWeather(current, forecast) };
@@ -74,17 +74,20 @@ namespace Cchbc.Weather
 		private static ForecaCurrentWeather ParseCurrent(XElement root)
 		{
 			var current = new ForecaCurrentWeather();
-			var currentValues = root.Descendants(XName.Get(@"cc")).Single();
-
-			current.Date = DateTime.Parse(currentValues.Attribute(XName.Get(@"dt")).Value);
-			current.Temperature = GetDoubleValue(currentValues.Attribute(XName.Get(@"t")).Value);
-			current.IconCode = ParseIcon(currentValues.Attribute(XName.Get(@"s")).Value);
-			current.Description = currentValues.Attribute(XName.Get(@"station")).Value;
 			var city = root.Attribute(XName.Get(@"name")).Value;
 			var country = root.Attribute(XName.Get(@"country")).Value;
 			current.Point = city + @", " + country;
-			current.Feelslike = GetDoubleValue(currentValues.Attribute(XName.Get(@"tf")).Value);
-			current.Humidity = GetDoubleValue(currentValues.Attribute(XName.Get(@"rh")).Value);
+
+			var currentValues = root.Descendants(XName.Get(@"cc")).SingleOrDefault();
+			if (currentValues != null)
+			{
+				current.Date = DateTime.Parse(currentValues.Attribute(XName.Get(@"dt")).Value);
+				current.Temperature = GetDoubleValue(currentValues.Attribute(XName.Get(@"t")).Value);
+				current.IconCode = ParseIcon(currentValues.Attribute(XName.Get(@"s")).Value);
+				current.Description = currentValues.Attribute(XName.Get(@"station")).Value;
+				current.Feelslike = GetDoubleValue(currentValues.Attribute(XName.Get(@"tf")).Value);
+				current.Humidity = GetDoubleValue(currentValues.Attribute(XName.Get(@"rh")).Value);
+			}
 
 			return current;
 		}

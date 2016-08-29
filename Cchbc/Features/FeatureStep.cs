@@ -26,4 +26,18 @@ namespace Cchbc.Features
 			this.Feature.EndStep(this);
 		}
 	}
+
+	public sealed class FeatureStepData
+	{
+		public string Name { get; }
+		public TimeSpan TimeSpent { get; }
+
+		public FeatureStepData(string name, TimeSpan timeSpent)
+		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			this.Name = name;
+			this.TimeSpent = timeSpent;
+		}
+	}
 }

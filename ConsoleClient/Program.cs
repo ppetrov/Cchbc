@@ -1,5 +1,7 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -8,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cchbc.App.ArticlesModule.Helpers;
+using Cchbc.App.OrderModule;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
@@ -171,69 +174,24 @@ namespace Cchbc.ConsoleClient
 			try
 			{
 				//WeatherTest();
+				//return;
+
+				GenerateData(clientDbPath);
+				//return;
+
+				//ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
+				//return;
 
 				var viewModel = new FeatureExceptionsViewModel(
 					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)),
 					new FeatureExceptionsSettings()
 					);
 
-				Func<IEnumerable<TimePeriod>> timePeriodsProvider = (() =>
-				{
-					try
-					{
-						viewModel.IsTimePeriodsLoading = true;
-
-						return FeatureExceptionsDataProvider.GetTimePeriods();
-					}
-					finally
-					{
-						viewModel.IsTimePeriodsLoading = false;
-					}
-				});
-				Func<ITransactionContext, IEnumerable<FeatureVersion>> versionsProvider = ctx =>
-				{
-					try
-					{
-						viewModel.IsVersionsLoading = true;
-
-						return FeatureExceptionsDataProvider.GetVersions(ctx);
-					}
-					finally
-					{
-						viewModel.IsVersionsLoading = false;
-					}
-				};
-				Func<ExceptionsDataLoadParams, IEnumerable<FeatureException>> exceptionsProvider = loadParams =>
-				{
-					try
-					{
-						viewModel.IsExceptionsLoading = true;
-
-						var w = Stopwatch.StartNew();
-						var tmp = FeatureExceptionsDataProvider.GetExceptions(loadParams);
-						w.Stop();
-						Console.WriteLine(w.ElapsedMilliseconds);
-						return tmp;
-					}
-					finally
-					{
-						viewModel.IsExceptionsLoading = false;
-					}
-				};
-				Func<ExceptionsDataLoadParams, IEnumerable<ExceptionsCount>> exceptionsCountProvider = loadParams =>
-				{
-					try
-					{
-						viewModel.IsExceptionsCountsLoading = true;
-
-						return FeatureExceptionsDataProvider.GetExceptionsCounts(loadParams);
-					}
-					finally
-					{
-						viewModel.IsExceptionsCountsLoading = false;
-					}
-				};
-				viewModel.Load(timePeriodsProvider, versionsProvider, exceptionsProvider, exceptionsCountProvider);
+				viewModel.Load(
+					FeatureExceptionsDataProvider.GetTimePeriods,
+					FeatureExceptionsDataProvider.GetVersions,
+					FeatureExceptionsDataProvider.GetExceptions,
+					FeatureExceptionsDataProvider.GetExceptionsCounts);
 
 				Console.WriteLine(@"Time Periods");
 				foreach (var vm in viewModel.TimePeriods)
@@ -249,6 +207,13 @@ namespace Cchbc.ConsoleClient
 				}
 				Console.WriteLine();
 
+				Console.WriteLine(@"Exceptions");
+				foreach (var vm in viewModel.Exceptions)
+				{
+					Console.WriteLine('\t' + string.Empty + vm.Contents + $@"({vm.CreatedAt}) " + vm.User + $@"({vm.Version})");
+				}
+				Console.WriteLine();
+
 				return;
 				//SearchSourceCode();
 				//return;
@@ -259,9 +224,9 @@ namespace Cchbc.ConsoleClient
 
 				GenerateDayReport(serverDbPath);
 
-				//GenerateData(dbPath);
 
-				//ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
+
+				//
 			}
 			catch (Exception ex)
 			{
@@ -379,7 +344,7 @@ namespace Cchbc.ConsoleClient
 		private static void WeatherTest()
 		{
 			var forecaAppKey = @"p4ktTTTHknRT9ZbQTROIuwnfw";
-			var weathers = ForecaWeather.GetWeatherAsync(forecaAppKey, new ForecaCityLocation(42.7, 23.32)).Result;
+			var weathers = ForecaWeather.GetWeatherAsync(new ForecaCityLocation(42.7, 23.32)).Result;
 
 			foreach (var weather in weathers)
 			{
@@ -413,13 +378,28 @@ namespace Cchbc.ConsoleClient
 			featureManager.LoadAsync().Wait();
 
 			var s = Stopwatch.StartNew();
-			for (var i = 0; i < 20 * 15; i++)
+			for (var i = 0; i < 100; i++)
 			{
-				UploadImageAsync(featureManager).Wait();
-				DownloadImageAsync(featureManager).Wait();
-				LoadImagesAsync(featureManager).Wait();
-				DeleteImageAsync(featureManager).Wait();
-				SetAsDefaultAsync(featureManager).Wait();
+				var steps = new[]
+				{
+					new FeatureStepData(@"BrowseImageAsync", TimeSpan.FromMilliseconds(_r.Next(5, 17))),
+					new FeatureStepData(@"AdjustImageAsync", TimeSpan.FromMilliseconds(_r.Next(50, 117))),
+					new FeatureStepData(@"CompressImageAsync", TimeSpan.FromMilliseconds(_r.Next(11, 33))),
+					new FeatureStepData(@"ResizeImageAsync", TimeSpan.FromMilliseconds(_r.Next(68, 98))),
+					new FeatureStepData(@"CheckSize", TimeSpan.FromMilliseconds(_r.Next(1, 2))),
+					new FeatureStepData(@"ConfirmSize", TimeSpan.FromMilliseconds(_r.Next(23, 54))),
+					new FeatureStepData(@"UploadDataAsync", TimeSpan.FromMilliseconds(_r.Next(231, 541))),
+				};
+				var data = new FeatureData(@"Images", "UploadImageAsync", TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)));
+
+				featureManager.MarkUsageAsync(data).Wait();
+				featureManager.WriteAsync(data).Wait();
+
+
+				//DownloadImageAsync(featureManager).Wait();
+				//LoadImagesAsync(featureManager).Wait();
+				//DeleteImageAsync(featureManager).Wait();
+				//SetAsDefaultAsync(featureManager).Wait();
 			}
 			s.Stop();
 
@@ -533,56 +513,56 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		private static async Task UploadImageAsync(FeatureManager featureManager)
-		{
-			var feature = Feature.StartNew(@"Images", nameof(UploadImageAsync));
-			try
-			{
-				await featureManager.MarkUsageAsync(feature);
+		//private static async Task UploadImageAsync(FeatureManager featureManager)
+		//{
+		//	var feature = Feature.StartNew(@"Images", nameof(UploadImageAsync));
+		//	try
+		//	{
+		//		await featureManager.MarkUsageAsync(feature);
 
-				var image = await BrowseImageAsync(feature);
-				if (image == null) return;
+		//		var image = await BrowseImageAsync(feature);
+		//		if (image == null) return;
 
-				var adjustedImage = AdjustImageAsync(feature, image);
+		//		var adjustedImage = AdjustImageAsync(feature, image);
 
-				var isSizeToBig = false;
-				var confirmed = true;
+		//		var isSizeToBig = false;
+		//		var confirmed = true;
 
-				using (feature.NewStep(@"CheckSize"))
-				{
-					var size = 2048;
-					isSizeToBig = size > 1024;
+		//		using (feature.NewStep(@"CheckSize"))
+		//		{
+		//			var size = 2048;
+		//			isSizeToBig = size > 1024;
 
-					isSizeToBig = true;
+		//			isSizeToBig = true;
 
-					if (isSizeToBig)
-					{
-						using (feature.NewStep(@"ConfirmSize"))
-						{
-							feature.Pause();
-							Thread.Sleep(_r.Next(23, 54));
-							feature.Resume();
-							confirmed = true;
-						}
-					}
-				}
+		//			if (isSizeToBig)
+		//			{
+		//				using (feature.NewStep(@"ConfirmSize"))
+		//				{
+		//					feature.Pause();
+		//					Thread.Sleep(_r.Next(23, 54));
+		//					feature.Resume();
+		//					confirmed = true;
+		//				}
+		//			}
+		//		}
 
-				if (confirmed)
-				{
-					using (feature.NewStep(@"UploadBytes"))
-					{
-						// Send bytes to the wire
-						Thread.Sleep(_r.Next(231, 541));
-					}
-				}
+		//		if (confirmed)
+		//		{
+		//			using (feature.NewStep(@"UploadBytes"))
+		//			{
+		//				// Send bytes to the wire
+		//				Thread.Sleep(_r.Next(231, 541));
+		//			}
+		//		}
 
-				await featureManager.WriteAsync(feature);
-			}
-			catch (Exception ex)
-			{
-				await featureManager.WriteExceptionAsync(feature, ex);
-			}
-		}
+		//		await featureManager.WriteAsync(feature);
+		//	}
+		//	catch (Exception ex)
+		//	{
+		//		await featureManager.WriteExceptionAsync(feature, ex);
+		//	}
+		//}
 
 		private static void SearchSourceCode()
 		{
@@ -629,35 +609,7 @@ namespace Cchbc.ConsoleClient
 
 
 
-		private static Task<string> AdjustImageAsync(Feature feature, string image)
-		{
-			using (feature.NewStep(nameof(AdjustImageAsync)))
-			{
-				Thread.Sleep(_r.Next(50, 117));
 
-				using (feature.NewStep(@"CompressImage"))
-				{
-					Thread.Sleep(_r.Next(11, 33));
-				}
-				using (feature.NewStep(@"Resize"))
-				{
-					Thread.Sleep(_r.Next(68, 98));
-				}
-
-				return Task.FromResult(string.Empty);
-			}
-		}
-
-		private static Task<string> BrowseImageAsync(Feature feature)
-		{
-			using (feature.NewStep(nameof(BrowseImageAsync)))
-			{
-				// Display user dialog
-				Thread.Sleep(_r.Next(5, 17));
-
-				return Task.FromResult(string.Empty);
-			}
-		}
 
 		private static void DisplayHistogram()
 		{

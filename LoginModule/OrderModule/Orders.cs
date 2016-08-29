@@ -230,6 +230,7 @@ namespace Cchbc.App.OrderModule
 	public sealed class Outlet : IDbObject
 	{
 		public long Id { get; set; }
+		public long Number { get; set; }
 		public string Name { get; set; }
 	}
 
