@@ -50,43 +50,22 @@ namespace Cchbc.Features.Replication
 			var totalEntrySteps = clientFeatureEntryStepRows.Count;
 			var batchSize = 256;
 			var totalBatches = totalEntrySteps / batchSize;
+			var entryStepRows = new DbFeatureEntryStepRow[batchSize];
 			for (var i = 0; i < totalBatches; i++)
 			{
 				var offset = i * batchSize;
-				var entryStepRows = new DbFeatureEntryStepRow[batchSize];
-
-				for (var j = 0; j < entryStepRows.Length; j++)
-				{
-					var row = clientFeatureEntryStepRows[offset + j];
-
-					var mappedFeatureEntryId = featureEntriesMap[row.FeatureEntryId];
-					var mappedStepId = stepsMap[row.FeatureStepId];
-
-					entryStepRows[j] = new DbFeatureEntryStepRow(row.TimeSpent, mappedFeatureEntryId, mappedStepId);
-				}
-
-				await FeatureAdapter.InsertStepEntriesAsync(serverContext, entryStepRows);
+				await InsertStepEntriesAsync(serverContext, entryStepRows, clientFeatureEntryStepRows, offset, featureEntriesMap, stepsMap);
 			}
-
 			var remaining = totalEntrySteps % batchSize;
 			if (remaining > 0)
 			{
 				var offset = totalBatches * batchSize;
-				var entryStepRows = new DbFeatureEntryStepRow[remaining];
+				Array.Resize(ref entryStepRows, remaining);
 
-				for (var j = 0; j < entryStepRows.Length; j++)
-				{
-					var row = clientFeatureEntryStepRows[offset + j];
-
-					var mappedFeatureEntryId = featureEntriesMap[row.FeatureEntryId];
-					var mappedStepId = stepsMap[row.FeatureStepId];
-
-					entryStepRows[j] = new DbFeatureEntryStepRow(row.TimeSpent, mappedFeatureEntryId, mappedStepId);
-				}
-
-				await FeatureAdapter.InsertStepEntriesAsync(serverContext, entryStepRows);
+				await InsertStepEntriesAsync(serverContext, entryStepRows, clientFeatureEntryStepRows, offset, featureEntriesMap, stepsMap);
 			}
 
+			// TODO :!!! Batch insert
 			foreach (var row in clientFeatureExceptionEntryRows)
 			{
 				var mappedExceptionId = exceptionsMap[row.ExceptionId];
@@ -223,6 +202,21 @@ namespace Cchbc.Features.Replication
 			}
 
 			return map;
+		}
+
+		private static async Task InsertStepEntriesAsync(ITransactionContext serverContext, DbFeatureEntryStepRow[] entryStepRows, List<DbFeatureEntryStepRow> clientFeatureEntryStepRows, int offset, Dictionary<long, long> featureEntriesMap, Dictionary<int, int> stepsMap)
+		{
+			for (var i = 0; i < entryStepRows.Length; i++)
+			{
+				var row = clientFeatureEntryStepRows[offset + i];
+
+				var mappedFeatureEntryId = featureEntriesMap[row.FeatureEntryId];
+				var mappedStepId = stepsMap[row.FeatureStepId];
+
+				entryStepRows[i] = new DbFeatureEntryStepRow(row.TimeSpent, mappedFeatureEntryId, mappedStepId);
+			}
+
+			await FeatureAdapter.InsertStepEntriesAsync(serverContext, entryStepRows);
 		}
 	}
 }
