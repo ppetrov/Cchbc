@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using Cchbc.Data;
 
@@ -44,17 +45,6 @@ namespace Cchbc.Features.Data
 					new QueryParameter(@"@DETAILS", string.Empty),
 					new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
 					new QueryParameter(@"@FEATURE", 0L)
-				});
-
-		private static readonly Query InsertStepEntryQuery =
-			new Query(
-				@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES (@TIMESPENT, @ENTRY, @STEP)",
-				new[]
-				{
-					new QueryParameter(@"@TIMESPENT", 0M),
-					new QueryParameter(@"@ENTRY", 0L),
-					new QueryParameter(@"@STEP", 0L),
-
 				});
 
 		private static readonly Query InsertExceptionQuery =
@@ -315,7 +305,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult((int)context.GetNewId());
 		}
 
-		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, int featureId, TimeSpan timeSpent, string details)
+		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, int featureId, TimeSpan timeSpent, string details, bool needNewId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (details == null) throw new ArgumentNullException(nameof(details));
@@ -326,7 +316,16 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			InsertClientFeatureEntryQuery.Parameters[2].Value = DateTime.Now;
 			InsertClientFeatureEntryQuery.Parameters[3].Value = featureId;
 
-			return ExecuteInsertAsync(context, InsertClientFeatureEntryQuery);
+			// Insert the record
+			context.Execute(InsertClientFeatureEntryQuery);
+
+			var id = -1L;
+			if (needNewId)
+			{
+				// Get new Id back
+				id = context.GetNewId();
+			}
+			return Task.FromResult(id);
 		}
 
 		public static Task InsertFeatureUsageAsync(ITransactionContext context, int featureId)
@@ -355,17 +354,29 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
-		public static Task InsertStepEntryAsync(ITransactionContext context, long featureEntryId, int stepId, double timeSpent)
+		public static Task InsertStepEntriesAsync(ITransactionContext context, DbFeatureEntryStepRow[] rows)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+			var buffer = new StringBuilder(@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES ");
 
-			// Set parameters values
-			InsertStepEntryQuery.Parameters[0].Value = Convert.ToDecimal(timeSpent);
-			InsertStepEntryQuery.Parameters[1].Value = featureEntryId;
-			InsertStepEntryQuery.Parameters[2].Value = stepId;
+			var addComma = false;
+			foreach (var row in rows)
+			{
+				if (addComma)
+				{
+					buffer.Append(',');
+				}
+				buffer.Append('(');
+				buffer.Append(row.TimeSpent);
+				buffer.Append(',');
+				buffer.Append(row.FeatureEntryId);
+				buffer.Append(',');
+				buffer.Append(row.FeatureStepId);
+				buffer.Append(')');
 
-			// Insert the record
-			context.Execute(InsertStepEntryQuery);
+				addComma = true;
+			}
+
+			context.Execute(new Query(buffer.ToString()));
 
 			return Task.FromResult(true);
 		}

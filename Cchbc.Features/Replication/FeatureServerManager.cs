@@ -46,11 +46,44 @@ namespace Cchbc.Features.Replication
 			var featuresMap = await ReplicateFeaturesAsync(serverContext, clientFeatureRows, contextsMap);
 			var featureEntriesMap = await ReplicateFeatureEntriesAsync(serverContext, clientFeatureEntryRows, featuresMap, userId, versionId);
 
-			foreach (var row in clientFeatureEntryStepRows)
+			// Process in batches
+			var batchSize = 256;
+			var totalBatches = clientFeatureEntryStepRows.Count / batchSize;
+			for (var i = 0; i < totalBatches; i++)
 			{
-				var mappedFeatureEntryId = featureEntriesMap[row.FeatureEntryId];
-				var mappedStepId = stepsMap[row.FeatureStepId];
-				await FeatureAdapter.InsertStepEntryAsync(serverContext, mappedFeatureEntryId, mappedStepId, row.TimeSpent);
+				var offset = i * batchSize;
+				var entryStepRows = new DbFeatureEntryStepRow[batchSize];
+
+				for (var j = 0; j < entryStepRows.Length; j++)
+				{
+					var row = clientFeatureEntryStepRows[offset + j];
+
+					var mappedFeatureEntryId = featureEntriesMap[row.FeatureEntryId];
+					var mappedStepId = stepsMap[row.FeatureStepId];
+
+					entryStepRows[j] = new DbFeatureEntryStepRow(row.TimeSpent, mappedFeatureEntryId, mappedStepId);
+				}
+
+				await FeatureAdapter.InsertStepEntriesAsync(serverContext, entryStepRows);
+			}
+
+			var remaining = clientFeatureEntryStepRows.Count % batchSize;
+			for (var i = 0; i < remaining; i++)
+			{
+				var offset = totalBatches * batchSize;
+				var entryStepRows = new DbFeatureEntryStepRow[remaining];
+
+				for (var j = 0; j < entryStepRows.Length; j++)
+				{
+					var row = clientFeatureEntryStepRows[offset + j];
+
+					var mappedFeatureEntryId = featureEntriesMap[row.FeatureEntryId];
+					var mappedStepId = stepsMap[row.FeatureStepId];
+
+					entryStepRows[j] = new DbFeatureEntryStepRow(row.TimeSpent, mappedFeatureEntryId, mappedStepId);
+				}
+
+				await FeatureAdapter.InsertStepEntriesAsync(serverContext, entryStepRows);
 			}
 
 			foreach (var row in clientFeatureExceptionEntryRows)

@@ -177,7 +177,7 @@ namespace Cchbc.ConsoleClient
 				//return;
 
 				GenerateData(clientDbPath);
-				//return;
+				return;
 
 				//ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
 				//return;
@@ -366,44 +366,47 @@ namespace Cchbc.ConsoleClient
 		{
 			if (path == null) throw new ArgumentNullException(nameof(path));
 
-			var featureManager = new FeatureManager { ContextCreator = new TransactionContextCreator(GetSqliteConnectionString(path)) };
-
-			if (!File.Exists(path))
+			var contextCreator = new TransactionContextCreator(GetSqliteConnectionString(path));
 			{
-				// Create the schema
-				featureManager.CreateSchemaAsync().Wait();
-			}
+				var featureManager = new FeatureManager { ContextCreator = contextCreator };
 
-			// Load the manager
-			featureManager.LoadAsync().Wait();
-
-			var s = Stopwatch.StartNew();
-			for (var i = 0; i < 100; i++)
-			{
-				var steps = new[]
+				if (!File.Exists(path))
 				{
-					new FeatureStepData(@"BrowseImageAsync", TimeSpan.FromMilliseconds(_r.Next(5, 17))),
-					new FeatureStepData(@"AdjustImageAsync", TimeSpan.FromMilliseconds(_r.Next(50, 117))),
-					new FeatureStepData(@"CompressImageAsync", TimeSpan.FromMilliseconds(_r.Next(11, 33))),
-					new FeatureStepData(@"ResizeImageAsync", TimeSpan.FromMilliseconds(_r.Next(68, 98))),
-					new FeatureStepData(@"CheckSize", TimeSpan.FromMilliseconds(_r.Next(1, 2))),
-					new FeatureStepData(@"ConfirmSize", TimeSpan.FromMilliseconds(_r.Next(23, 54))),
-					new FeatureStepData(@"UploadDataAsync", TimeSpan.FromMilliseconds(_r.Next(231, 541))),
-				};
-				var data = new FeatureData(@"Images", "UploadImageAsync", TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)));
+					// Create the schema
+					featureManager.CreateSchemaAsync().Wait();
+				}
 
-				featureManager.MarkUsageAsync(data).Wait();
-				featureManager.WriteAsync(data).Wait();
+				// Load the manager
+				featureManager.LoadAsync().Wait();
+
+				var s = Stopwatch.StartNew();
+				for (var i = 0; i < 100; i++)
+				{
+					var steps = new[]
+					{
+						new FeatureStepData(@"BrowseImageAsync", TimeSpan.FromTicks((long) ((_r.Next(5, 17) + _r.NextDouble()) * 10000))),
+						new FeatureStepData(@"AdjustImageAsync", TimeSpan.FromTicks((long) ((_r.Next(50, 117)+ _r.NextDouble()) * 10000))),
+						new FeatureStepData(@"CompressImageAsync", TimeSpan.FromTicks((long) ((_r.Next(11, 33)+ _r.NextDouble()) * 10000))),
+						new FeatureStepData(@"ResizeImageAsync", TimeSpan.FromTicks((long) ((_r.Next(68, 98)+ _r.NextDouble()) * 10000))),
+						new FeatureStepData(@"CheckSize", TimeSpan.FromTicks((long) ((_r.Next(1, 2)+ _r.NextDouble())* 10000))),
+						new FeatureStepData(@"ConfirmSize", TimeSpan.FromTicks((long) ((_r.Next(23, 54)+ _r.NextDouble())* 10000))),
+						new FeatureStepData(@"UploadDataAsync", TimeSpan.FromTicks((long) ((_r.Next(231, 541)+ _r.NextDouble()) * 10000))),
+					};
+					var data = new FeatureData(@"Images", "UploadImageAsync", TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
+
+					featureManager.MarkUsageAsync(data).Wait();
+					featureManager.WriteAsync(data).Wait();
 
 
-				//DownloadImageAsync(featureManager).Wait();
-				//LoadImagesAsync(featureManager).Wait();
-				//DeleteImageAsync(featureManager).Wait();
-				//SetAsDefaultAsync(featureManager).Wait();
+					//DownloadImageAsync(featureManager).Wait();
+					//LoadImagesAsync(featureManager).Wait();
+					//DeleteImageAsync(featureManager).Wait();
+					//SetAsDefaultAsync(featureManager).Wait();
+				}
+				s.Stop();
+
+				Console.WriteLine(s.ElapsedMilliseconds);
 			}
-			s.Stop();
-
-			Console.WriteLine(s.ElapsedMilliseconds);
 		}
 
 		static Random _r = new Random();

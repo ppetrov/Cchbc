@@ -85,23 +85,31 @@ namespace Cchbc.Features
 			{
 				var featureRow = await this.SaveAsync(context, feature);
 
-				var featureEntryId = await FeatureAdapter.InsertFeatureEntryAsync(context, featureRow.Id, feature.TimeSpent, details ?? string.Empty);
-				await this.SaveStepsAsync(context, featureEntryId, feature.Steps);
+				var hasSteps = feature.Steps.Count > 0;
+				var featureEntryId = await FeatureAdapter.InsertFeatureEntryAsync(context, featureRow.Id, feature.TimeSpent, details ?? string.Empty, hasSteps);
+				if (hasSteps)
+				{
+					await this.SaveStepsAsync(context, featureEntryId, feature.Steps);
+				}
 
 				context.Complete();
 			}
 		}
 
-		public async Task WriteAsync(FeatureData feature, string details = null)
+		public async Task WriteAsync(FeatureData featureData, string details = null)
 		{
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (featureData == null) throw new ArgumentNullException(nameof(featureData));
 
 			using (var context = this.ContextCreator.Create())
 			{
-				var featureRow = await this.SaveAsync(context, feature);
+				var featureRow = await this.SaveAsync(context, featureData);
 
-				var featureEntryId = await FeatureAdapter.InsertFeatureEntryAsync(context, featureRow.Id, feature.TimeSpent, details ?? string.Empty);
-				await this.SaveStepsAsync(context, featureEntryId, feature.Steps);
+				var hasSteps = featureData.Steps.Length > 0;
+				var featureEntryId = await FeatureAdapter.InsertFeatureEntryAsync(context, featureRow.Id, featureData.TimeSpent, details ?? string.Empty, hasSteps);
+				if (hasSteps)
+				{
+					await this.SaveStepsAsync(context, featureEntryId, featureData.Steps);
+				}
 
 				context.Complete();
 			}
@@ -183,39 +191,22 @@ namespace Cchbc.Features
 			return feature;
 		}
 
-		private async Task SaveStepsAsync(ITransactionContext context, long featureEntryId, ICollection<FeatureStep> steps)
+		private Task SaveStepsAsync(ITransactionContext context, long featureEntryId, List<FeatureStep> steps)
 		{
-			if (steps.Count == 0) return;
+			var stepData = new FeatureStepData[steps.Count];
 
-			foreach (var step in steps)
+			for (var index = 0; index < steps.Count; index++)
 			{
-				var name = step.Name;
-
-				DbFeatureStepRow current;
-				if (!this.Steps.TryGetValue(name, out current))
-				{
-					// Inser step
-					var newStepId = await FeatureAdapter.InsertStepAsync(context, name);
-
-					current = new DbFeatureStepRow(newStepId, name);
-
-					this.Steps.Add(name, current);
-				}
+				var step = steps[index];
+				stepData[index] = new FeatureStepData(step.Name, step.TimeSpent);
 			}
 
-			// Inser step entries
-			foreach (var step in steps)
-			{
-				await FeatureAdapter.InsertStepEntryAsync(context,
-					featureEntryId,
-					this.Steps[step.Name].Id,
-					step.TimeSpent.TotalMilliseconds);
-			}
+			return SaveStepsAsync(context, featureEntryId, stepData);
 		}
 
-		private async Task SaveStepsAsync(ITransactionContext context, long featureEntryId, ICollection<FeatureStepData> steps)
+		private async Task SaveStepsAsync(ITransactionContext context, long featureEntryId, FeatureStepData[] steps)
 		{
-			if (steps.Count == 0) return;
+			if (steps.Length == 0) return;
 
 			foreach (var step in steps)
 			{
@@ -233,14 +224,16 @@ namespace Cchbc.Features
 				}
 			}
 
-			// Inser step entries
-			foreach (var step in steps)
+			var rows = new DbFeatureEntryStepRow[steps.Length];
+
+			for (var index = 0; index < steps.Length; index++)
 			{
-				await FeatureAdapter.InsertStepEntryAsync(context,
-					featureEntryId,
-					this.Steps[step.Name].Id,
-					step.TimeSpent.TotalMilliseconds);
+				var step = steps[index];
+				rows[index] = new DbFeatureEntryStepRow(step.TimeSpent.TotalMilliseconds, featureEntryId, this.Steps[step.Name].Id);
 			}
+
+			// Inser step entries
+			await FeatureAdapter.InsertStepEntriesAsync(context, rows);
 		}
 
 		private async Task<Dictionary<long, List<DbFeatureRow>>> GetFeaturesAsync(ITransactionContext context)
