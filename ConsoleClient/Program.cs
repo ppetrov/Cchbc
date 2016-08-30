@@ -394,7 +394,7 @@ namespace Cchbc.ConsoleClient
 					};
 					var data = new FeatureData(@"Images", "UploadImageAsync", TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
 
-					featureManager.MarkUsageAsync(data).Wait();
+					//featureManager.MarkUsageAsync(data).Wait();
 					featureManager.WriteAsync(data).Wait();
 
 

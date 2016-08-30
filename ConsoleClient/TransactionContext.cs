@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Cchbc.ConsoleClient;
 using Cchbc.Data;
@@ -39,6 +40,8 @@ namespace ConsoleClient
 				cmd.CommandText = query.Statement;
 				cmd.CommandType = CommandType.Text;
 
+				Debug.WriteLine(query.Statement);
+
 				foreach (var p in query.Parameters)
 				{
 					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
@@ -61,6 +64,8 @@ namespace ConsoleClient
 				cmd.Transaction = _tr;
 				cmd.CommandText = query.Statement;
 				cmd.CommandType = CommandType.Text;
+
+				Debug.WriteLine(query.Statement);
 
 				foreach (var p in query.Parameters)
 				{
@@ -92,6 +97,8 @@ namespace ConsoleClient
 				cmd.CommandText = query.Statement;
 				cmd.CommandType = CommandType.Text;
 
+				Debug.WriteLine(query.Statement);
+
 				foreach (var p in query.Parameters)
 				{
 					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
@@ -121,6 +128,8 @@ namespace ConsoleClient
 				cmd.CommandText = query.Statement;
 				cmd.CommandType = CommandType.Text;
 
+				Debug.WriteLine(query.Statement);
+
 				foreach (var p in query.Parameters)
 				{
 					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
@@ -148,6 +157,8 @@ namespace ConsoleClient
 				cmd.Transaction = _tr;
 				cmd.CommandText = query.Statement;
 				cmd.CommandType = CommandType.Text;
+
+				Debug.WriteLine(query.Statement);
 
 				using (var r = cmd.ExecuteReader())
 				{
