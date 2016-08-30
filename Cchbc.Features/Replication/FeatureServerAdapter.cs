@@ -46,7 +46,7 @@ namespace Cchbc.Features.Replication
 
 		private static readonly Query InsertServerFeatureEntryQuery =
 			new Query(
-				@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID ) VALUES (@TIMESPENT, @DETAILS, @CREATED_AT, @FEATURE, @USER, @VERSION)",
+				@"INSERT INTO FEATURE_ENTRIES(TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID) VALUES (@TIMESPENT, @DETAILS, @CREATED_AT, @FEATURE, @USER, @VERSION)",
 				new[]
 				{
 					new QueryParameter(@"@TIMESPENT", 0M),
@@ -58,7 +58,7 @@ namespace Cchbc.Features.Replication
 				});
 
 		private static readonly Query InsertExceptionEntryQuery =
-			new Query(@"INSERT INTO FEATURE_EXCEPTION_ENTRIES(EXCEPTION_ID, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID ) VALUES (@EXCEPTION, @CREATED_AT, @FEATURE, @USER, @VERSION)",
+			new Query(@"INSERT INTO FEATURE_EXCEPTION_ENTRIES(EXCEPTION_ID, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID) VALUES (@EXCEPTION, @CREATED_AT, @FEATURE, @USER, @VERSION)",
 				new[]
 				{
 					new QueryParameter(@"@EXCEPTION", 0L),
@@ -287,7 +287,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return GetDataMapped(context, @"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS");
 		}
 
-		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, double timeSpent, string details, DateTime createdAt, int featureId, int userId, int versionId)
+		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, double timeSpent, string details, DateTime createdAt, int featureId, int userId, int versionId, bool needNewId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (details == null) throw new ArgumentNullException(nameof(details));
@@ -300,7 +300,14 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			InsertServerFeatureEntryQuery.Parameters[4].Value = userId;
 			InsertServerFeatureEntryQuery.Parameters[5].Value = versionId;
 
-			return FeatureAdapter.ExecuteInsertAsync(context, InsertServerFeatureEntryQuery);
+			context.Execute(InsertServerFeatureEntryQuery);
+
+			var id = -1L;
+			if (needNewId)
+			{
+				id = context.GetNewId();
+			}
+			return Task.FromResult(id);
 		}
 
 		public static Task InsertExceptionEntryAsync(ITransactionContext context, long exceptionId, DateTime createdAt, long featureId, long userId, long versionId)

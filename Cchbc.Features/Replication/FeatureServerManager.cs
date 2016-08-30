@@ -44,11 +44,12 @@ namespace Cchbc.Features.Replication
 			var stepsMap = await ReplicateStepsAsync(serverContext, clientStepRows);
 			var exceptionsMap = await ReplicateExceptionsAsync(serverContext, clientExceptionRows);
 			var featuresMap = await ReplicateFeaturesAsync(serverContext, clientFeatureRows, contextsMap);
-			var featureEntriesMap = await ReplicateFeatureEntriesAsync(serverContext, clientFeatureEntryRows, featuresMap, userId, versionId);
+			var featureEntriesMap = await ReplicateFeatureEntriesAsync(serverContext, clientFeatureEntryRows, featuresMap, userId, versionId, clientFeatureEntryStepRows);
 
 			// Process in batches
+			var totalEntrySteps = clientFeatureEntryStepRows.Count;
 			var batchSize = 256;
-			var totalBatches = clientFeatureEntryStepRows.Count / batchSize;
+			var totalBatches = totalEntrySteps / batchSize;
 			for (var i = 0; i < totalBatches; i++)
 			{
 				var offset = i * batchSize;
@@ -67,8 +68,8 @@ namespace Cchbc.Features.Replication
 				await FeatureAdapter.InsertStepEntriesAsync(serverContext, entryStepRows);
 			}
 
-			var remaining = clientFeatureEntryStepRows.Count % batchSize;
-			for (var i = 0; i < remaining; i++)
+			var remaining = totalEntrySteps % batchSize;
+			if (remaining > 0)
 			{
 				var offset = totalBatches * batchSize;
 				var entryStepRows = new DbFeatureEntryStepRow[remaining];
@@ -203,14 +204,22 @@ namespace Cchbc.Features.Replication
 			return featuresMap;
 		}
 
-		private static async Task<Dictionary<long, long>> ReplicateFeatureEntriesAsync(ITransactionContext context, List<DbFeatureEntryRow> featureEntryRows, Dictionary<int, int> featuresMap, int userId, int versionId)
+		private static async Task<Dictionary<long, long>> ReplicateFeatureEntriesAsync(ITransactionContext context, List<DbFeatureEntryRow> featureEntryRows, Dictionary<int, int> featuresMap, int userId, int versionId, List<DbFeatureEntryStepRow> entrySteps)
 		{
+			var featuresWithSteps = new HashSet<long>();
+
+			foreach (var step in entrySteps)
+			{
+				featuresWithSteps.Add(step.FeatureEntryId);
+			}
+
 			var map = new Dictionary<long, long>(featureEntryRows.Count);
 
 			foreach (var row in featureEntryRows)
 			{
 				var mappedFeatureId = featuresMap[row.FeatureId];
-				map.Add(row.Id, await FeatureServerAdapter.InsertFeatureEntryAsync(context, row.TimeSpent, row.Details, row.CreatedAt, mappedFeatureId, userId, versionId));
+				var needNewId = featuresWithSteps.Contains(row.FeatureId);
+				map.Add(row.Id, await FeatureServerAdapter.InsertFeatureEntryAsync(context, row.TimeSpent, row.Details, row.CreatedAt, mappedFeatureId, userId, versionId, needNewId));
 			}
 
 			return map;

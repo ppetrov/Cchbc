@@ -176,11 +176,11 @@ namespace Cchbc.ConsoleClient
 				//WeatherTest();
 				//return;
 
-				GenerateData(clientDbPath);
-				return;
-
-				//ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
+				//GenerateData(clientDbPath);
 				//return;
+
+				ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
+				return;
 
 				var viewModel = new FeatureExceptionsViewModel(
 					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)),
