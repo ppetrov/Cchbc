@@ -176,16 +176,20 @@ namespace Cchbc.ConsoleClient
 				//WeatherTest();
 				//return;
 
-				//GenerateData(clientDbPath);
+				//CreateSchema(GetSqliteConnectionString(serverDbPath));
 				//return;
 
+				var w = Stopwatch.StartNew();
+				GenerateData(clientDbPath);
 				ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
+				ClearData(clientDbPath);
+				w.Stop();
+				Console.WriteLine(w.ElapsedMilliseconds);
 				return;
 
 				var viewModel = new FeatureExceptionsViewModel(
 					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)),
-					new FeatureExceptionsSettings()
-					);
+					new FeatureExceptionsSettings());
 
 				viewModel.Load(
 					FeatureExceptionsDataProvider.GetTimePeriods,
@@ -341,6 +345,12 @@ namespace Cchbc.ConsoleClient
 			//}
 		}
 
+		private static void ClearData(string path)
+		{
+			File.Delete(path);
+			new FeatureManager { ContextCreator = new TransactionContextCreator(GetSqliteConnectionString(path)) }.CreateSchemaAsync().Wait();
+		}
+
 		private static void WeatherTest()
 		{
 			var forecaAppKey = @"p4ktTTTHknRT9ZbQTROIuwnfw";
@@ -354,218 +364,151 @@ namespace Cchbc.ConsoleClient
 
 		private static void ReplicateData(string clientDb, string serverDb)
 		{
-			//CreateSchema(serverDb);
-			//return;
+			Console.WriteLine(@"Load client data");
+			var s = Stopwatch.StartNew();
 
-			Replicate(serverDb, clientDb, @"ppetrov", @"8.28.79.927");
-			Replicate(serverDb, clientDb, @"vsimeonov", @"6.18.29.392");
-			Replicate(serverDb, clientDb, @"iandonov", @"3.8.109.23");
+			ClientData data;
+			using (var client = new TransactionContextCreator(clientDb).Create())
+			{
+				data = FeatureAdapter.GetDataAsync(client).Result;
+				client.Complete();
+			}
+
+			s.Stop();
+			Console.WriteLine(s.ElapsedMilliseconds);
+
+			var versions = new[]
+			{
+				@"8.28.79.127",
+				@"7.74.19.727",
+				@"6.22.29.492",
+				@"5.96.69.792",
+				@"4.11.27.292",
+				@"3.85.19.223",
+			};
+
+			for (var i = 11; i < 120; i++)
+			{
+				var user = @"BG" + (i.ToString()).PadLeft(6, '0');
+
+				if (_r.Next(0, 10) == 0)
+				{
+					continue;
+				}
+				Replicate(serverDb, data, user, versions[_r.Next(versions.Length)]);
+			}
 		}
 
 		private static void GenerateData(string path)
 		{
-			if (path == null) throw new ArgumentNullException(nameof(path));
-
 			var contextCreator = new TransactionContextCreator(GetSqliteConnectionString(path));
+
+			var featureManager = new FeatureManager { ContextCreator = contextCreator };
+
+			if (!File.Exists(path))
 			{
-				var featureManager = new FeatureManager { ContextCreator = contextCreator };
-
-				if (!File.Exists(path))
-				{
-					// Create the schema
-					featureManager.CreateSchemaAsync().Wait();
-				}
-
-				// Load the manager
-				featureManager.LoadAsync().Wait();
-
-				var s = Stopwatch.StartNew();
-				for (var i = 0; i < 100; i++)
-				{
-					var steps = new[]
-					{
-						new FeatureStepData(@"BrowseImageAsync", TimeSpan.FromTicks((long) ((_r.Next(5, 17) + _r.NextDouble()) * 10000))),
-						new FeatureStepData(@"AdjustImageAsync", TimeSpan.FromTicks((long) ((_r.Next(50, 117)+ _r.NextDouble()) * 10000))),
-						new FeatureStepData(@"CompressImageAsync", TimeSpan.FromTicks((long) ((_r.Next(11, 33)+ _r.NextDouble()) * 10000))),
-						new FeatureStepData(@"ResizeImageAsync", TimeSpan.FromTicks((long) ((_r.Next(68, 98)+ _r.NextDouble()) * 10000))),
-						new FeatureStepData(@"CheckSize", TimeSpan.FromTicks((long) ((_r.Next(1, 2)+ _r.NextDouble())* 10000))),
-						new FeatureStepData(@"ConfirmSize", TimeSpan.FromTicks((long) ((_r.Next(23, 54)+ _r.NextDouble())* 10000))),
-						new FeatureStepData(@"UploadDataAsync", TimeSpan.FromTicks((long) ((_r.Next(231, 541)+ _r.NextDouble()) * 10000))),
-					};
-					var data = new FeatureData(@"Images", "UploadImageAsync", TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
-
-					//featureManager.MarkUsageAsync(data).Wait();
-					featureManager.WriteAsync(data).Wait();
-
-
-					//DownloadImageAsync(featureManager).Wait();
-					//LoadImagesAsync(featureManager).Wait();
-					//DeleteImageAsync(featureManager).Wait();
-					//SetAsDefaultAsync(featureManager).Wait();
-				}
-				s.Stop();
-
-				Console.WriteLine(s.ElapsedMilliseconds);
+				// Create the schema
+				featureManager.CreateSchemaAsync().Wait();
 			}
+
+			// Load the manager
+			featureManager.LoadAsync().Wait();
+
+			// TODO : !!!
+			// Generate exceptions
+			// Generate mode scenarios
+			var s = Stopwatch.StartNew();
+			var scenarios = new[]
+			{
+				GetUploadImageFeature(),
+				GetDownloadImageFeature(),
+				GetLoadImagesAsync(),
+				GetDeleteImageAsync(),
+				GetSetAsDefaultAsync(),
+			};
+			foreach (var data in scenarios)
+			{
+				featureManager.MarkUsageAsync(data).Wait();
+				featureManager.WriteAsync(data).Wait();
+			}
+
+			s.Stop();
+
+			Console.WriteLine(s.ElapsedMilliseconds);
+		}
+
+		private static FeatureData GetUploadImageFeature()
+		{
+			var steps = new[]
+			{
+				new FeatureStepData(@"BrowseImageAsync", GetTime(5, 17)),
+				new FeatureStepData(@"AdjustImageAsync", GetTime(50, 117)),
+				new FeatureStepData(@"CompressImageAsync", GetTime(11, 33)),
+				new FeatureStepData(@"ResizeImageAsync", GetTime(68, 98)),
+				new FeatureStepData(@"CheckSize", GetTime(1, 2)),
+				new FeatureStepData(@"ConfirmSize", GetTime(23, 54)),
+				new FeatureStepData(@"UploadDataAsync", GetTime(231, 541)),
+			};
+			return new FeatureData(@"Images", "UploadImageAsync",
+				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
+		}
+
+		private static FeatureData GetDownloadImageFeature()
+		{
+			var steps = new[]
+			{
+				new FeatureStepData(@"DownloadImageDataFromService", GetTime(100, 200)),
+				new FeatureStepData(@"SaveImageToDb", GetTime(7, 23)),
+			};
+			return new FeatureData(@"Images", "DownloadImageAsync",
+				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
+		}
+
+		private static FeatureData GetLoadImagesAsync()
+		{
+			var steps = new[]
+			{
+				new FeatureStepData(@"LoadImagesFromDb", GetTime(250, 350)),
+			};
+			return new FeatureData(@"Images", "LoadImagesAsync",
+				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
+		}
+
+		private static FeatureData GetDeleteImageAsync()
+		{
+			var steps = new[]
+			{
+				new FeatureStepData(@"ConfirmDelete", GetTime(1, 20)),
+				new FeatureStepData(@"CheckDeleteDefault", GetTime(1, 20)),
+				new FeatureStepData(@"DeleteImageFromService", GetTime(375, 951)),
+				new FeatureStepData(@"DeleteImageFromDb", GetTime(15, 50)),
+			};
+			return new FeatureData(@"Images", "DeleteImageAsync",
+				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
+		}
+
+		private static FeatureData GetSetAsDefaultAsync()
+		{
+			var steps = new[]
+			{
+				new FeatureStepData(@"CheckDefault", GetTime(5, 17)),
+				new FeatureStepData(@"SetAsDefaultFromService", GetTime(564, 700)),
+				new FeatureStepData(@"UpdateImageFromDb", GetTime(20, 30)),
+			};
+			return new FeatureData(@"Images", "SetAsDefaultAsync",
+				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
+		}
+
+
+		private static TimeSpan GetTime(int min, int max)
+		{
+			return TimeSpan.FromTicks((long)((_r.Next(min, max) + _r.NextDouble()) * 10000));
 		}
 
 		static Random _r = new Random();
 
-		private static async Task SetAsDefaultAsync(FeatureManager featureManager)
-		{
-			var feature = Feature.StartNew(@"Images", nameof(SetAsDefaultAsync));
-			try
-			{
-				await featureManager.MarkUsageAsync(feature);
 
-				using (feature.NewStep(@"CheckDefault"))
-				{
-					Thread.Sleep(_r.Next(5, 7));
-				}
-				using (feature.NewStep(@"SetAsDefaultFromService"))
-				{
-					Thread.Sleep(_r.Next(564, 700));
-				}
-				using (feature.NewStep(@"UpdateImageFromDb"))
-				{
-					Thread.Sleep(_r.Next(20, 30));
-				}
 
-				await featureManager.WriteAsync(feature);
-			}
-			catch (Exception ex)
-			{
-				await featureManager.WriteExceptionAsync(feature, ex);
-			}
-		}
-
-		private static async Task DeleteImageAsync(FeatureManager featureManager)
-		{
-			var feature = Feature.StartNew(@"Images", nameof(DeleteImageAsync));
-			try
-			{
-				await featureManager.MarkUsageAsync(feature);
-
-				using (feature.NewStep(@"ConfirmDelete"))
-				{
-					Thread.Sleep(_r.Next(1, 10));
-				}
-				using (feature.NewStep(@"CheckDeleteDefault"))
-				{
-					Thread.Sleep(_r.Next(1, 10));
-				}
-				using (feature.NewStep(@"DeleteImageFromService"))
-				{
-					Thread.Sleep(_r.Next(375, 951));
-				}
-				using (feature.NewStep(@"DeleteImageFromDb"))
-				{
-					Thread.Sleep(_r.Next(15, 50));
-				}
-
-				await featureManager.WriteAsync(feature);
-			}
-			catch (Exception ex)
-			{
-				await featureManager.WriteExceptionAsync(feature, ex);
-			}
-		}
-
-		private static async Task LoadImagesAsync(FeatureManager featureManager)
-		{
-			var feature = Feature.StartNew(@"Images", nameof(LoadImagesAsync));
-			try
-			{
-				await featureManager.MarkUsageAsync(feature);
-
-				using (feature.NewStep(@"LoadImagesFromDb"))
-				{
-					Thread.Sleep(_r.Next(250, 350));
-				}
-
-				await featureManager.WriteAsync(feature);
-			}
-			catch (Exception ex)
-			{
-				await featureManager.WriteExceptionAsync(feature, ex);
-			}
-		}
-
-		private static async Task DownloadImageAsync(FeatureManager featureManager)
-		{
-			var feature = Feature.StartNew(@"Images", nameof(DownloadImageAsync));
-			try
-			{
-				await featureManager.MarkUsageAsync(feature);
-
-				using (feature.NewStep(@"DownloadImageDataFromService"))
-				{
-					Thread.Sleep(_r.Next(100, 200));
-				}
-
-				using (feature.NewStep(@"SaveImageToDb"))
-				{
-					Thread.Sleep(_r.Next(7, 23));
-				}
-
-				await featureManager.WriteAsync(feature);
-			}
-			catch (Exception ex)
-			{
-				await featureManager.WriteExceptionAsync(feature, ex);
-			}
-		}
-
-		//private static async Task UploadImageAsync(FeatureManager featureManager)
-		//{
-		//	var feature = Feature.StartNew(@"Images", nameof(UploadImageAsync));
-		//	try
-		//	{
-		//		await featureManager.MarkUsageAsync(feature);
-
-		//		var image = await BrowseImageAsync(feature);
-		//		if (image == null) return;
-
-		//		var adjustedImage = AdjustImageAsync(feature, image);
-
-		//		var isSizeToBig = false;
-		//		var confirmed = true;
-
-		//		using (feature.NewStep(@"CheckSize"))
-		//		{
-		//			var size = 2048;
-		//			isSizeToBig = size > 1024;
-
-		//			isSizeToBig = true;
-
-		//			if (isSizeToBig)
-		//			{
-		//				using (feature.NewStep(@"ConfirmSize"))
-		//				{
-		//					feature.Pause();
-		//					Thread.Sleep(_r.Next(23, 54));
-		//					feature.Resume();
-		//					confirmed = true;
-		//				}
-		//			}
-		//		}
-
-		//		if (confirmed)
-		//		{
-		//			using (feature.NewStep(@"UploadBytes"))
-		//			{
-		//				// Send bytes to the wire
-		//				Thread.Sleep(_r.Next(231, 541));
-		//			}
-		//		}
-
-		//		await featureManager.WriteAsync(feature);
-		//	}
-		//	catch (Exception ex)
-		//	{
-		//		await featureManager.WriteExceptionAsync(feature, ex);
-		//	}
-		//}
 
 		private static void SearchSourceCode()
 		{
@@ -609,10 +552,6 @@ namespace Cchbc.ConsoleClient
 
 			Console.WriteLine();
 		}
-
-
-
-
 
 		private static void DisplayHistogram()
 		{
@@ -862,25 +801,11 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		private static void Replicate(string serverDb, string clientDb, string user, string version)
+		private static void Replicate(string serverDb, ClientData data, string user, string version)
 		{
 			Console.WriteLine($@"Replicate '{user}' & {version}");
 
-			Console.WriteLine(@"Load client data");
 			var s = Stopwatch.StartNew();
-
-			ClientData data;
-			using (var client = new TransactionContextCreator(clientDb).Create())
-			{
-				data = FeatureAdapter.GetDataAsync(client).Result;
-				client.Complete();
-			}
-
-			s.Stop();
-			Console.WriteLine(s.ElapsedMilliseconds);
-
-			Console.WriteLine(@"Replicate client data to server");
-			s.Restart();
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
 				FeatureServerManager.ReplicateAsync(user, version, server, data).Wait();

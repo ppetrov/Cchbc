@@ -13,4 +13,11 @@ namespace Cchbc.Features.Data
 			this.FeatureStepId = featureStepId;
 		}
 	}
+
+	public sealed class FeatureEntryStep
+	{
+		public double TimeSpent;
+		public long FeatureEntryId;
+		public int FeatureStepId;
+	}
 }

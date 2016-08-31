@@ -381,6 +381,33 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
+		public static Task InsertStepEntriesAsync(ITransactionContext context, IEnumerable<FeatureEntryStep> rows)
+		{
+			var buffer = new StringBuilder(@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES ");
+
+			var addComma = false;
+			foreach (var row in rows)
+			{
+				if (addComma)
+				{
+					buffer.Append(',');
+				}
+				buffer.Append('(');
+				buffer.Append(row.TimeSpent);
+				buffer.Append(',');
+				buffer.Append(row.FeatureEntryId);
+				buffer.Append(',');
+				buffer.Append(row.FeatureStepId);
+				buffer.Append(')');
+
+				addComma = true;
+			}
+
+			context.Execute(new Query(buffer.ToString()));
+
+			return Task.FromResult(true);
+		}
+
 		public static Task<long> ExecuteInsertAsync(ITransactionContext context, Query query)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
