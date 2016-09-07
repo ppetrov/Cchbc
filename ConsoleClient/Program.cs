@@ -1,5 +1,6 @@
 ﻿using System;
 using System.CodeDom;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
@@ -173,19 +174,38 @@ namespace Cchbc.ConsoleClient
 
 			try
 			{
+				//GenerateData(clientDbPath);
+
+				ClientData cd;
+				using (var client = new TransactionContextCreator(GetSqliteConnectionString(clientDbPath)).Create())
+				{
+					cd = FeatureAdapter.GetDataAsync(client).Result;
+					client.Complete();
+				}
+
+				cd.ExceptionRows.Add(new DbFeatureExceptionRow(1, @"PPP Exception"));
+				cd.ExceptionEntryRows.Add(new DbFeatureExceptionEntryRow(1, DateTime.Now, cd.FeatureRows[0].Id));
+
+				var sw = Stopwatch.StartNew();
+				var packedData = ClientDataPacker.Pack(cd);
+				var original = ClientDataPacker.Unpack(packedData);
+				sw.Stop();
+
+				Console.WriteLine(sw.ElapsedMilliseconds);
+
 				//WeatherTest();
 				//return;
 
 				//CreateSchema(GetSqliteConnectionString(serverDbPath));
 				//return;
 
-				var w = Stopwatch.StartNew();
-				GenerateData(clientDbPath);
-				ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
-				ClearData(clientDbPath);
-				w.Stop();
-				Console.WriteLine(w.ElapsedMilliseconds);
-				return;
+				//var w = Stopwatch.StartNew();
+				//GenerateData(clientDbPath);
+				//ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
+				//ClearData(clientDbPath);
+				//w.Stop();
+				//Console.WriteLine(w.ElapsedMilliseconds);
+				//return;
 
 				var viewModel = new FeatureExceptionsViewModel(
 					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)),
@@ -255,23 +275,23 @@ namespace Cchbc.ConsoleClient
 			data.FeatureEntryRows.Add(new DbFeatureEntryRow(17, 123.456, @"#", DateTime.Today.AddDays(-1), -4));
 			data.EntryStepRows.Add(new DbFeatureEntryStepRow(55.66, -1, -2));
 
-			var s = Stopwatch.StartNew();
-			var result = ClientDataPacker.Pack(data);
+			//var s = Stopwatch.StartNew();
+			//var result = ClientDataPacker.Pack(data);
 
-			s.Stop();
-			Console.WriteLine(s.ElapsedMilliseconds);
+			//s.Stop();
+			//Console.WriteLine(s.ElapsedMilliseconds);
 
-			s.Restart();
-			var back = ClientDataPacker.Unpack(result);
-			s.Stop();
-			Console.WriteLine(s.ElapsedMilliseconds);
-			Console.WriteLine(back);
+			//s.Restart();
+			//var back = ClientDataPacker.Unpack(result);
+			//s.Stop();
+			//Console.WriteLine(s.ElapsedMilliseconds);
+			//Console.WriteLine(back);
 
-			Console.WriteLine();
-			Console.WriteLine();
-			Console.WriteLine();
+			//Console.WriteLine();
+			//Console.WriteLine();
+			//Console.WriteLine();
 
-			Console.WriteLine(result.Length);
+			//Console.WriteLine(result.Length);
 
 
 
@@ -343,6 +363,79 @@ namespace Cchbc.ConsoleClient
 			//{
 			//	Console.WriteLine(e);
 			//}
+		}
+
+		private static void DispatchItems()
+		{
+			//
+			// Dispatcher
+			//
+			using (var exitEvent = new ManualResetEvent(false))
+			{
+				while (true)
+				{
+					// Get the items to send to SAP
+					var items = new ConcurrentQueue<string>(new[] { @"A", @"B", @"C" });
+					if (!items.Any())
+					{
+						// We don't have items. 
+						var exitRequested = false;
+						var timeout = TimeSpan.FromSeconds(1);
+						var seconds = 45;
+						while (seconds-- > 0)
+						{
+							if (exitEvent.WaitOne(timeout))
+							{
+								exitRequested = true;
+							}
+						}
+						if (exitRequested)
+						{
+							break;
+						}
+						continue;
+					}
+
+					// Process in parallel
+					using (var ce = new CountdownEvent(Math.Min(8, items.Count)))
+					{
+						for (var i = 0; i < ce.InitialCount; i++)
+						{
+							ThreadPool.QueueUserWorkItem(_ =>
+							{
+								var parameters = _ as object[];
+								var shared = parameters[0] as ConcurrentQueue<string>;
+								var e = parameters[1] as CountdownEvent;
+
+								try
+								{
+									// Share the 
+									string item;
+									while (shared.TryDequeue(out item))
+									{
+										Console.WriteLine(item);
+										try
+										{
+											// TODO : Send to SAP & Mark in Oracle
+										}
+										catch
+										{
+											// TODO : Unable to process item item
+											// TODO : Log exception
+										}
+									}
+								}
+								finally
+								{
+									e.Signal();
+								}
+							}, new object[] { items, ce });
+						}
+
+						ce.Wait();
+					}
+				}
+			}
 		}
 
 		private static void ClearData(string path)
@@ -425,6 +518,7 @@ namespace Cchbc.ConsoleClient
 				GetLoadImagesAsync(),
 				GetDeleteImageAsync(),
 				GetSetAsDefaultAsync(),
+				GetCreateActivityData(),
 			};
 			foreach (var data in scenarios)
 			{
@@ -494,6 +588,22 @@ namespace Cchbc.ConsoleClient
 				new FeatureStepData(@"CheckDefault", GetTime(5, 17)),
 				new FeatureStepData(@"SetAsDefaultFromService", GetTime(564, 700)),
 				new FeatureStepData(@"UpdateImageFromDb", GetTime(20, 30)),
+			};
+			return new FeatureData(@"Images", "SetAsDefaultAsync",
+				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
+		}
+
+		private static FeatureData GetCreateActivityData()
+		{
+			var steps = new[]
+			{
+				new FeatureStepData(@"ValidateActiveDay", GetTime(20, 30)),
+				new FeatureStepData(@"ValidateOldDays", GetTime(20, 30)),
+				new FeatureStepData(@"ValidateOutletAssignment", GetTime(10, 20)),
+				new FeatureStepData(@"ValidateActivityTypesByOutlet", GetTime(100, 300)),
+				new FeatureStepData(@"CreateVisit", GetTime(50, 220)),
+				new FeatureStepData(@"CreateVisitActivity", GetTime(50, 220)),
+				new FeatureStepData(@"Create", GetTime(50, 220)),
 			};
 			return new FeatureData(@"Images", "SetAsDefaultAsync",
 				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);

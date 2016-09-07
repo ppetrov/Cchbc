@@ -43,7 +43,7 @@ namespace ConsoleClient
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			var query = @"SELECT ID, NAME FROM FEATURE_VERSIONS";
+			var query = @"SELECT ID, NAME FROM FEATURE_VERSIONS ORDER BY NAME";
 
 			return context.Execute(new Query<FeatureVersion>(query, r => new FeatureVersion(r.GetInt64(0), r.GetString(1))));
 		}
@@ -72,7 +72,7 @@ namespace ConsoleClient
 				m.Add(r.GetInt64(0), r.GetString(1));
 			}, new Query(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS"));
 
-			// ~ 10 entries only Max entries (distict) users
+			// ~ 10 entries only Max entries (distinct) users
 			var users = new Dictionary<long, FeatureUser>();
 			context.Fill(users, (r, m) =>
 			{
@@ -80,7 +80,7 @@ namespace ConsoleClient
 				m.Add(id, new FeatureUser(id, r.GetString(1)));
 			}, new Query(@"SELECT ID, NAME FROM FEATURE_USERS"));
 
-			// ~ 10 Max entries (distict) versions
+			// ~ 10 Max entries (distinct) versions
 			var versions = new Dictionary<long, FeatureVersion>();
 			context.Fill(versions, (r, m) =>
 			{

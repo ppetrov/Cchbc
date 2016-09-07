@@ -183,68 +183,93 @@ namespace Cchbc.Features.Data
 
 		private static short ReadShort(byte[] buffer, ref int offset)
 		{
+			var value = BitConverter.ToInt16(buffer, offset);
 			offset += ShortSize;
-			return BitConverter.ToInt16(buffer, offset - ShortSize);
+			return value;
 		}
 
 		private static int ReadInt(byte[] buffer, ref int offset)
 		{
+			var value = BitConverter.ToInt32(buffer, offset);
 			offset += IntSize;
-			return BitConverter.ToInt32(buffer, offset - ShortSize);
+			return value;
 		}
 
 		private static long ReadLong(byte[] buffer, ref int offset)
 		{
+			var value = BitConverter.ToInt64(buffer, offset);
 			offset += LongSize;
-			return BitConverter.ToInt64(buffer, offset - LongSize);
+			return value;
 		}
 
 		private static int GetBufferSize(ClientData clientData)
 		{
-			const int longSize = 8;
+			// For the number of elements in every list
+			var totalLists = 8;
+			var size = totalLists * ShortSize;
 
-			var lists = 7;
-			var bufferSize = lists * ShortSize;
-
+			// Id 
+			size += IntSize * clientData.ContextRows.Count;
 			foreach (var row in clientData.ContextRows)
 			{
-				bufferSize += longSize;
-				bufferSize += GetBufferSize(row.Name);
+				// Name
+				size += GetBufferSize(row.Name);
 			}
 
+			// Id
+			size += IntSize * clientData.StepRows.Count;
 			foreach (var row in clientData.StepRows)
 			{
-				bufferSize += longSize;
-				bufferSize += GetBufferSize(row.Name);
+				// Name
+				size += GetBufferSize(row.Name);
 			}
 
+			// Id
+			size += IntSize * clientData.ExceptionRows.Count;
 			foreach (var row in clientData.ExceptionRows)
 			{
-				bufferSize += longSize;
-				bufferSize += GetBufferSize(row.Contents);
+				// Contents
+				size += GetBufferSize(row.Contents);
 			}
 
+			// Id & Context Id
+			size += 2 * IntSize * clientData.FeatureRows.Count;
 			foreach (var row in clientData.FeatureRows)
 			{
-				bufferSize += (2 * longSize);
-				bufferSize += GetBufferSize(row.Name);
+				// Name
+				size += GetBufferSize(row.Name);
 			}
 
+			// Feature Id & Created At
+			size += IntSize * clientData.UsageRows.Count;
+			size += LongSize * clientData.UsageRows.Count;
+
+			// Id, Time, CreatedAt
+			size += 3 * LongSize * clientData.FeatureEntryRows.Count;
+			// FeatureId
+			size += IntSize * clientData.FeatureEntryRows.Count;
+			// Details
 			foreach (var row in clientData.FeatureEntryRows)
 			{
-				bufferSize += (4 * longSize);
-				bufferSize += GetBufferSize(row.Details);
+				size += GetBufferSize(row.Details);
 			}
 
-			bufferSize += (3 * longSize) * clientData.EntryStepRows.Count;
+			// Time & Feature Entry
+			size += 2 * LongSize * clientData.EntryStepRows.Count;
+			// Feature Step Id
+			size += IntSize * clientData.EntryStepRows.Count;
 
-			bufferSize += (clientData.ExceptionEntryRows.Count * (3 * longSize));
+			// Exception Id & Feature Id
+			size += 2 * IntSize * clientData.ExceptionEntryRows.Count;
+			// Created At
+			size += LongSize * clientData.ExceptionEntryRows.Count;
 
-			return bufferSize;
+			return size;
 		}
 
 		private static int GetBufferSize(string value)
 		{
+			// the length(encoded in short) and a char for every symbol
 			return ShortSize + value.Length;
 		}
 
