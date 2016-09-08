@@ -50,19 +50,16 @@ namespace Cchbc.Features.Replication
 			var totalEntrySteps = clientFeatureEntryStepRows.Count;
 			var batchSize = 256;
 			var totalBatches = totalEntrySteps / batchSize;
-			var entryStepRows = new DbFeatureEntryStepRow[batchSize];
 			for (var i = 0; i < totalBatches; i++)
 			{
 				var offset = i * batchSize;
-				await InsertStepEntriesAsync(serverContext, entryStepRows, clientFeatureEntryStepRows, offset, featureEntriesMap, stepsMap);
+				await FeatureServerAdapter.InsertStepEntriesAsync(serverContext, GetRange(clientFeatureEntryStepRows, offset, batchSize), featureEntriesMap, stepsMap);
 			}
 			var remaining = totalEntrySteps % batchSize;
 			if (remaining > 0)
 			{
 				var offset = totalBatches * batchSize;
-				Array.Resize(ref entryStepRows, remaining);
-
-				await InsertStepEntriesAsync(serverContext, entryStepRows, clientFeatureEntryStepRows, offset, featureEntriesMap, stepsMap);
+				await FeatureServerAdapter.InsertStepEntriesAsync(serverContext, GetRange(clientFeatureEntryStepRows, offset, remaining), featureEntriesMap, stepsMap);
 			}
 
 			// TODO :!!! Batch insert
@@ -204,19 +201,12 @@ namespace Cchbc.Features.Replication
 			return map;
 		}
 
-		private static async Task InsertStepEntriesAsync(ITransactionContext serverContext, DbFeatureEntryStepRow[] entryStepRows, List<DbFeatureEntryStepRow> clientFeatureEntryStepRows, int offset, Dictionary<long, long> featureEntriesMap, Dictionary<int, int> stepsMap)
+		private static IEnumerable<DbFeatureEntryStepRow> GetRange(List<DbFeatureEntryStepRow> entries, int offset, int total)
 		{
-			for (var i = 0; i < entryStepRows.Length; i++)
+			for (var i = 0; i < total; i++)
 			{
-				var row = clientFeatureEntryStepRows[offset + i];
-
-				var mappedFeatureEntryId = featureEntriesMap[row.FeatureEntryId];
-				var mappedStepId = stepsMap[row.FeatureStepId];
-
-				entryStepRows[i] = new DbFeatureEntryStepRow(row.TimeSpent, row.Level, mappedFeatureEntryId, mappedStepId);
+				yield return entries[offset + i];
 			}
-
-			await FeatureAdapter.InsertStepEntriesAsync(serverContext, entryStepRows);
 		}
 	}
 }

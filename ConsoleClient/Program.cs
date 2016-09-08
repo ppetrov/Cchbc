@@ -865,7 +865,7 @@ namespace Cchbc.ConsoleClient
 
 		private static void Replicate(string serverDb, ClientData data, string user, string version)
 		{
-			Console.WriteLine($@"Replicate '{user}' & {version}");
+			//Console.WriteLine($@"Replicate '{user}' & {version}");
 
 			var s = Stopwatch.StartNew();
 			using (var server = new TransactionContextCreator(serverDb).Create())

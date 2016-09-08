@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Features.Data;
@@ -309,6 +310,36 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 				id = context.GetNewId();
 			}
 			return Task.FromResult(id);
+		}
+
+		public static Task InsertStepEntriesAsync(ITransactionContext context, IEnumerable<DbFeatureEntryStepRow> entryStepRows, Dictionary<long, long> featureEntriesMap, Dictionary<int, int> stepsMap)
+		{
+			var buffer = new StringBuilder(@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, LEVEL, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES ");
+
+			var addComma = false;
+			foreach (var s in entryStepRows)
+			{
+				if (addComma)
+				{
+					buffer.Append(',');
+				}
+
+				buffer.Append('(');
+				buffer.Append(s.TimeSpent);
+				buffer.Append(',');
+				buffer.Append(s.Level);
+				buffer.Append(',');
+				buffer.Append(featureEntriesMap[s.FeatureEntryId]);
+				buffer.Append(',');
+				buffer.Append(stepsMap[s.FeatureStepId]);
+				buffer.Append(')');
+
+				addComma = true;
+			}
+
+			context.Execute(new Query(buffer.ToString()));
+
+			return Task.FromResult(true);
 		}
 
 		public static Task InsertExceptionEntryAsync(ITransactionContext context, long exceptionId, DateTime createdAt, long featureId, long userId, long versionId)

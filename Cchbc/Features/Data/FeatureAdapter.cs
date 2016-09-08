@@ -355,35 +355,6 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
-		public static Task InsertStepEntriesAsync(ITransactionContext context, IEnumerable<DbFeatureEntryStepRow> steps)
-		{
-			var buffer = new StringBuilder(@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, LEVEL, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES ");
-
-			var addComma = false;
-			foreach (var s in steps)
-			{
-				if (addComma)
-				{
-					buffer.Append(',');
-				}
-				buffer.Append('(');
-				buffer.Append(s.TimeSpent);
-				buffer.Append(',');
-				buffer.Append(s.Level);
-				buffer.Append(',');
-				buffer.Append(s.FeatureEntryId);
-				buffer.Append(',');
-				buffer.Append(s.FeatureStepId);
-				buffer.Append(')');
-
-				addComma = true;
-			}
-
-			context.Execute(new Query(buffer.ToString()));
-
-			return Task.FromResult(true);
-		}
-
 		public static Task InsertStepEntriesAsync(ITransactionContext context, long featureEntryId, FeatureStepData[] steps, Dictionary<string, DbFeatureStepRow> stepNames)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
