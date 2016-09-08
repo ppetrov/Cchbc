@@ -72,7 +72,7 @@ namespace Cchbc.Features
 			for (var i = 0; i < featureSteps.Count; i++)
 			{
 				var s = featureSteps[i];
-				steps[i] = new FeatureStepData(s.Name, s.TimeSpent);
+				steps[i] = new FeatureStepData(s.Name, s.Level, s.TimeSpent);
 			}
 			var featureData = new FeatureData(feature.Context, feature.Name, feature.TimeSpent, steps);
 
@@ -109,7 +109,7 @@ namespace Cchbc.Features
 					}
 
 					// Inser step entries
-					await FeatureAdapter.InsertStepEntriesAsync(context, this.GetFeatureEntryStep(featureEntryId, steps));
+					await FeatureAdapter.InsertStepEntriesAsync(context, featureEntryId, steps, this.Steps);
 				}
 
 				context.Complete();
@@ -197,20 +197,6 @@ namespace Cchbc.Features
 			features.Add(feature);
 
 			return feature;
-		}
-
-		private IEnumerable<FeatureEntryStep> GetFeatureEntryStep(long featureEntryId, IEnumerable<FeatureStepData> steps)
-		{
-			var common = new FeatureEntryStep();
-
-			foreach (var step in steps)
-			{
-				common.TimeSpent = step.TimeSpent.TotalMilliseconds;
-				common.FeatureEntryId = featureEntryId;
-				common.FeatureStepId = this.Steps[step.Name].Id;
-
-				yield return common;
-			}
 		}
 
 		private async Task<Dictionary<long, List<DbFeatureRow>>> GetFeaturesAsync(ITransactionContext context)

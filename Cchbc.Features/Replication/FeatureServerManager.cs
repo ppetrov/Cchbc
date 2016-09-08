@@ -213,7 +213,7 @@ namespace Cchbc.Features.Replication
 				var mappedFeatureEntryId = featureEntriesMap[row.FeatureEntryId];
 				var mappedStepId = stepsMap[row.FeatureStepId];
 
-				entryStepRows[i] = new DbFeatureEntryStepRow(row.TimeSpent, mappedFeatureEntryId, mappedStepId);
+				entryStepRows[i] = new DbFeatureEntryStepRow(row.TimeSpent, row.Level, mappedFeatureEntryId, mappedStepId);
 			}
 
 			await FeatureAdapter.InsertStepEntriesAsync(serverContext, entryStepRows);

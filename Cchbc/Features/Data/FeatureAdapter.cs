@@ -69,7 +69,7 @@ namespace Cchbc.Features.Data
 		private static readonly Query<DbFeatureRow> GetFeaturesQuery = new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
 		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
 		private static readonly Query<DbFeatureUsageRow> GetFeatureUsagesQuery = new Query<DbFeatureUsageRow>(@"SELECT CREATED_AT, FEATURE_ID FROM FEATURE_USAGES", DbFeatureUsageRowCreator);
-		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);
+		private static readonly Query<DbFeatureEntryStepRow> GetFeatureEntryStepsQuery = new Query<DbFeatureEntryStepRow>(@"SELECT TIMESPENT, LEVEL, FEATURE_ENTRY_ID, FEATURE_STEP_ID FROM FEATURE_STEP_ENTRIES", EntryStepRowCreator);
 		private static readonly Query<DbFeatureExceptionEntryRow> GetDbFeatureExceptionEntryRowQuery = new Query<DbFeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
 
 		private static readonly Query<int> GetExceptionQuery =
@@ -150,6 +150,7 @@ CREATE TABLE [FEATURE_EXCEPTION_ENTRIES] (
 CREATE TABLE [FEATURE_STEP_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
+	[Level] integer NOT NULL,
 	[Feature_Entry_Id] integer NOT NULL, 
 	[Feature_Step_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Entry_Id])
@@ -354,23 +355,25 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
-		public static Task InsertStepEntriesAsync(ITransactionContext context, DbFeatureEntryStepRow[] rows)
+		public static Task InsertStepEntriesAsync(ITransactionContext context, IEnumerable<DbFeatureEntryStepRow> steps)
 		{
-			var buffer = new StringBuilder(@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES ");
+			var buffer = new StringBuilder(@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, LEVEL, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES ");
 
 			var addComma = false;
-			foreach (var row in rows)
+			foreach (var s in steps)
 			{
 				if (addComma)
 				{
 					buffer.Append(',');
 				}
 				buffer.Append('(');
-				buffer.Append(row.TimeSpent);
+				buffer.Append(s.TimeSpent);
 				buffer.Append(',');
-				buffer.Append(row.FeatureEntryId);
+				buffer.Append(s.Level);
 				buffer.Append(',');
-				buffer.Append(row.FeatureStepId);
+				buffer.Append(s.FeatureEntryId);
+				buffer.Append(',');
+				buffer.Append(s.FeatureStepId);
 				buffer.Append(')');
 
 				addComma = true;
@@ -381,23 +384,28 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult(true);
 		}
 
-		public static Task InsertStepEntriesAsync(ITransactionContext context, IEnumerable<FeatureEntryStep> rows)
+		public static Task InsertStepEntriesAsync(ITransactionContext context, long featureEntryId, FeatureStepData[] steps, Dictionary<string, DbFeatureStepRow> stepNames)
 		{
-			var buffer = new StringBuilder(@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES ");
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (steps == null) throw new ArgumentNullException(nameof(steps));
+
+			var buffer = new StringBuilder(@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, LEVEL, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES ");
 
 			var addComma = false;
-			foreach (var row in rows)
+			foreach (var s in steps)
 			{
 				if (addComma)
 				{
 					buffer.Append(',');
 				}
 				buffer.Append('(');
-				buffer.Append(row.TimeSpent);
+				buffer.Append(s.TimeSpent.TotalMilliseconds);
 				buffer.Append(',');
-				buffer.Append(row.FeatureEntryId);
+				buffer.Append(s.Level);
 				buffer.Append(',');
-				buffer.Append(row.FeatureStepId);
+				buffer.Append(featureEntryId);
+				buffer.Append(',');
+				buffer.Append(stepNames[s.Name].Id);
 				buffer.Append(')');
 
 				addComma = true;
@@ -447,7 +455,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 
 		private static DbFeatureEntryStepRow EntryStepRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureEntryStepRow(Convert.ToDouble(r.GetDecimal(0)), r.GetInt64(1), r.GetInt32(2));
+			return new DbFeatureEntryStepRow(Convert.ToDouble(r.GetDecimal(0)), r.GetInt32(1), r.GetInt64(2), r.GetInt32(3));
 		}
 
 		private static DbFeatureExceptionRow DbFeatureExceptionRowCreator(IFieldDataReader r)

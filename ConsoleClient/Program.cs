@@ -175,23 +175,7 @@ namespace Cchbc.ConsoleClient
 			try
 			{
 				//GenerateData(clientDbPath);
-
-				ClientData cd;
-				using (var client = new TransactionContextCreator(GetSqliteConnectionString(clientDbPath)).Create())
-				{
-					cd = FeatureAdapter.GetDataAsync(client).Result;
-					client.Complete();
-				}
-
-				cd.ExceptionRows.Add(new DbFeatureExceptionRow(1, @"PPP Exception"));
-				cd.ExceptionEntryRows.Add(new DbFeatureExceptionEntryRow(1, DateTime.Now, cd.FeatureRows[0].Id));
-
-				var sw = Stopwatch.StartNew();
-				var packedData = ClientDataPacker.Pack(cd);
-				var original = ClientDataPacker.Unpack(packedData);
-				sw.Stop();
-
-				Console.WriteLine(sw.ElapsedMilliseconds);
+				//return;
 
 				//WeatherTest();
 				//return;
@@ -199,13 +183,13 @@ namespace Cchbc.ConsoleClient
 				//CreateSchema(GetSqliteConnectionString(serverDbPath));
 				//return;
 
-				//var w = Stopwatch.StartNew();
-				//GenerateData(clientDbPath);
-				//ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
-				//ClearData(clientDbPath);
-				//w.Stop();
-				//Console.WriteLine(w.ElapsedMilliseconds);
-				//return;
+				var w = Stopwatch.StartNew();
+				GenerateData(clientDbPath);
+				ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
+				ClearData(clientDbPath);
+				w.Stop();
+				Console.WriteLine(w.ElapsedMilliseconds);
+				return;
 
 				var viewModel = new FeatureExceptionsViewModel(
 					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)),
@@ -273,7 +257,7 @@ namespace Cchbc.ConsoleClient
 			data.StepRows.Add(new DbFeatureStepRow(23, @"Apply filter"));
 
 			data.FeatureEntryRows.Add(new DbFeatureEntryRow(17, 123.456, @"#", DateTime.Today.AddDays(-1), -4));
-			data.EntryStepRows.Add(new DbFeatureEntryStepRow(55.66, -1, -2));
+
 
 			//var s = Stopwatch.StartNew();
 			//var result = ClientDataPacker.Pack(data);
@@ -365,78 +349,7 @@ namespace Cchbc.ConsoleClient
 			//}
 		}
 
-		private static void DispatchItems()
-		{
-			//
-			// Dispatcher
-			//
-			using (var exitEvent = new ManualResetEvent(false))
-			{
-				while (true)
-				{
-					// Get the items to send to SAP
-					var items = new ConcurrentQueue<string>(new[] { @"A", @"B", @"C" });
-					if (!items.Any())
-					{
-						// We don't have items. 
-						var exitRequested = false;
-						var timeout = TimeSpan.FromSeconds(1);
-						var seconds = 45;
-						while (seconds-- > 0)
-						{
-							if (exitEvent.WaitOne(timeout))
-							{
-								exitRequested = true;
-							}
-						}
-						if (exitRequested)
-						{
-							break;
-						}
-						continue;
-					}
 
-					// Process in parallel
-					using (var ce = new CountdownEvent(Math.Min(8, items.Count)))
-					{
-						for (var i = 0; i < ce.InitialCount; i++)
-						{
-							ThreadPool.QueueUserWorkItem(_ =>
-							{
-								var parameters = _ as object[];
-								var shared = parameters[0] as ConcurrentQueue<string>;
-								var e = parameters[1] as CountdownEvent;
-
-								try
-								{
-									// Share the 
-									string item;
-									while (shared.TryDequeue(out item))
-									{
-										Console.WriteLine(item);
-										try
-										{
-											// TODO : Send to SAP & Mark in Oracle
-										}
-										catch
-										{
-											// TODO : Unable to process item item
-											// TODO : Log exception
-										}
-									}
-								}
-								finally
-								{
-									e.Signal();
-								}
-							}, new object[] { items, ce });
-						}
-
-						ce.Wait();
-					}
-				}
-			}
-		}
 
 		private static void ClearData(string path)
 		{
@@ -509,7 +422,7 @@ namespace Cchbc.ConsoleClient
 
 			// TODO : !!!
 			// Generate exceptions
-			// Generate mode scenarios
+			// Generate more scenarios
 			var s = Stopwatch.StartNew();
 			var scenarios = new[]
 			{
@@ -522,9 +435,48 @@ namespace Cchbc.ConsoleClient
 			};
 			foreach (var data in scenarios)
 			{
-				featureManager.MarkUsageAsync(data).Wait();
-				featureManager.WriteAsync(data).Wait();
+				//featureManager.MarkUsageAsync(data).Wait();
+				//featureManager.WriteAsync(data).Wait();
+
+				break;
 			}
+
+			var f = Feature.StartNew(@"Images", @"Upload");
+			using (f.NewStep(@"Browse"))
+			{
+
+			}
+			using (f.NewStep(@"Resize"))
+			{
+				using (f.NewStep(@"Load client size from db"))
+				{
+				}
+				using (f.NewStep(@"Resize image to client size"))
+				{
+				}
+			}
+			using (f.NewStep(@"Compress"))
+			{
+				using (f.NewStep(@"Compress as JPG"))
+				{
+				}
+				using (f.NewStep(@"Compress as PNG"))
+				{
+				}
+				using (f.NewStep(@"Choose the smallest"))
+				{
+				}
+				using (f.NewStep(@"Load max image size allowed from db"))
+				{
+				}
+				using (f.NewStep(@"Verify against max size allowed"))
+				{
+				}
+			}
+
+			DisplayFeature(f);
+
+			featureManager.WriteAsync(f).Wait();
 
 			s.Stop();
 
@@ -535,13 +487,13 @@ namespace Cchbc.ConsoleClient
 		{
 			var steps = new[]
 			{
-				new FeatureStepData(@"BrowseImageAsync", GetTime(5, 17)),
-				new FeatureStepData(@"AdjustImageAsync", GetTime(50, 117)),
-				new FeatureStepData(@"CompressImageAsync", GetTime(11, 33)),
-				new FeatureStepData(@"ResizeImageAsync", GetTime(68, 98)),
-				new FeatureStepData(@"CheckSize", GetTime(1, 2)),
-				new FeatureStepData(@"ConfirmSize", GetTime(23, 54)),
-				new FeatureStepData(@"UploadDataAsync", GetTime(231, 541)),
+				new FeatureStepData(@"BrowseImageAsync", 1, GetTime(5, 17)),
+				new FeatureStepData(@"AdjustImageAsync", 1, GetTime(50, 117)),
+				new FeatureStepData(@"CompressImageAsync", 1, GetTime(11, 33)),
+				new FeatureStepData(@"ResizeImageAsync", 1, GetTime(68, 98)),
+				new FeatureStepData(@"CheckSize", 1, GetTime(1, 2)),
+				new FeatureStepData(@"ConfirmSize", 1, GetTime(23, 54)),
+				new FeatureStepData(@"UploadDataAsync", 1, GetTime(231, 541)),
 			};
 			return new FeatureData(@"Images", "UploadImageAsync",
 				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
@@ -551,8 +503,8 @@ namespace Cchbc.ConsoleClient
 		{
 			var steps = new[]
 			{
-				new FeatureStepData(@"DownloadImageDataFromService", GetTime(100, 200)),
-				new FeatureStepData(@"SaveImageToDb", GetTime(7, 23)),
+				new FeatureStepData(@"DownloadImageDataFromService", 1, GetTime(100, 200)),
+				new FeatureStepData(@"SaveImageToDb", 1, GetTime(7, 23)),
 			};
 			return new FeatureData(@"Images", "DownloadImageAsync",
 				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
@@ -562,7 +514,7 @@ namespace Cchbc.ConsoleClient
 		{
 			var steps = new[]
 			{
-				new FeatureStepData(@"LoadImagesFromDb", GetTime(250, 350)),
+				new FeatureStepData(@"LoadImagesFromDb", 1, GetTime(250, 350)),
 			};
 			return new FeatureData(@"Images", "LoadImagesAsync",
 				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
@@ -572,10 +524,10 @@ namespace Cchbc.ConsoleClient
 		{
 			var steps = new[]
 			{
-				new FeatureStepData(@"ConfirmDelete", GetTime(1, 20)),
-				new FeatureStepData(@"CheckDeleteDefault", GetTime(1, 20)),
-				new FeatureStepData(@"DeleteImageFromService", GetTime(375, 951)),
-				new FeatureStepData(@"DeleteImageFromDb", GetTime(15, 50)),
+				new FeatureStepData(@"ConfirmDelete", 1, GetTime(1, 20)),
+				new FeatureStepData(@"CheckDeleteDefault", 1, GetTime(1, 20)),
+				new FeatureStepData(@"DeleteImageFromService", 1, GetTime(375, 951)),
+				new FeatureStepData(@"DeleteImageFromDb", 1, GetTime(15, 50)),
 			};
 			return new FeatureData(@"Images", "DeleteImageAsync",
 				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
@@ -585,9 +537,9 @@ namespace Cchbc.ConsoleClient
 		{
 			var steps = new[]
 			{
-				new FeatureStepData(@"CheckDefault", GetTime(5, 17)),
-				new FeatureStepData(@"SetAsDefaultFromService", GetTime(564, 700)),
-				new FeatureStepData(@"UpdateImageFromDb", GetTime(20, 30)),
+				new FeatureStepData(@"CheckDefault", 1, GetTime(5, 17)),
+				new FeatureStepData(@"SetAsDefaultFromService", 1, GetTime(564, 700)),
+				new FeatureStepData(@"UpdateImageFromDb", 1, GetTime(20, 30)),
 			};
 			return new FeatureData(@"Images", "SetAsDefaultAsync",
 				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
@@ -597,13 +549,13 @@ namespace Cchbc.ConsoleClient
 		{
 			var steps = new[]
 			{
-				new FeatureStepData(@"ValidateActiveDay", GetTime(20, 30)),
-				new FeatureStepData(@"ValidateOldDays", GetTime(20, 30)),
-				new FeatureStepData(@"ValidateOutletAssignment", GetTime(10, 20)),
-				new FeatureStepData(@"ValidateActivityTypesByOutlet", GetTime(100, 300)),
-				new FeatureStepData(@"CreateVisit", GetTime(50, 220)),
-				new FeatureStepData(@"CreateVisitActivity", GetTime(50, 220)),
-				new FeatureStepData(@"Create", GetTime(50, 220)),
+				new FeatureStepData(@"ValidateActiveDay", 1, GetTime(20, 30)),
+				new FeatureStepData(@"ValidateOldDays", 1, GetTime(20, 30)),
+				new FeatureStepData(@"ValidateOutletAssignment", 1, GetTime(10, 20)),
+				new FeatureStepData(@"ValidateActivityTypesByOutlet", 1, GetTime(100, 300)),
+				new FeatureStepData(@"CreateVisit", 1, GetTime(50, 220)),
+				new FeatureStepData(@"CreateVisitActivity", 1, GetTime(50, 220)),
+				new FeatureStepData(@"Create", 1, GetTime(50, 220)),
 			};
 			return new FeatureData(@"Images", "SetAsDefaultAsync",
 				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);

@@ -177,6 +177,7 @@ CREATE TABLE [FEATURE_ENTRIES] (
 CREATE TABLE [FEATURE_STEP_ENTRIES] (
 	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	[TimeSpent] decimal(38, 0) NOT NULL, 
+	[Level] integer NOT NULL, 
 	[Feature_Entry_Id] integer NOT NULL, 
 	[Feature_Step_Id] integer NOT NULL, 
 	FOREIGN KEY ([Feature_Entry_Id])

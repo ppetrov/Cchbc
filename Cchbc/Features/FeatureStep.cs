@@ -30,13 +30,15 @@ namespace Cchbc.Features
 	public sealed class FeatureStepData
 	{
 		public string Name { get; }
+		public int Level { get; }
 		public TimeSpan TimeSpent { get; }
 
-		public FeatureStepData(string name, TimeSpan timeSpent)
+		public FeatureStepData(string name, int level, TimeSpan timeSpent)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			this.Name = name;
+			this.Level = level;
 			this.TimeSpent = timeSpent;
 		}
 	}

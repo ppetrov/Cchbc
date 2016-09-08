@@ -66,6 +66,7 @@ namespace Cchbc.Features.Data
 			foreach (var row in clientData.EntryStepRows)
 			{
 				Write(buffer, ref offset, BitConverter.DoubleToInt64Bits(row.TimeSpent));
+				Write(buffer, ref offset, row.Level);
 				Write(buffer, ref offset, row.FeatureEntryId);
 				Write(buffer, ref offset, row.FeatureStepId);
 			}
@@ -151,9 +152,10 @@ namespace Cchbc.Features.Data
 			for (var i = 0; i < count; i++)
 			{
 				var timeSpent = BitConverter.Int64BitsToDouble(ReadLong(buffer, ref offset));
+				var level = ReadInt(buffer, ref offset);
 				var featureEntryId = ReadLong(buffer, ref offset);
 				var featureStepId = ReadInt(buffer, ref offset);
-				dbFeatureEntryStepRows.Add(new DbFeatureEntryStepRow(timeSpent, featureEntryId, featureStepId));
+				dbFeatureEntryStepRows.Add(new DbFeatureEntryStepRow(timeSpent, level, featureEntryId, featureStepId));
 			}
 
 			count = ReadShort(buffer, ref offset);
@@ -256,8 +258,8 @@ namespace Cchbc.Features.Data
 
 			// Time & Feature Entry
 			size += 2 * LongSize * clientData.EntryStepRows.Count;
-			// Feature Step Id
-			size += IntSize * clientData.EntryStepRows.Count;
+			// Level & FeatureStep Id
+			size += 2 * IntSize * clientData.EntryStepRows.Count;
 
 			// Exception Id & Feature Id
 			size += 2 * IntSize * clientData.ExceptionEntryRows.Count;

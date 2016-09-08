@@ -63,6 +63,7 @@
     <Compile Include="Features\Data\DbFeatureStepRow.cs" />
     <Compile Include="Features\Data\ClientData.cs" />
     <Compile Include="Features\Feature.cs" />
+    <Compile Include="Features\FeatureData.cs" />
     <Compile Include="Features\FeatureManager.cs" />
     <Compile Include="Features\FeatureStep.cs" />
     <Compile Include="Localization\LocalizationManager.cs" />

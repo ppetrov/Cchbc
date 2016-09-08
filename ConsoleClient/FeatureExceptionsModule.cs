@@ -27,8 +27,10 @@ namespace ConsoleClient
 			}
 		}
 
-		public static IEnumerable<TimePeriod> GetTimePeriods()
+		public static IEnumerable<TimePeriod> GetTimePeriods(ITransactionContext context)
 		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
 			return new[]
 			{
 				new TimePeriod(TimeSpan.FromHours(1), @"Last 1 hour"),
@@ -206,7 +208,7 @@ namespace ConsoleClient
 		}
 
 		public void Load(
-			Func<IEnumerable<TimePeriod>> timePeriodsProvider,
+			Func<ITransactionContext, IEnumerable<TimePeriod>> timePeriodsProvider,
 			Func<ITransactionContext, IEnumerable<FeatureVersion>> versionsProvider,
 			Func<ExceptionsDataLoadParams, IEnumerable<FeatureException>> exceptionsProvider,
 			Func<ExceptionsDataLoadParams, IEnumerable<ExceptionsCount>> exceptionsCountProvider)
@@ -219,10 +221,9 @@ namespace ConsoleClient
 			this.ExceptionsProvider = exceptionsProvider;
 			this.ExceptionsCountProvider = exceptionsCountProvider;
 
-			this.LoadPeriods(timePeriodsProvider);
-
 			using (var context = this.ContextCreator.Create())
 			{
+				this.LoadPeriods(context, timePeriodsProvider);
 				this.LoadVersions(context, versionsProvider);
 
 				var hasData = this.TimePeriods.Count > 0 && this.Versions.Count > 0;
@@ -236,11 +237,11 @@ namespace ConsoleClient
 			}
 		}
 
-		private void LoadPeriods(Func<IEnumerable<TimePeriod>> timePeriodsProvider)
+		private void LoadPeriods(ITransactionContext context, Func<ITransactionContext, IEnumerable<TimePeriod>> timePeriodsProvider)
 		{
 			this.TimePeriods.Clear();
 
-			foreach (var timePeriod in timePeriodsProvider())
+			foreach (var timePeriod in timePeriodsProvider(context))
 			{
 				this.TimePeriods.Add(new TimePeriodViewModel(timePeriod));
 			}
