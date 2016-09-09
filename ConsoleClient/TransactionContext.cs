@@ -87,8 +87,6 @@ namespace ConsoleClient
 
 		public void Fill<T>(Dictionary<long, T> items, Func<T, long> selector, Query<T> query)
 		{
-			items.Clear();
-
 			using (var cmd = _cn.CreateCommand())
 			{
 				DisplayQuery(query);
@@ -118,8 +116,6 @@ namespace ConsoleClient
 
 		public void Fill<TK, TV>(Dictionary<TK, TV> items, Action<IFieldDataReader, Dictionary<TK, TV>> filler, Query query)
 		{
-			items.Clear();
-
 			using (var cmd = _cn.CreateCommand())
 			{
 				DisplayQuery(query);

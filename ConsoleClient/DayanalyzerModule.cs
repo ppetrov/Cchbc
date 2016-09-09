@@ -4,8 +4,6 @@ using Cchbc.Data;
 
 namespace ConsoleClient
 {
-	
-
 	public sealed class FeatureUser
 	{
 		public long Id { get; }

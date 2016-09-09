@@ -184,12 +184,12 @@ namespace Cchbc.ConsoleClient
 				//return;
 
 				var w = Stopwatch.StartNew();
-				GenerateData(clientDbPath);
-				ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
-				ClearData(clientDbPath);
-				w.Stop();
-				Console.WriteLine(w.ElapsedMilliseconds);
-				return;
+				//GenerateData(clientDbPath);
+				//ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
+				//ClearData(clientDbPath);
+				//w.Stop();
+				//Console.WriteLine(w.ElapsedMilliseconds);
+
 
 				var viewModel = new FeatureExceptionsViewModel(
 					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)),
@@ -200,6 +200,9 @@ namespace Cchbc.ConsoleClient
 					FeatureExceptionsDataProvider.GetVersions,
 					FeatureExceptionsDataProvider.GetExceptions,
 					FeatureExceptionsDataProvider.GetExceptionsCounts);
+
+				w.Stop();
+				Console.WriteLine(w.ElapsedMilliseconds);
 
 				Console.WriteLine(@"Time Periods");
 				foreach (var vm in viewModel.TimePeriods)
@@ -218,7 +221,7 @@ namespace Cchbc.ConsoleClient
 				Console.WriteLine(@"Exceptions");
 				foreach (var vm in viewModel.Exceptions)
 				{
-					Console.WriteLine('\t' + string.Empty + vm.Contents + $@"({vm.CreatedAt}) " + vm.User + $@"({vm.Version})");
+					Console.WriteLine('\t' + string.Empty + new string(vm.Contents.Take(40).ToArray()) + $@"... ({vm.CreatedAt}) " + vm.User + $@"({vm.Version})");
 				}
 				Console.WriteLine();
 
@@ -442,41 +445,50 @@ namespace Cchbc.ConsoleClient
 			}
 
 			var f = Feature.StartNew(@"Images", @"Upload");
-			using (f.NewStep(@"Browse"))
+			try
 			{
+				using (f.NewStep(@"Browse"))
+				{
 
+				}
+				using (f.NewStep(@"Resize"))
+				{
+					using (f.NewStep(@"Load client size from db"))
+					{
+					}
+					using (f.NewStep(@"Resize image to client size"))
+					{
+					}
+				}
+				using (f.NewStep(@"Compress"))
+				{
+					using (f.NewStep(@"Compress as JPG"))
+					{
+					}
+					using (f.NewStep(@"Compress as PNG"))
+					{
+					}
+					using (f.NewStep(@"Choose the smallest"))
+					{
+					}
+					using (f.NewStep(@"Load max image size allowed from db"))
+					{
+					}
+					using (f.NewStep(@"Verify against max size allowed"))
+					{
+					}
+				}
+
+				DisplayFeature(f);
+
+				throw new Exception(@"Unable to display feature");
+
+				featureManager.WriteAsync(f).Wait();
 			}
-			using (f.NewStep(@"Resize"))
+			catch (Exception ex)
 			{
-				using (f.NewStep(@"Load client size from db"))
-				{
-				}
-				using (f.NewStep(@"Resize image to client size"))
-				{
-				}
+				featureManager.WriteExceptionAsync(f, ex).Wait();
 			}
-			using (f.NewStep(@"Compress"))
-			{
-				using (f.NewStep(@"Compress as JPG"))
-				{
-				}
-				using (f.NewStep(@"Compress as PNG"))
-				{
-				}
-				using (f.NewStep(@"Choose the smallest"))
-				{
-				}
-				using (f.NewStep(@"Load max image size allowed from db"))
-				{
-				}
-				using (f.NewStep(@"Verify against max size allowed"))
-				{
-				}
-			}
-
-			DisplayFeature(f);
-
-			featureManager.WriteAsync(f).Wait();
 
 			s.Stop();
 

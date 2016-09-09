@@ -56,7 +56,19 @@ namespace ConsoleClient
 
 			var context = dataLoadParams.Context;
 
-			var query = @"SELECT ID, EXCEPTION_ID, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID FROM FEATURE_EXCEPTION_ENTRIES ORDER BY CREATED_AT DESC LIMIT @maxEntries";
+			var query = @"
+			SELECT E.ID,
+				   E.EXCEPTION_ID,
+				   E.CREATED_AT,
+				   E.USER_ID,
+				   E.VERSION_ID
+			FROM FEATURE_EXCEPTION_ENTRIES E
+			WHERE NOT EXISTS
+				(SELECT 1
+				 FROM FEATURE_EXCEPTIONS_EXCLUDED EX
+				 WHERE E.EXCEPTION_ID = EX.EXCEPTION_ID)
+			ORDER BY E.CREATED_AT DESC
+			LIMIT @maxEntries";
 
 			var sqlParams = new[]
 			{
@@ -66,29 +78,11 @@ namespace ConsoleClient
 			var rows =
 				context.Execute(new Query<FeatureExceptionRow>(query,
 					r => new FeatureExceptionRow(r.GetInt64(0), r.GetInt64(1), r.GetDateTime(2), r.GetInt64(3), r.GetInt64(4)), sqlParams));
+			if (rows.Count == 0) return Enumerable.Empty<FeatureException>().ToArray();
 
-			// ~ 10 items
-			var exceptions = new Dictionary<long, string>();
-			context.Fill(exceptions, (r, m) =>
-			{
-				m.Add(r.GetInt64(0), r.GetString(1));
-			}, new Query(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS"));
-
-			// ~ 10 entries only Max entries (distinct) users
-			var users = new Dictionary<long, FeatureUser>();
-			context.Fill(users, (r, m) =>
-			{
-				var id = r.GetInt64(0);
-				m.Add(id, new FeatureUser(id, r.GetString(1)));
-			}, new Query(@"SELECT ID, NAME FROM FEATURE_USERS"));
-
-			// ~ 10 Max entries (distinct) versions
-			var versions = new Dictionary<long, FeatureVersion>();
-			context.Fill(versions, (r, m) =>
-			{
-				var id = r.GetInt64(0);
-				m.Add(id, new FeatureVersion(id, r.GetString(1)));
-			}, new Query(@"SELECT ID, NAME FROM FEATURE_VERSIONS"));
+			var exceptions = GetExceptions(context, rows, dataLoadParams.MaxEntries);
+			var users = GetUsers(context, rows, dataLoadParams.MaxEntries);
+			var versions = GetVersions(context, rows, dataLoadParams.MaxEntries);
 
 			var featureExceptions = new FeatureException[rows.Count];
 			for (var i = 0; i < rows.Count; i++)
@@ -107,6 +101,69 @@ namespace ConsoleClient
 			//TODO
 
 			return new ExceptionsCount[0];
+		}
+
+		private static Dictionary<long, FeatureVersion> GetVersions(ITransactionContext context, List<FeatureExceptionRow> rows, int maxEntries)
+		{
+			var versions = new Dictionary<long, FeatureVersion>(maxEntries);
+
+			var idParam = new QueryParameter(@"@ID", 0L);
+
+			var query = new Query<FeatureVersion>(@"SELECT ID, NAME FROM FEATURE_VERSIONS WHERE ID = @ID", r => new FeatureVersion(r.GetInt64(0), r.GetString(1)), new[] { idParam });
+
+			foreach (var row in rows)
+			{
+				var id = row.Version;
+				if (!versions.ContainsKey(id))
+				{
+					idParam.Value = id;
+					context.Fill(versions, u => u.Id, query);
+				}
+			}
+
+			return versions;
+		}
+
+		private static Dictionary<long, FeatureUser> GetUsers(ITransactionContext context, List<FeatureExceptionRow> rows, int maxEntries)
+		{
+			var users = new Dictionary<long, FeatureUser>(maxEntries);
+
+			var idParam = new QueryParameter(@"@ID", 0L);
+
+			var query = new Query<FeatureUser>(@"SELECT ID, NAME FROM FEATURE_USERS WHERE ID = @ID", r => new FeatureUser(r.GetInt64(0), r.GetString(1)), new[] { idParam });
+
+			foreach (var row in rows)
+			{
+				var id = row.User;
+				if (!users.ContainsKey(id))
+				{
+					idParam.Value = id;
+					context.Fill(users, u => u.Id, query);
+				}
+			}
+
+			return users;
+		}
+
+		private static Dictionary<long, string> GetExceptions(ITransactionContext context, List<FeatureExceptionRow> rows, int maxEntries)
+		{
+			var exceptions = new Dictionary<long, string>(maxEntries);
+
+			var idParam = new QueryParameter(@"@ID", 0L);
+
+			var query = new Query(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS WHERE ID = @ID", new[] { idParam });
+
+			foreach (var row in rows)
+			{
+				var id = row.Exception;
+				if (!exceptions.ContainsKey(id))
+				{
+					idParam.Value = id;
+					context.Fill(exceptions, (r, m) => { m.Add(r.GetInt32(0), r.GetString(1)); }, query);
+				}
+			}
+
+			return exceptions;
 		}
 	}
 
