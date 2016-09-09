@@ -49,7 +49,16 @@
     <Compile Include="ContextCreator.cs" />
     <Compile Include="DayAnalyzerModule.cs" />
     <Compile Include="Dispatcher.cs" />
-    <Compile Include="FeatureExceptionsModule.cs" />
+    <Compile Include="Exceptions\FeatureException.cs" />
+    <Compile Include="Exceptions\FeatureExceptionEntryRow.cs" />
+    <Compile Include="Exceptions\FeatureExceptionRow.cs" />
+    <Compile Include="Exceptions\FeatureExceptionsModule.cs" />
+    <Compile Include="Exceptions\FeatureRow.cs" />
+    <Compile Include="Exceptions\FeatureUser.cs" />
+    <Compile Include="Exceptions\FeatureUserRow.cs" />
+    <Compile Include="Exceptions\FeatureVersion.cs" />
+    <Compile Include="Exceptions\FeatureVersionRow.cs" />
+    <Compile Include="Exceptions\FeatureVersionViewModel.cs" />
     <Compile Include="Objects.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

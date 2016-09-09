@@ -23,6 +23,7 @@ using Cchbc.Features.Replication;
 using Cchbc.Validation;
 using Cchbc.Weather;
 using ConsoleClient;
+using ConsoleClient.Exceptions;
 
 namespace Cchbc.ConsoleClient
 {
@@ -92,26 +93,26 @@ namespace Cchbc.ConsoleClient
 			return $@"Data Source = {path}; Version = 3;";
 		}
 
-		private static void Display(FeatureReport report)
-		{
-			Console.WriteLine(@"SlowestFeatures");
-			foreach (var featureTime in report.SlowestFeatures)
-			{
-				Console.WriteLine("\t" + featureTime.Id + " : " + featureTime.Avg + '\t' + featureTime.Count);
-			}
+		//private static void Display(FeatureReport report)
+		//{
+		//	Console.WriteLine(@"SlowestFeatures");
+		//	foreach (var featureTime in report.SlowestFeatures)
+		//	{
+		//		Console.WriteLine("\t" + featureTime.Id + " : " + featureTime.Avg + '\t' + featureTime.Count);
+		//	}
 
-			Console.WriteLine(@"MostUsedFeatures");
-			foreach (var featureTime in report.MostUsedFeatures)
-			{
-				Console.WriteLine("\t" + featureTime.Id + " : " + '\t' + featureTime.Count);
-			}
+		//	Console.WriteLine(@"MostUsedFeatures");
+		//	foreach (var featureTime in report.MostUsedFeatures)
+		//	{
+		//		Console.WriteLine("\t" + featureTime.Id + " : " + '\t' + featureTime.Count);
+		//	}
 
-			Console.WriteLine(@"LeastUsedFeatures");
-			foreach (var featureTime in report.LeastUsedFeatures)
-			{
-				Console.WriteLine("\t" + featureTime.Id + " : " + '\t' + featureTime.Count);
-			}
-		}
+		//	Console.WriteLine(@"LeastUsedFeatures");
+		//	foreach (var featureTime in report.LeastUsedFeatures)
+		//	{
+		//		Console.WriteLine("\t" + featureTime.Id + " : " + '\t' + featureTime.Count);
+		//	}
+		//}
 
 		public static void GenerateDayReport(string path)
 		{
@@ -119,50 +120,28 @@ namespace Cchbc.ConsoleClient
 
 			var contextCreator = new TransactionContextCreator(GetSqliteConnectionString(path));
 
-			using (var context = contextCreator.Create())
-			{
-				var settings = new FeatureReportSettings { SlowestFeatures = 3, MostUsedFeatures = 3, LeastUsedFeatures = 3 };
+			//using (var context = contextCreator.Create())
+			//{
+			//	var settings = new FeatureReportSettings { SlowestFeatures = 3, MostUsedFeatures = 3, LeastUsedFeatures = 3 };
 
-				var s = Stopwatch.StartNew();
+			//	var s = Stopwatch.StartNew();
 
-				List<FeatureReport> reports = null;
-				for (var i = 0; i < 1; i++)
-				{
-					reports = FeatureAnalyzer.GetFeatureReport(context, settings, DateTime.Today);
-					//reports = new List<FeatureReport>(1) { FeatureAnalyzer.GetFeatureReport(context, settings, DateTime.Today, 2, 1) };
-				}
-				Console.WriteLine(s.ElapsedMilliseconds);
+			//	List<FeatureReport> reports = null;
+			//	for (var i = 0; i < 1; i++)
+			//	{
+			//		reports = FeatureAnalyzer.GetFeatureReport(context, settings, DateTime.Today);
+			//		//reports = new List<FeatureReport>(1) { FeatureAnalyzer.GetFeatureReport(context, settings, DateTime.Today, 2, 1) };
+			//	}
+			//	Console.WriteLine(s.ElapsedMilliseconds);
 
-				foreach (var report in reports)
-				{
-					Display(report);
-					Console.WriteLine();
-				}
+			//	foreach (var report in reports)
+			//	{
+			//		Display(report);
+			//		Console.WriteLine();
+			//	}
 
-
-
-				//Console.WriteLine(@"SlowestFeatures");
-				//foreach (var featureTime in report.SlowestFeatures)
-				//{
-				//    Console.WriteLine(featureTime.Id + " : " + featureTime.Avg + '\t' + featureTime.Count);
-				//}
-
-				//Console.WriteLine();
-				//Console.WriteLine(@"MostUsedFeatures");
-				//foreach (var featureTime in report.MostUsedFeatures)
-				//{
-				//    Console.WriteLine(featureTime.Id + " : " + '\t' + featureTime.Count);
-				//}
-
-				//Console.WriteLine();
-				//Console.WriteLine(@"LeastUsedFeatures");
-				//foreach (var featureTime in report.LeastUsedFeatures)
-				//{
-				//    Console.WriteLine(featureTime.Id + " : " + '\t' + featureTime.Count);
-				//}
-
-				context.Complete();
-			}
+			//	context.Complete();
+			//}
 		}
 
 
@@ -195,11 +174,14 @@ namespace Cchbc.ConsoleClient
 					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)),
 					new FeatureExceptionsSettings());
 
-				viewModel.Load(
+				for (var i = 0; i < 100; i++)
+				{
+					viewModel.Load(
 					FeatureExceptionsDataProvider.GetTimePeriods,
 					FeatureExceptionsDataProvider.GetVersions,
 					FeatureExceptionsDataProvider.GetExceptions,
 					FeatureExceptionsDataProvider.GetExceptionsCounts);
+				}
 
 				w.Stop();
 				Console.WriteLine(w.ElapsedMilliseconds);
@@ -218,11 +200,11 @@ namespace Cchbc.ConsoleClient
 				}
 				Console.WriteLine();
 
-				Console.WriteLine(@"Exceptions");
-				foreach (var vm in viewModel.Exceptions)
-				{
-					Console.WriteLine('\t' + string.Empty + new string(vm.Contents.Take(40).ToArray()) + $@"... ({vm.CreatedAt}) " + vm.User + $@"({vm.Version})");
-				}
+				//Console.WriteLine(@"Exceptions");
+				//foreach (var vm in viewModel.Exceptions)
+				//{
+				//	Console.WriteLine('\t' + string.Empty + new string(vm.Message.Take(40).ToArray()) + $@"... ({vm.CreatedAt}) " + vm.User + $@"({vm.Version})");
+				//}
 				Console.WriteLine();
 
 				return;
