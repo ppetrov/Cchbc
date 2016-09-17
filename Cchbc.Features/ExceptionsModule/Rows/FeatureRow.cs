@@ -1,4 +1,4 @@
-namespace ConsoleClient.Exceptions
+namespace Cchbc.Features.ExceptionsModule.Rows
 {
 	public sealed class FeatureRow
 	{

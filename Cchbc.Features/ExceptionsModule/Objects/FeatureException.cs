@@ -1,13 +1,14 @@
 using System;
+using Cchbc.Features.ExceptionsModule.Rows;
 
-namespace ConsoleClient.Exceptions
+namespace Cchbc.Features.ExceptionsModule
 {
 	public sealed class FeatureException
 	{
-		public FeatureExceptionRow Row { get; }
+		public ExceptionRow Row { get; }
 		public string Name { get; }
 
-		public FeatureException(FeatureExceptionRow row)
+		public FeatureException(ExceptionRow row)
 		{
 			if (row == null) throw new ArgumentNullException(nameof(row));
 

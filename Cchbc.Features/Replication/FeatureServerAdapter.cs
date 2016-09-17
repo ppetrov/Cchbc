@@ -9,18 +9,6 @@ namespace Cchbc.Features.Replication
 {
 	public static class FeatureServerAdapter
 	{
-		private static readonly Query InserChangeQuery =
-			new Query(@"INSERT INTO FEATURE_CHANGES(LAST_CHANGED_AT) VALUES (@CHANGED_AT)", new[]
-			{
-				new QueryParameter(@"CHANGED_AT", DateTime.MinValue),
-			});
-
-		private static readonly Query UpdateChangeQuery =
-			new Query(@"UPDATE FEATURE_CHANGES SET LAST_CHANGED_AT = @CHANGED_AT", new[]
-			{
-				new QueryParameter(@"CHANGED_AT", DateTime.MinValue),
-			});
-
 		private static readonly Query InserUserQuery =
 			new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT, VERSION_ID) VALUES (@NAME, @REPLICATED_AT, @VERSION_ID)",
 				new[]
@@ -83,12 +71,6 @@ namespace Cchbc.Features.Replication
 		public static Task CreateSchemaAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			context.Execute(new Query(@"
-CREATE TABLE[FEATURE_CHANGES] (
-	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	[LAST_CHANGED_AT] datetime NOT NULL
-)"));
 
 			context.Execute(new Query(@"
 CREATE TABLE[FEATURE_CONTEXTS] (
@@ -215,7 +197,6 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 				@"FEATURE_STEPS",
 				@"FEATURE_CONTEXTS",
 				@"FEATURE_VERSIONS",
-				@"FEATURE_CHANGES",
 				@"FEATURE_EXCEPTIONS"
 			})
 			{
@@ -364,21 +345,6 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 
 			// Insert the record
 			context.Execute(InsertExceptionEntryQuery);
-
-			return Task.FromResult(true);
-		}
-
-		public static Task UpdateLastChangedFlagAsync(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			UpdateChangeQuery.Parameters[0].Value = InserChangeQuery.Parameters[0].Value = DateTime.Now;
-
-			var isUpdated = Convert.ToBoolean(context.Execute(UpdateChangeQuery));
-			if (!isUpdated)
-			{
-				context.Execute(InserChangeQuery);
-			}
 
 			return Task.FromResult(true);
 		}

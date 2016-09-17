@@ -1,8 +1,5 @@
 ﻿using System;
-using System.CodeDom;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -11,19 +8,17 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cchbc.App.ArticlesModule.Helpers;
-using Cchbc.App.OrderModule;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
-using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Data;
+using Cchbc.Features.ExceptionsModule;
 using Cchbc.Features.Replication;
 using Cchbc.Validation;
 using Cchbc.Weather;
 using ConsoleClient;
-using ConsoleClient.Exceptions;
 
 namespace Cchbc.ConsoleClient
 {
@@ -163,40 +158,41 @@ namespace Cchbc.ConsoleClient
 				//return;
 
 				var w = Stopwatch.StartNew();
-				//GenerateData(clientDbPath);
-				//ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
-				//ClearData(clientDbPath);
-				//w.Stop();
-				//Console.WriteLine(w.ElapsedMilliseconds);
+				GenerateData(clientDbPath);
+				ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
+				ClearData(clientDbPath);
+				w.Stop();
+				Console.WriteLine(w.ElapsedMilliseconds);
+				return;
 
 
-				var viewModel = new FeatureExceptionsViewModel(
+				var viewModel = new ExceptionsViewModel(
 					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)),
-					new FeatureExceptionsSettings());
+					new ExceptionsSettings());
 
 				for (var i = 0; i < 100; i++)
 				{
 					viewModel.Load(
-					FeatureExceptionsDataProvider.GetTimePeriods,
-					FeatureExceptionsDataProvider.GetVersions,
-					FeatureExceptionsDataProvider.GetExceptions,
-					FeatureExceptionsDataProvider.GetExceptionsCounts);
+					ExceptionsDataProvider.GetTimePeriods,
+					ExceptionsDataProvider.GetVersions,
+					ExceptionsDataProvider.GetExceptions,
+					ExceptionsDataProvider.GetExceptionsCounts);
 				}
 
 				w.Stop();
 				Console.WriteLine(w.ElapsedMilliseconds);
 
 				Console.WriteLine(@"Time Periods");
-				foreach (var vm in viewModel.TimePeriods)
+				foreach (var v in viewModel.TimePeriods)
 				{
-					Console.WriteLine('\t' + string.Empty + vm.Name);
+					Console.WriteLine('\t' + string.Empty + v.Name);
 				}
 				Console.WriteLine();
 
 				Console.WriteLine(@"Versions");
-				foreach (var vm in viewModel.Versions)
+				foreach (var v in viewModel.Versions)
 				{
-					Console.WriteLine('\t' + string.Empty + vm.Name);
+					Console.WriteLine('\t' + string.Empty + v.Name);
 				}
 				Console.WriteLine();
 
@@ -1497,3 +1493,4 @@ using System.Data;
 
 
 }
+

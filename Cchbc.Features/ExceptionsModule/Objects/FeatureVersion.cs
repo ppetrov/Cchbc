@@ -1,13 +1,14 @@
 using System;
+using Cchbc.Features.ExceptionsModule.Rows;
 
-namespace ConsoleClient.Exceptions
+namespace Cchbc.Features.ExceptionsModule.Objects
 {
 	public sealed class FeatureVersion
 	{
-		public FeatureVersionRow Row { get; }
+		public VersionRow Row { get; }
 		public string Name { get; }
 
-		public FeatureVersion(FeatureVersionRow row)
+		public FeatureVersion(VersionRow row)
 		{
 			if (row == null) throw new ArgumentNullException(nameof(row));
 

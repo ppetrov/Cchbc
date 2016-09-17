@@ -70,8 +70,6 @@ namespace Cchbc.Features.Replication
 
 				await FeatureServerAdapter.InsertExceptionEntryAsync(serverContext, mappedExceptionId, row.CreatedAt, mappedFeatureId, userId, versionId);
 			}
-
-			await FeatureServerAdapter.UpdateLastChangedFlagAsync(serverContext);
 		}
 
 		private static async Task<Dictionary<int, int>> ReplicateContextsAsync(ITransactionContext serverContext, List<DbFeatureContextRow> clientContextRows)
