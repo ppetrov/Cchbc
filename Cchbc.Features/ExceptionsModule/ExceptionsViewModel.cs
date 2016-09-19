@@ -11,6 +11,8 @@ namespace Cchbc.Features.ExceptionsModule
 {
 	public sealed class ExceptionsViewModel : ViewModel
 	{
+		private bool IsLoaded { get; set; }
+
 		private ExceptionsDataLoadParams GetExceptionsDataLoadParams(ITransactionContext context)
 		{
 			var loadParams = new ExceptionsDataLoadParams(context, this.Settings.MaxExceptionEntries)
@@ -21,6 +23,7 @@ namespace Cchbc.Features.ExceptionsModule
 			return loadParams;
 		}
 
+		public string VersionCaption { get; } = @"Version";
 		private bool _isVersionsLoading;
 		public bool IsVersionsLoading
 		{
@@ -40,6 +43,7 @@ namespace Cchbc.Features.ExceptionsModule
 		}
 		public ObservableCollection<FeatureVersion> Versions { get; } = new ObservableCollection<FeatureVersion>();
 
+		public string TimePeriodCaption { get; } = @"Period";
 		private bool _isTimePeriodsLoading;
 		public bool IsTimePeriodsLoading
 		{
@@ -59,13 +63,16 @@ namespace Cchbc.Features.ExceptionsModule
 		}
 		public ObservableCollection<TimePeriod> TimePeriods { get; } = new ObservableCollection<TimePeriod>();
 
+		public string LatestExceptionsCaption { get; } = @"Latest exceptions";
 		private bool _isExceptionsLoading;
 		public bool IsExceptionsLoading
 		{
 			get { return _isExceptionsLoading; }
 			set { this.SetField(ref _isExceptionsLoading, value); }
 		}
-		public ObservableCollection<FeatureExceptionEntry> Exceptions { get; } = new ObservableCollection<FeatureExceptionEntry>();
+		public ObservableCollection<FeatureExceptionEntry> LatestExceptions { get; } = new ObservableCollection<FeatureExceptionEntry>();
+
+		public string ExceptionsCaption { get; } = @"Exceptions";
 		private bool _isExceptionsCountsLoading;
 		public bool IsExceptionsCountsLoading
 		{
@@ -107,15 +114,16 @@ namespace Cchbc.Features.ExceptionsModule
 				this.LoadPeriods(ctx, timePeriodsProvider);
 				this.LoadVersions(ctx, versionsProvider);
 
-				// Set the field to avoid reloading data
-				_timePeriod = this.TimePeriods.FirstOrDefault();
-				_version = this.Versions.FirstOrDefault();
+				this.TimePeriod = this.TimePeriods.FirstOrDefault();
+				this.Version = this.Versions.FirstOrDefault();
 
 				this.LoadExceptions(ctx);
 				this.LoadExceptionsCounts(ctx);
 
 				ctx.Complete();
 			}
+
+			this.IsLoaded = true;
 		}
 
 		private void LoadPeriods(ITransactionContext context, Func<ITransactionContext, IEnumerable<TimePeriodRow>> timePeriodsProvider)
@@ -140,11 +148,11 @@ namespace Cchbc.Features.ExceptionsModule
 
 		private void LoadExceptions(ITransactionContext context)
 		{
-			this.Exceptions.Clear();
+			this.LatestExceptions.Clear();
 
 			foreach (var featureException in this.ExceptionsProvider(this.GetExceptionsDataLoadParams(context)))
 			{
-				this.Exceptions.Add(featureException);
+				this.LatestExceptions.Add(featureException);
 			}
 		}
 
@@ -160,6 +168,8 @@ namespace Cchbc.Features.ExceptionsModule
 
 		private void LoadCurrentExceptionData()
 		{
+			if (!this.IsLoaded) return;
+
 			using (var ctx = this.ContextCreator.Create())
 			{
 				this.LoadExceptions(ctx);
@@ -171,6 +181,8 @@ namespace Cchbc.Features.ExceptionsModule
 
 		private void LoadCurrentExceptionsCounts()
 		{
+			if (!this.IsLoaded) return;
+
 			using (var ctx = this.ContextCreator.Create())
 			{
 				this.LoadExceptionsCounts(ctx);

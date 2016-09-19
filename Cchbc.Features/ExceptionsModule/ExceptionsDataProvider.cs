@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cchbc.Data;
+using Cchbc.Features.ExceptionsModule.Objects;
 using Cchbc.Features.ExceptionsModule.Rows;
 
 namespace Cchbc.Features.ExceptionsModule
@@ -82,11 +83,15 @@ namespace Cchbc.Features.ExceptionsModule
 					AND (@FROMDATE IS NULL OR (@FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE))
 			GROUP BY DATE(CREATED_AT)";
 
-			var value = dataLoadParams.Version.Row.Id;
-			var version = default(long?);
-			if (value > 0)
+			var versionId = default(long?);
+			var version = dataLoadParams.Version;
+			if (version != null)
 			{
-				version = value;
+				var value = version.Row.Id;
+				if (value > 0)
+				{
+					versionId = value;
+				}
 			}
 
 			var fromDate = default(DateTime?);
@@ -100,7 +105,7 @@ namespace Cchbc.Features.ExceptionsModule
 
 			var sqlParams = new[]
 			{
-				new QueryParameter(@"@VERSION", version),
+				new QueryParameter(@"@VERSION", versionId),
 				new QueryParameter(@"@FROMDATE", fromDate),
 				new QueryParameter(@"@TODATE", toDate),
 			};

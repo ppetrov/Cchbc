@@ -158,12 +158,12 @@ namespace Cchbc.ConsoleClient
 				//return;
 
 				var w = Stopwatch.StartNew();
-				GenerateData(clientDbPath);
-				ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
-				ClearData(clientDbPath);
-				w.Stop();
-				Console.WriteLine(w.ElapsedMilliseconds);
-				return;
+				//GenerateData(clientDbPath);
+				//ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
+				//ClearData(clientDbPath);
+				//w.Stop();
+				//Console.WriteLine(w.ElapsedMilliseconds);
+				//return;
 
 
 				var viewModel = new ExceptionsViewModel(
@@ -196,11 +196,11 @@ namespace Cchbc.ConsoleClient
 				}
 				Console.WriteLine();
 
-				//Console.WriteLine(@"Exceptions");
-				//foreach (var vm in viewModel.Exceptions)
-				//{
-				//	Console.WriteLine('\t' + string.Empty + new string(vm.Message.Take(40).ToArray()) + $@"... ({vm.CreatedAt}) " + vm.User + $@"({vm.Version})");
-				//}
+				Console.WriteLine(@"Exceptions");
+				foreach (var vm in viewModel.LatestExceptions)
+				{
+					Console.WriteLine('\t' + string.Empty + new string(vm.Message.Take(40).ToArray()) + $@"... ({vm.CreatedAt.ToString(@"T")}) " + vm.User.Name + $@"({vm.Version.Name})");
+				}
 				Console.WriteLine();
 
 				return;

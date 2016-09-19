@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.Features.ExceptionsModule
+namespace Cchbc.Features.ExceptionsModule.Objects
 {
 	public sealed class ExceptionsCount
 	{

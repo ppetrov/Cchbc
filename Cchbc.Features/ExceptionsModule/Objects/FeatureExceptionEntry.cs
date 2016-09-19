@@ -1,7 +1,7 @@
 using System;
 using Cchbc.Features.ExceptionsModule.Rows;
 
-namespace Cchbc.Features.ExceptionsModule
+namespace Cchbc.Features.ExceptionsModule.Objects
 {
 	public sealed class FeatureExceptionEntry
 	{
