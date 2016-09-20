@@ -158,17 +158,23 @@ namespace Cchbc.ConsoleClient
 				//return;
 
 				var w = Stopwatch.StartNew();
-				//GenerateData(clientDbPath);
-				//ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
-				//ClearData(clientDbPath);
-				//w.Stop();
-				//Console.WriteLine(w.ElapsedMilliseconds);
-				//return;
+				for (var i = 0; i < 1; i++)
+				{
+					GenerateData(clientDbPath);
+					ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
+					ClearData(clientDbPath);
+
+					FeatureAdapter.DaysOffset--;
+				}
+
+				w.Stop();
+				Console.WriteLine(w.ElapsedMilliseconds);
+				return;
 
 
 				var viewModel = new ExceptionsViewModel(
 					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)),
-					new ExceptionsSettings());
+					ExceptionsSettings.Default);
 
 				for (var i = 0; i < 100; i++)
 				{

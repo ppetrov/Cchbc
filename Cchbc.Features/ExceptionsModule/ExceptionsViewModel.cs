@@ -9,18 +9,48 @@ using Cchbc.Objects;
 
 namespace Cchbc.Features.ExceptionsModule
 {
+
+	public sealed class ExceptionsCountViewModel
+	{
+		public ExceptionsCount Model { get; }
+
+		public string CreatedAtFormatted { get; }
+		public int Count { get; }
+
+		public ExceptionsCountViewModel(ExceptionsCount model)
+		{
+			if (model == null) throw new ArgumentNullException(nameof(model));
+
+			this.Model = model;
+			this.Count = model.Count;
+			this.CreatedAtFormatted = model.DateTime.ToString(@"d");
+		}
+	}
+
 	public sealed class ExceptionsViewModel : ViewModel
 	{
 		private bool IsLoaded { get; set; }
 
-		private ExceptionsDataLoadParams GetExceptionsDataLoadParams(ITransactionContext context)
+		private ExceptionsDataLoadParams GetExceptionsDataLoadParams(ITransactionContext context, ExceptionsSettings settings)
 		{
-			var loadParams = new ExceptionsDataLoadParams(context, this.Settings.MaxExceptionEntries)
+			var loadParams = new ExceptionsDataLoadParams(context, settings)
 			{
 				Version = this.Version,
 				TimePeriod = this.TimePeriod
 			};
 			return loadParams;
+		}
+
+		private bool? _removeExcluded = true;
+		public bool? RemoveExcluded
+		{
+			get { return _removeExcluded; }
+			set
+			{
+				this.SetField(ref _removeExcluded, value);
+
+				this.LoadCurrentExceptionData(new ExceptionsSettings(this.Settings.MaxExceptionEntries, value ?? false));
+			}
 		}
 
 		public string VersionCaption { get; } = @"Version";
@@ -79,7 +109,7 @@ namespace Cchbc.Features.ExceptionsModule
 			get { return _isExceptionsCountsLoading; }
 			set { this.SetField(ref _isExceptionsCountsLoading, value); }
 		}
-		public ObservableCollection<ExceptionsCount> ExceptionsCounts { get; } = new ObservableCollection<ExceptionsCount>();
+		public ObservableCollection<ExceptionsCountViewModel> ExceptionsCounts { get; } = new ObservableCollection<ExceptionsCountViewModel>();
 
 		public ITransactionContextCreator ContextCreator { get; }
 		public Func<ExceptionsDataLoadParams, IEnumerable<FeatureExceptionEntry>> ExceptionsProvider { get; private set; }
@@ -115,6 +145,9 @@ namespace Cchbc.Features.ExceptionsModule
 				this.LoadVersions(ctx, versionsProvider);
 
 				this.TimePeriod = this.TimePeriods.FirstOrDefault();
+#if DEBUG
+				this.TimePeriod = this.TimePeriods.LastOrDefault();
+#endif
 				this.Version = this.Versions.FirstOrDefault();
 
 				this.LoadExceptions(ctx);
@@ -146,34 +179,34 @@ namespace Cchbc.Features.ExceptionsModule
 			}
 		}
 
-		private void LoadExceptions(ITransactionContext context)
+		private void LoadExceptions(ITransactionContext context, ExceptionsSettings settings = null)
 		{
 			this.LatestExceptions.Clear();
 
-			foreach (var featureException in this.ExceptionsProvider(this.GetExceptionsDataLoadParams(context)))
+			foreach (var featureException in this.ExceptionsProvider(this.GetExceptionsDataLoadParams(context, settings ?? this.Settings)))
 			{
 				this.LatestExceptions.Add(featureException);
 			}
 		}
 
-		private void LoadExceptionsCounts(ITransactionContext context)
+		private void LoadExceptionsCounts(ITransactionContext context, ExceptionsSettings settings = null)
 		{
 			this.ExceptionsCounts.Clear();
 
-			foreach (var exceptionsCount in this.ExceptionsCountProvider(this.GetExceptionsDataLoadParams(context)))
+			foreach (var exceptionsCount in this.ExceptionsCountProvider(this.GetExceptionsDataLoadParams(context, settings ?? this.Settings)))
 			{
-				this.ExceptionsCounts.Add(exceptionsCount);
+				this.ExceptionsCounts.Add(new ExceptionsCountViewModel(exceptionsCount));
 			}
 		}
 
-		private void LoadCurrentExceptionData()
+		private void LoadCurrentExceptionData(ExceptionsSettings settings = null)
 		{
 			if (!this.IsLoaded) return;
 
 			using (var ctx = this.ContextCreator.Create())
 			{
-				this.LoadExceptions(ctx);
-				this.LoadExceptionsCounts(ctx);
+				this.LoadExceptions(ctx, settings);
+				this.LoadExceptionsCounts(ctx, settings);
 
 				ctx.Complete();
 			}

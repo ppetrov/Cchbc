@@ -7,16 +7,17 @@ namespace Cchbc.Features.ExceptionsModule
 	public sealed class ExceptionsDataLoadParams
 	{
 		public ITransactionContext Context { get; }
-		public int MaxEntries { get; }
+		public ExceptionsSettings Settings { get; set; }
 		public FeatureVersion Version { get; set; }
 		public TimePeriod TimePeriod { get; set; }
 
-		public ExceptionsDataLoadParams(ITransactionContext context, int maxEntries)
+		public ExceptionsDataLoadParams(ITransactionContext context, ExceptionsSettings settings)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (settings == null) throw new ArgumentNullException(nameof(settings));
 
 			this.Context = context;
-			this.MaxEntries = maxEntries;
+			this.Settings = settings;
 		}
 	}
 }

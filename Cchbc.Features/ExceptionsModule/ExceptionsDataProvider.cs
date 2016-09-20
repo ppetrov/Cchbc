@@ -13,14 +13,13 @@ namespace Cchbc.Features.ExceptionsModule
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			// TODO : Load from database ???
 			return new[]
 			{
-				new TimePeriodRow(@"Last 1 hour", TimeSpan.FromHours(1)),
-				new TimePeriodRow(@"Last 24 hours", TimeSpan.FromHours(24)),
-				new TimePeriodRow(@"Last 7 days", TimeSpan.FromDays(7)),
-				new TimePeriodRow(@"Last 30 days", TimeSpan.FromDays(30)),
-				new TimePeriodRow(@"All", null),
+				new TimePeriodRow(@"Last 1 hour", TimeSpan.FromHours(1), 30),
+				new TimePeriodRow(@"Last 24 hours", TimeSpan.FromHours(24), 24),
+				new TimePeriodRow(@"Last 7 days", TimeSpan.FromDays(7), 28),
+				new TimePeriodRow(@"Last 30 days", TimeSpan.FromDays(30), 30),
+				new TimePeriodRow(@"Last 365 days", TimeSpan.FromDays(365), 30),
 			};
 		}
 
@@ -39,19 +38,30 @@ namespace Cchbc.Features.ExceptionsModule
 		{
 			if (dataLoadParams == null) throw new ArgumentNullException(nameof(dataLoadParams));
 
+			var settings = dataLoadParams.Settings;
+
 			var query = @"
+			SELECT E.ID, E.FEATURE_ID, E.EXCEPTION_ID, E.USER_ID, E.VERSION_ID, E.CREATED_AT
+			FROM FEATURE_EXCEPTION_ENTRIES E
+			ORDER BY E.CREATED_AT DESC
+			LIMIT @maxEntries";
+
+			if (settings.RemoveExcluded)
+			{
+				query = @"
 			SELECT E.ID, E.FEATURE_ID, E.EXCEPTION_ID, E.USER_ID, E.VERSION_ID, E.CREATED_AT
 			FROM FEATURE_EXCEPTION_ENTRIES E
 			WHERE NOT EXISTS
 				(SELECT 1
-				 FROM FEATURE_EXCEPTIONS_EXCLUDED EX
-				 WHERE E.EXCEPTION_ID = EX.EXCEPTION_ID)
+					FROM FEATURE_EXCEPTIONS_EXCLUDED EX
+					WHERE E.EXCEPTION_ID = EX.EXCEPTION_ID)
 			ORDER BY E.CREATED_AT DESC
 			LIMIT @maxEntries";
+			}
 
 			var sqlParams = new[]
 			{
-				new QueryParameter(@"@maxEntries", dataLoadParams.MaxEntries)
+				new QueryParameter(@"@maxEntries", settings.MaxExceptionEntries)
 			};
 
 			var context = dataLoadParams.Context;
@@ -78,10 +88,18 @@ namespace Cchbc.Features.ExceptionsModule
 			if (dataLoadParams == null) throw new ArgumentNullException(nameof(dataLoadParams));
 
 			var query = @"
-			SELECT DATE(CREATED_AT), COUNT(*) FROM FEATURE_EXCEPTION_ENTRIES
+			SELECT CREATED_AT FROM FEATURE_EXCEPTION_ENTRIES
 			WHERE (@VERSION IS NULL OR VERSION_ID = @VERSION)
-					AND (@FROMDATE IS NULL OR (@FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE))
-			GROUP BY DATE(CREATED_AT)";
+			AND (@FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE)";
+
+			if (dataLoadParams.Settings.RemoveExcluded)
+			{
+				query = @"
+				SELECT CREATED_AT FROM FEATURE_EXCEPTION_ENTRIES E
+				WHERE (@VERSION IS NULL OR VERSION_ID = @VERSION)
+				AND (@FROMDATE <= CREATED_AT AND CREATED_AT <= @TODATE)
+				AND NOT EXISTS (SELECT 1 FROM FEATURE_EXCEPTIONS_EXCLUDED EX WHERE E.EXCEPTION_ID = EX.EXCEPTION_ID)";
+			}
 
 			var versionId = default(long?);
 			var version = dataLoadParams.Version;
@@ -94,14 +112,9 @@ namespace Cchbc.Features.ExceptionsModule
 				}
 			}
 
-			var fromDate = default(DateTime?);
 			var toDate = DateTime.Now;
-
-			var timePeriod = dataLoadParams.TimePeriod.Row.TimeOffset;
-			if (timePeriod.HasValue)
-			{
-				fromDate = toDate.Add(-timePeriod.Value);
-			}
+			var timePeriodRow = dataLoadParams.TimePeriod.Row;
+			var fromDate = toDate.Add(-timePeriodRow.TimeOffset);
 
 			var sqlParams = new[]
 			{
@@ -110,7 +123,22 @@ namespace Cchbc.Features.ExceptionsModule
 				new QueryParameter(@"@TODATE", toDate),
 			};
 
-			return dataLoadParams.Context.Execute(new Query<ExceptionsCount>(query, r => new ExceptionsCount(r.GetDateTime(0), r.GetInt32(1)), sqlParams));
+			var bukets = new int[timePeriodRow.ChartSamples];
+			var interval = (toDate - fromDate).TotalSeconds / bukets.Length;
+
+			var _ = new Dictionary<int, int>(0);
+			dataLoadParams.Context.Fill(_, (r, m) =>
+			{
+				bukets[(int)(Math.Round((toDate - r.GetDateTime(0)).TotalSeconds / interval, MidpointRounding.AwayFromZero))]++;
+			}, new Query(query, sqlParams));
+
+			var counts = new ExceptionsCount[bukets.Length];
+			for (var i = 0; i < bukets.Length; i++)
+			{
+				counts[i] = new ExceptionsCount(fromDate.AddSeconds(interval * i), bukets[bukets.Length - 1 - i]);
+			}
+
+			return counts;
 		}
 
 		private static Dictionary<long, FeatureRow> GetFeatures(ITransactionContext context, List<ExceptionEntryRow> entries)

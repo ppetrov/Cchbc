@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using Windows.Storage;
 using Windows.UI.Xaml;
@@ -8,7 +9,7 @@ namespace Cchbc.Features.DashboardUI
 {
 	public sealed partial class ExceptionsScreen
 	{
-		public ExceptionsViewModel ViewModel { get; } = new ExceptionsViewModel(new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"server.sqlite")), new ExceptionsSettings());
+		public ExceptionsViewModel ViewModel { get; } = new ExceptionsViewModel(new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"server.sqlite")), ExceptionsSettings.Default);
 
 		public ExceptionsScreen()
 		{
@@ -20,11 +21,14 @@ namespace Cchbc.Features.DashboardUI
 		{
 			try
 			{
+				var s = Stopwatch.StartNew();
 				this.ViewModel.Load(
 					ExceptionsDataProvider.GetTimePeriods,
 					ExceptionsDataProvider.GetVersions,
 					ExceptionsDataProvider.GetExceptions,
 					ExceptionsDataProvider.GetExceptionsCounts);
+				s.Stop();
+				Debug.WriteLine(s.ElapsedMilliseconds);
 			}
 			catch (Exception ex)
 			{

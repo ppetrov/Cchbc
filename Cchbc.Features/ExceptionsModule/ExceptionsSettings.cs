@@ -2,6 +2,15 @@
 {
 	public sealed class ExceptionsSettings
 	{
-		public int MaxExceptionEntries { get; } = 10;
+		public static readonly ExceptionsSettings Default = new ExceptionsSettings(10, true);
+
+		public int MaxExceptionEntries { get; }
+		public bool RemoveExcluded { get; }
+
+		public ExceptionsSettings(int maxExceptionEntries, bool removeExcluded)
+		{
+			this.MaxExceptionEntries = maxExceptionEntries;
+			this.RemoveExcluded = removeExcluded;
+		}
 	}
 }
