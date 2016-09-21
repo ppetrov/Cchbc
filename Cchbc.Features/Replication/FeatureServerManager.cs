@@ -109,7 +109,7 @@ namespace Cchbc.Features.Replication
 		{
 			var serverFeaturesByContext = new Dictionary<long, Dictionary<string, int>>();
 
-			var features = FeatureAdapter.GetFeaturesAsync(context);
+			var features = FeatureAdapter.GetFeatures(context);
 			foreach (var feature in features)
 			{
 				Dictionary<string, int> byContext;
@@ -160,7 +160,7 @@ namespace Cchbc.Features.Replication
 				long serverStepId;
 				if (!serverSteps.TryGetValue(name, out serverStepId))
 				{
-					serverStepId = FeatureAdapter.InsertStepAsync(context, name);
+					serverStepId = FeatureAdapter.InsertStep(context, name);
 					serverSteps.Add(name, serverStepId);
 				}
 
@@ -182,7 +182,7 @@ namespace Cchbc.Features.Replication
 				long serverExceptionId;
 				if (!serverExceptions.TryGetValue(contents, out serverExceptionId))
 				{
-					serverExceptionId = FeatureAdapter.InsertExceptionAsync(context, contents);
+					serverExceptionId = FeatureAdapter.InsertException(context, contents);
 					serverExceptions.Add(contents, serverExceptionId);
 				}
 
@@ -208,7 +208,7 @@ namespace Cchbc.Features.Replication
 				// Entirely New feature or New feature in the context
 				if (!serverFeaturesByContext.TryGetValue(contextId, out byContext) || !byContext.TryGetValue(name, out featureId))
 				{
-					featureId = FeatureAdapter.InsertFeatureAsync(context, name, contextId);
+					featureId = FeatureAdapter.InsertFeature(context, name, contextId);
 
 					if (byContext == null)
 					{

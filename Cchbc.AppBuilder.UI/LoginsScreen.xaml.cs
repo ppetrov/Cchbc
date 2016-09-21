@@ -28,7 +28,7 @@ namespace Cchbc.AppBuilder.UI
 			{
 				var featureManager = Context.Core.FeatureManager;
 				featureManager.ContextCreator = Context.Core.ContextCreator;
-				//await featureManager.CreateSchemaAsync();
+				//await featureManager.CreateSchema();
 				featureManager.LoadAsync();
 			}
 			catch (Exception ex)

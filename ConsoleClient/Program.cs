@@ -139,7 +139,7 @@ namespace Cchbc.ConsoleClient
 				ClientData cd;
 				using (var client = new TransactionContextCreator(GetSqliteConnectionString(clientDbPath)).Create())
 				{
-					cd = FeatureAdapter.GetDataAsync(client);
+					cd = FeatureAdapter.GetData(client);
 					client.Complete();
 				}
 
@@ -233,7 +233,7 @@ namespace Cchbc.ConsoleClient
 			ClientData data;
 			using (var client = new TransactionContextCreator(c).Create())
 			{
-				data = FeatureAdapter.GetDataAsync(client);
+				data = FeatureAdapter.GetData(client);
 				client.Complete();
 			}
 
@@ -359,7 +359,7 @@ namespace Cchbc.ConsoleClient
 			ClientData data;
 			using (var client = new TransactionContextCreator(clientDb).Create())
 			{
-				data = FeatureAdapter.GetDataAsync(client);
+				data = FeatureAdapter.GetData(client);
 				client.Complete();
 			}
 

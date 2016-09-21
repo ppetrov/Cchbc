@@ -157,7 +157,7 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 
 		public static long InsertVersionAsync(ITransactionContext context, string version)
 		{
-			return FeatureAdapter.ExecuteInsertAsync(context, new Query(@"INSERT INTO FEATURE_VERSIONS(NAME) VALUES (@NAME)", new[] { new QueryParameter(@"NAME", version), }));
+			return FeatureAdapter.ExecuteInsert(context, new Query(@"INSERT INTO FEATURE_VERSIONS(NAME) VALUES (@NAME)", new[] { new QueryParameter(@"NAME", version), }));
 		}
 
 		public static long InsertUserAsync(ITransactionContext context, string userName, long versionId)
@@ -169,7 +169,7 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 				new QueryParameter(@"@VERSION_ID", versionId),
 			};
 
-			return FeatureAdapter.ExecuteInsertAsync(context, new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT, VERSION_ID) VALUES (@NAME, @REPLICATED_AT, @VERSION_ID)", sqlParams));
+			return FeatureAdapter.ExecuteInsert(context, new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT, VERSION_ID) VALUES (@NAME, @REPLICATED_AT, @VERSION_ID)", sqlParams));
 		}
 
 		public static void UpdateUserAsync(ITransactionContext context, long userId, long versionId)

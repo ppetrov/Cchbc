@@ -17,7 +17,7 @@ namespace Cchbc.Features
 		{
 			using (var context = this.ContextCreator.Create())
 			{
-				FeatureAdapter.CreateSchemaAsync(context);
+				FeatureAdapter.CreateSchema(context);
 				context.Complete();
 			}
 		}
@@ -26,7 +26,7 @@ namespace Cchbc.Features
 		{
 			using (var context = this.ContextCreator.Create())
 			{
-				FeatureAdapter.DropSchemaAsync(context);
+				FeatureAdapter.DropSchema(context);
 				context.Complete();
 			}
 		}
@@ -35,8 +35,8 @@ namespace Cchbc.Features
 		{
 			using (var context = this.ContextCreator.Create())
 			{
-				this.Contexts = FeatureAdapter.GetContextsAsync(context);
-				this.Steps = FeatureAdapter.GetStepsAsync(context);
+				this.Contexts = FeatureAdapter.GetContexts(context);
+				this.Steps = FeatureAdapter.GetSteps(context);
 				this.Features = this.GetFeaturesAsync(context);
 
 				context.Complete();
@@ -86,7 +86,7 @@ namespace Cchbc.Features
 
 				var steps = featureData.Steps;
 				var hasSteps = steps.Length > 0;
-				var featureEntryId = FeatureAdapter.InsertFeatureEntryAsync(context, featureRow.Id, featureData.TimeSpent, details ?? string.Empty, hasSteps);
+				var featureEntryId = FeatureAdapter.InsertFeatureEntry(context, featureRow.Id, featureData.TimeSpent, details ?? string.Empty, hasSteps);
 				if (hasSteps)
 				{
 					foreach (var step in steps)
@@ -97,7 +97,7 @@ namespace Cchbc.Features
 						if (!this.Steps.TryGetValue(name, out current))
 						{
 							// Inser step
-							var newStepId = FeatureAdapter.InsertStepAsync(context, name);
+							var newStepId = FeatureAdapter.InsertStep(context, name);
 
 							current = new DbFeatureStepRow(newStepId, name);
 
@@ -106,7 +106,7 @@ namespace Cchbc.Features
 					}
 
 					// Inser step entries
-					FeatureAdapter.InsertStepEntriesAsync(context, featureEntryId, steps, this.Steps);
+					FeatureAdapter.InsertStepEntries(context, featureEntryId, steps, this.Steps);
 				}
 
 				context.Complete();
@@ -121,9 +121,9 @@ namespace Cchbc.Features
 			using (var context = this.ContextCreator.Create())
 			{
 				var featureRow = this.SaveAsync(context, feature.Context, feature.Name);
-				var exceptionId = FeatureAdapter.GetOrCreateExceptionAsync(context, exception.ToString());
+				var exceptionId = FeatureAdapter.GetOrCreateException(context, exception.ToString());
 
-				FeatureAdapter.InsertExceptionEntryAsync(context, featureRow.Id, exceptionId);
+				FeatureAdapter.InsertExceptionEntry(context, featureRow.Id, exceptionId);
 
 				context.Complete();
 			}
@@ -135,7 +135,7 @@ namespace Cchbc.Features
 			{
 				var featureRow = this.SaveAsync(context, featureContext, name);
 
-				FeatureAdapter.InsertFeatureUsageAsync(context, featureRow.Id);
+				FeatureAdapter.InsertFeatureUsage(context, featureRow.Id);
 
 				context.Complete();
 			}
@@ -186,7 +186,7 @@ namespace Cchbc.Features
 			}
 
 			// Insert into database
-			var newFeatureId = FeatureAdapter.InsertFeatureAsync(transactionContext, name, contextId);
+			var newFeatureId = FeatureAdapter.InsertFeature(transactionContext, name, contextId);
 
 			var feature = new DbFeatureRow(newFeatureId, name, contextId);
 
@@ -201,7 +201,7 @@ namespace Cchbc.Features
 			var featuresByContext = new Dictionary<long, List<DbFeatureRow>>(this.Contexts.Count);
 
 			// Fetch & add new values
-			foreach (var feature in FeatureAdapter.GetFeaturesAsync(context))
+			foreach (var feature in FeatureAdapter.GetFeatures(context))
 			{
 				var contextId = feature.ContextId;
 
