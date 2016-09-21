@@ -293,7 +293,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return Task.FromResult((int)context.GetNewId());
 		}
 
-		public static Task<int> InsertFeatureAsync(ITransactionContext context, string name, int contextId)
+		public static Task<int> InsertFeatureAsync(ITransactionContext context, string name, long contextId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
