@@ -30,40 +30,13 @@ namespace Cchbc.ConsoleClient
 		}
 	}
 
-	public sealed class HotPathFinder
-	{
-		public void FindHotPath()
-		{
-			// TODO : !!! We need data mine & analyze
-		}
-	}
+	// By version - latest
+	// By steps
+	// * By date - last day
 
-	public sealed class ServerProfiler
-	{
-
-	}
-
-	public sealed class Profiler
-	{
-		public void Analyze(Feature feature)
-		{
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-
-			// By version - latest
-			// By steps
-			// * By date - last day
-
-			// Create report by user on the server
-			// PPetrov Top 5 slowest features
-			// PPetrov Top 5 most used features
-		}
-	}
-
-	public sealed class ProfilerReport
-	{
-
-	}
+	// Create report by user on the server
+	// PPetrov Top 5 slowest features
+	// PPetrov Top 5 most used features
 
 
 
@@ -158,13 +131,29 @@ namespace Cchbc.ConsoleClient
 				//return;
 
 				var w = Stopwatch.StartNew();
-				for (var i = 0; i < 1; i++)
-				{
-					GenerateData(clientDbPath);
-					ReplicateData(GetSqliteConnectionString(clientDbPath), GetSqliteConnectionString(serverDbPath));
-					ClearData(clientDbPath);
+				GenerateData(clientDbPath);
 
-					FeatureAdapter.DaysOffset--;
+				Console.WriteLine(@"Load client data");
+				var s = Stopwatch.StartNew();
+
+				ClientData cd;
+				using (var client = new TransactionContextCreator(GetSqliteConnectionString(clientDbPath)).Create())
+				{
+					cd = FeatureAdapter.GetDataAsync(client).Result;
+					client.Complete();
+				}
+
+				s.Stop();
+				Console.WriteLine(s.ElapsedMilliseconds);
+
+				while (true)
+				{
+					s.Restart();
+					Replicate(GetSqliteConnectionString(serverDbPath), cd);
+					s.Stop();
+					//FeatureServerAdapter.MinutesOffset--;
+					Console.WriteLine(s.ElapsedMilliseconds);
+					//ClearData(clientDbPath);
 				}
 
 				w.Stop();
@@ -370,6 +359,11 @@ namespace Cchbc.ConsoleClient
 			s.Stop();
 			Console.WriteLine(s.ElapsedMilliseconds);
 
+			Replicate(serverDb, data);
+		}
+
+		private static void Replicate(string serverDb, ClientData data)
+		{
 			var versions = new[]
 			{
 				@"8.28.79.127",
@@ -861,8 +855,6 @@ namespace Cchbc.ConsoleClient
 
 		private static void Replicate(string serverDb, ClientData data, string user, string version)
 		{
-			//Console.WriteLine($@"Replicate '{user}' & {version}");
-
 			var s = Stopwatch.StartNew();
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
@@ -871,7 +863,7 @@ namespace Cchbc.ConsoleClient
 			}
 
 			s.Stop();
-			Console.WriteLine(s.ElapsedMilliseconds);
+			//Console.WriteLine(s.ElapsedMilliseconds);
 		}
 
 		public static void Unpack(byte[] input)

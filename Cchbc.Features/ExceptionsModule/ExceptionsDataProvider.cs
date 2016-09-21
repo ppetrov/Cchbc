@@ -16,8 +16,8 @@ namespace Cchbc.Features.ExceptionsModule
 			return new[]
 			{
 				new TimePeriodRow(@"Last 1 hour", TimeSpan.FromHours(1), 30),
-				new TimePeriodRow(@"Last 24 hours", TimeSpan.FromHours(24), 24),
-				new TimePeriodRow(@"Last 7 days", TimeSpan.FromDays(7), 28),
+				new TimePeriodRow(@"Last 24 hours", TimeSpan.FromDays(1), 30),
+				new TimePeriodRow(@"Last 7 days", TimeSpan.FromDays(7), 30),
 				new TimePeriodRow(@"Last 30 days", TimeSpan.FromDays(30), 30),
 				new TimePeriodRow(@"Last 365 days", TimeSpan.FromDays(365), 30),
 			};
@@ -129,7 +129,7 @@ namespace Cchbc.Features.ExceptionsModule
 			var _ = new Dictionary<int, int>(0);
 			dataLoadParams.Context.Fill(_, (r, m) =>
 			{
-				bukets[(int)(Math.Round((toDate - r.GetDateTime(0)).TotalSeconds / interval, MidpointRounding.AwayFromZero))]++;
+				bukets[Math.Min((int)(Math.Round((toDate - r.GetDateTime(0)).TotalSeconds / interval, MidpointRounding.AwayFromZero)), bukets.Length - 1)]++;
 			}, new Query(query, sqlParams));
 
 			var counts = new ExceptionsCount[bukets.Length];

@@ -46,29 +46,36 @@ namespace Cchbc.Features.Replication
 			var featuresMap = await ReplicateFeaturesAsync(serverContext, clientFeatureRows, contextsMap);
 			var featureEntriesMap = await ReplicateFeatureEntriesAsync(serverContext, clientFeatureEntryRows, featuresMap, userId, versionId, clientFeatureEntryStepRows);
 
-			// Process in batches
-			var totalEntrySteps = clientFeatureEntryStepRows.Count;
 			var batchSize = 256;
-			var totalBatches = totalEntrySteps / batchSize;
+
+			// Process Steps in batches
+			var total = clientFeatureEntryStepRows.Count;
+			var remaining = total % batchSize;
+			var totalBatches = total / batchSize;
 			for (var i = 0; i < totalBatches; i++)
 			{
 				var offset = i * batchSize;
 				await FeatureServerAdapter.InsertStepEntriesAsync(serverContext, GetRange(clientFeatureEntryStepRows, offset, batchSize), featureEntriesMap, stepsMap);
 			}
-			var remaining = totalEntrySteps % batchSize;
 			if (remaining > 0)
 			{
 				var offset = totalBatches * batchSize;
 				await FeatureServerAdapter.InsertStepEntriesAsync(serverContext, GetRange(clientFeatureEntryStepRows, offset, remaining), featureEntriesMap, stepsMap);
 			}
 
-			// TODO :!!! Batch insert
-			foreach (var row in clientFeatureExceptionEntryRows)
-			{
-				var mappedExceptionId = exceptionsMap[row.ExceptionId];
-				var mappedFeatureId = featuresMap[row.FeatureId];
 
-				await FeatureServerAdapter.InsertExceptionEntryAsync(serverContext, mappedExceptionId, row.CreatedAt, mappedFeatureId, userId, versionId);
+			total = clientFeatureExceptionEntryRows.Count;
+			remaining = total % batchSize;
+			totalBatches = total / batchSize;
+			for (var i = 0; i < totalBatches; i++)
+			{
+				var offset = i * batchSize;
+				await FeatureServerAdapter.InsertExceptionEntryAsync(serverContext, GetRange(clientFeatureExceptionEntryRows, offset, batchSize), userId, versionId, exceptionsMap, featuresMap);
+			}
+			if (remaining > 0)
+			{
+				var offset = totalBatches * batchSize;
+				await FeatureServerAdapter.InsertExceptionEntryAsync(serverContext, GetRange(clientFeatureExceptionEntryRows, offset, remaining), userId, versionId, exceptionsMap, featuresMap);
 			}
 		}
 
@@ -206,5 +213,15 @@ namespace Cchbc.Features.Replication
 				yield return entries[offset + i];
 			}
 		}
+
+		private static IEnumerable<DbFeatureExceptionEntryRow> GetRange(List<DbFeatureExceptionEntryRow> entries, int offset, int total)
+		{
+			for (var i = 0; i < total; i++)
+			{
+				yield return entries[offset + i];
+			}
+		}
+
+		
 	}
 }

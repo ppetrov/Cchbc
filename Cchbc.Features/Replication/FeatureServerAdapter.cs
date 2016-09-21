@@ -46,18 +46,6 @@ namespace Cchbc.Features.Replication
 					new QueryParameter(@"@VERSION", 0L),
 				});
 
-		private static readonly Query InsertExceptionEntryQuery =
-			new Query(@"INSERT INTO FEATURE_EXCEPTION_ENTRIES(EXCEPTION_ID, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID) VALUES (@EXCEPTION, @CREATED_AT, @FEATURE, @USER, @VERSION)",
-				new[]
-				{
-					new QueryParameter(@"@EXCEPTION", 0L),
-					new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
-					new QueryParameter(@"@FEATURE", 0L),
-					new QueryParameter(@"@USER", 0L),
-					new QueryParameter(@"@VERSION", 0L),
-				});
-
-
 		private static readonly Query<int> GetUserQuery = new Query<int>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", ReadInt, new[]
 			{
 				new QueryParameter(@"NAME", string.Empty),
@@ -332,19 +320,38 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 			return Task.FromResult(true);
 		}
 
-		public static Task InsertExceptionEntryAsync(ITransactionContext context, long exceptionId, DateTime createdAt, long featureId, long userId, long versionId)
+		public static Task InsertExceptionEntryAsync(ITransactionContext context, IEnumerable<DbFeatureExceptionEntryRow> exceptionEntryRows, int userId, int versionId, Dictionary<int, int> exceptionsMap, Dictionary<int, int> featuresMap)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			// Set parameters values
-			InsertExceptionEntryQuery.Parameters[0].Value = exceptionId;
-			InsertExceptionEntryQuery.Parameters[1].Value = createdAt;
-			InsertExceptionEntryQuery.Parameters[2].Value = featureId;
-			InsertExceptionEntryQuery.Parameters[3].Value = userId;
-			InsertExceptionEntryQuery.Parameters[4].Value = versionId;
+			var buffer = new StringBuilder(@"INSERT INTO FEATURE_EXCEPTION_ENTRIES(EXCEPTION_ID, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID) VALUES ");
 
-			// Insert the record
-			context.Execute(InsertExceptionEntryQuery);
+			var addComma = false;
+			foreach (var r in exceptionEntryRows)
+			{
+				if (addComma)
+				{
+					buffer.Append(',');
+				}
+
+				buffer.Append('(');
+				buffer.Append(exceptionsMap[r.ExceptionId]);
+				buffer.Append(',');
+				buffer.Append('\'');
+				buffer.Append(r.CreatedAt.ToString(@"yyyy-MM-dd HH:mm:ss.fffffff"));
+				buffer.Append('\'');
+				buffer.Append(',');
+				buffer.Append(featuresMap[r.FeatureId]);
+				buffer.Append(',');
+				buffer.Append(userId);
+				buffer.Append(',');
+				buffer.Append(versionId);
+				buffer.Append(')');
+
+				addComma = true;
+			}
+
+			context.Execute(new Query(buffer.ToString()));
 
 			return Task.FromResult(true);
 		}
