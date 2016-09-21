@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Features.Data;
 
@@ -14,53 +13,51 @@ namespace Cchbc.Features
 
 		public ITransactionContextCreator ContextCreator { get; set; }
 
-		public async Task CreateSchemaAsync()
+		public void CreateSchemaAsync()
 		{
 			using (var context = this.ContextCreator.Create())
 			{
-				await FeatureAdapter.CreateSchemaAsync(context);
+				FeatureAdapter.CreateSchemaAsync(context);
+				context.Complete();
+			}
+		}
+
+		public void DropSchemaAsync()
+		{
+			using (var context = this.ContextCreator.Create())
+			{
+				FeatureAdapter.DropSchemaAsync(context);
+				context.Complete();
+			}
+		}
+
+		public void LoadAsync()
+		{
+			using (var context = this.ContextCreator.Create())
+			{
+				this.Contexts = FeatureAdapter.GetContextsAsync(context);
+				this.Steps = FeatureAdapter.GetStepsAsync(context);
+				this.Features = this.GetFeaturesAsync(context);
 
 				context.Complete();
 			}
 		}
 
-		public async Task DropSchemaAsync()
-		{
-			using (var context = this.ContextCreator.Create())
-			{
-				await FeatureAdapter.DropSchemaAsync(context);
-
-				context.Complete();
-			}
-		}
-
-		public async Task LoadAsync()
-		{
-			using (var context = this.ContextCreator.Create())
-			{
-				this.Contexts = await FeatureAdapter.GetContextsAsync(context);
-				this.Steps = await FeatureAdapter.GetStepsAsync(context);
-				this.Features = await this.GetFeaturesAsync(context);
-
-				context.Complete();
-			}
-		}
-
-		public async Task MarkUsageAsync(Feature feature)
+		public void MarkUsageAsync(Feature feature)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			await MarkUsageAsync(feature.Context, feature.Name);
+			MarkUsageAsync(feature.Context, feature.Name);
 		}
 
-		public async Task MarkUsageAsync(FeatureData featureData)
+		public void MarkUsageAsync(FeatureData featureData)
 		{
 			if (featureData == null) throw new ArgumentNullException(nameof(featureData));
 
-			await MarkUsageAsync(featureData.Context, featureData.Name);
+			MarkUsageAsync(featureData.Context, featureData.Name);
 		}
 
-		public Task WriteAsync(Feature feature, string details = null)
+		public void WriteAsync(Feature feature, string details = null)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
@@ -76,20 +73,20 @@ namespace Cchbc.Features
 			}
 			var featureData = new FeatureData(feature.Context, feature.Name, feature.TimeSpent, steps);
 
-			return WriteAsync(featureData, details);
+			WriteAsync(featureData, details);
 		}
 
-		public async Task WriteAsync(FeatureData featureData, string details = null)
+		public void WriteAsync(FeatureData featureData, string details = null)
 		{
 			if (featureData == null) throw new ArgumentNullException(nameof(featureData));
 
 			using (var context = this.ContextCreator.Create())
 			{
-				var featureRow = await this.SaveAsync(context, featureData.Context, featureData.Name);
+				var featureRow = this.SaveAsync(context, featureData.Context, featureData.Name);
 
 				var steps = featureData.Steps;
 				var hasSteps = steps.Length > 0;
-				var featureEntryId = await FeatureAdapter.InsertFeatureEntryAsync(context, featureRow.Id, featureData.TimeSpent, details ?? string.Empty, hasSteps);
+				var featureEntryId = FeatureAdapter.InsertFeatureEntryAsync(context, featureRow.Id, featureData.TimeSpent, details ?? string.Empty, hasSteps);
 				if (hasSteps)
 				{
 					foreach (var step in steps)
@@ -100,7 +97,7 @@ namespace Cchbc.Features
 						if (!this.Steps.TryGetValue(name, out current))
 						{
 							// Inser step
-							var newStepId = await FeatureAdapter.InsertStepAsync(context, name);
+							var newStepId = FeatureAdapter.InsertStepAsync(context, name);
 
 							current = new DbFeatureStepRow(newStepId, name);
 
@@ -109,54 +106,54 @@ namespace Cchbc.Features
 					}
 
 					// Inser step entries
-					await FeatureAdapter.InsertStepEntriesAsync(context, featureEntryId, steps, this.Steps);
+					FeatureAdapter.InsertStepEntriesAsync(context, featureEntryId, steps, this.Steps);
 				}
 
 				context.Complete();
 			}
 		}
 
-		public async Task WriteExceptionAsync(Feature feature, Exception exception)
+		public void WriteExceptionAsync(Feature feature, Exception exception)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
 			using (var context = this.ContextCreator.Create())
 			{
-				var featureRow = await this.SaveAsync(context, feature.Context, feature.Name);
-				var exceptionId = await FeatureAdapter.GetOrCreateExceptionAsync(context, exception.ToString());
+				var featureRow = this.SaveAsync(context, feature.Context, feature.Name);
+				var exceptionId = FeatureAdapter.GetOrCreateExceptionAsync(context, exception.ToString());
 
-				await FeatureAdapter.InsertExceptionEntryAsync(context, featureRow.Id, exceptionId);
+				FeatureAdapter.InsertExceptionEntryAsync(context, featureRow.Id, exceptionId);
 
 				context.Complete();
 			}
 		}
 
-		private async Task MarkUsageAsync(string featureContext, string name)
+		private void MarkUsageAsync(string featureContext, string name)
 		{
 			using (var context = this.ContextCreator.Create())
 			{
-				var featureRow = await this.SaveAsync(context, featureContext, name);
+				var featureRow = this.SaveAsync(context, featureContext, name);
 
-				await FeatureAdapter.InsertFeatureUsageAsync(context, featureRow.Id);
+				FeatureAdapter.InsertFeatureUsageAsync(context, featureRow.Id);
 
 				context.Complete();
 			}
 		}
 
-		private async Task<DbFeatureRow> SaveAsync(ITransactionContext context, string featureContext, string name)
+		private DbFeatureRow SaveAsync(ITransactionContext context, string featureContext, string name)
 		{
-			return await this.SaveFeatureAsync(context, await this.SaveContextAsync(context, featureContext), name);
+			return this.SaveFeatureAsync(context, this.SaveContextAsync(context, featureContext), name);
 		}
 
-		private async Task<DbFeatureContextRow> SaveContextAsync(ITransactionContext transactionContext, string name)
+		private DbFeatureContextRow SaveContextAsync(ITransactionContext transactionContext, string name)
 		{
 			DbFeatureContextRow featureContextRow;
 
 			if (!this.Contexts.TryGetValue(name, out featureContextRow))
 			{
 				// Insert into database
-				var newContextId = await FeatureAdapter.InsertContextAsync(transactionContext, name);
+				var newContextId = FeatureAdapter.InsertContextAsync(transactionContext, name);
 
 				featureContextRow = new DbFeatureContextRow(newContextId, name);
 
@@ -167,7 +164,7 @@ namespace Cchbc.Features
 			return featureContextRow;
 		}
 
-		private async Task<DbFeatureRow> SaveFeatureAsync(ITransactionContext transactionContext, DbFeatureContextRow featureContextRow, string name)
+		private DbFeatureRow SaveFeatureAsync(ITransactionContext transactionContext, DbFeatureContextRow featureContextRow, string name)
 		{
 			var contextId = featureContextRow.Id;
 			List<DbFeatureRow> features;
@@ -189,7 +186,7 @@ namespace Cchbc.Features
 			}
 
 			// Insert into database
-			var newFeatureId = await FeatureAdapter.InsertFeatureAsync(transactionContext, name, contextId);
+			var newFeatureId = FeatureAdapter.InsertFeatureAsync(transactionContext, name, contextId);
 
 			var feature = new DbFeatureRow(newFeatureId, name, contextId);
 
@@ -199,12 +196,12 @@ namespace Cchbc.Features
 			return feature;
 		}
 
-		private async Task<Dictionary<long, List<DbFeatureRow>>> GetFeaturesAsync(ITransactionContext context)
+		private Dictionary<long, List<DbFeatureRow>> GetFeaturesAsync(ITransactionContext context)
 		{
 			var featuresByContext = new Dictionary<long, List<DbFeatureRow>>(this.Contexts.Count);
 
 			// Fetch & add new values
-			foreach (var feature in await FeatureAdapter.GetFeaturesAsync(context))
+			foreach (var feature in FeatureAdapter.GetFeaturesAsync(context))
 			{
 				var contextId = feature.ContextId;
 

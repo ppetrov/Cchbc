@@ -29,7 +29,7 @@ namespace Cchbc.AppBuilder.UI
 				var featureManager = Context.Core.FeatureManager;
 				featureManager.ContextCreator = Context.Core.ContextCreator;
 				//await featureManager.CreateSchemaAsync();
-				await featureManager.LoadAsync();
+				featureManager.LoadAsync();
 			}
 			catch (Exception ex)
 			{
@@ -66,11 +66,11 @@ namespace Cchbc.AppBuilder.UI
 					}
 				}
 
-				await featureManager.WriteAsync(feature);
+				featureManager.WriteAsync(feature);
 			}
 			catch (Exception ex)
 			{
-				await featureManager.WriteExceptionAsync(feature, ex);
+				featureManager.WriteExceptionAsync(feature, ex);
 			}
 		}
 
@@ -105,7 +105,7 @@ namespace Cchbc.AppBuilder.UI
 			}
 			finally
 			{
-				await manager.WriteAsync(f);
+				manager.WriteAsync(f);
 			}
 		}
 	}

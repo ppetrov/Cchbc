@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Features.Data;
 
@@ -22,7 +21,7 @@ namespace Cchbc.Features.Replication
 					new QueryParameter(@"@VERSION", 0L),
 				});
 
-		public static Task CreateSchemaAsync(ITransactionContext context)
+		public static void CreateSchemaAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -133,11 +132,9 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 		REFERENCES [FEATURE_EXCEPTIONS] ([Id])
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
-
-			return Task.FromResult(true);
 		}
 
-		public static Task DropSchemaAsync(ITransactionContext context)
+		public static void DropSchemaAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -156,16 +153,14 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 			{
 				context.Execute(new Query(@"DROP TABLE " + name));
 			}
-
-			return Task.FromResult(true);
 		}
 
-		public static Task<long> InsertVersionAsync(ITransactionContext context, string version)
+		public static long InsertVersionAsync(ITransactionContext context, string version)
 		{
 			return FeatureAdapter.ExecuteInsertAsync(context, new Query(@"INSERT INTO FEATURE_VERSIONS(NAME) VALUES (@NAME)", new[] { new QueryParameter(@"NAME", version), }));
 		}
 
-		public static Task<long> InsertUserAsync(ITransactionContext context, string userName, long versionId)
+		public static long InsertUserAsync(ITransactionContext context, string userName, long versionId)
 		{
 			var sqlParams = new[]
 			{
@@ -177,7 +172,7 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 			return FeatureAdapter.ExecuteInsertAsync(context, new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT, VERSION_ID) VALUES (@NAME, @REPLICATED_AT, @VERSION_ID)", sqlParams));
 		}
 
-		public static Task UpdateUserAsync(ITransactionContext context, long userId, long versionId)
+		public static void UpdateUserAsync(ITransactionContext context, long userId, long versionId)
 		{
 			var sqlParams = new[]
 			{
@@ -187,46 +182,44 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 			};
 
 			context.Execute(new Query(@"UPDATE FEATURE_USERS SET REPLICATED_AT = @REPLICATED_AT, VERSION_ID = @VERSION WHERE ID = @ID", sqlParams));
-
-			return Task.FromResult(true);
 		}
 
-		public static Task<Dictionary<string, long>> GetUsersAsync(ITransactionContext context)
+		public static Dictionary<string, long> GetUsersAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_USERS");
 		}
 
-		public static Task<Dictionary<string, long>> GetVersionsAsync(ITransactionContext context)
+		public static Dictionary<string, long> GetVersionsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_VERSIONS");
 		}
 
-		public static Task<Dictionary<string, long>> GetContextsAsync(ITransactionContext context)
+		public static Dictionary<string, long> GetContextsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_CONTEXTS");
 		}
 
-		public static Task<Dictionary<string, long>> GetStepsAsync(ITransactionContext context)
+		public static Dictionary<string, long> GetStepsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_STEPS");
 		}
 
-		public static Task<Dictionary<string, long>> GetExceptionsAsync(ITransactionContext context)
+		public static Dictionary<string, long> GetExceptionsAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS");
 		}
 
-		public static Task<long> InsertFeatureEntryAsync(ITransactionContext context, double timeSpent, string details, DateTime createdAt, long featureId, long userId, long versionId, bool needNewId)
+		public static long InsertFeatureEntryAsync(ITransactionContext context, double timeSpent, string details, DateTime createdAt, long featureId, long userId, long versionId, bool needNewId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (details == null) throw new ArgumentNullException(nameof(details));
@@ -241,15 +234,14 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 
 			context.Execute(InsertServerFeatureEntryQuery);
 
-			var id = -1L;
 			if (needNewId)
 			{
-				id = context.GetNewId();
+				return context.GetNewId();
 			}
-			return Task.FromResult(id);
+			return -1L;
 		}
 
-		public static Task InsertStepEntriesAsync(ITransactionContext context, IEnumerable<DbFeatureEntryStepRow> entryStepRows, Dictionary<long, long> featureEntriesMap, Dictionary<int, long> stepsMap)
+		public static void InsertStepEntriesAsync(ITransactionContext context, IEnumerable<DbFeatureEntryStepRow> entryStepRows, Dictionary<long, long> featureEntriesMap, Dictionary<int, long> stepsMap)
 		{
 			var buffer = new StringBuilder(@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, LEVEL, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES ");
 
@@ -275,11 +267,9 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 			}
 
 			context.Execute(new Query(buffer.ToString()));
-
-			return Task.FromResult(true);
 		}
 
-		public static Task InsertExceptionEntryAsync(ITransactionContext context, IEnumerable<DbFeatureExceptionEntryRow> exceptionEntryRows, long userId, long versionId, Dictionary<int, long> exceptionsMap, Dictionary<int, long> featuresMap)
+		public static void InsertExceptionEntryAsync(ITransactionContext context, IEnumerable<DbFeatureExceptionEntryRow> exceptionEntryRows, long userId, long versionId, Dictionary<int, long> exceptionsMap, Dictionary<int, long> featuresMap)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -311,17 +301,15 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 			}
 
 			context.Execute(new Query(buffer.ToString()));
-
-			return Task.FromResult(true);
 		}
 
-		private static Task<Dictionary<string, long>> GetDataMapped(ITransactionContext context, string statement)
+		private static Dictionary<string, long> GetDataMapped(ITransactionContext context, string statement)
 		{
 			var result = new Dictionary<string, long>(32);
 
 			context.Fill(result, (r, map) => { map.Add(r.GetString(1), r.GetInt64(0)); }, new Query(statement));
 
-			return Task.FromResult(result);
+			return result;
 		}
 	}
 }

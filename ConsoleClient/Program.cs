@@ -139,7 +139,7 @@ namespace Cchbc.ConsoleClient
 				ClientData cd;
 				using (var client = new TransactionContextCreator(GetSqliteConnectionString(clientDbPath)).Create())
 				{
-					cd = FeatureAdapter.GetDataAsync(client).Result;
+					cd = FeatureAdapter.GetDataAsync(client);
 					client.Complete();
 				}
 
@@ -149,7 +149,7 @@ namespace Cchbc.ConsoleClient
 				ServerData sd;
 				using (var client = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
 				{
-					sd = FeatureServerManager.GetServerDataAsync(client).Result;
+					sd = FeatureServerManager.GetServerDataAsync(client);
 					client.Complete();
 				}
 
@@ -233,7 +233,7 @@ namespace Cchbc.ConsoleClient
 			ClientData data;
 			using (var client = new TransactionContextCreator(c).Create())
 			{
-				data = FeatureAdapter.GetDataAsync(client).Result;
+				data = FeatureAdapter.GetDataAsync(client);
 				client.Complete();
 			}
 
@@ -337,7 +337,7 @@ namespace Cchbc.ConsoleClient
 		private static void ClearData(string path)
 		{
 			File.Delete(path);
-			new FeatureManager { ContextCreator = new TransactionContextCreator(GetSqliteConnectionString(path)) }.CreateSchemaAsync().Wait();
+			new FeatureManager { ContextCreator = new TransactionContextCreator(GetSqliteConnectionString(path)) }.CreateSchemaAsync();
 		}
 
 		private static void WeatherTest()
@@ -359,7 +359,7 @@ namespace Cchbc.ConsoleClient
 			ClientData data;
 			using (var client = new TransactionContextCreator(clientDb).Create())
 			{
-				data = FeatureAdapter.GetDataAsync(client).Result;
+				data = FeatureAdapter.GetDataAsync(client);
 				client.Complete();
 			}
 
@@ -403,11 +403,11 @@ namespace Cchbc.ConsoleClient
 			if (!File.Exists(path))
 			{
 				// Create the schema
-				featureManager.CreateSchemaAsync().Wait();
+				featureManager.CreateSchemaAsync();
 			}
 
 			// Load the manager
-			featureManager.LoadAsync().Wait();
+			featureManager.LoadAsync();
 
 			// TODO : !!!
 			// Generate exceptions
@@ -469,11 +469,11 @@ namespace Cchbc.ConsoleClient
 
 				throw new Exception(@"Unable to display feature");
 
-				featureManager.WriteAsync(f).Wait();
+				featureManager.WriteAsync(f);
 			}
 			catch (Exception ex)
 			{
-				featureManager.WriteExceptionAsync(f, ex).Wait();
+				featureManager.WriteExceptionAsync(f, ex);
 			}
 
 			s.Stop();
@@ -867,7 +867,7 @@ namespace Cchbc.ConsoleClient
 
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
-				FeatureServerManager.ReplicateAsync(user, version, server, data, serverData).Wait();
+				FeatureServerManager.ReplicateAsync(user, version, server, data, serverData);
 				server.Complete();
 			}
 

@@ -141,11 +141,11 @@ namespace LoginModule.ViewModels
 					}
 				}
 
-				await this.FeatureManager.WriteAsync(feature, viewModels.Length.ToString());
+				this.FeatureManager.WriteAsync(feature, viewModels.Length.ToString());
 			}
 			catch (Exception ex)
 			{
-				await this.FeatureManager.WriteExceptionAsync(feature, ex);
+				this.FeatureManager.WriteExceptionAsync(feature, ex);
 			}
 		}
 
