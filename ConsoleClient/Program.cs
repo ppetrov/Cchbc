@@ -11,6 +11,7 @@ using Cchbc.App.ArticlesModule.Helpers;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
+using Cchbc.ConsoleClient;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Data;
@@ -18,103 +19,12 @@ using Cchbc.Features.ExceptionsModule;
 using Cchbc.Features.Replication;
 using Cchbc.Validation;
 using Cchbc.Weather;
-using ConsoleClient;
 
-namespace Cchbc.ConsoleClient
+namespace ConsoleClient
 {
-	public sealed class ConsoleDialog : IModalDialog
-	{
-		public Task<DialogResult> ShowAsync(string message, Feature feature, DialogType? type = null)
-		{
-			return Task.FromResult(DialogResult.Cancel);
-		}
-	}
-
-	// By version - latest
-	// By steps
-	// * By date - last day
-
-	// Create report by user on the server
-	// PPetrov Top 5 slowest features
-	// PPetrov Top 5 most used features
-
-
-
-
-
-	public sealed class TimeEntry
-	{
-		public DateTime Date { get; }
-
-		public TimeEntry(DateTime date)
-		{
-			this.Date = date;
-		}
-	}
-
 	public class Program
 	{
-		public static string GetSqliteConnectionString(string path)
-		{
-			if (path == null) throw new ArgumentNullException(nameof(path));
-
-			return $@"Data Source = {path}; Version = 3;";
-		}
-
-		//private static void Display(FeatureReport report)
-		//{
-		//	Console.WriteLine(@"SlowestFeatures");
-		//	foreach (var featureTime in report.SlowestFeatures)
-		//	{
-		//		Console.WriteLine("\t" + featureTime.Id + " : " + featureTime.Avg + '\t' + featureTime.Count);
-		//	}
-
-		//	Console.WriteLine(@"MostUsedFeatures");
-		//	foreach (var featureTime in report.MostUsedFeatures)
-		//	{
-		//		Console.WriteLine("\t" + featureTime.Id + " : " + '\t' + featureTime.Count);
-		//	}
-
-		//	Console.WriteLine(@"LeastUsedFeatures");
-		//	foreach (var featureTime in report.LeastUsedFeatures)
-		//	{
-		//		Console.WriteLine("\t" + featureTime.Id + " : " + '\t' + featureTime.Count);
-		//	}
-		//}
-
-		public static void GenerateDayReport(string path)
-		{
-			if (path == null) throw new ArgumentNullException(nameof(path));
-
-			var contextCreator = new TransactionContextCreator(GetSqliteConnectionString(path));
-
-			//using (var context = contextCreator.Create())
-			//{
-			//	var settings = new FeatureReportSettings { SlowestFeatures = 3, MostUsedFeatures = 3, LeastUsedFeatures = 3 };
-
-			//	var s = Stopwatch.StartNew();
-
-			//	List<FeatureReport> reports = null;
-			//	for (var i = 0; i < 1; i++)
-			//	{
-			//		reports = FeatureAnalyzer.GetFeatureReport(context, settings, DateTime.Today);
-			//		//reports = new List<FeatureReport>(1) { FeatureAnalyzer.GetFeatureReport(context, settings, DateTime.Today, 2, 1) };
-			//	}
-			//	Console.WriteLine(s.ElapsedMilliseconds);
-
-			//	foreach (var report in reports)
-			//	{
-			//		Display(report);
-			//		Console.WriteLine();
-			//	}
-
-			//	context.Complete();
-			//}
-		}
-
-
-
-		static void Main(string[] args)
+		public static void Main(string[] args)
 		{
 			var clientDbPath = @"C:\Users\PetarPetrov\Desktop\features.sqlite";
 			var serverDbPath = @"C:\Users\PetarPetrov\Desktop\server.sqlite";
@@ -160,7 +70,8 @@ namespace Cchbc.ConsoleClient
 					s.Stop();
 					//FeatureServerAdapter.MinutesOffset--;
 					Console.WriteLine(s.ElapsedMilliseconds);
-					break;
+					Console.ReadLine();
+					//break;
 				}
 
 				w.Stop();
@@ -213,7 +124,7 @@ namespace Cchbc.ConsoleClient
 
 
 
-				GenerateDayReport(serverDbPath);
+				//GenerateDayReport(serverDbPath);
 
 
 
@@ -332,7 +243,12 @@ namespace Cchbc.ConsoleClient
 			//}
 		}
 
+		public static string GetSqliteConnectionString(string path)
+		{
+			if (path == null) throw new ArgumentNullException(nameof(path));
 
+			return $@"Data Source = {path}; Version = 3;";
+		}
 
 		private static void ClearData(string path)
 		{
@@ -424,10 +340,8 @@ namespace Cchbc.ConsoleClient
 			};
 			foreach (var data in scenarios)
 			{
-				//featureManager.MarkUsageAsync(data).Wait();
-				//featureManager.WriteAsync(data).Wait();
-
-				break;
+				featureManager.MarkUsageAsync(data);
+				featureManager.WriteAsync(data);
 			}
 
 			var f = Feature.StartNew(@"Images", @"Upload");
@@ -611,62 +525,6 @@ namespace Cchbc.ConsoleClient
 			}
 
 			Console.WriteLine();
-		}
-
-		private static void DisplayHistogram()
-		{
-			// Histohram by hour
-			var hours = new int[24];
-
-			// Create & initialize with random data
-			var r = new Random(0);
-			var entries = new TimeEntry[1024];
-			for (var i = 0; i < entries.Length; i++)
-			{
-				entries[i] =
-					new TimeEntry(DateTime.Today.AddSeconds(r.Next(0, Convert.ToInt32(TimeSpan.FromDays(1).TotalSeconds))));
-			}
-
-			// Create the histogram
-			foreach (var e in entries)
-			{
-				hours[e.Date.Hour]++;
-			}
-
-			// Display the data as bar chart
-			var bars = new List<string>();
-
-			var min = hours.Min() - 1;
-			var limit = hours.Max() - min + 3;
-			foreach (var hour in hours)
-			{
-				bars.Add(new string(' ', limit));
-
-				var cnt = hour - min;
-				var line = new string('*', cnt).PadRight(limit, ' ');
-				bars.Add(line);
-
-				bars.Add(new string(' ', limit));
-			}
-			var lines = new List<string>();
-			for (var i = 0; i < limit; i++)
-			{
-				var buffer = new StringBuilder(bars.Count);
-
-				foreach (var bar in bars)
-				{
-					buffer.Append(bar[i]);
-				}
-
-				lines.Add(buffer.ToString());
-			}
-
-			for (var i = lines.Count - 1; i >= 0; i--)
-			{
-				Console.WriteLine(lines[i]);
-			}
-
-			return;
 		}
 
 		private static void SearchDirectory()
@@ -863,16 +721,14 @@ namespace Cchbc.ConsoleClient
 
 		private static void Replicate(string serverDb, ClientData data, string user, string version, ServerData serverData)
 		{
-			//var s = Stopwatch.StartNew();
-
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
+				var s = Stopwatch.StartNew();
 				FeatureServerManager.ReplicateAsync(user, version, server, data, serverData);
 				server.Complete();
+				s.Stop();
+				Console.WriteLine(s.ElapsedMilliseconds);
 			}
-
-			//s.Stop();
-			//Console.WriteLine(s.ElapsedMilliseconds);
 		}
 
 		public static void Unpack(byte[] input)
@@ -1434,59 +1290,14 @@ using System.Data;
 		}
 	}
 
-	//public abstract class BufferedLogger : ILogger
-	//{
-	//	protected readonly ConcurrentQueue<string> Buffer = new ConcurrentQueue<string>();
 
-	//	public string Context { get; }
-
-	//	protected BufferedLogger(string context)
-	//	{
-	//		if (context == null) throw new ArgumentNullException(nameof(context));
-
-	//		this.Context = context;
-	//	}
-
-	//	public bool IsDebugEnabled { get; protected set; }
-	//	public bool IsInfoEnabled { get; protected set; }
-	//	public bool IsWarnEnabled { get; protected set; }
-	//	public bool IsErrorEnabled { get; protected set; }
-
-	//	public void Debug(string message)
-	//	{
-	//		if (this.IsDebugEnabled)
-	//		{
-	//			Buffer.Enqueue(message);
-	//		}
-	//	}
-
-	//	public void Info(string message)
-	//	{
-	//		if (this.IsInfoEnabled)
-	//		{
-	//			Buffer.Enqueue(message);
-	//		}
-	//	}
-
-	//	public void Warn(string message)
-	//	{
-	//		if (this.IsWarnEnabled)
-	//		{
-	//			Buffer.Enqueue(message);
-	//		}
-	//	}
-
-	//	public void Error(string message)
-	//	{
-	//		if (this.IsErrorEnabled)
-	//		{
-	//			Buffer.Enqueue(message);
-	//		}
-	//	}
-	//}
-
-
-
+	public sealed class ConsoleDialog : IModalDialog
+	{
+		public Task<DialogResult> ShowAsync(string message, Feature feature, DialogType? type = null)
+		{
+			return Task.FromResult(DialogResult.Cancel);
+		}
+	}
 
 
 

@@ -153,7 +153,7 @@ namespace Cchbc.Features
 			if (!this.Contexts.TryGetValue(name, out featureContextRow))
 			{
 				// Insert into database
-				var newContextId = FeatureAdapter.InsertContextAsync(transactionContext, name);
+				var newContextId = FeatureAdapter.InsertContext(transactionContext, name);
 
 				featureContextRow = new DbFeatureContextRow(newContextId, name);
 

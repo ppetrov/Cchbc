@@ -7,7 +7,7 @@ namespace Cchbc.Features.Data
 {
 	public static class FeatureAdapter
 	{
-		private static readonly Query InsertContext = new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)",
+		private static readonly Query InsertContextQuery = new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)",
 			new[]
 			{
 				new QueryParameter(@"@NAME", string.Empty)
@@ -82,81 +82,81 @@ namespace Cchbc.Features.Data
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			context.Execute(new Query(@"
-CREATE TABLE[FEATURE_CONTEXTS] (
-	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	[Name] nvarchar(254) NOT NULL
+CREATE TABLE FEATURE_CONTEXTS (
+	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	Name nvarchar(254) NOT NULL
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE[FEATURE_STEPS] (
-	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	[Name] nvarchar(254) NOT NULL
+CREATE TABLE FEATURE_STEPS (
+	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	Name nvarchar(254) NOT NULL
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE[FEATURE_EXCEPTIONS] (
-	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	[Contents] nvarchar(254) NOT NULL
+CREATE TABLE FEATURE_EXCEPTIONS (
+	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+	Contents nvarchar(254) NOT NULL
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE [FEATURES] (
-	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
-	[Name] nvarchar(254) NOT NULL, 
-	[Context_Id] integer NOT NULL, 
-	FOREIGN KEY ([Context_Id])
-		REFERENCES [FEATURE_CONTEXTS] ([Id])
+CREATE TABLE FEATURES (
+	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	Name nvarchar(254) NOT NULL, 
+	Context_Id integer NOT NULL, 
+	FOREIGN KEY (Context_Id)
+		REFERENCES FEATURE_CONTEXTS (Id)
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE [FEATURE_USAGES] (
-	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
-	[Created_At] datetime NOT NULL, 
-	[Feature_Id] integer NOT NULL, 
-	FOREIGN KEY ([Feature_Id])
-		REFERENCES [FEATURES] ([Id])
+CREATE TABLE FEATURE_USAGES (
+	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	Created_At datetime NOT NULL, 
+	Feature_Id integer NOT NULL, 
+	FOREIGN KEY (Feature_Id)
+		REFERENCES FEATURES (Id)
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE [FEATURE_ENTRIES] (
-	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
-	[TimeSpent] decimal(38, 0) NOT NULL, 
-	[Details] nvarchar(254) NOT NULL, 
-	[Created_At] datetime NOT NULL, 
-	[Feature_Id] integer NOT NULL, 
-	FOREIGN KEY ([Feature_Id])
-		REFERENCES [FEATURES] ([Id])
+CREATE TABLE FEATURE_ENTRIES (
+	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	TimeSpent decimal(38, 0) NOT NULL, 
+	Details nvarchar(254) NOT NULL, 
+	Created_At datetime NOT NULL, 
+	Feature_Id integer NOT NULL, 
+	FOREIGN KEY (Feature_Id)
+		REFERENCES FEATURES (Id)
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE [FEATURE_EXCEPTION_ENTRIES] (
-	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
-	[Exception_Id] integer NOT NULL, 
-	[Created_At] datetime NOT NULL, 
-	[Feature_Id] integer NOT NULL, 
-	FOREIGN KEY ([Feature_Id])
-		REFERENCES [FEATURES] ([Id])
+CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
+	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	Exception_Id integer NOT NULL, 
+	Created_At datetime NOT NULL, 
+	Feature_Id integer NOT NULL, 
+	FOREIGN KEY (Feature_Id)
+		REFERENCES FEATURES (Id)
 		ON UPDATE CASCADE ON DELETE CASCADE
-	FOREIGN KEY ([Exception_Id])
-		REFERENCES [FEATURE_EXCEPTIONS] ([Id])
+	FOREIGN KEY (Exception_Id)
+		REFERENCES FEATURE_EXCEPTIONS (Id)
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE [FEATURE_STEP_ENTRIES] (
-	[Id] integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
-	[TimeSpent] decimal(38, 0) NOT NULL, 
-	[Level] integer NOT NULL,
-	[Feature_Entry_Id] integer NOT NULL, 
-	[Feature_Step_Id] integer NOT NULL, 
-	FOREIGN KEY ([Feature_Entry_Id])
-		REFERENCES [FEATURE_ENTRIES] ([Id])
+CREATE TABLE FEATURE_STEP_ENTRIES (
+	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	TimeSpent decimal(38, 0) NOT NULL, 
+	Level integer NOT NULL,
+	Feature_Entry_Id integer NOT NULL, 
+	Feature_Step_Id integer NOT NULL, 
+	FOREIGN KEY (Feature_Entry_Id)
+		REFERENCES FEATURE_ENTRIES (Id)
 		ON UPDATE CASCADE ON DELETE CASCADE
-	FOREIGN KEY ([Feature_Step_Id])
-		REFERENCES [FEATURE_STEPS] ([Id])
+	FOREIGN KEY (Feature_Step_Id)
+		REFERENCES FEATURE_STEPS (Id)
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
 		}
@@ -250,15 +250,15 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			return InsertException(context, contents);
 		}
 
-		public static int InsertContextAsync(ITransactionContext context, string name)
+		public static int InsertContext(ITransactionContext context, string name)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			// Set parameters values
-			InsertContext.Parameters[0].Value = name;
+			InsertContextQuery.Parameters[0].Value = name;
 
-			context.Execute(InsertContext);
+			context.Execute(InsertContextQuery);
 
 			return (int)context.GetNewId();
 		}
@@ -281,6 +281,7 @@ CREATE TABLE [FEATURE_STEP_ENTRIES] (
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
+			// Set parameters values
 			InsertExceptionQuery.Parameters[0].Value = contents;
 
 			context.Execute(InsertExceptionQuery);
