@@ -146,14 +146,21 @@ namespace Cchbc.ConsoleClient
 				s.Stop();
 				Console.WriteLine(s.ElapsedMilliseconds);
 
+				ServerData sd;
+				using (var client = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
+				{
+					sd = FeatureServerManager.GetServerDataAsync(client).Result;
+					client.Complete();
+				}
+
 				while (true)
 				{
 					s.Restart();
-					Replicate(GetSqliteConnectionString(serverDbPath), cd);
+					Replicate(GetSqliteConnectionString(serverDbPath), cd, sd);
 					s.Stop();
 					//FeatureServerAdapter.MinutesOffset--;
 					Console.WriteLine(s.ElapsedMilliseconds);
-					//ClearData(clientDbPath);
+					break;
 				}
 
 				w.Stop();
@@ -359,10 +366,10 @@ namespace Cchbc.ConsoleClient
 			s.Stop();
 			Console.WriteLine(s.ElapsedMilliseconds);
 
-			Replicate(serverDb, data);
+			//Replicate(serverDb, data, null);
 		}
 
-		private static void Replicate(string serverDb, ClientData data)
+		private static void Replicate(string serverDb, ClientData data, ServerData serverData)
 		{
 			var versions = new[]
 			{
@@ -382,7 +389,8 @@ namespace Cchbc.ConsoleClient
 				{
 					continue;
 				}
-				Replicate(serverDb, data, user, versions[_r.Next(versions.Length)]);
+
+				Replicate(serverDb, data, user, versions[_r.Next(versions.Length)], serverData);
 			}
 		}
 
@@ -853,16 +861,17 @@ namespace Cchbc.ConsoleClient
 			}
 		}
 
-		private static void Replicate(string serverDb, ClientData data, string user, string version)
+		private static void Replicate(string serverDb, ClientData data, string user, string version, ServerData serverData)
 		{
-			var s = Stopwatch.StartNew();
+			//var s = Stopwatch.StartNew();
+
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
-				FeatureServerManager.ReplicateAsync(user, version, server, data).Wait();
+				FeatureServerManager.ReplicateAsync(user, version, server, data, serverData).Wait();
 				server.Complete();
 			}
 
-			s.Stop();
+			//s.Stop();
 			//Console.WriteLine(s.ElapsedMilliseconds);
 		}
 

@@ -9,29 +9,7 @@ namespace Cchbc.Features.Replication
 {
 	public static class FeatureServerAdapter
 	{
-		private static readonly Query InserUserQuery =
-			new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT, VERSION_ID) VALUES (@NAME, @REPLICATED_AT, @VERSION_ID)",
-				new[]
-				{
-					new QueryParameter(@"NAME", string.Empty),
-					new QueryParameter(@"REPLICATED_AT", DateTime.MinValue),
-					new QueryParameter(@"@VERSION_ID", 0),
-				});
 
-		private static readonly Query InserVersionQuery = new Query(@"INSERT INTO FEATURE_VERSIONS(NAME) VALUES (@NAME)",
-			new[]
-			{
-				new QueryParameter(@"NAME", string.Empty),
-			});
-
-		private static readonly Query UpdateUserQuery =
-			new Query(@"UPDATE FEATURE_USERS SET REPLICATED_AT = @REPLICATED_AT, VERSION_ID = @VERSION_ID WHERE ID = @ID",
-				new[]
-				{
-					new QueryParameter(@"@ID", 0L),
-					new QueryParameter(@"@REPLICATED_AT", DateTime.MinValue),
-					new QueryParameter(@"@VERSION_ID", 0),
-				});
 
 		private static readonly Query InsertServerFeatureEntryQuery =
 			new Query(
@@ -45,16 +23,6 @@ namespace Cchbc.Features.Replication
 					new QueryParameter(@"@USER", 0L),
 					new QueryParameter(@"@VERSION", 0L),
 				});
-
-		private static readonly Query<int> GetUserQuery = new Query<int>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", ReadInt, new[]
-			{
-				new QueryParameter(@"NAME", string.Empty),
-			});
-
-		private static readonly Query<int> GetVersionQuery = new Query<int>(@"SELECT ID FROM FEATURE_VERSIONS WHERE NAME = @NAME", ReadInt, new[]
-			{
-				new QueryParameter(@"NAME", string.Empty),
-			});
 
 		public static Task CreateSchemaAsync(ITransactionContext context)
 		{
@@ -194,56 +162,47 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 			return Task.FromResult(true);
 		}
 
-		public static Task<long> GetOrCreateVersionAsync(ITransactionContext context, string version)
+		public static Task<long> InsertVersionAsync(ITransactionContext context, string version)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (version == null) throw new ArgumentNullException(nameof(version));
-
-			// Set parameters values
-			GetVersionQuery.Parameters[0].Value = version;
-
-			// select the record
-			var ids = context.Execute(GetVersionQuery);
-			if (ids.Count > 0)
-			{
-				return Task.FromResult(Convert.ToInt64(ids[0]));
-			}
-
-			InserVersionQuery.Parameters[0].Value = version;
-
-			return FeatureAdapter.ExecuteInsertAsync(context, InserVersionQuery);
+			return FeatureAdapter.ExecuteInsertAsync(context, new Query(@"INSERT INTO FEATURE_VERSIONS(NAME) VALUES (@NAME)", new[] { new QueryParameter(@"NAME", version), }));
 		}
 
-		public static Task<long> GetOrCreateUserAsync(ITransactionContext context, string userName, int versionId)
+		public static Task<long> InsertUserAsync(ITransactionContext context, string userName, int versionId)
+		{
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"NAME", userName),
+				new QueryParameter(@"REPLICATED_AT", DateTime.Now),
+				new QueryParameter(@"@VERSION_ID", versionId),
+			};
+
+			return FeatureAdapter.ExecuteInsertAsync(context, new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT, VERSION_ID) VALUES (@NAME, @REPLICATED_AT, @VERSION_ID)", sqlParams));
+		}
+
+		public static Task<long> UpdateUserAsync(ITransactionContext context, int userId, int versionId)
+		{
+			var sqlParams = new[]
+			{
+				new QueryParameter(@"@ID", userId),
+				new QueryParameter(@"@REPLICATED_AT", DateTime.Now),
+				new QueryParameter(@"@VERSION", versionId),
+			};
+
+			return FeatureAdapter.ExecuteInsertAsync(context, new Query(@"UPDATE FEATURE_USERS SET REPLICATED_AT = @REPLICATED_AT, VERSION_ID = @VERSION WHERE ID = @ID", sqlParams));
+		}
+
+		public static Task<Dictionary<string, int>> GetUsersAsync(ITransactionContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (userName == null) throw new ArgumentNullException(nameof(userName));
 
-			var currentTime = DateTime.Now;
+			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_USERS");
+		}
 
-			// Set parameters values
-			GetUserQuery.Parameters[0].Value = userName;
+		public static Task<Dictionary<string, int>> GetVersionsAsync(ITransactionContext context)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			// select the record
-			var ids = context.Execute(GetUserQuery);
-			if (ids.Count > 0)
-			{
-				var userId = ids[0];
-
-				UpdateUserQuery.Parameters[0].Value = userId;
-				UpdateUserQuery.Parameters[1].Value = currentTime;
-				UpdateUserQuery.Parameters[2].Value = versionId;
-
-				context.Execute(UpdateUserQuery);
-
-				return Task.FromResult(Convert.ToInt64(userId));
-			}
-
-			InserUserQuery.Parameters[0].Value = userName;
-			InserUserQuery.Parameters[1].Value = currentTime;
-			InserUserQuery.Parameters[2].Value = versionId;
-
-			return FeatureAdapter.ExecuteInsertAsync(context, InserUserQuery);
+			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_VERSIONS");
 		}
 
 		public static Task<Dictionary<string, int>> GetContextsAsync(ITransactionContext context)
@@ -354,11 +313,6 @@ CREATE TABLE [FEATURE_EXCEPTIONS_EXCLUDED] (
 			context.Execute(new Query(buffer.ToString()));
 
 			return Task.FromResult(true);
-		}
-
-		private static int ReadInt(IFieldDataReader r)
-		{
-			return r.GetInt32(0);
 		}
 
 		private static Task<Dictionary<string, int>> GetDataMapped(ITransactionContext context, string statement)
