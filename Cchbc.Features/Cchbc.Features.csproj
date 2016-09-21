@@ -81,6 +81,7 @@
     <Compile Include="Replication\FeatureServerAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Objects\RangeTimePeriod.cs" />
+    <Compile Include="Replication\ServerData.cs" />
     <Compile Include="ViewModels\TimePeriodViewModel.cs" />
   </ItemGroup>
   <ItemGroup />
