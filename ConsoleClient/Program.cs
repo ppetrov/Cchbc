@@ -12,6 +12,7 @@ using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
 using Cchbc.ConsoleClient;
+using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Data;
@@ -37,8 +38,10 @@ namespace ConsoleClient
 				//WeatherTest();
 				//return;
 
-				//CreateSchema(GetSqliteConnectionString(serverDbPath));
-				//return;
+				if (!File.Exists(serverDbPath))
+				{
+					CreateSchema(GetSqliteConnectionString(serverDbPath));
+				}
 
 				var w = Stopwatch.StartNew();
 				GenerateData(clientDbPath);
@@ -46,32 +49,33 @@ namespace ConsoleClient
 				Console.WriteLine(@"Load client data");
 				var s = Stopwatch.StartNew();
 
-				ClientData cd;
+				ClientData clientData;
 				using (var client = new TransactionContextCreator(GetSqliteConnectionString(clientDbPath)).Create())
 				{
-					cd = FeatureAdapter.GetData(client);
+					clientData = FeatureAdapter.GetData(client);
+					clientData.FeatureEntryRows.Clear();
 					client.Complete();
 				}
+
+				File.Delete(clientDbPath);
 
 				s.Stop();
 				Console.WriteLine(s.ElapsedMilliseconds);
 
-				ServerData sd;
+				ServerData serverData;
 				using (var client = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
 				{
-					sd = FeatureServerManager.GetServerDataAsync(client);
+					serverData = FeatureServerManager.GetServerDataAsync(client);
 					client.Complete();
 				}
 
 				while (true)
 				{
 					s.Restart();
-					Replicate(GetSqliteConnectionString(serverDbPath), cd, sd);
+					Replicate(GetSqliteConnectionString(serverDbPath), clientData, serverData);
 					s.Stop();
-					//FeatureServerAdapter.MinutesOffset--;
 					Console.WriteLine(s.ElapsedMilliseconds);
-					Console.ReadLine();
-					//break;
+					//Console.ReadLine();
 				}
 
 				w.Stop();
@@ -297,16 +301,25 @@ namespace ConsoleClient
 				@"3.85.19.223",
 			};
 
-			for (var i = 11; i < 120; i++)
+			using (var ctx = new TransactionContextCreator(serverDb).Create())
 			{
-				var user = @"BG" + (i.ToString()).PadLeft(6, '0');
-
-				if (_r.Next(0, 10) == 0)
+				for (var i = 11; i < 120; i++)
 				{
-					continue;
-				}
+					var user = @"BG" + (i.ToString()).PadLeft(6, '0');
 
-				Replicate(serverDb, data, user, versions[_r.Next(versions.Length)], serverData);
+					if (_r.Next(0, 10) == 0)
+					{
+						continue;
+					}
+
+					//Replicate(serverDb, data, user, versions[_r.Next(versions.Length)], serverData);
+					var version = versions[_r.Next(versions.Length)];
+
+					//Replicate(serverDb, data, user, version, serverData);
+
+					FeatureServerManager.ReplicateAsync(user, version, ctx, data, serverData);
+				}
+				ctx.Complete();
 			}
 		}
 
@@ -341,7 +354,7 @@ namespace ConsoleClient
 			foreach (var data in scenarios)
 			{
 				featureManager.MarkUsageAsync(data);
-				featureManager.WriteAsync(data);
+				//featureManager.WriteAsync(data);
 			}
 
 			var f = Feature.StartNew(@"Images", @"Upload");
@@ -723,11 +736,8 @@ namespace ConsoleClient
 		{
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
-				var s = Stopwatch.StartNew();
 				FeatureServerManager.ReplicateAsync(user, version, server, data, serverData);
 				server.Complete();
-				s.Stop();
-				Console.WriteLine(s.ElapsedMilliseconds);
 			}
 		}
 

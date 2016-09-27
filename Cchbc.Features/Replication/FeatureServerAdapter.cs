@@ -100,6 +100,24 @@ CREATE TABLE FEATURE_ENTRIES (
 )"));
 
 			context.Execute(new Query(@"
+CREATE TABLE FEATURE_USAGES (
+	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
+	Created_At datetime NOT NULL, 
+	Feature_Id integer NOT NULL, 
+	User_Id integer NOT NULL, 
+	Version_Id integer NOT NULL, 
+	FOREIGN KEY (Feature_Id)
+		REFERENCES FEATURES (Id)
+		ON UPDATE CASCADE ON DELETE CASCADE
+	FOREIGN KEY (User_Id)
+		REFERENCES FEATURE_USERS (Id)
+		ON UPDATE CASCADE ON DELETE CASCADE
+	FOREIGN KEY (Version_Id)
+		REFERENCES FEATURE_VERSIONS (Id)
+		ON UPDATE CASCADE ON DELETE CASCADE
+)"));
+
+			context.Execute(new Query(@"
 CREATE TABLE FEATURE_STEP_ENTRIES (
 	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	TimeSpent decimal(38, 0) NOT NULL, 
@@ -130,8 +148,10 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 
 			foreach (var name in new[]
 			{
+				@"FEATURE_EXCEPTIONS_EXCLUDED",
 				@"FEATURE_STEP_ENTRIES",
 				@"FEATURE_EXCEPTION_ENTRIES",
+				@"FEATURE_USAGES",
 				@"FEATURE_ENTRIES",
 				@"FEATURE_USERS",
 				@"FEATURES",
@@ -324,6 +344,40 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 				buffer.Append(featureEntriesMap[s.FeatureEntryId]);
 				buffer.Append(',');
 				buffer.Append(stepsMap[s.FeatureStepId]);
+				buffer.Append(')');
+
+				addComma = true;
+			}
+
+			context.Execute(new Query(buffer.ToString()));
+		}
+
+		public static void InsertUsageEntry(ITransactionContext context, IEnumerable<DbFeatureUsageRow> usageRows, long userId, long versionId, Dictionary<int, long> featuresMap)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (usageRows == null) throw new ArgumentNullException(nameof(usageRows));
+			if (featuresMap == null) throw new ArgumentNullException(nameof(featuresMap));
+
+			var buffer = new StringBuilder(@"INSERT INTO FEATURE_USAGES(CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID) VALUES ");
+
+			var addComma = false;
+			foreach (var r in usageRows)
+			{
+				if (addComma)
+				{
+					buffer.Append(',');
+				}
+
+				buffer.Append('(');
+				buffer.Append('\'');
+				buffer.Append(r.CreatedAt);
+				buffer.Append('\'');
+				buffer.Append(',');
+				buffer.Append(featuresMap[r.FeatureId]);
+				buffer.Append(',');
+				buffer.Append(userId);
+				buffer.Append(',');
+				buffer.Append(versionId);
 				buffer.Append(')');
 
 				addComma = true;
