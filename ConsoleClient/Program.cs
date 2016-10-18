@@ -23,15 +23,205 @@ using Cchbc.Weather;
 
 namespace ConsoleClient
 {
+	public static class ClientDataReplication
+	{
+		public static string GetSqliteConnectionString(string path)
+		{
+			if (path == null) throw new ArgumentNullException(nameof(path));
+
+			return $@"Data Source = {path}; Version = 3;";
+		}
+
+		public static void SimulateDay(string serverDbPath, DateTime date)
+		{
+			var s = Stopwatch.StartNew();
+			var replicationPerDay = 3;
+			var commonUsages = 100;
+			var systemUsages = 25;
+
+			var rnd = new Random();
+
+			var versions = new[]
+			{
+				@"8.28.79.127",
+				@"7.74.19.727",
+				@"6.22.29.492",
+				@"5.96.69.792",
+				@"4.11.27.292",
+				@"3.85.19.223",
+			};
+
+			var users = new List<string>();
+			for (var i = 11; i < 1200; i++)
+			{
+				users.Add(@"BG" + (i.ToString()).PadLeft(6, '0'));
+			}
+
+			var replications = new List<Tuple<string, string>>(users.Count * replicationPerDay);
+			foreach (var user in users)
+			{
+				for (var i = 0; i < replicationPerDay; i++)
+				{
+					replications.Add(Tuple.Create(user, versions[rnd.Next(versions.Length)]));
+				}
+			}
+
+			ServerData serverData;
+			using (var client = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
+			{
+				serverData = FeatureServerManager.GetServerDataAsync(client);
+				client.Complete();
+			}
+
+			var fromDate = date.AddHours(7);
+			var toDate = date.AddHours(19);
+			var diff = (int)((toDate - fromDate).TotalSeconds);
+
+			var dbFeatureStepRows = new List<DbFeatureStepRow>();
+			var dbFeatureUsageRows = new List<DbFeatureUsageRow>(systemUsages + commonUsages);
+			var dbFeatureEntryRows = new List<DbFeatureEntryRow>();
+			var dbFeatureEntryStepRows = new List<DbFeatureEntryStepRow>();
+
+			foreach (var replication in replications)
+			{
+				var referenceDate = fromDate.AddSeconds(rnd.Next(diff));
+
+				var dbFeatureExceptionRows = new List<DbFeatureExceptionRow>
+				{
+					new DbFeatureExceptionRow(rnd.Next(1,1024), @"System.Collections.Generic.KeyNotFoundException: The given key was not present in the dictionary.
+   at System.Collections.Generic.Dictionary`2.get_Item(TKey key)
+   at System.SQLite.SQLiteDataReader.GetOrdinal(String name)
+   at SFA.BusinessLogic.DataAccess.OutletManagement.OutletAdapter.OutletSnapCreator(IDataReader r)
+   at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, IEnumerable`1 parameters, Int32 capacity)
+   at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, Int32 capacity)
+   at SFA.BusinessLogic.DataAccess.OutletManagement.OutletAdapter.GetAll()
+   at SFA.BusinessLogic.Helpers.OutletHelper.Load(OutletAdapter outletAdapter, OutletHierLevelAdapter hierLevelAdapter, TradeChannelsAdapter channelsAdapter, OutletAssignmentAdapter assignmentAdapter, PayerAdapter payerAdapter, OutletAddressAdapter addressAdapter, MarketAttributesAdapter attributesAdapter, List`1 modifiedTables)
+   at SFA.BusinessLogic.Cache.<>c__DisplayClass62_0.<Load>b__32()
+   at SFA.BusinessLogic.Cache.Load(Boolean useDependancies)")
+				};
+
+				var dbFeatureContextRows = new List<DbFeatureContextRow>
+				{
+					new DbFeatureContextRow(rnd.Next(1,1024), @"Cache"),
+					new DbFeatureContextRow(rnd.Next(1024,2024), @"Agenda"),
+				};
+				var dbFeatureRows = new List<DbFeatureRow>
+				{
+					new DbFeatureRow(rnd.Next(1, 1024), @"Load", dbFeatureContextRows[0].Id),
+					new DbFeatureRow(rnd.Next(1024, 2024), @"Load", dbFeatureContextRows[1].Id),
+
+					new DbFeatureRow(rnd.Next(2024, 3024), @"Close Activity", dbFeatureContextRows[1].Id),
+					new DbFeatureRow(rnd.Next(3024, 4024), @"Cancel Activity", dbFeatureContextRows[1].Id),
+					new DbFeatureRow(rnd.Next(4024, 5024), @"Edit Activity", dbFeatureContextRows[1].Id),
+
+					new DbFeatureRow(rnd.Next(5024, 6024), @"Synchronize", dbFeatureContextRows[1].Id),
+					new DbFeatureRow(rnd.Next(6024, 7024), @"View Outlet Details", dbFeatureContextRows[1].Id),
+				};
+				var dbFeatureExceptionEntryRows = new List<DbFeatureExceptionEntryRow>
+				{
+					new DbFeatureExceptionEntryRow(dbFeatureExceptionRows[0].Id, GetRandomDate(rnd, fromDate, referenceDate), dbFeatureRows[0].Id)
+				};
+
+				dbFeatureUsageRows.Clear();
+				for (var i = 0; i < commonUsages; i++)
+				{
+					// Edit, Close & Cancel activity
+					dbFeatureUsageRows.Add(new DbFeatureUsageRow(GetRandomDate(rnd, fromDate, referenceDate), dbFeatureRows[rnd.Next(2, 5)].Id));
+				}
+				for (var i = 0; i < systemUsages; i++)
+				{
+					// Sync & View outlet
+					dbFeatureUsageRows.Add(new DbFeatureUsageRow(GetRandomDate(rnd, fromDate, referenceDate), dbFeatureRows[rnd.Next(5, dbFeatureRows.Count)].Id));
+				}
+
+				var clientData = new ClientData(dbFeatureContextRows, dbFeatureStepRows, dbFeatureExceptionRows, dbFeatureRows, dbFeatureUsageRows, dbFeatureEntryRows, dbFeatureEntryStepRows, dbFeatureExceptionEntryRows);
+
+				using (var ctx = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
+				{
+					FeatureServerManager.ReplicateAsync(replication.Item1, replication.Item2, ctx, clientData, serverData);
+					ctx.Complete();
+				}
+			}
+
+			s.Stop();
+			Console.WriteLine(s.ElapsedMilliseconds);
+		}
+
+		private static DateTime GetRandomDate(Random r, DateTime fromDate, DateTime toDate)
+		{
+			return fromDate.Add(TimeSpan.FromSeconds(r.Next((int)(toDate - fromDate).TotalSeconds)));
+		}
+	}
+
+
 	public class Program
 	{
+		public static readonly string DbPrefix = @"obppc_db_";
+
 		public static void Main(string[] args)
 		{
+
 			var clientDbPath = @"C:\Users\PetarPetrov\Desktop\features.sqlite";
 			var serverDbPath = @"C:\Users\PetarPetrov\Desktop\server.sqlite";
 
 			try
 			{
+				var tempPath = Path.GetTempPath();
+				foreach (var f in Directory.GetFiles(tempPath, @"*.dat"))
+				{
+					var name = Path.GetFileNameWithoutExtension(f);
+					if (name.StartsWith(DbPrefix, StringComparison.OrdinalIgnoreCase))
+					{
+						// We need to check if the file is too old
+						try
+						{
+							var isTooOld = (DateTime.Now - new FileInfo(f).CreationTime) >= TimeSpan.FromSeconds(5);
+							if (isTooOld)
+							{
+								Console.WriteLine($@"File '{name}' is too old and it will be deleted");
+								try
+								{
+									File.Delete(f);
+								}
+								catch
+								{
+									Console.WriteLine($@"Unable to delete file: '{name}'");
+								}
+							}
+						}
+						catch (Exception)
+						{
+							Console.WriteLine($@"Unable to check 'CreationTime' of - '{name}'");
+						}
+					}
+				}
+
+				return;
+
+				if (!File.Exists(serverDbPath))
+				{
+					CreateSchema(GetSqliteConnectionString(serverDbPath));
+				}
+				foreach (var date in new[]
+				{
+					DateTime.Today.AddDays(-10),
+					DateTime.Today.AddDays(-9),
+					DateTime.Today.AddDays(-8),
+					DateTime.Today.AddDays(-7),
+					DateTime.Today.AddDays(-6),
+					DateTime.Today.AddDays(-5),
+					DateTime.Today.AddDays(-4),
+					DateTime.Today.AddDays(-3),
+					DateTime.Today.AddDays(-2),
+					DateTime.Today.AddDays(-1),
+					DateTime.Today,
+				})
+				{
+					ClientDataReplication.SimulateDay(serverDbPath, date);
+				}
+
+				return;
+
 				//GenerateData(clientDbPath);
 				//return;
 

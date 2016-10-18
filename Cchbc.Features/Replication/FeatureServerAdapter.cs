@@ -101,7 +101,6 @@ CREATE TABLE FEATURE_ENTRIES (
 
 			context.Execute(new Query(@"
 CREATE TABLE FEATURE_USAGES (
-	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	Created_At datetime NOT NULL, 
 	Feature_Id integer NOT NULL, 
 	User_Id integer NOT NULL, 
