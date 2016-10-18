@@ -30,21 +30,6 @@ namespace Cchbc.Localization
 			}
 		}
 
-		public void Add(string context, string key, string message)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (key == null) throw new ArgumentNullException(nameof(key));
-			if (message == null) throw new ArgumentNullException(nameof(message));
-
-			Dictionary<string, string> values;
-			if (!this.ByContextValues.TryGetValue(context, out values))
-			{
-				values = new Dictionary<string, string>();
-				this.ByContextValues.Add(context, values);
-			}
-			values.Add(key, message);
-		}
-
 		public IReadOnlyDictionary<string, string> GetByContext(string context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -63,6 +48,17 @@ namespace Cchbc.Localization
 			string message;
 			context.TryGetValue(key, out message);
 			return message ?? @"N/A";
+		}
+
+		private void Add(string context, string key, string message)
+		{
+			Dictionary<string, string> values;
+			if (!this.ByContextValues.TryGetValue(context, out values))
+			{
+				values = new Dictionary<string, string>();
+				this.ByContextValues.Add(context, values);
+			}
+			values.Add(key, message);
 		}
 	}
 }

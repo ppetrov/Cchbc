@@ -21,12 +21,6 @@ CREATE TABLE FEATURE_CONTEXTS (
 )"));
 
 			context.Execute(new Query(@"
-CREATE TABLE FEATURE_STEPS (
-	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	Name nvarchar(254) NOT NULL
-)"));
-
-			context.Execute(new Query(@"
 CREATE TABLE FEATURE_EXCEPTIONS (
 	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	Contents nvarchar(254) NOT NULL
@@ -117,7 +111,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 				@"FEATURE_ENTRIES",
 				@"FEATURE_USERS",
 				@"FEATURES",
-				@"FEATURE_STEPS",
 				@"FEATURE_CONTEXTS",
 				@"FEATURE_VERSIONS",
 				@"FEATURE_EXCEPTIONS"
@@ -175,13 +168,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_CONTEXTS");
-		}
-
-		public static Dictionary<string, long> GetSteps(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_STEPS");
 		}
 
 		public static Dictionary<string, long> GetExceptions(ITransactionContext context)

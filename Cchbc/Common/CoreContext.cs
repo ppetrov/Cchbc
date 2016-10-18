@@ -1,25 +1,28 @@
 ﻿using System;
 using Cchbc.Data;
 using Cchbc.Features;
-using Cchbc.Logs;
 
 namespace Cchbc.Common
 {
-	public sealed class CoreContext
+	public sealed class CoreContext : IDisposable
 	{
-		public ITransactionContext DbContext { get; }
-		public Action<string, LogLevel> Log { get; }
+		public Core Core { get; }
 		public Feature Feature { get; }
+		public ITransactionContext DbContext { get; }
 
-		public CoreContext(ITransactionContext dbContext, Action<string, LogLevel> log, Feature feature)
+		public CoreContext(Core core, Feature feature)
 		{
-			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
-			if (log == null) throw new ArgumentNullException(nameof(log));
+			if (core == null) throw new ArgumentNullException(nameof(core));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			this.DbContext = dbContext;
-			this.Log = log;
+			this.Core = core;
 			this.Feature = feature;
+			this.DbContext = core.ContextCreator.Create();
+		}
+
+		public void Dispose()
+		{
+			this.DbContext.Complete();
 		}
 	}
 }

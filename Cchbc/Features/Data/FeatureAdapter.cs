@@ -12,12 +12,6 @@ namespace Cchbc.Features.Data
 				new QueryParameter(@"@NAME", string.Empty)
 			});
 
-		private static readonly Query InsertStepQuery = new Query(@"INSERT INTO FEATURE_STEPS(NAME) VALUES (@NAME)",
-			new[]
-			{
-				new QueryParameter(@"@NAME", string.Empty)
-			});
-
 		private static readonly Query InsertFeatureQuery =
 			new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", new[]
 			{
@@ -54,7 +48,7 @@ namespace Cchbc.Features.Data
 		private static readonly Query<DbFeatureContextRow> GetContextsQuery = new Query<DbFeatureContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextCreator);
 		private static readonly Query<DbFeatureExceptionRow> GetDbFeatureExceptionsRowQuery = new Query<DbFeatureExceptionRow>(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS", DbFeatureExceptionRowCreator);
 		private static readonly Query<DbFeatureRow> GetFeaturesQuery = new Query<DbFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
-		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT ID, DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
+		private static readonly Query<DbFeatureEntryRow> GetFeatureEntriesQuery = new Query<DbFeatureEntryRow>(@"SELECT DETAILS, CREATED_AT, FEATURE_ID FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
 		private static readonly Query<DbFeatureExceptionEntryRow> GetDbFeatureExceptionEntryRowQuery = new Query<DbFeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
 
 		private static readonly Query<int> GetExceptionQuery =
@@ -69,12 +63,6 @@ namespace Cchbc.Features.Data
 
 			context.Execute(new Query(@"
 CREATE TABLE FEATURE_CONTEXTS (
-	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-	Name nvarchar(254) NOT NULL
-)"));
-
-			context.Execute(new Query(@"
-CREATE TABLE FEATURE_STEPS (
 	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 	Name nvarchar(254) NOT NULL
 )"));
@@ -131,7 +119,6 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 				@"FEATURE_EXCEPTION_ENTRIES",
 				@"FEATURE_ENTRIES",
 				@"FEATURES",
-				@"FEATURE_STEPS",
 				@"FEATURE_CONTEXTS",
 				@"FEATURE_EXCEPTIONS"
 			})
@@ -203,19 +190,6 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return (int)context.GetNewId();
 		}
 
-		public static int InsertStep(ITransactionContext context, string name)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			// Set parameters values
-			InsertStepQuery.Parameters[0].Value = name;
-
-			context.Execute(InsertStepQuery);
-
-			return (int)context.GetNewId();
-		}
-
 		public static int InsertException(ITransactionContext context, string contents)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -243,16 +217,15 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return (int)context.GetNewId();
 		}
 
-		public static void InsertFeatureEntry(ITransactionContext context, int featureId, TimeSpan timeSpent, string details)
+		public static void InsertFeatureEntry(ITransactionContext context, int featureId, string details)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (details == null) throw new ArgumentNullException(nameof(details));
 
 			// Set parameters values
-			InsertClientFeatureEntryQuery.Parameters[0].Value = Convert.ToDecimal(timeSpent.TotalMilliseconds);
-			InsertClientFeatureEntryQuery.Parameters[1].Value = details;
-			InsertClientFeatureEntryQuery.Parameters[2].Value = DateTime.Now;
-			InsertClientFeatureEntryQuery.Parameters[3].Value = featureId;
+			InsertClientFeatureEntryQuery.Parameters[0].Value = details;
+			InsertClientFeatureEntryQuery.Parameters[1].Value = DateTime.Now;
+			InsertClientFeatureEntryQuery.Parameters[2].Value = featureId;
 
 			// Insert the record
 			context.Execute(InsertClientFeatureEntryQuery);
@@ -293,7 +266,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 
 		private static DbFeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
 		{
-			return new DbFeatureEntryRow(r.GetInt64(0), r.GetString(1), r.GetDateTime(2), r.GetInt32(3));
+			return new DbFeatureEntryRow(r.GetString(0), r.GetDateTime(1), r.GetInt32(2));
 		}
 
 		private static DbFeatureExceptionRow DbFeatureExceptionRowCreator(IFieldDataReader r)

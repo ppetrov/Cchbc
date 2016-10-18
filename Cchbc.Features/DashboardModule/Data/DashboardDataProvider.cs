@@ -21,7 +21,7 @@ namespace Cchbc.Features.DashboardModule.Data
 				var maxUsers = default(int?);
 				var maxMostUsedFeatures = default(int?);
 
-				var log = coreContext.Log;
+				var log = coreContext.Core.Log;
 				// TODO : Load settings from db for the context
 				var contextForSettings = nameof(Dashboard);
 				var settings = new List<Setting>();

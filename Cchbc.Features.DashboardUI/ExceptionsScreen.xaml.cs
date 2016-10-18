@@ -3,7 +3,9 @@ using System.Diagnostics;
 using System.IO;
 using Windows.Storage;
 using Windows.UI.Xaml;
+using Cchbc.Common;
 using Cchbc.Features.ExceptionsModule;
+using Cchbc.Logs;
 
 namespace Cchbc.Features.DashboardUI
 {
@@ -19,9 +21,21 @@ namespace Cchbc.Features.DashboardUI
 
 		private void ExceptionsScreen_OnLoaded(object sender, RoutedEventArgs e)
 		{
+			var core = AppContext.Core;
+			var feature = new Feature(@"Exceptions", @"Load");
 			try
 			{
 				var s = Stopwatch.StartNew();
+
+				try
+				{
+					FeatureManager.CreateSchema(core.ContextCreator);
+				}
+				catch { }
+
+				core.FeatureManager.Load(core.ContextCreator);
+
+				core.FeatureManager.Write(feature, string.Empty);
 				this.ViewModel.Load(
 					ExceptionsDataProvider.GetTimePeriods,
 					ExceptionsDataProvider.GetVersions,
@@ -32,7 +46,8 @@ namespace Cchbc.Features.DashboardUI
 			}
 			catch (Exception ex)
 			{
-
+				core.Log(ex.ToString(), LogLevel.Error);
+				core.FeatureManager.WriteException(feature, ex);
 			}
 		}
 	}

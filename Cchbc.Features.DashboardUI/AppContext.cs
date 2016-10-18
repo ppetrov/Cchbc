@@ -1,0 +1,42 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
+using Windows.Storage;
+using Windows.UI.Popups;
+using Cchbc.Dialog;
+
+namespace Cchbc.Features.DashboardUI
+{
+	public sealed class AppContext
+	{
+		public static Core Core { get; } = new Core((msg, level) =>
+		{
+			Debug.WriteLine(msg, level.ToString());
+		}, new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"features.sqlite")), new ModalDialog());
+	}
+
+	public sealed class ModalDialog : IModalDialog
+	{
+		public async Task<DialogResult> ShowAsync(string message, Feature feature, DialogType? type = null)
+		{
+			if (message == null) throw new ArgumentNullException(nameof(message));
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			var dialog = new MessageDialog(message);
+
+			UICommandInvokedHandler empty = cmd => { };
+			dialog.Commands.Add(new UICommand(@"Accept", empty, DialogResult.Accept));
+			dialog.Commands.Add(new UICommand(@"Cancel", empty, DialogResult.Cancel));
+			dialog.Commands.Add(new UICommand(@"Decline", empty, DialogResult.Decline));
+
+			feature.Pause();
+
+			var task = dialog.ShowAsync().AsTask();
+			var result = await task;
+
+			feature.Resume();
+			return (DialogResult)result.Id;
+		}
+	}
+}

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
-using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Input;
 using Cchbc.Common;
@@ -23,26 +20,13 @@ namespace Cchbc.Features.DashboardUI
 
 		private async void DashboardScreenLoaded(object sender, RoutedEventArgs e)
 		{
-			var contextCreator = new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"server.sqlite"));
+			var core = AppContext.Core;
+			var feature = Feature.StartNew(@"Dashboard", @"Load");
+
 			try
 			{
-				Action<string, LogLevel> log = (msg, level) =>
+				using (var coreContext = new CoreContext(core, feature))
 				{
-					// Easy to port to a file
-					// or db !!!
-					Debug.WriteLine(level + ":" + msg);
-				};
-
-				var fm = new FeatureManager { ContextCreator = contextCreator };
-				fm.Load();
-
-				var feature = Feature.StartNew(@"Dashboard", @"Load");
-
-				var w = Stopwatch.StartNew();
-				using (var ctx = contextCreator.Create())
-				{
-					var coreContext = new CoreContext(ctx, log, feature);
-
 					await this.ViewModel.LoadAsync(coreContext,
 						DashboardDataProvider.GetSettingsAsync,
 						DashboardDataProvider.GetCommonDataAsync,
@@ -50,17 +34,12 @@ namespace Cchbc.Features.DashboardUI
 						DashboardDataProvider.GetVersionsAsync,
 						DashboardDataProvider.GetExceptionsAsync, DashboardDataProvider.GetMostUsedFeaturesAsync,
 						DashboardDataProvider.GetLeastUsedFeaturesAsync, DashboardDataProvider.GetSlowestFeaturesAsync);
-
-					ctx.Complete();
 				}
-				w.Stop();
-				feature.Stop();
-
-				log(string.Empty + w.Elapsed.TotalMilliseconds, LogLevel.Info);
 			}
 			catch (Exception ex)
 			{
-
+				core.Log(ex.ToString(), LogLevel.Error);
+				core.FeatureManager.WriteException(feature, ex);
 			}
 		}
 

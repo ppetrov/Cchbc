@@ -7,31 +7,38 @@ namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
+		private ITransactionContextCreator ContextCreator { get; set; }
 		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }
 		private Dictionary<long, List<DbFeatureRow>> Features { get; set; }
 
-		public ITransactionContextCreator ContextCreator { get; set; }
-
-		public void CreateSchema()
+		public static void CreateSchema(ITransactionContextCreator contextCreator)
 		{
-			using (var context = this.ContextCreator.Create())
+			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
+
+			using (var context = contextCreator.Create())
 			{
 				FeatureAdapter.CreateSchema(context);
 				context.Complete();
 			}
 		}
 
-		public void DropSchema()
+		public static void DropSchema(ITransactionContextCreator contextCreator)
 		{
-			using (var context = this.ContextCreator.Create())
+			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
+
+			using (var context = contextCreator.Create())
 			{
 				FeatureAdapter.DropSchema(context);
 				context.Complete();
 			}
 		}
 
-		public void Load()
+		public void Load(ITransactionContextCreator contextCreator)
 		{
+			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
+
+			this.ContextCreator = contextCreator;
+
 			using (var context = this.ContextCreator.Create())
 			{
 				this.Contexts = FeatureAdapter.GetContexts(context);
@@ -48,9 +55,15 @@ namespace Cchbc.Features
 			// Stop the feature
 			feature.Stop();
 
-			var featureData = new FeatureData(feature.Context, feature.Name, feature.TimeSpent);
+			var featureData = new FeatureData(feature.Context, feature.Name);
 
-			Write(featureData, details);
+			var value = details;
+			if (feature.TimeSpent != TimeSpan.Zero)
+			{
+				value = feature.TimeSpent.ToString(@"c");
+			}
+
+			Write(featureData, value);
 		}
 
 		public void Write(FeatureData featureData, string details = null)
@@ -61,7 +74,7 @@ namespace Cchbc.Features
 			{
 				var featureRow = this.Save(context, featureData.Context, featureData.Name);
 
-				FeatureAdapter.InsertFeatureEntry(context, featureRow.Id, featureData.TimeSpent, details ?? string.Empty);
+				FeatureAdapter.InsertFeatureEntry(context, featureRow.Id, details ?? string.Empty);
 
 				context.Complete();
 			}

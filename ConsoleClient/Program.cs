@@ -36,6 +36,9 @@ namespace ConsoleClient
 		{
 			var s = Stopwatch.StartNew();
 			var replicationPerDay = 3;
+
+			replicationPerDay = 1;
+
 			var commonUsages = 100;
 			var systemUsages = 25;
 
@@ -77,8 +80,6 @@ namespace ConsoleClient
 			var toDate = date.AddHours(19);
 			var diff = (int)((toDate - fromDate).TotalSeconds);
 
-			var dbFeatureEntryRows = new List<DbFeatureEntryRow>();
-
 			foreach (var replication in replications)
 			{
 				var referenceDate = fromDate.AddSeconds(rnd.Next(diff));
@@ -119,6 +120,12 @@ namespace ConsoleClient
 					new DbFeatureExceptionEntryRow(dbFeatureExceptionRows[0].Id, GetRandomDate(rnd, fromDate, referenceDate), dbFeatureRows[0].Id)
 				};
 
+				var dbFeatureEntryRows = new List<DbFeatureEntryRow>
+				{
+					new DbFeatureEntryRow(string.Empty, DateTime.Now, dbFeatureRows[rnd.Next(dbFeatureRows.Count)].Id),
+					new DbFeatureEntryRow(string.Empty, DateTime.Now, dbFeatureRows[rnd.Next(dbFeatureRows.Count)].Id)
+				};
+
 				var clientData = new ClientData(dbFeatureContextRows, dbFeatureExceptionRows, dbFeatureRows, dbFeatureEntryRows, dbFeatureExceptionEntryRows);
 
 				using (var ctx = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
@@ -151,38 +158,6 @@ namespace ConsoleClient
 
 			try
 			{
-				var tempPath = Path.GetTempPath();
-				foreach (var f in Directory.GetFiles(tempPath, @"*.dat"))
-				{
-					var name = Path.GetFileNameWithoutExtension(f);
-					if (name.StartsWith(DbPrefix, StringComparison.OrdinalIgnoreCase))
-					{
-						// We need to check if the file is too old
-						try
-						{
-							var isTooOld = (DateTime.Now - new FileInfo(f).CreationTime) >= TimeSpan.FromSeconds(5);
-							if (isTooOld)
-							{
-								Console.WriteLine($@"File '{name}' is too old and it will be deleted");
-								try
-								{
-									File.Delete(f);
-								}
-								catch
-								{
-									Console.WriteLine($@"Unable to delete file: '{name}'");
-								}
-							}
-						}
-						catch (Exception)
-						{
-							Console.WriteLine($@"Unable to check 'CreationTime' of - '{name}'");
-						}
-					}
-				}
-
-				return;
-
 				if (!File.Exists(serverDbPath))
 				{
 					CreateSchema(GetSqliteConnectionString(serverDbPath));
@@ -204,6 +179,10 @@ namespace ConsoleClient
 				{
 					ClientDataReplication.SimulateDay(serverDbPath, date);
 				}
+
+				var fm = new FeatureManager();
+
+				fm.Load(null);
 
 				return;
 
@@ -329,7 +308,7 @@ namespace ConsoleClient
 
 
 
-			data.FeatureEntryRows.Add(new DbFeatureEntryRow(17, @"#", DateTime.Today.AddDays(-1), -4));
+			data.FeatureEntryRows.Add(new DbFeatureEntryRow(@"#", DateTime.Today.AddDays(-1), -4));
 
 
 			//var s = Stopwatch.StartNew();
@@ -432,7 +411,7 @@ namespace ConsoleClient
 		private static void ClearData(string path)
 		{
 			File.Delete(path);
-			new FeatureManager { ContextCreator = new TransactionContextCreator(GetSqliteConnectionString(path)) }.CreateSchema();
+			FeatureManager.CreateSchema(new TransactionContextCreator(GetSqliteConnectionString(path)));
 		}
 
 		private static void WeatherTest()
@@ -502,16 +481,16 @@ namespace ConsoleClient
 		{
 			var contextCreator = new TransactionContextCreator(GetSqliteConnectionString(path));
 
-			var featureManager = new FeatureManager { ContextCreator = contextCreator };
+			var featureManager = new FeatureManager();
 
 			if (!File.Exists(path))
 			{
 				// Create the schema
-				featureManager.CreateSchema();
+				FeatureManager.CreateSchema(contextCreator);
 			}
 
 			// Load the manager
-			featureManager.Load();
+			featureManager.Load(contextCreator);
 
 			// TODO : !!!
 			// Generate exceptions

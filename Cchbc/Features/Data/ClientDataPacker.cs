@@ -41,7 +41,6 @@ namespace Cchbc.Features.Data
 			Write(buffer, ref offset, (short)clientData.FeatureEntryRows.Count);
 			foreach (var row in clientData.FeatureEntryRows)
 			{
-				Write(buffer, ref offset, row.Id);
 				Write(buffer, ref offset, row.Details);
 				Write(buffer, ref offset, row.CreatedAt.ToBinary());
 				Write(buffer, ref offset, row.FeatureId);
@@ -97,11 +96,10 @@ namespace Cchbc.Features.Data
 			var dbFeatureEntryRows = new List<DbFeatureEntryRow>(count);
 			for (var i = 0; i < count; i++)
 			{
-				var id = ReadLong(buffer, ref offset);
 				var details = ReadString(buffer, ref offset, symbolBuffer);
 				var createdAt = DateTime.FromBinary(ReadLong(buffer, ref offset));
 				var featureId = ReadInt(buffer, ref offset);
-				dbFeatureEntryRows.Add(new DbFeatureEntryRow(id, details, createdAt, featureId));
+				dbFeatureEntryRows.Add(new DbFeatureEntryRow(details, createdAt, featureId));
 			}
 
 			count = ReadShort(buffer, ref offset);
@@ -181,7 +179,7 @@ namespace Cchbc.Features.Data
 			}
 
 			// Id, CreatedAt
-			size += 2 * LongSize * clientData.FeatureEntryRows.Count;
+			size += LongSize * clientData.FeatureEntryRows.Count;
 			// FeatureId
 			size += IntSize * clientData.FeatureEntryRows.Count;
 			// Details

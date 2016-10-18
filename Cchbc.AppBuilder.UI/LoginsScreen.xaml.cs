@@ -18,7 +18,6 @@ namespace Cchbc.AppBuilder.UI
 		public LoginsScreen()
 		{
 			this.InitializeComponent();
-			Context.Core.ContextCreator = new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"features.sqlite"));
 			this.ViewModel = new LoginsViewModel(Context.Core, new LoginAdapter());
 		}
 
@@ -27,9 +26,8 @@ namespace Cchbc.AppBuilder.UI
 			try
 			{
 				var featureManager = Context.Core.FeatureManager;
-				featureManager.ContextCreator = Context.Core.ContextCreator;
 				//await featureManager.CreateSchema();
-				featureManager.Load();
+				featureManager.Load(Context.Core.ContextCreator);
 			}
 			catch (Exception ex)
 			{

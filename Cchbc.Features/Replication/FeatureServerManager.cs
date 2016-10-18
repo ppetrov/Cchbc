@@ -28,11 +28,10 @@ namespace Cchbc.Features.Replication
 			var versions = FeatureServerAdapter.GetVersions(context);
 			var users = FeatureServerAdapter.GetUsers(context);
 			var serverContexts = FeatureServerAdapter.GetContexts(context);
-			var serverSteps = FeatureServerAdapter.GetSteps(context);
 			var serverExceptions = FeatureServerAdapter.GetExceptions(context);
 			var serverFeaturesByContext = GetFeaturesByContext(context);
 
-			return new ServerData(versions, users, serverContexts, serverSteps, serverExceptions, serverFeaturesByContext);
+			return new ServerData(versions, users, serverContexts, serverExceptions, serverFeaturesByContext);
 		}
 
 		public static void Replicate(string userName, string version, ITransactionContext serverContext, ClientData clientData, ServerData serverData)
