@@ -69,7 +69,7 @@ namespace ConsoleClient
 			ServerData serverData;
 			using (var client = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
 			{
-				serverData = FeatureServerManager.GetServerDataAsync(client);
+				serverData = FeatureServerManager.GetServerData(client);
 				client.Complete();
 			}
 
@@ -77,10 +77,7 @@ namespace ConsoleClient
 			var toDate = date.AddHours(19);
 			var diff = (int)((toDate - fromDate).TotalSeconds);
 
-			var dbFeatureStepRows = new List<DbFeatureStepRow>();
-			var dbFeatureUsageRows = new List<DbFeatureUsageRow>(systemUsages + commonUsages);
 			var dbFeatureEntryRows = new List<DbFeatureEntryRow>();
-			var dbFeatureEntryStepRows = new List<DbFeatureEntryStepRow>();
 
 			foreach (var replication in replications)
 			{
@@ -122,23 +119,11 @@ namespace ConsoleClient
 					new DbFeatureExceptionEntryRow(dbFeatureExceptionRows[0].Id, GetRandomDate(rnd, fromDate, referenceDate), dbFeatureRows[0].Id)
 				};
 
-				dbFeatureUsageRows.Clear();
-				for (var i = 0; i < commonUsages; i++)
-				{
-					// Edit, Close & Cancel activity
-					dbFeatureUsageRows.Add(new DbFeatureUsageRow(GetRandomDate(rnd, fromDate, referenceDate), dbFeatureRows[rnd.Next(2, 5)].Id));
-				}
-				for (var i = 0; i < systemUsages; i++)
-				{
-					// Sync & View outlet
-					dbFeatureUsageRows.Add(new DbFeatureUsageRow(GetRandomDate(rnd, fromDate, referenceDate), dbFeatureRows[rnd.Next(5, dbFeatureRows.Count)].Id));
-				}
-
-				var clientData = new ClientData(dbFeatureContextRows, dbFeatureStepRows, dbFeatureExceptionRows, dbFeatureRows, dbFeatureUsageRows, dbFeatureEntryRows, dbFeatureEntryStepRows, dbFeatureExceptionEntryRows);
+				var clientData = new ClientData(dbFeatureContextRows, dbFeatureExceptionRows, dbFeatureRows, dbFeatureEntryRows, dbFeatureExceptionEntryRows);
 
 				using (var ctx = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
 				{
-					FeatureServerManager.ReplicateAsync(replication.Item1, replication.Item2, ctx, clientData, serverData);
+					FeatureServerManager.Replicate(replication.Item1, replication.Item2, ctx, clientData, serverData);
 					ctx.Complete();
 				}
 			}
@@ -255,7 +240,7 @@ namespace ConsoleClient
 				ServerData serverData;
 				using (var client = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
 				{
-					serverData = FeatureServerManager.GetServerDataAsync(client);
+					serverData = FeatureServerManager.GetServerData(client);
 					client.Complete();
 				}
 
@@ -342,9 +327,9 @@ namespace ConsoleClient
 				client.Complete();
 			}
 
-			data.StepRows.Add(new DbFeatureStepRow(23, @"Apply filter"));
 
-			data.FeatureEntryRows.Add(new DbFeatureEntryRow(17, 123.456, @"#", DateTime.Today.AddDays(-1), -4));
+
+			data.FeatureEntryRows.Add(new DbFeatureEntryRow(17, @"#", DateTime.Today.AddDays(-1), -4));
 
 
 			//var s = Stopwatch.StartNew();
@@ -447,7 +432,7 @@ namespace ConsoleClient
 		private static void ClearData(string path)
 		{
 			File.Delete(path);
-			new FeatureManager { ContextCreator = new TransactionContextCreator(GetSqliteConnectionString(path)) }.CreateSchemaAsync();
+			new FeatureManager { ContextCreator = new TransactionContextCreator(GetSqliteConnectionString(path)) }.CreateSchema();
 		}
 
 		private static void WeatherTest()
@@ -507,7 +492,7 @@ namespace ConsoleClient
 
 					//Replicate(serverDb, data, user, version, serverData);
 
-					FeatureServerManager.ReplicateAsync(user, version, ctx, data, serverData);
+					FeatureServerManager.Replicate(user, version, ctx, data, serverData);
 				}
 				ctx.Complete();
 			}
@@ -522,75 +507,41 @@ namespace ConsoleClient
 			if (!File.Exists(path))
 			{
 				// Create the schema
-				featureManager.CreateSchemaAsync();
+				featureManager.CreateSchema();
 			}
 
 			// Load the manager
-			featureManager.LoadAsync();
+			featureManager.Load();
 
 			// TODO : !!!
 			// Generate exceptions
 			// Generate more scenarios
 			var s = Stopwatch.StartNew();
-			var scenarios = new[]
-			{
-				GetUploadImageFeature(),
-				GetDownloadImageFeature(),
-				GetLoadImagesAsync(),
-				GetDeleteImageAsync(),
-				GetSetAsDefaultAsync(),
-				GetCreateActivityData(),
-			};
-			foreach (var data in scenarios)
-			{
-				featureManager.MarkUsageAsync(data);
-				//featureManager.WriteAsync(data);
-			}
+			//var scenarios = new[]
+			//{
+			//	GetUploadImageFeature(),
+			//	GetDownloadImageFeature(),
+			//	GetLoadImagesAsync(),
+			//	GetDeleteImageAsync(),
+			//	GetSetAsDefaultAsync(),
+			//	GetCreateActivityData(),
+			//};
+			//foreach (var data in scenarios)
+			//{
+			//	featureManager.MarkUsageAsync(data);
+			//	//featureManager.Write(data);
+			//}
 
 			var f = Feature.StartNew(@"Images", @"Upload");
 			try
 			{
-				using (f.NewStep(@"Browse"))
-				{
-
-				}
-				using (f.NewStep(@"Resize"))
-				{
-					using (f.NewStep(@"Load client size from db"))
-					{
-					}
-					using (f.NewStep(@"Resize image to client size"))
-					{
-					}
-				}
-				using (f.NewStep(@"Compress"))
-				{
-					using (f.NewStep(@"Compress as JPG"))
-					{
-					}
-					using (f.NewStep(@"Compress as PNG"))
-					{
-					}
-					using (f.NewStep(@"Choose the smallest"))
-					{
-					}
-					using (f.NewStep(@"Load max image size allowed from db"))
-					{
-					}
-					using (f.NewStep(@"Verify against max size allowed"))
-					{
-					}
-				}
-
-				DisplayFeature(f);
-
 				throw new Exception(@"Unable to display feature");
 
-				featureManager.WriteAsync(f);
+				featureManager.Write(f);
 			}
 			catch (Exception ex)
 			{
-				featureManager.WriteExceptionAsync(f, ex);
+				featureManager.WriteException(f, ex);
 			}
 
 			s.Stop();
@@ -598,83 +549,8 @@ namespace ConsoleClient
 			Console.WriteLine(s.ElapsedMilliseconds);
 		}
 
-		private static FeatureData GetUploadImageFeature()
-		{
-			var steps = new[]
-			{
-				new FeatureStepData(@"BrowseImageAsync", 1, GetTime(5, 17)),
-				new FeatureStepData(@"AdjustImageAsync", 1, GetTime(50, 117)),
-				new FeatureStepData(@"CompressImageAsync", 1, GetTime(11, 33)),
-				new FeatureStepData(@"ResizeImageAsync", 1, GetTime(68, 98)),
-				new FeatureStepData(@"CheckSize", 1, GetTime(1, 2)),
-				new FeatureStepData(@"ConfirmSize", 1, GetTime(23, 54)),
-				new FeatureStepData(@"UploadDataAsync", 1, GetTime(231, 541)),
-			};
-			return new FeatureData(@"Images", "UploadImageAsync",
-				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
-		}
 
-		private static FeatureData GetDownloadImageFeature()
-		{
-			var steps = new[]
-			{
-				new FeatureStepData(@"DownloadImageDataFromService", 1, GetTime(100, 200)),
-				new FeatureStepData(@"SaveImageToDb", 1, GetTime(7, 23)),
-			};
-			return new FeatureData(@"Images", "DownloadImageAsync",
-				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
-		}
 
-		private static FeatureData GetLoadImagesAsync()
-		{
-			var steps = new[]
-			{
-				new FeatureStepData(@"LoadImagesFromDb", 1, GetTime(250, 350)),
-			};
-			return new FeatureData(@"Images", "LoadImagesAsync",
-				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
-		}
-
-		private static FeatureData GetDeleteImageAsync()
-		{
-			var steps = new[]
-			{
-				new FeatureStepData(@"ConfirmDelete", 1, GetTime(1, 20)),
-				new FeatureStepData(@"CheckDeleteDefault", 1, GetTime(1, 20)),
-				new FeatureStepData(@"DeleteImageFromService", 1, GetTime(375, 951)),
-				new FeatureStepData(@"DeleteImageFromDb", 1, GetTime(15, 50)),
-			};
-			return new FeatureData(@"Images", "DeleteImageAsync",
-				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
-		}
-
-		private static FeatureData GetSetAsDefaultAsync()
-		{
-			var steps = new[]
-			{
-				new FeatureStepData(@"CheckDefault", 1, GetTime(5, 17)),
-				new FeatureStepData(@"SetAsDefaultFromService", 1, GetTime(564, 700)),
-				new FeatureStepData(@"UpdateImageFromDb", 1, GetTime(20, 30)),
-			};
-			return new FeatureData(@"Images", "SetAsDefaultAsync",
-				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
-		}
-
-		private static FeatureData GetCreateActivityData()
-		{
-			var steps = new[]
-			{
-				new FeatureStepData(@"ValidateActiveDay", 1, GetTime(20, 30)),
-				new FeatureStepData(@"ValidateOldDays", 1, GetTime(20, 30)),
-				new FeatureStepData(@"ValidateOutletAssignment", 1, GetTime(10, 20)),
-				new FeatureStepData(@"ValidateActivityTypesByOutlet", 1, GetTime(100, 300)),
-				new FeatureStepData(@"CreateVisit", 1, GetTime(50, 220)),
-				new FeatureStepData(@"CreateVisitActivity", 1, GetTime(50, 220)),
-				new FeatureStepData(@"Create", 1, GetTime(50, 220)),
-			};
-			return new FeatureData(@"Images", "SetAsDefaultAsync",
-				TimeSpan.FromMilliseconds(steps.Select(t => t.TimeSpent.TotalMilliseconds).Sum() + _r.Next(17, 23)), steps);
-		}
 
 
 		private static TimeSpan GetTime(int min, int max)
@@ -703,31 +579,6 @@ namespace ConsoleClient
 				}
 			}
 			return;
-		}
-
-		private static void DisplayFeature(Feature feature)
-		{
-			Console.WriteLine();
-			Console.WriteLine(feature.Name.PadRight(45) + feature.TimeSpent.TotalMilliseconds.ToString(@"F3") + @"ms");
-
-			var max = feature.Steps.Select(v => v.TimeSpent.TotalMilliseconds).Max();
-			var percent = max / 100;
-
-			foreach (var step in feature.Steps)
-			{
-				var offset = string.Empty;
-				for (int i = 0; i < step.Level; i++)
-				{
-					offset += @"   ";
-				}
-
-				var value = offset + step.Name;
-				var ms = step.TimeSpent.TotalMilliseconds;
-				var times = (int)(ms / percent) / 2;
-				Console.WriteLine(value.PadRight(45) + ms.ToString(@"F3") + " ms " + new string('-', times));
-			}
-
-			Console.WriteLine();
 		}
 
 		private static void SearchDirectory()
@@ -770,7 +621,6 @@ namespace ConsoleClient
 
 		private static void CreateActivity(Feature feature, string activity)
 		{
-			using (feature.NewStep(nameof(CreateActivity)))
 			{
 				var visit = CreateVisit(feature);
 				if (visit == null) return;
@@ -781,7 +631,6 @@ namespace ConsoleClient
 
 		private static void InsertActivity(Feature feature, string visit, string activity)
 		{
-			using (feature.NewStep(nameof(InsertActivity)))
 			{
 				var copy = activity + @"+" + visit;
 			}
@@ -789,7 +638,6 @@ namespace ConsoleClient
 
 		private static DateTime? SelectDateFromDialog(Feature feature)
 		{
-			using (feature.NewStep(nameof(SelectDateFromDialog)))
 			{
 				// TODO : !!! Get from the UI
 				return DateTime.Today.AddDays(1);
@@ -798,7 +646,6 @@ namespace ConsoleClient
 
 		private static List<object> GetDays(Feature feature, DateTime value)
 		{
-			using (feature.NewStep(nameof(GetDays)))
 			{
 				Thread.Sleep(5);
 				return new List<object>();
@@ -807,7 +654,6 @@ namespace ConsoleClient
 
 		private static bool IsDayActive(Feature feature, List<object> days)
 		{
-			using (feature.NewStep(nameof(IsDayActive)))
 			{
 				//Thread.Sleep(100);
 				// TODO : Query the db
@@ -817,7 +663,6 @@ namespace ConsoleClient
 
 		private static bool IsDayInThePast(Feature feature, List<object> days)
 		{
-			using (feature.NewStep(nameof(IsDayInThePast)))
 			{
 				// TODO : Query the db
 				//Thread.Sleep(100);
@@ -839,7 +684,6 @@ namespace ConsoleClient
 			var canCreateActivityForOutlet = CanCreateActivityForOutlet(f);
 			if (canCreateActivityForOutlet.Type != PermissionType.Allow) return null;
 
-			using (f.NewStep(nameof(CreateVisit)))
 			{
 				var visit = GetVisit(f);
 				if (visit != null) return visit;
@@ -850,9 +694,7 @@ namespace ConsoleClient
 
 		private static PermissionResult CanCreateActivityForOutlet(Feature f)
 		{
-			using (f.NewStep(nameof(CanCreateActivityForOutlet)))
 			{
-				using (f.NewStep(@"IsOutletAssignmentValid"))
 				{
 					var assignment = "From the for outlet";
 					if (assignment == null)
@@ -868,7 +710,6 @@ namespace ConsoleClient
 					}
 				}
 				//Is R E D Activities Allowed
-				using (f.NewStep(@"IsREDActivitiesAllowed"))
 				{
 					// TODO : !!!
 					return PermissionResult.Allow.Result;
@@ -878,7 +719,6 @@ namespace ConsoleClient
 
 		private static string InsertVisit(Feature f)
 		{
-			using (f.NewStep(nameof(InsertVisit)))
 			{
 				// TODO : !!!
 				return @"new visit";
@@ -887,7 +727,6 @@ namespace ConsoleClient
 
 		private static string GetVisit(Feature f)
 		{
-			using (f.NewStep(nameof(GetVisit)))
 			{
 				// TODO : !!!
 				return null;
@@ -902,7 +741,7 @@ namespace ConsoleClient
 			{
 				using (var serverContext = creator.Create())
 				{
-					FeatureServerManager.DropSchemaAsync(serverContext);
+					FeatureServerManager.DropSchema(serverContext);
 					serverContext.Complete();
 
 					Console.WriteLine(@"Drop schema");
@@ -915,7 +754,7 @@ namespace ConsoleClient
 
 			using (var serverContext = creator.Create())
 			{
-				FeatureServerManager.CreateSchemaAsync(serverContext);
+				FeatureServerManager.CreateSchema(serverContext);
 				serverContext.Complete();
 
 				Console.WriteLine(@"Schema created");
@@ -926,7 +765,7 @@ namespace ConsoleClient
 		{
 			using (var server = new TransactionContextCreator(serverDb).Create())
 			{
-				FeatureServerManager.ReplicateAsync(user, version, server, data, serverData);
+				FeatureServerManager.Replicate(user, version, server, data, serverData);
 				server.Complete();
 			}
 		}
@@ -1411,7 +1250,6 @@ using System.Data;
 		{
 			var brandHelper = new BrandHelper();
 
-			using (feature.NewStep(nameof(LoadBrandsAsync)))
 			{
 				// TODO : Load the brand helper
 			}
@@ -1423,7 +1261,6 @@ using System.Data;
 		{
 			var flavorHelper = new FlavorHelper();
 
-			using (feature.NewStep(nameof(LoadFlavorsAsync)))
 			{
 				// TODO : Load the flavor helper
 			}
@@ -1435,7 +1272,6 @@ using System.Data;
 		{
 			var articleHelper = new ArticleHelper();
 
-			using (var step = feature.NewStep(nameof(LoadArticlesAsync)))
 			{
 				// TODO : Load the articles helper
 			}

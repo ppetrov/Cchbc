@@ -270,41 +270,38 @@ namespace Cchbc
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			using (feature.NewStep(nameof(InsertValidatedAsync)))
+			// Add the item to the db
+			using (var context = this.ContextCreator.Create())
 			{
-				// Add the item to the db
-				using (var context = this.ContextCreator.Create())
-				{
-					await this.Adapter.InsertAsync(context, viewModel.Model);
+				await this.Adapter.InsertAsync(context, viewModel.Model);
 
-					context.Complete();
-				}
-
-				// Find the right index to insert the new element
-				var index = this.ViewModels.Count;
-				var option = this.Sorter.CurrentOption;
-				if (option != null)
-				{
-					index = 0;
-
-					var cmp = option.Comparison;
-					foreach (var current in this.ViewModels)
-					{
-						var result = cmp(current, viewModel);
-						if (result > 0)
-						{
-							break;
-						}
-						index++;
-					}
-				}
-
-				// Insert the item into the list at the correct place
-				this.ViewModels.Insert(index, viewModel);
-
-				// Fire the event
-				this.ItemInserted?.Invoke(new ObjectEventArgs<TViewModel>(viewModel));
+				context.Complete();
 			}
+
+			// Find the right index to insert the new element
+			var index = this.ViewModels.Count;
+			var option = this.Sorter.CurrentOption;
+			if (option != null)
+			{
+				index = 0;
+
+				var cmp = option.Comparison;
+				foreach (var current in this.ViewModels)
+				{
+					var result = cmp(current, viewModel);
+					if (result > 0)
+					{
+						break;
+					}
+					index++;
+				}
+			}
+
+			// Insert the item into the list at the correct place
+			this.ViewModels.Insert(index, viewModel);
+
+			// Fire the event
+			this.ItemInserted?.Invoke(new ObjectEventArgs<TViewModel>(viewModel));
 		}
 
 		public async Task UpdateValidatedAsync(TViewModel viewModel, Feature feature)
@@ -312,19 +309,16 @@ namespace Cchbc
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			using (feature.NewStep(nameof(UpdateValidatedAsync)))
+			// Update the item from the db
+			using (var context = this.ContextCreator.Create())
 			{
-				// Update the item from the db
-				using (var context = this.ContextCreator.Create())
-				{
-					await this.Adapter.UpdateAsync(context, viewModel.Model);
+				await this.Adapter.UpdateAsync(context, viewModel.Model);
 
-					context.Complete();
-				}
-
-				// Fire the event
-				this.ItemUpdated?.Invoke(new ObjectEventArgs<TViewModel>(viewModel));
+				context.Complete();
 			}
+
+			// Fire the event
+			this.ItemUpdated?.Invoke(new ObjectEventArgs<TViewModel>(viewModel));
 		}
 
 		public async Task DeleteValidatedAsync(TViewModel viewModel, Feature feature)
@@ -332,22 +326,19 @@ namespace Cchbc
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			using (feature.NewStep(nameof(UpdateValidatedAsync)))
+			// Delete the item from the db
+			using (var context = this.ContextCreator.Create())
 			{
-				// Delete the item from the db
-				using (var context = this.ContextCreator.Create())
-				{
-					await this.Adapter.DeleteAsync(context, viewModel.Model);
+				await this.Adapter.DeleteAsync(context, viewModel.Model);
 
-					context.Complete();
-				}
-
-				// Delete the item from the list
-				this.ViewModels.Remove(viewModel);
-
-				// Fire the event
-				this.ItemDeleted?.Invoke(new ObjectEventArgs<TViewModel>(viewModel));
+				context.Complete();
 			}
+
+			// Delete the item from the list
+			this.ViewModels.Remove(viewModel);
+
+			// Fire the event
+			this.ItemDeleted?.Invoke(new ObjectEventArgs<TViewModel>(viewModel));
 		}
 
 		private int FindNewIndex(ObservableCollection<TViewModel> viewModels, TViewModel viewModel)

@@ -36,7 +36,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 
 				var feature = Feature.StartNew(this.Context, nameof(SearchByText));
 				this.SearchByText();
-				this.FeatureManager.WriteAsync(feature);
+				this.FeatureManager.Write(feature);
 			}
 		}
 
@@ -49,7 +49,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 				this.SetField(ref _searchOption, value);
 				var feature = Feature.StartNew(this.Context, nameof(SearchByOption));
 				this.SearchByOption();
-				this.FeatureManager.WriteAsync(feature, value?.Name ?? string.Empty);
+				this.FeatureManager.Write(feature, value?.Name ?? string.Empty);
 			}
 		}
 
@@ -62,7 +62,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 				this.SetField(ref _sortOption, value);
 				var feature = Feature.StartNew(this.Context, nameof(SortBy));
 				this.SortBy();
-				this.FeatureManager.WriteAsync(feature);
+				this.FeatureManager.Write(feature);
 			}
 		}
 
@@ -96,16 +96,13 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 			var viewModels = articlesHelper.Items.Values.Select(v => new ArticleViewModel(v)).ToArray();
 			this.DisplayArticles(feature, viewModels);
 
-			this.FeatureManager.WriteAsync(feature);
+			this.FeatureManager.Write(feature);
 		}
 
 		private void DisplayArticles(Feature feature, ArticleViewModel[] viewModels)
 		{
-			using (feature.NewStep(nameof(DisplayArticles)))
-			{
-				this.Module.SetupViewModels(viewModels);
-				this.ApplySearch();
-			}
+			this.Module.SetupViewModels(viewModels);
+			this.ApplySearch();
 		}
 
 		private void SearchByText() => this.ApplySearch();

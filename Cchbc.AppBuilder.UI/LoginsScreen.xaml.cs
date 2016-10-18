@@ -29,7 +29,7 @@ namespace Cchbc.AppBuilder.UI
 				var featureManager = Context.Core.FeatureManager;
 				featureManager.ContextCreator = Context.Core.ContextCreator;
 				//await featureManager.CreateSchema();
-				featureManager.LoadAsync();
+				featureManager.Load();
 			}
 			catch (Exception ex)
 			{
@@ -44,20 +44,20 @@ namespace Cchbc.AppBuilder.UI
 			var feature = Feature.StartNew(@"Agenda", @"CreateActivity");
 			try
 			{
-				using (feature.NewStep(@"Select type/outlet"))
+
 				{
 					var r = new Random(0);
 					await Task.Delay(r.Next(20));
-					using (feature.NewStep(@"Check outlet"))
+
 					{
 						await Task.Delay(r.Next(20));
-						using (feature.NewStep(@"Check type"))
+
 						{
 							await Task.Delay(r.Next(20));
-							using (feature.NewStep(@"Create visit"))
+
 							{
 								await Task.Delay(r.Next(20));
-								using (feature.NewStep(@"Insert activity"))
+
 								{
 									await Task.Delay(r.Next(20));
 								}
@@ -66,11 +66,11 @@ namespace Cchbc.AppBuilder.UI
 					}
 				}
 
-				featureManager.WriteAsync(feature);
+				featureManager.Write(feature);
 			}
 			catch (Exception ex)
 			{
-				featureManager.WriteExceptionAsync(feature, ex);
+				featureManager.WriteException(feature, ex);
 			}
 		}
 
@@ -81,23 +81,19 @@ namespace Cchbc.AppBuilder.UI
 			var f = Feature.StartNew(@"Agenda", @"CopyActivity");
 			try
 			{
-				using (f.NewStep(@"Select activity"))
+
 				{
 					await Task.Delay(r.Next(20));
 				}
-				using (f.NewStep(@"Select date"))
 				{
 					await Task.Delay(r.Next(20));
 				}
-				using (f.NewStep(@"Check date"))
 				{
 					await Task.Delay(r.Next(20));
 				}
-				using (f.NewStep(@"Create visit"))
 				{
 					await Task.Delay(r.Next(20));
 
-					using (f.NewStep(@"Insert activity"))
 					{
 						await Task.Delay(r.Next(20));
 					}
@@ -105,7 +101,7 @@ namespace Cchbc.AppBuilder.UI
 			}
 			finally
 			{
-				manager.WriteAsync(f);
+				manager.Write(f);
 			}
 		}
 	}

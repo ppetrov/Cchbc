@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Cchbc.Data;
 using Cchbc.Features.Data;
@@ -81,8 +80,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 
 			context.Execute(new Query(@"
 CREATE TABLE FEATURE_ENTRIES (
-	Id integer NOT NULL PRIMARY KEY, 
-	TimeSpent decimal(38, 0) NOT NULL, 
+	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	Details nvarchar(254) NULL, 
 	Created_At datetime NOT NULL, 
 	Feature_Id integer NOT NULL, 
@@ -98,39 +96,6 @@ CREATE TABLE FEATURE_ENTRIES (
 		REFERENCES FEATURE_VERSIONS (Id)
 		ON UPDATE CASCADE ON DELETE CASCADE
 )"));
-
-			context.Execute(new Query(@"
-CREATE TABLE FEATURE_USAGES (
-	Created_At datetime NOT NULL, 
-	Feature_Id integer NOT NULL, 
-	User_Id integer NOT NULL, 
-	Version_Id integer NOT NULL, 
-	FOREIGN KEY (Feature_Id)
-		REFERENCES FEATURES (Id)
-		ON UPDATE CASCADE ON DELETE CASCADE
-	FOREIGN KEY (User_Id)
-		REFERENCES FEATURE_USERS (Id)
-		ON UPDATE CASCADE ON DELETE CASCADE
-	FOREIGN KEY (Version_Id)
-		REFERENCES FEATURE_VERSIONS (Id)
-		ON UPDATE CASCADE ON DELETE CASCADE
-)"));
-
-			context.Execute(new Query(@"
-CREATE TABLE FEATURE_STEP_ENTRIES (
-	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
-	TimeSpent decimal(38, 0) NOT NULL, 
-	Level integer NOT NULL, 
-	Feature_Entry_Id integer NOT NULL, 
-	Feature_Step_Id integer NOT NULL, 
-	FOREIGN KEY (Feature_Entry_Id)
-		REFERENCES FEATURE_ENTRIES (Id)
-		ON UPDATE CASCADE ON DELETE CASCADE
-	FOREIGN KEY (Feature_Step_Id)
-		REFERENCES FEATURE_STEPS (Id)
-		ON UPDATE CASCADE ON DELETE CASCADE		
-)"));
-
 			context.Execute(new Query(@"
 CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
@@ -148,9 +113,7 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			foreach (var name in new[]
 			{
 				@"FEATURE_EXCEPTIONS_EXCLUDED",
-				@"FEATURE_STEP_ENTRIES",
 				@"FEATURE_EXCEPTION_ENTRIES",
-				@"FEATURE_USAGES",
 				@"FEATURE_ENTRIES",
 				@"FEATURE_USERS",
 				@"FEATURES",
@@ -191,13 +154,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			};
 
 			context.Execute(new Query(@"UPDATE FEATURE_USERS SET REPLICATED_AT = @REPLICATED_AT, VERSION_ID = @VERSION WHERE ID = @ID", sqlParams));
-		}
-
-		public static long GetFeatureEntryNextSeed(ITransactionContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			return context.Execute(new Query<long>(@"SELECT MAX(ID) FROM FEATURE_ENTRIES", r => !r.IsDbNull(0) ? r.GetInt64(0) : 0L)).Single() + 1;
 		}
 
 		public static Dictionary<string, long> GetUsers(ITransactionContext context)
@@ -272,14 +228,13 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			context.Execute(new Query(buffer.ToString()));
 		}
 
-		public static void InsertFeatureEntry(ITransactionContext context, IEnumerable<DbFeatureEntryRow> featureEntryRows, long userId, long versionId, Dictionary<int, long> featuresMap, Dictionary<long, long> results, ref long featureEntryId)
+		public static void InsertFeatureEntry(ITransactionContext context, IEnumerable<DbFeatureEntryRow> featureEntryRows, long userId, long versionId, Dictionary<int, long> featuresMap)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (featureEntryRows == null) throw new ArgumentNullException(nameof(featureEntryRows));
 			if (featuresMap == null) throw new ArgumentNullException(nameof(featuresMap));
-			if (results == null) throw new ArgumentNullException(nameof(results));
 
-			var buffer = new StringBuilder(@"INSERT INTO FEATURE_ENTRIES(ID, TIMESPENT, DETAILS, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID) VALUES ");
+			var buffer = new StringBuilder(@"INSERT INTO FEATURE_ENTRIES(DETAILS, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID) VALUES ");
 
 			var addComma = false;
 			foreach (var e in featureEntryRows)
@@ -290,10 +245,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 				}
 
 				buffer.Append('(');
-				buffer.Append(featureEntryId);
-				buffer.Append(',');
-				buffer.Append(Convert.ToDecimal(e.TimeSpent));
-				buffer.Append(',');
 				buffer.Append('\'');
 				buffer.Append(e.Details);
 				buffer.Append('\'');
@@ -303,76 +254,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 				buffer.Append('\'');
 				buffer.Append(',');
 				buffer.Append(featuresMap[e.FeatureId]);
-				buffer.Append(',');
-				buffer.Append(userId);
-				buffer.Append(',');
-				buffer.Append(versionId);
-				buffer.Append(')');
-
-				results.Add(e.Id, featureEntryId);
-				featureEntryId++;
-
-				addComma = true;
-			}
-
-			context.Execute(new Query(buffer.ToString()));
-		}
-
-		public static void InsertStepEntries(ITransactionContext context, IEnumerable<DbFeatureEntryStepRow> entryStepRows, Dictionary<long, long> featureEntriesMap, Dictionary<int, long> stepsMap)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (entryStepRows == null) throw new ArgumentNullException(nameof(entryStepRows));
-			if (featureEntriesMap == null) throw new ArgumentNullException(nameof(featureEntriesMap));
-			if (stepsMap == null) throw new ArgumentNullException(nameof(stepsMap));
-
-			var buffer = new StringBuilder(@"INSERT INTO FEATURE_STEP_ENTRIES(TIMESPENT, LEVEL, FEATURE_ENTRY_ID, FEATURE_STEP_ID) VALUES ");
-
-			var addComma = false;
-			foreach (var s in entryStepRows)
-			{
-				if (addComma)
-				{
-					buffer.Append(',');
-				}
-
-				buffer.Append('(');
-				buffer.Append(s.TimeSpent);
-				buffer.Append(',');
-				buffer.Append(s.Level);
-				buffer.Append(',');
-				buffer.Append(featureEntriesMap[s.FeatureEntryId]);
-				buffer.Append(',');
-				buffer.Append(stepsMap[s.FeatureStepId]);
-				buffer.Append(')');
-
-				addComma = true;
-			}
-
-			context.Execute(new Query(buffer.ToString()));
-		}
-
-		public static void InsertUsageEntry(ITransactionContext context, IEnumerable<DbFeatureUsageRow> usageRows, long userId, long versionId, Dictionary<int, long> featuresMap)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (usageRows == null) throw new ArgumentNullException(nameof(usageRows));
-			if (featuresMap == null) throw new ArgumentNullException(nameof(featuresMap));
-
-			var buffer = new StringBuilder(@"INSERT INTO FEATURE_USAGES(CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID) VALUES ");
-
-			var addComma = false;
-			foreach (var r in usageRows)
-			{
-				if (addComma)
-				{
-					buffer.Append(',');
-				}
-
-				buffer.Append('(');
-				buffer.Append('\'');
-				buffer.Append(r.CreatedAt);
-				buffer.Append('\'');
-				buffer.Append(',');
-				buffer.Append(featuresMap[r.FeatureId]);
 				buffer.Append(',');
 				buffer.Append(userId);
 				buffer.Append(',');

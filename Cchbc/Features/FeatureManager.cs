@@ -8,12 +8,11 @@ namespace Cchbc.Features
 	public sealed class FeatureManager
 	{
 		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }
-		private Dictionary<string, DbFeatureStepRow> Steps { get; set; }
 		private Dictionary<long, List<DbFeatureRow>> Features { get; set; }
 
 		public ITransactionContextCreator ContextCreator { get; set; }
 
-		public void CreateSchemaAsync()
+		public void CreateSchema()
 		{
 			using (var context = this.ContextCreator.Create())
 			{
@@ -22,7 +21,7 @@ namespace Cchbc.Features
 			}
 		}
 
-		public void DropSchemaAsync()
+		public void DropSchema()
 		{
 			using (var context = this.ContextCreator.Create())
 			{
@@ -31,96 +30,51 @@ namespace Cchbc.Features
 			}
 		}
 
-		public void LoadAsync()
+		public void Load()
 		{
 			using (var context = this.ContextCreator.Create())
 			{
 				this.Contexts = FeatureAdapter.GetContexts(context);
-				this.Steps = FeatureAdapter.GetSteps(context);
-				this.Features = this.GetFeaturesAsync(context);
+				this.Features = this.GetFeatures(context);
 
 				context.Complete();
 			}
 		}
 
-		public void MarkUsageAsync(Feature feature)
-		{
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			MarkUsageAsync(feature.Context, feature.Name);
-		}
-
-		public void MarkUsageAsync(FeatureData featureData)
-		{
-			if (featureData == null) throw new ArgumentNullException(nameof(featureData));
-
-			MarkUsageAsync(featureData.Context, featureData.Name);
-		}
-
-		public void WriteAsync(Feature feature, string details = null)
+		public void Write(Feature feature, string details = null)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			// Stop the feature
 			feature.Stop();
 
-			var featureSteps = feature.Steps;
-			var steps = new FeatureStepData[featureSteps.Count];
-			for (var i = 0; i < featureSteps.Count; i++)
-			{
-				var s = featureSteps[i];
-				steps[i] = new FeatureStepData(s.Name, s.Level, s.TimeSpent);
-			}
-			var featureData = new FeatureData(feature.Context, feature.Name, feature.TimeSpent, steps);
+			var featureData = new FeatureData(feature.Context, feature.Name, feature.TimeSpent);
 
-			WriteAsync(featureData, details);
+			Write(featureData, details);
 		}
 
-		public void WriteAsync(FeatureData featureData, string details = null)
+		public void Write(FeatureData featureData, string details = null)
 		{
 			if (featureData == null) throw new ArgumentNullException(nameof(featureData));
 
 			using (var context = this.ContextCreator.Create())
 			{
-				var featureRow = this.SaveAsync(context, featureData.Context, featureData.Name);
+				var featureRow = this.Save(context, featureData.Context, featureData.Name);
 
-				var steps = featureData.Steps;
-				var hasSteps = steps.Length > 0;
-				var featureEntryId = FeatureAdapter.InsertFeatureEntry(context, featureRow.Id, featureData.TimeSpent, details ?? string.Empty, hasSteps);
-				if (hasSteps)
-				{
-					foreach (var step in steps)
-					{
-						var name = step.Name;
-
-						DbFeatureStepRow current;
-						if (!this.Steps.TryGetValue(name, out current))
-						{
-							// Inser step
-							var newStepId = FeatureAdapter.InsertStep(context, name);
-
-							current = new DbFeatureStepRow(newStepId, name);
-
-							this.Steps.Add(name, current);
-						}
-					}
-
-					// Inser step entries
-					FeatureAdapter.InsertStepEntries(context, featureEntryId, steps, this.Steps);
-				}
+				FeatureAdapter.InsertFeatureEntry(context, featureRow.Id, featureData.TimeSpent, details ?? string.Empty);
 
 				context.Complete();
 			}
 		}
 
-		public void WriteExceptionAsync(Feature feature, Exception exception)
+		public void WriteException(Feature feature, Exception exception)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
 			using (var context = this.ContextCreator.Create())
 			{
-				var featureRow = this.SaveAsync(context, feature.Context, feature.Name);
+				var featureRow = this.Save(context, feature.Context, feature.Name);
 				var exceptionId = FeatureAdapter.GetOrCreateException(context, exception.ToString());
 
 				FeatureAdapter.InsertExceptionEntry(context, featureRow.Id, exceptionId);
@@ -129,24 +83,12 @@ namespace Cchbc.Features
 			}
 		}
 
-		private void MarkUsageAsync(string featureContext, string name)
+		private DbFeatureRow Save(ITransactionContext context, string featureContext, string name)
 		{
-			using (var context = this.ContextCreator.Create())
-			{
-				var featureRow = this.SaveAsync(context, featureContext, name);
-
-				FeatureAdapter.InsertFeatureUsage(context, featureRow.Id);
-
-				context.Complete();
-			}
+			return this.SaveFeature(context, this.SaveContext(context, featureContext), name);
 		}
 
-		private DbFeatureRow SaveAsync(ITransactionContext context, string featureContext, string name)
-		{
-			return this.SaveFeatureAsync(context, this.SaveContextAsync(context, featureContext), name);
-		}
-
-		private DbFeatureContextRow SaveContextAsync(ITransactionContext transactionContext, string name)
+		private DbFeatureContextRow SaveContext(ITransactionContext transactionContext, string name)
 		{
 			DbFeatureContextRow featureContextRow;
 
@@ -164,7 +106,7 @@ namespace Cchbc.Features
 			return featureContextRow;
 		}
 
-		private DbFeatureRow SaveFeatureAsync(ITransactionContext transactionContext, DbFeatureContextRow featureContextRow, string name)
+		private DbFeatureRow SaveFeature(ITransactionContext transactionContext, DbFeatureContextRow featureContextRow, string name)
 		{
 			var contextId = featureContextRow.Id;
 			List<DbFeatureRow> features;
@@ -196,7 +138,7 @@ namespace Cchbc.Features
 			return feature;
 		}
 
-		private Dictionary<long, List<DbFeatureRow>> GetFeaturesAsync(ITransactionContext context)
+		private Dictionary<long, List<DbFeatureRow>> GetFeatures(ITransactionContext context)
 		{
 			var featuresByContext = new Dictionary<long, List<DbFeatureRow>>(this.Contexts.Count);
 

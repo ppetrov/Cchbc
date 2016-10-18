@@ -34,7 +34,7 @@ namespace Cchbc.Features.DashboardUI
 				};
 
 				var fm = new FeatureManager { ContextCreator = contextCreator };
-				fm.LoadAsync();
+				fm.Load();
 
 				var feature = Feature.StartNew(@"Dashboard", @"Load");
 
@@ -57,11 +57,6 @@ namespace Cchbc.Features.DashboardUI
 				feature.Stop();
 
 				log(string.Empty + w.Elapsed.TotalMilliseconds, LogLevel.Info);
-
-				foreach (var s in feature.Steps)
-				{
-					log(@" - " + s.Name + @" [" + @"N/А" + @"]" + @": " + s.TimeSpent.TotalMilliseconds + " ms", LogLevel.Info);
-				}
 			}
 			catch (Exception ex)
 			{

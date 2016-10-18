@@ -23,13 +23,6 @@ namespace Cchbc.Features.Data
 				Write(buffer, ref offset, row.Name);
 			}
 
-			Write(buffer, ref offset, (short)clientData.StepRows.Count);
-			foreach (var row in clientData.StepRows)
-			{
-				Write(buffer, ref offset, row.Id);
-				Write(buffer, ref offset, row.Name);
-			}
-
 			Write(buffer, ref offset, (short)clientData.ExceptionRows.Count);
 			foreach (var row in clientData.ExceptionRows)
 			{
@@ -45,30 +38,13 @@ namespace Cchbc.Features.Data
 				Write(buffer, ref offset, row.ContextId);
 			}
 
-			Write(buffer, ref offset, (short)clientData.UsageRows.Count);
-			foreach (var row in clientData.UsageRows)
-			{
-				Write(buffer, ref offset, row.CreatedAt.ToBinary());
-				Write(buffer, ref offset, row.FeatureId);
-			}
-
 			Write(buffer, ref offset, (short)clientData.FeatureEntryRows.Count);
 			foreach (var row in clientData.FeatureEntryRows)
 			{
 				Write(buffer, ref offset, row.Id);
-				Write(buffer, ref offset, BitConverter.DoubleToInt64Bits(row.TimeSpent));
 				Write(buffer, ref offset, row.Details);
 				Write(buffer, ref offset, row.CreatedAt.ToBinary());
 				Write(buffer, ref offset, row.FeatureId);
-			}
-
-			Write(buffer, ref offset, (short)clientData.EntryStepRows.Count);
-			foreach (var row in clientData.EntryStepRows)
-			{
-				Write(buffer, ref offset, BitConverter.DoubleToInt64Bits(row.TimeSpent));
-				Write(buffer, ref offset, row.Level);
-				Write(buffer, ref offset, row.FeatureEntryId);
-				Write(buffer, ref offset, row.FeatureStepId);
 			}
 
 			Write(buffer, ref offset, (short)clientData.ExceptionEntryRows.Count);
@@ -99,15 +75,6 @@ namespace Cchbc.Features.Data
 			}
 
 			count = ReadShort(buffer, ref offset);
-			var dbFeatureStepRows = new List<DbFeatureStepRow>(count);
-			for (var i = 0; i < count; i++)
-			{
-				var id = ReadInt(buffer, ref offset);
-				var name = ReadString(buffer, ref offset, symbolBuffer);
-				dbFeatureStepRows.Add(new DbFeatureStepRow(id, name));
-			}
-
-			count = ReadShort(buffer, ref offset);
 			var dbFeatureExceptionRows = new List<DbFeatureExceptionRow>(count);
 			for (var i = 0; i < count; i++)
 			{
@@ -127,35 +94,14 @@ namespace Cchbc.Features.Data
 			}
 
 			count = ReadShort(buffer, ref offset);
-			var dbUsageRows = new List<DbFeatureUsageRow>(count);
-			for (var i = 0; i < count; i++)
-			{
-				var createdAt = DateTime.FromBinary(ReadLong(buffer, ref offset));
-				var featureId = ReadInt(buffer, ref offset);
-				dbUsageRows.Add(new DbFeatureUsageRow(createdAt, featureId));
-			}
-
-			count = ReadShort(buffer, ref offset);
 			var dbFeatureEntryRows = new List<DbFeatureEntryRow>(count);
 			for (var i = 0; i < count; i++)
 			{
 				var id = ReadLong(buffer, ref offset);
-				var timeSpent = BitConverter.Int64BitsToDouble(ReadLong(buffer, ref offset));
 				var details = ReadString(buffer, ref offset, symbolBuffer);
 				var createdAt = DateTime.FromBinary(ReadLong(buffer, ref offset));
 				var featureId = ReadInt(buffer, ref offset);
-				dbFeatureEntryRows.Add(new DbFeatureEntryRow(id, timeSpent, details, createdAt, featureId));
-			}
-
-			count = ReadShort(buffer, ref offset);
-			var dbFeatureEntryStepRows = new List<DbFeatureEntryStepRow>(count);
-			for (var i = 0; i < count; i++)
-			{
-				var timeSpent = BitConverter.Int64BitsToDouble(ReadLong(buffer, ref offset));
-				var level = ReadInt(buffer, ref offset);
-				var featureEntryId = ReadLong(buffer, ref offset);
-				var featureStepId = ReadInt(buffer, ref offset);
-				dbFeatureEntryStepRows.Add(new DbFeatureEntryStepRow(timeSpent, level, featureEntryId, featureStepId));
+				dbFeatureEntryRows.Add(new DbFeatureEntryRow(id, details, createdAt, featureId));
 			}
 
 			count = ReadShort(buffer, ref offset);
@@ -168,7 +114,7 @@ namespace Cchbc.Features.Data
 				dbFeatureExceptionEntryRows.Add(new DbFeatureExceptionEntryRow(exceptionRowId, createdAt, featureId));
 			}
 
-			return new ClientData(dbFeatureContextRows, dbFeatureStepRows, dbFeatureExceptionRows, dbFeatureRows, dbUsageRows, dbFeatureEntryRows, dbFeatureEntryStepRows, dbFeatureExceptionEntryRows);
+			return new ClientData(dbFeatureContextRows, dbFeatureExceptionRows, dbFeatureRows, dbFeatureEntryRows, dbFeatureExceptionEntryRows);
 		}
 
 		private static string ReadString(byte[] buffer, ref int offset, char[] symbolBuffer)
@@ -207,20 +153,12 @@ namespace Cchbc.Features.Data
 		private static int GetBufferSize(ClientData clientData)
 		{
 			// For the number of elements in every list
-			var totalLists = 8;
+			var totalLists = 5;
 			var size = totalLists * ShortSize;
 
 			// Id 
 			size += IntSize * clientData.ContextRows.Count;
 			foreach (var row in clientData.ContextRows)
-			{
-				// Name
-				size += GetBufferSize(row.Name);
-			}
-
-			// Id
-			size += IntSize * clientData.StepRows.Count;
-			foreach (var row in clientData.StepRows)
 			{
 				// Name
 				size += GetBufferSize(row.Name);
@@ -242,12 +180,8 @@ namespace Cchbc.Features.Data
 				size += GetBufferSize(row.Name);
 			}
 
-			// Feature Id & Created At
-			size += IntSize * clientData.UsageRows.Count;
-			size += LongSize * clientData.UsageRows.Count;
-
-			// Id, Time, CreatedAt
-			size += 3 * LongSize * clientData.FeatureEntryRows.Count;
+			// Id, CreatedAt
+			size += 2 * LongSize * clientData.FeatureEntryRows.Count;
 			// FeatureId
 			size += IntSize * clientData.FeatureEntryRows.Count;
 			// Details
@@ -255,11 +189,6 @@ namespace Cchbc.Features.Data
 			{
 				size += GetBufferSize(row.Details);
 			}
-
-			// Time & Feature Entry
-			size += 2 * LongSize * clientData.EntryStepRows.Count;
-			// Level & FeatureStep Id
-			size += 2 * IntSize * clientData.EntryStepRows.Count;
 
 			// Exception Id & Feature Id
 			size += 2 * IntSize * clientData.ExceptionEntryRows.Count;

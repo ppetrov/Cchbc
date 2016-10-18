@@ -17,7 +17,6 @@ namespace Cchbc.Features.DashboardModule.Data
 
 			var feature = coreContext.Feature;
 
-			using (feature.NewStep(nameof(GetSettingsAsync)))
 			{
 				var maxUsers = default(int?);
 				var maxMostUsedFeatures = default(int?);
@@ -58,7 +57,6 @@ namespace Cchbc.Features.DashboardModule.Data
 		{
 			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
 
-			using (coreContext.Feature.NewStep(nameof(GetCommonDataAsync)))
 			{
 				var contexts = new Dictionary<long, DbFeatureContextRow>();
 				var features = new Dictionary<long, DbFeatureRow>();
@@ -85,7 +83,6 @@ namespace Cchbc.Features.DashboardModule.Data
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
 			var context = loadParams.CoreContext;
-			using (context.Feature.NewStep(nameof(GetUsersAsync)))
 			{
 				var statement = @"SELECT U.ID, U.NAME UNAME, U.REPLICATED_AT, V.NAME VNAME FROM FEATURE_USERS U INNER JOIN FEATURE_VERSIONS V ON U.VERSION_ID = V.ID ORDER BY REPLICATED_AT DESC LIMIT @MAXUSERS";
 
@@ -107,7 +104,6 @@ namespace Cchbc.Features.DashboardModule.Data
 
 			var context = loadParams.CoreContext;
 			var feature = context.Feature;
-			using (feature.NewStep(nameof(GetVersionsAsync)))
 			{
 				var maxVersions = loadParams.Settings.MaxVersions;
 
@@ -154,7 +150,6 @@ namespace Cchbc.Features.DashboardModule.Data
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
 			var feature = loadParams.CoreContext.Feature;
-			using (feature.NewStep(nameof(GetExceptionsAsync)))
 			{
 				var dbContext = loadParams.CoreContext.DbContext;
 				var settings = loadParams.Settings;

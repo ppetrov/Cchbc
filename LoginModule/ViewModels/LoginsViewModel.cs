@@ -47,7 +47,7 @@ namespace LoginModule.ViewModels
 
 				var feature = Feature.StartNew(this.Context, nameof(SearchByText));
 				this.SearchByText();
-				this.FeatureManager.WriteAsync(feature);
+				this.FeatureManager.Write(feature);
 			}
 		}
 
@@ -60,7 +60,7 @@ namespace LoginModule.ViewModels
 				this.SetField(ref _searchOption, value);
 				var feature = Feature.StartNew(this.Context, nameof(SearchByOption));
 				this.SearchByOption();
-				this.FeatureManager.WriteAsync(feature, value?.Name ?? string.Empty);
+				this.FeatureManager.Write(feature, value?.Name ?? string.Empty);
 			}
 		}
 
@@ -73,7 +73,7 @@ namespace LoginModule.ViewModels
 				this.SetField(ref _sortOption, value);
 				var feature = Feature.StartNew(this.Context, nameof(SortBy));
 				this.SortBy();
-				this.FeatureManager.WriteAsync(feature);
+				this.FeatureManager.Write(feature);
 			}
 		}
 
@@ -95,11 +95,11 @@ namespace LoginModule.ViewModels
 			};
 			this.Module.OperationEnd = feature =>
 			{
-				this.FeatureManager.WriteAsync(feature);
+				this.FeatureManager.Write(feature);
 			};
 			this.Module.OperationError = (feature, ex) =>
 			{
-				this.FeatureManager.WriteExceptionAsync(feature, ex);
+				this.FeatureManager.WriteException(feature, ex);
 			};
 
 			this.Module.ItemInserted = ModuleOnItemInserted;
@@ -120,7 +120,7 @@ namespace LoginModule.ViewModels
 			}
 			catch (Exception ex)
 			{
-				this.FeatureManager.WriteExceptionAsync(feature, ex);
+				this.FeatureManager.WriteException(feature, ex);
 			}
 		}
 
@@ -129,23 +129,14 @@ namespace LoginModule.ViewModels
 			var feature = Feature.StartNew(this.Context, nameof(LoadDataAsync));
 			try
 			{
-				LoginViewModel[] viewModels;
+				var viewModels = await GetLoginsFromDbAsync();
+				this.DisplayLogins(viewModels, feature);
 
-				using (feature.NewStep(nameof(GetLoginsFromDbAsync)))
-				{
-					viewModels = await GetLoginsFromDbAsync();
-
-					using (feature.NewStep(nameof(DisplayLogins)))
-					{
-						this.DisplayLogins(viewModels, feature);
-					}
-				}
-
-				this.FeatureManager.WriteAsync(feature, viewModels.Length.ToString());
+				this.FeatureManager.Write(feature, viewModels.Length.ToString());
 			}
 			catch (Exception ex)
 			{
-				this.FeatureManager.WriteExceptionAsync(feature, ex);
+				this.FeatureManager.WriteException(feature, ex);
 			}
 		}
 
@@ -231,7 +222,6 @@ namespace LoginModule.ViewModels
 		{
 			feature.Started = _ => { this.IsWorking = true; };
 			feature.Stopped = _ => { this.IsWorking = false; };
-			feature.StepStarted = _ => this.WorkProgress = _.Name;
 
 			return feature;
 		}

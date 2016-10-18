@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Cchbc.Features
@@ -14,18 +13,11 @@ namespace Cchbc.Features
 
 		public Action<Feature> Started;
 		public Action<Feature> Stopped;
-		public Action<FeatureStep> StepStarted;
-		public Action<FeatureStep> StepEnded;
-
-		private int _level;
 
 		private Stopwatch _stopwatch;
 		private Stopwatch Stopwatch => _stopwatch ?? (_stopwatch = new Stopwatch());
 
 		public TimeSpan Elapsed => this.Stopwatch.Elapsed;
-
-		private List<FeatureStep> _steps;
-		public List<FeatureStep> Steps => _steps ?? (_steps = new List<FeatureStep>());
 
 		public static Feature StartNew(string context, string name)
 		{
@@ -46,46 +38,6 @@ namespace Cchbc.Features
 
 			this.Context = context;
 			this.Name = name;
-		}
-
-		public FeatureStep NewStep(string name)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			// Create new feature step
-			var step = new FeatureStep(this, name, ++_level, this.Stopwatch.Elapsed);
-
-			this.StepStarted?.Invoke(step);
-
-			// Add to feature steps
-			this.Steps.Add(step);
-
-			return step;
-		}
-
-		public void EndStep(FeatureStep step)
-		{
-			if (step == null) throw new ArgumentNullException(nameof(step));
-
-			var adjustment = TimeSpan.Zero;
-			var currentLevel = step.Level;
-			for (var i = this.Steps.Count - 1; i >= 0; i--)
-			{
-				var s = this.Steps[i];
-				if (s.Level > currentLevel)
-				{
-					adjustment += s.TimeSpent;
-					continue;
-				}
-				break;
-			}
-			if (adjustment != TimeSpan.Zero)
-			{
-				step.TimeSpent -= adjustment;
-			}
-
-			this.StepEnded?.Invoke(step);
-			_level--;
 		}
 
 		public void Start()
