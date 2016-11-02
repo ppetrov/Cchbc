@@ -1,40 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cchbc.Helpers;
+using Cchbc.Data;
 
 namespace Cchbc
 {
 	public sealed class DataCache
 	{
-		private readonly Dictionary<string, object> _helpers = new Dictionary<string, object>();
+		private readonly Dictionary<string, object> _values = new Dictionary<string, object>();
+		private readonly Dictionary<string, object> _dataProviders = new Dictionary<string, object>();
 
-		public void Add<T>(Helper<T> helper)
+		public void Register<T>(Func<ITransactionContext, DataCache, Dictionary<long, T>> dataProvider)
 		{
-			if (helper == null) throw new ArgumentNullException(nameof(helper));
+			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 
-			_helpers.Add(typeof(T).Name, helper);
+			_dataProviders.Add(typeof(T).Name, dataProvider);
 		}
 
-		public void Remove<T>(Helper<T> helper)
+		public void Unregister<T>()
 		{
-			if (helper == null) throw new ArgumentNullException(nameof(helper));
-
-			_helpers.Remove(typeof(T).Name);
+			_dataProviders.Remove(typeof(T).Name);
 		}
 
-		public Helper<T> Get<T>()
+		public Dictionary<long, T> GetValues<T>(ITransactionContext context)
 		{
-			object helper;
-			if (_helpers.TryGetValue(typeof(T).Name, out helper))
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			var key = typeof(T).Name;
+
+			object value;
+			if (!_values.TryGetValue(key, out value))
 			{
-				return (Helper<T>)helper;
+				var dataProvider = (Func<ITransactionContext, DataCache, Dictionary<long, T>>)_dataProviders[key];
+				_values.Add(key, dataProvider(context, this));
 			}
-			return null;
+
+			return (Dictionary<long, T>)value;
+		}
+
+		public void RemoveValues<T>()
+		{
+			_values.Remove(typeof(T).Name);
 		}
 
 		public void Clear()
 		{
-			_helpers.Clear();
+			_values.Clear();
 		}
 	}
 }

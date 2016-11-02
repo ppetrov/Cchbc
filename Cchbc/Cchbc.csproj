@@ -45,7 +45,6 @@
     <Compile Include="DataCache.cs" />
     <Compile Include="Data\IFieldDataReader.cs" />
     <Compile Include="Data\IModifiableAdapter.cs" />
-    <Compile Include="Data\ITransactionContextCreator.cs" />
     <Compile Include="Data\Query.cs" />
     <Compile Include="Data\QueryParameter.cs" />
     <Compile Include="Data\ITransactionContext.cs" />
@@ -71,8 +70,6 @@
     <Compile Include="Module.cs" />
     <Compile Include="Data\IReadOnlyAdapter.cs" />
     <Compile Include="Dialog\DialogType.cs" />
-    <Compile Include="Helpers\Helper.cs" />
-    <Compile Include="Helpers\IHelper.cs" />
     <Compile Include="Objects\IDbObject.cs" />
     <Compile Include="Objects\ObjectEventArgs.cs" />
     <Compile Include="Objects\ViewModel.cs" />

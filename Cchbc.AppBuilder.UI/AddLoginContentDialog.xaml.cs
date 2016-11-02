@@ -52,7 +52,7 @@ namespace Cchbc.AppBuilder.UI
 			get { return _name; }
 			set
 			{
-				this.SetField(ref _name, value);
+				this.SetProperty(out _name, value);
 				this.CreateCommand.RaiseCanExecuteChanged();
 			}
 		}
@@ -61,7 +61,7 @@ namespace Cchbc.AppBuilder.UI
 		public string NameValidationError
 		{
 			get { return _nameValidationError; }
-			private set { this.SetField(ref _nameValidationError, value); }
+			private set { this.SetProperty(out _nameValidationError, value); }
 		}
 
 		private string _password = string.Empty;
@@ -70,7 +70,7 @@ namespace Cchbc.AppBuilder.UI
 			get { return _password; }
 			set
 			{
-				this.SetField(ref _password, value);
+				this.SetProperty(out _password, value);
 				this.CreateCommand.RaiseCanExecuteChanged();
 			}
 		}
@@ -79,7 +79,7 @@ namespace Cchbc.AppBuilder.UI
 		public string PasswordValidationError
 		{
 			get { return _passwordValidationError; }
-			private set { this.SetField(ref _passwordValidationError, value); }
+			private set { this.SetProperty(out _passwordValidationError, value); }
 		}
 
 		public AddLoginViewModel(LoginsViewModel viewModel, Action<Login> acceptAction, Action<Login> cancelAction)

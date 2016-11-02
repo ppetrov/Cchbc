@@ -12,6 +12,7 @@ namespace ConsoleClient
 	public sealed class TransactionContext : ITransactionContext
 	{
 		private readonly SQLiteConnection _cn;
+
 		private SQLiteTransaction _tr;
 
 		public TransactionContext(string cnString)

@@ -12,14 +12,14 @@ namespace Cchbc.Search
 		public int Count
 		{
 			get { return _count; }
-			set { this.SetField(ref _count, value); }
+			set { this.SetProperty(out _count, value); }
 		}
 
 		private bool _isSelected;
 		public bool IsSelected
 		{
 			get { return _isSelected; }
-			set { this.SetField(ref _isSelected, value); }
+			set { this.SetProperty(out _isSelected, value); }
 		}
 
 		public SearchOption(string name, Func<T, bool> isMatch, bool isSelected = false)

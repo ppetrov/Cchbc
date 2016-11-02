@@ -13,7 +13,7 @@ namespace Cchbc.Sort
 		public bool? Ascending
 		{
 			get { return _ascending; }
-			set { this.SetField(ref _ascending, value); }
+			set { this.SetProperty(out _ascending, value); }
 		}
 
 		public SortOption(string name, Func<T, T, int> comparison, bool isDefault = false)

@@ -27,14 +27,14 @@ namespace LoginModule.ViewModels
 		public bool IsWorking
 		{
 			get { return _isWorking; }
-			private set { this.SetField(ref _isWorking, value); }
+			private set { this.SetProperty(out _isWorking, value); }
 		}
 
 		private string _workProgress;
 		public string WorkProgress
 		{
 			get { return _workProgress; }
-			private set { this.SetField(ref _workProgress, value); }
+			private set { this.SetProperty(out _workProgress, value); }
 		}
 
 		private string _textSearch = string.Empty;
@@ -43,7 +43,7 @@ namespace LoginModule.ViewModels
 			get { return _textSearch; }
 			set
 			{
-				this.SetField(ref _textSearch, value);
+				this.SetProperty(out _textSearch, value);
 
 				var feature = Feature.StartNew(this.Context, nameof(SearchByText));
 				this.SearchByText();
@@ -57,7 +57,7 @@ namespace LoginModule.ViewModels
 			get { return _searchOption; }
 			set
 			{
-				this.SetField(ref _searchOption, value);
+				this.SetProperty(out _searchOption, value);
 				var feature = Feature.StartNew(this.Context, nameof(SearchByOption));
 				this.SearchByOption();
 				this.FeatureManager.Write(feature, value?.Name ?? string.Empty);
@@ -70,7 +70,7 @@ namespace LoginModule.ViewModels
 			get { return _sortOption; }
 			set
 			{
-				this.SetField(ref _sortOption, value);
+				this.SetProperty(out _sortOption, value);
 				var feature = Feature.StartNew(this.Context, nameof(SortBy));
 				this.SortBy();
 				this.FeatureManager.Write(feature);

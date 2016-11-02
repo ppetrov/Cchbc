@@ -32,7 +32,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 			get { return _textSearch; }
 			set
 			{
-				this.SetField(ref _textSearch, value);
+				this.SetProperty(out _textSearch, value);
 
 				var feature = Feature.StartNew(this.Context, nameof(SearchByText));
 				this.SearchByText();
@@ -46,7 +46,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 			get { return _searchOption; }
 			set
 			{
-				this.SetField(ref _searchOption, value);
+				this.SetProperty(out _searchOption, value);
 				var feature = Feature.StartNew(this.Context, nameof(SearchByOption));
 				this.SearchByOption();
 				this.FeatureManager.Write(feature, value?.Name ?? string.Empty);
@@ -59,7 +59,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 			get { return _sortOption; }
 			set
 			{
-				this.SetField(ref _sortOption, value);
+				this.SetProperty(out _sortOption, value);
 				var feature = Feature.StartNew(this.Context, nameof(SortBy));
 				this.SortBy();
 				this.FeatureManager.Write(feature);
@@ -92,8 +92,8 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 		{
 			var feature = Feature.StartNew(this.Context, nameof(LoadData));
 
-			var articlesHelper = this.Core.DataCache.Get<Article>();
-			var viewModels = articlesHelper.Items.Values.Select(v => new ArticleViewModel(v)).ToArray();
+			var articlesHelper = this.Core.DataCache.GetValues<Article>(null);
+			var viewModels = articlesHelper.Values.Select(v => new ArticleViewModel(v)).ToArray();
 			this.DisplayArticles(feature, viewModels);
 
 			this.FeatureManager.Write(feature);

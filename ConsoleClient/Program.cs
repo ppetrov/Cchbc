@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Cchbc.App.ArticlesModule.Helpers;
+using Cchbc;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
@@ -152,12 +152,34 @@ namespace ConsoleClient
 
 		public static void Main(string[] args)
 		{
-
 			var clientDbPath = @"C:\Users\PetarPetrov\Desktop\features.sqlite";
 			var serverDbPath = @"C:\Users\PetarPetrov\Desktop\server.sqlite";
 
 			try
 			{
+				//var addViewModel = new AddActivityViewModel(new ActivityCreator(), new ConsoleDialog());
+				//using (var transactionContext = new TransactionContextCreator(string.Empty).Create())
+				//{
+				//	var modelData = new AddActivityViewModelData(transactionContext);
+				//	modelData.Load();
+
+				//	addViewModel.Load(modelData);
+
+				//	transactionContext.Complete();
+				//}
+
+				var core = new Core((msg, level) =>
+				{
+					Console.WriteLine(level + @":" + msg);
+				},
+				() => new TransactionContext(GetSqliteConnectionString(clientDbPath)), 
+				new ConsoleDialog());
+
+				var agendaViewModel = new AgendaViewModel(core);
+				agendaViewModel.Load();
+
+				return;
+
 				if (!File.Exists(serverDbPath))
 				{
 					CreateSchema(GetSqliteConnectionString(serverDbPath));
@@ -238,7 +260,7 @@ namespace ConsoleClient
 
 
 				var viewModel = new ExceptionsViewModel(
-					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)),
+					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create,
 					ExceptionsSettings.Default);
 
 				for (var i = 0; i < 100; i++)
@@ -411,7 +433,7 @@ namespace ConsoleClient
 		private static void ClearData(string path)
 		{
 			File.Delete(path);
-			FeatureManager.CreateSchema(new TransactionContextCreator(GetSqliteConnectionString(path)));
+			FeatureManager.CreateSchema(new TransactionContextCreator(GetSqliteConnectionString(path)).Create);
 		}
 
 		private static void WeatherTest()
@@ -486,11 +508,11 @@ namespace ConsoleClient
 			if (!File.Exists(path))
 			{
 				// Create the schema
-				FeatureManager.CreateSchema(contextCreator);
+				FeatureManager.CreateSchema(contextCreator.Create);
 			}
 
 			// Load the manager
-			featureManager.Load(contextCreator);
+			featureManager.Load(contextCreator.Create);
 
 			// TODO : !!!
 			// Generate exceptions
@@ -1225,39 +1247,6 @@ using System.Data;
 			//Console.WriteLine(tnp);
 		}
 
-		private async Task<BrandHelper> LoadBrandsAsync(Feature feature)
-		{
-			var brandHelper = new BrandHelper();
-
-			{
-				// TODO : Load the brand helper
-			}
-
-			return brandHelper;
-		}
-
-		private async Task<FlavorHelper> LoadFlavorsAsync(Feature feature)
-		{
-			var flavorHelper = new FlavorHelper();
-
-			{
-				// TODO : Load the flavor helper
-			}
-
-			return flavorHelper;
-		}
-
-		private async Task<ArticleHelper> LoadArticlesAsync(Feature feature, BrandHelper brandHelper, FlavorHelper flavorHelper)
-		{
-			var articleHelper = new ArticleHelper();
-
-			{
-				// TODO : Load the articles helper
-			}
-
-			return articleHelper;
-		}
-
 		private static void InspectFeature(Feature f)
 		{
 			//var buffer = new StringBuilder();
@@ -1304,6 +1293,8 @@ using System.Data;
 			//File.AppendAllText(@"C:\temp\diagnostics.txt", output);
 		}
 	}
+
+
 
 
 	public sealed class ConsoleDialog : IModalDialog

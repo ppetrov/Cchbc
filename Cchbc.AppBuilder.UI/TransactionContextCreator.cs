@@ -3,7 +3,7 @@ using Cchbc.Data;
 
 namespace Cchbc.AppBuilder.UI
 {
-	public sealed class TransactionContextCreator : ITransactionContextCreator
+	public sealed class TransactionContextCreator
 	{
 		private readonly string _cnString;
 

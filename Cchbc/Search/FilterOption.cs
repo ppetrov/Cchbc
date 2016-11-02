@@ -12,7 +12,7 @@ namespace Cchbc.Search
 		public bool IsSelected
 		{
 			get { return _isSelected; }
-			set { this.SetField(ref _isSelected, value); }
+			set { this.SetProperty(out _isSelected, value); }
 		}
 
 		public FilterOption(string name, Func<T, bool> isMatch, bool isSelected = false)

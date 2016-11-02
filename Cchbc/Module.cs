@@ -29,12 +29,12 @@ namespace Cchbc
 
 		private IModifiableAdapter<T> Adapter { get; }
 
-		public ITransactionContextCreator ContextCreator { get; }
+		public Func<ITransactionContext> ContextCreator { get; }
 		public Sorter<TViewModel> Sorter { get; }
 		public Searcher<TViewModel> Searcher { get; }
 		public FilterOption<TViewModel>[] FilterOptions { get; set; }
 
-		protected Module(ITransactionContextCreator contextCreator, IModifiableAdapter<T> adapter, Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
+		protected Module(Func<ITransactionContext> contextCreator, IModifiableAdapter<T> adapter, Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
 		{
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 			if (sorter == null) throw new ArgumentNullException(nameof(sorter));
@@ -271,7 +271,7 @@ namespace Cchbc
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			// Add the item to the db
-			using (var context = this.ContextCreator.Create())
+			using (var context = this.ContextCreator())
 			{
 				await this.Adapter.InsertAsync(context, viewModel.Model);
 
@@ -310,7 +310,7 @@ namespace Cchbc
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			// Update the item from the db
-			using (var context = this.ContextCreator.Create())
+			using (var context = this.ContextCreator())
 			{
 				await this.Adapter.UpdateAsync(context, viewModel.Model);
 
@@ -327,7 +327,7 @@ namespace Cchbc
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			// Delete the item from the db
-			using (var context = this.ContextCreator.Create())
+			using (var context = this.ContextCreator())
 			{
 				await this.Adapter.DeleteAsync(context, viewModel.Model);
 

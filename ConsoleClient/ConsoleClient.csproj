@@ -46,9 +46,13 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddActivityViewModel.cs" />
+    <Compile Include="AgendaViewModel.cs" />
+    <Compile Include="AppUsageManager.cs" />
     <Compile Include="ContextCreator.cs" />
     <Compile Include="DayAnalyzerModule.cs" />
     <Compile Include="Dispatcher.cs" />
+    <Compile Include="IAddActivityViewModelData.cs" />
     <Compile Include="Objects.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

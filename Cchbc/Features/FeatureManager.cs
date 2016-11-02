@@ -7,39 +7,39 @@ namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
-		private ITransactionContextCreator ContextCreator { get; set; }
+		private Func<ITransactionContext> ContextCreator { get; set; }
 		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }
 		private Dictionary<long, List<DbFeatureRow>> Features { get; set; }
 
-		public static void CreateSchema(ITransactionContextCreator contextCreator)
+		public static void CreateSchema(Func<ITransactionContext> contextCreator)
 		{
 			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
 
-			using (var context = contextCreator.Create())
+			using (var context = contextCreator())
 			{
 				FeatureAdapter.CreateSchema(context);
 				context.Complete();
 			}
 		}
 
-		public static void DropSchema(ITransactionContextCreator contextCreator)
+		public static void DropSchema(Func<ITransactionContext> contextCreator)
 		{
 			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
 
-			using (var context = contextCreator.Create())
+			using (var context = contextCreator())
 			{
 				FeatureAdapter.DropSchema(context);
 				context.Complete();
 			}
 		}
 
-		public void Load(ITransactionContextCreator contextCreator)
+		public void Load(Func<ITransactionContext> contextCreator)
 		{
 			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
 
 			this.ContextCreator = contextCreator;
 
-			using (var context = this.ContextCreator.Create())
+			using (var context = this.ContextCreator())
 			{
 				this.Contexts = FeatureAdapter.GetContexts(context);
 				this.Features = this.GetFeatures(context);
@@ -70,7 +70,7 @@ namespace Cchbc.Features
 		{
 			if (featureData == null) throw new ArgumentNullException(nameof(featureData));
 
-			using (var context = this.ContextCreator.Create())
+			using (var context = this.ContextCreator())
 			{
 				var featureRow = this.Save(context, featureData.Context, featureData.Name);
 
@@ -85,7 +85,7 @@ namespace Cchbc.Features
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			using (var context = this.ContextCreator.Create())
+			using (var context = this.ContextCreator())
 			{
 				var featureRow = this.Save(context, feature.Context, feature.Name);
 				var exceptionId = FeatureAdapter.GetOrCreateException(context, exception.ToString());

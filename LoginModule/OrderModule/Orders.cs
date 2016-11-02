@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Cchbc.App.ArticlesModule.Objects;
 using Cchbc.Data;
 using Cchbc.Features;
-using Cchbc.Helpers;
 using Cchbc.Objects;
 using Cchbc.Search;
 using Cchbc.Sort;
@@ -38,10 +37,6 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class OrderTypeHelper : Helper<OrderType>
-	{
-
-	}
 
 
 
@@ -102,7 +97,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class DeliveryAddressModule : Module<DeliveryAddress, DeliveryAddressViewModel>
 	{
-		public DeliveryAddressModule(ITransactionContextCreator contextCreator, IModifiableAdapter<DeliveryAddress> adapter,
+		public DeliveryAddressModule(Func<ITransactionContext> contextCreator, IModifiableAdapter<DeliveryAddress> adapter,
 			Sorter<DeliveryAddressViewModel> sorter,
 			Searcher<DeliveryAddressViewModel> searcher, FilterOption<DeliveryAddressViewModel>[] filterOptions = null) : base(contextCreator, adapter, sorter, searcher, filterOptions)
 		{
@@ -176,10 +171,7 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class VendorHelper : Helper<Vendor>
-	{
 
-	}
 
 
 
@@ -219,10 +211,7 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class WholesalerHelper : Helper<Wholesaler>
-	{
 
-	}
 
 
 
@@ -248,7 +237,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderHeaderAdapter : IModifiableAdapter<OrderHeader>
 	{
-		public Task<OrderHeader> GetByIdAsync(ITransactionContextCreator contextCreator, Activity activity, Dictionary<long, OrderType> orderTypes, Dictionary<long, Vendor> vendors, Dictionary<long, Wholesaler> wholesalers)
+		public Task<OrderHeader> GetByIdAsync(Func<ITransactionContext> contextCreator, Activity activity, Dictionary<long, OrderType> orderTypes, Dictionary<long, Vendor> vendors, Dictionary<long, Wholesaler> wholesalers)
 		{
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 			if (orderTypes == null) throw new ArgumentNullException(nameof(orderTypes));
@@ -407,7 +396,7 @@ namespace Cchbc.App.OrderModule
 
 			await this.LoadAssortments();
 
-			await this.LoadOrderHeader();
+			await this.LoadOrderHeader(null);
 
 			await this.LoadOrderNotes();
 
@@ -440,8 +429,8 @@ namespace Cchbc.App.OrderModule
 				if (viewModel == null)
 				{
 					// Create new assortment
-					var articleHelper = this.Core.DataCache.Get<Article>();
-					var article = articleHelper.Items[articleId];
+					var articleHelper = this.Core.DataCache.GetValues<Article>(null);
+					var article = articleHelper[articleId];
 					var assortment = new Assortment(article);
 					viewModel = new AssortmentViewModel(assortment);
 
@@ -454,17 +443,17 @@ namespace Cchbc.App.OrderModule
 			}
 		}
 
-		private async Task LoadOrderHeader()
+		private async Task LoadOrderHeader(ITransactionContext context)
 		{
 			var cache = this.Core.DataCache;
 			var orderHeader = await new OrderHeaderAdapter().GetByIdAsync(this.Core.ContextCreator, this.Activity,
-				cache.Get<OrderType>().Items,
-				cache.Get<Vendor>().Items,
-				cache.Get<Wholesaler>().Items);
+				cache.GetValues<OrderType>(context),
+				cache.GetValues<Vendor>(context),
+				cache.GetValues<Wholesaler>(context));
 
-			orderHeader.Type = this.Core.DataCache.Get<OrderType>().Items[orderHeader.Type.Id];
-			orderHeader.Vendor = this.Core.DataCache.Get<Vendor>().Items[orderHeader.Vendor.Id];
-			orderHeader.Wholesaler = this.Core.DataCache.Get<Wholesaler>().Items[orderHeader.Wholesaler.Id];
+			orderHeader.Type = this.Core.DataCache.GetValues<OrderType>(context)[orderHeader.Type.Id];
+			orderHeader.Vendor = this.Core.DataCache.GetValues<Vendor>(context)[orderHeader.Vendor.Id];
+			orderHeader.Wholesaler = this.Core.DataCache.GetValues<Wholesaler>(context)[orderHeader.Wholesaler.Id];
 
 			var addressId = orderHeader.Address.Id;
 			foreach (var vi in this.Addresses)
@@ -518,7 +507,7 @@ namespace Cchbc.App.OrderModule
 		private async Task LoadOrderNotes()
 		{
 			var adapter = new OrderNoteAdapter();
-			var orderNotes = await adapter.GetByOutletAsync(this.Core.ContextCreator, this.Order.OrderHeader, this.Core.DataCache.Get<OrderNoteType>().Items);
+			var orderNotes = await adapter.GetByOutletAsync(this.Core.ContextCreator, this.Order.OrderHeader, this.Core.DataCache.GetValues<OrderNoteType>(null));
 			var orderNotesViewModels = new OrderNoteViewModel[orderNotes.Count];
 			for (var i = 0; i < orderNotes.Count; i++)
 			{
@@ -535,9 +524,9 @@ namespace Cchbc.App.OrderModule
 
 		private void LoadOrderTypes(DataCache cache)
 		{
-			var orderTypeHelper = cache.Get<OrderType>();
+			var orderTypeHelper = cache.GetValues<OrderType>(null);
 			this.OrderTypes.Clear();
-			foreach (var orderType in orderTypeHelper.Items.Values)
+			foreach (var orderType in orderTypeHelper.Values)
 			{
 				this.OrderTypes.Add(new OrderTypeViewModel(orderType));
 			}
@@ -545,9 +534,9 @@ namespace Cchbc.App.OrderModule
 
 		private void LoadVendors(DataCache cache)
 		{
-			var vendorHelper = cache.Get<Vendor>();
+			var vendorHelper = cache.GetValues<Vendor>(null);
 			this.Vendors.Clear();
-			foreach (var vendor in vendorHelper.Items.Values)
+			foreach (var vendor in vendorHelper.Values)
 			{
 				this.Vendors.Add(new VendorViewModel(vendor));
 			}
@@ -555,9 +544,9 @@ namespace Cchbc.App.OrderModule
 
 		private void LoadWholesaler(DataCache cache)
 		{
-			var wholesalerHelper = cache.Get<Wholesaler>();
+			var wholesalerHelper = cache.GetValues<Wholesaler>(null);
 			this.Wholesalers.Clear();
-			foreach (var wholesaler in wholesalerHelper.Items.Values)
+			foreach (var wholesaler in wholesalerHelper.Values)
 			{
 				this.Wholesalers.Add(new WholesalerViewModel(wholesaler));
 			}
@@ -588,10 +577,6 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class OrderNoteTypeHelper : Helper<OrderNoteType>
-	{
-
-	}
 
 	public sealed class OrderNote : IDbObject
 	{
@@ -612,7 +597,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderNoteAdapter : IModifiableAdapter<OrderNote>
 	{
-		public Task<List<OrderNote>> GetByOutletAsync(ITransactionContextCreator contextCreator, OrderHeader orderHeader, Dictionary<long, OrderNoteType> types)
+		public Task<List<OrderNote>> GetByOutletAsync(Func<ITransactionContext> contextCreator, OrderHeader orderHeader, Dictionary<long, OrderNoteType> types)
 		{
 			if (orderHeader == null) throw new ArgumentNullException(nameof(orderHeader));
 			if (types == null) throw new ArgumentNullException(nameof(types));
@@ -638,7 +623,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderNoteModule : Module<OrderNote, OrderNoteViewModel>
 	{
-		public OrderNoteModule(ITransactionContextCreator contextCreator, IModifiableAdapter<OrderNote> adapter,
+		public OrderNoteModule(Func<ITransactionContext> contextCreator, IModifiableAdapter<OrderNote> adapter,
 			Sorter<OrderNoteViewModel> sorter,
 			Searcher<OrderNoteViewModel> searcher,
 			FilterOption<OrderNoteViewModel>[] filterOptions = null) : base(contextCreator, adapter, sorter, searcher, filterOptions)
@@ -760,7 +745,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class AssortmentModule : Module<Assortment, AssortmentViewModel>
 	{
-		public AssortmentModule(ITransactionContextCreator contextCreator, IModifiableAdapter<Assortment> adapter,
+		public AssortmentModule(Func<ITransactionContext> contextCreator, IModifiableAdapter<Assortment> adapter,
 			Sorter<AssortmentViewModel> sorter,
 			Searcher<AssortmentViewModel> searcher,
 			FilterOption<AssortmentViewModel>[] filterOptions = null) : base(contextCreator, adapter, sorter, searcher, filterOptions)
@@ -796,7 +781,7 @@ namespace Cchbc.App.OrderModule
 		public long Quantity
 		{
 			get { return _quantity; }
-			set { this.SetField(ref _quantity, value); }
+			set { this.SetProperty(out _quantity, value); }
 		}
 
 		public AssortmentViewModel(Assortment model) : base(model)

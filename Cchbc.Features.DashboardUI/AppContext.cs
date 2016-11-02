@@ -13,7 +13,7 @@ namespace Cchbc.Features.DashboardUI
 		public static Core Core { get; } = new Core((msg, level) =>
 		{
 			Debug.WriteLine(msg, level.ToString());
-		}, new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"features.sqlite")), new ModalDialog());
+		}, new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"features.sqlite")).Create, new ModalDialog());
 	}
 
 	public sealed class ModalDialog : IModalDialog

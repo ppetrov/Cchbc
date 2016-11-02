@@ -17,7 +17,7 @@ namespace Cchbc.Common
 
 			this.Core = core;
 			this.Feature = feature;
-			this.DbContext = core.ContextCreator.Create();
+			this.DbContext = core.ContextCreator();
 		}
 
 		public void Dispose()

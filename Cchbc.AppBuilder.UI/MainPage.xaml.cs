@@ -65,7 +65,7 @@ namespace Cchbc.AppBuilder.UI
 		public string TableName
 		{
 			get { return _tableName; }
-			set { this.SetField(ref _tableName, value); }
+			set { this.SetProperty(out _tableName, value); }
 		}
 
 		private DbTableViewModel _selectedTable;
@@ -74,7 +74,7 @@ namespace Cchbc.AppBuilder.UI
 			get { return _selectedTable; }
 			set
 			{
-				this.SetField(ref _selectedTable, value);
+				this.SetProperty(out _selectedTable, value);
 				this.Select(value);
 			}
 		}
@@ -210,13 +210,13 @@ namespace Cchbc.AppBuilder.UI
 		public string InputName
 		{
 			get { return _inputName; }
-			set { this.SetField(ref _inputName, value); }
+			set { this.SetProperty(out _inputName, value); }
 		}
 		private bool _isSelected;
 		public bool IsSelected
 		{
 			get { return _isSelected; }
-			set { this.SetField(ref _isSelected, value); }
+			set { this.SetProperty(out _isSelected, value); }
 		}
 		public string IconPath { get; }
 		public ICommand CreateCommand { get; }

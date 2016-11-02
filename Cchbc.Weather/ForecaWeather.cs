@@ -74,8 +74,9 @@ namespace Cchbc.Weather
 		private static ForecaCurrentWeather ParseCurrent(XElement root)
 		{
 			var current = new ForecaCurrentWeather();
+			current.LocationId = root.Attribute(XName.Get(@"id")).Value;
 			var city = root.Attribute(XName.Get(@"name")).Value;
-			var country = root.Attribute(XName.Get(@"country")).Value;
+			var country = root.Attribute(XName.Get(@"country")).Value;			
 			current.Point = city + @", " + country;
 
 			var currentValues = root.Descendants(XName.Get(@"cc")).SingleOrDefault();
@@ -166,6 +167,7 @@ namespace Cchbc.Weather
 
 	public sealed class ForecaCurrentWeather
 	{
+		public string LocationId { get; set; }
 		public double Temperature { get; set; }
 		public string IconCode { get; set; }
 		public string Description { get; set; } = string.Empty;

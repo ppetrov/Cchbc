@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using Windows.Storage;
 using Windows.UI.Xaml;
-using Cchbc.Common;
 using Cchbc.Features.ExceptionsModule;
 using Cchbc.Logs;
 
@@ -11,7 +10,7 @@ namespace Cchbc.Features.DashboardUI
 {
 	public sealed partial class ExceptionsScreen
 	{
-		public ExceptionsViewModel ViewModel { get; } = new ExceptionsViewModel(new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"server.sqlite")), ExceptionsSettings.Default);
+		public ExceptionsViewModel ViewModel { get; } = new ExceptionsViewModel(new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"server.sqlite")).Create, ExceptionsSettings.Default);
 
 		public ExceptionsScreen()
 		{

@@ -17,7 +17,7 @@ namespace LoginModule
 	{
 		private LoginAdapter Adapter { get; }
 
-		public LoginsModule(ITransactionContextCreator contextCreator, LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher,
+		public LoginsModule(Func<ITransactionContext> contextCreator, LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher,
 			FilterOption<LoginViewModel>[] filterOptions = null)
 			: base(contextCreator, adapter, sorter, searcher, filterOptions)
 		{
@@ -28,7 +28,7 @@ namespace LoginModule
 
 		public Task<List<Login>> GetAllAsync()
 		{
-			using (var context = this.ContextCreator.Create())
+			using (var context = this.ContextCreator())
 			{
 				return this.Adapter.GetAllAsync(context);
 			}
