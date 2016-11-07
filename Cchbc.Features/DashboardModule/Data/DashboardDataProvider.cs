@@ -6,22 +6,23 @@ using Cchbc.Data;
 using Cchbc.Features.DashboardModule.Objects;
 using Cchbc.Features.Data;
 using Cchbc.Logs;
+using Cchbc.Settings;
 
 namespace Cchbc.Features.DashboardModule.Data
 {
 	public static class DashboardDataProvider
 	{
-		public static Task<DashboardSettings> GetSettingsAsync(CoreContext coreContext)
+		public static Task<DashboardSettings> GetSettingsAsync(FeatureContext featureContext)
 		{
-			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
+			if (featureContext == null) throw new ArgumentNullException(nameof(featureContext));
 
-			var feature = coreContext.Feature;
+			var feature = featureContext.Feature;
 
 			{
 				var maxUsers = default(int?);
 				var maxMostUsedFeatures = default(int?);
 
-				var log = coreContext.Core.Log;
+				var log = featureContext.AppContext.Log;
 				// TODO : Load settings from db for the context
 				var contextForSettings = nameof(Dashboard);
 				var settings = new List<Setting>();
@@ -53,22 +54,22 @@ namespace Cchbc.Features.DashboardModule.Data
 			}
 		}
 
-		public static Task<DashboardCommonData> GetCommonDataAsync(CoreContext coreContext)
+		public static Task<DashboardCommonData> GetCommonDataAsync(FeatureContext featureContext)
 		{
-			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
+			if (featureContext == null) throw new ArgumentNullException(nameof(featureContext));
 
 			{
 				var contexts = new Dictionary<long, DbFeatureContextRow>();
 				var features = new Dictionary<long, DbFeatureRow>();
 
-				var context = coreContext.DbContext;
-				context.Fill(contexts, (r, map) =>
+				var dbContext = featureContext.DbContext;
+				dbContext.Fill(contexts, (r, map) =>
 				{
 					var row = new DbFeatureContextRow(r.GetInt32(0), r.GetString(1));
 					map.Add(row.Id, row);
 				}, new Query(@"SELECT ID, NAME FROM FEATURE_CONTEXTS"));
 
-				context.Fill(features, (r, map) =>
+				dbContext.Fill(features, (r, map) =>
 				{
 					var row = new DbFeatureRow(r.GetInt32(0), r.GetString(1), r.GetInt32(2));
 					map.Add(row.Id, row);
@@ -82,7 +83,7 @@ namespace Cchbc.Features.DashboardModule.Data
 		{
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			var context = loadParams.CoreContext;
+			var context = loadParams.FeatureContext;
 			{
 				var statement = @"SELECT U.ID, U.NAME UNAME, U.REPLICATED_AT, V.NAME VNAME FROM FEATURE_USERS U INNER JOIN FEATURE_VERSIONS V ON U.VERSION_ID = V.ID ORDER BY REPLICATED_AT DESC LIMIT @MAXUSERS";
 
@@ -102,7 +103,7 @@ namespace Cchbc.Features.DashboardModule.Data
 		{
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			var context = loadParams.CoreContext;
+			var context = loadParams.FeatureContext;
 			var feature = context.Feature;
 			{
 				var maxVersions = loadParams.Settings.MaxVersions;
@@ -149,9 +150,9 @@ namespace Cchbc.Features.DashboardModule.Data
 		{
 			if (loadParams == null) throw new ArgumentNullException(nameof(loadParams));
 
-			var feature = loadParams.CoreContext.Feature;
+			var feature = loadParams.FeatureContext.Feature;
 			{
-				var dbContext = loadParams.CoreContext.DbContext;
+				var dbContext = loadParams.FeatureContext.DbContext;
 				var settings = loadParams.Settings;
 				var relativeTimePeriod = settings.ExceptionsRelativeTimePeriod;
 				var samples = settings.ExceptionsChartEntries;
@@ -229,7 +230,7 @@ namespace Cchbc.Features.DashboardModule.Data
 
 		private static Task<List<DashboardFeatureByCount>> GetUsedFeaturesAsync(DashboarLoadParams loadParams, string query, QueryParameter[] sqlParams)
 		{
-			var dbContext = loadParams.CoreContext.DbContext;
+			var dbContext = loadParams.FeatureContext.DbContext;
 			var features = loadParams.Data.Features;
 			var contexts = loadParams.Data.Contexts;
 
@@ -251,17 +252,17 @@ namespace Cchbc.Features.DashboardModule.Data
 			return Task.FromResult(new List<DashboardFeatureByTime>(0));
 		}
 
-		private static Dictionary<long, int> CountExceptionsByVersion(ITransactionContext context)
+		private static Dictionary<long, int> CountExceptionsByVersion(IDbContext context)
 		{
 			return CountByVersion(context, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_EXCEPTION_ENTRIES GROUP BY VERSION_ID");
 		}
 
-		private static Dictionary<long, int> CountUsersByVersion(ITransactionContext context)
+		private static Dictionary<long, int> CountUsersByVersion(IDbContext context)
 		{
 			return CountByVersion(context, @"SELECT VERSION_ID, COUNT(*) FROM FEATURE_USERS GROUP BY VERSION_ID");
 		}
 
-		private static Dictionary<long, int> CountByVersion(ITransactionContext context, string query)
+		private static Dictionary<long, int> CountByVersion(IDbContext context, string query)
 		{
 			var result = new Dictionary<long, int>();
 

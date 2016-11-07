@@ -15,9 +15,9 @@ namespace Cchbc.ConsoleClient
 			_cnString = cnString;
 		}
 
-		public ITransactionContext Create()
+		public IDbContext Create()
 		{
-			return new TransactionContext(_cnString);
+			return new DbContext(_cnString);
 		}
 	}
 }

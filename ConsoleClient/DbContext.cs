@@ -9,13 +9,13 @@ using Cchbc.Data;
 
 namespace ConsoleClient
 {
-	public sealed class TransactionContext : ITransactionContext
+	public sealed class DbContext : IDbContext
 	{
 		private readonly SQLiteConnection _cn;
 
 		private SQLiteTransaction _tr;
 
-		public TransactionContext(string cnString)
+		public DbContext(string cnString)
 		{
 			if (cnString == null) throw new ArgumentNullException(nameof(cnString));
 
@@ -141,33 +141,6 @@ namespace ConsoleClient
 					}
 				}
 			}
-		}
-
-		public long GetNewId()
-		{
-			var query = Query.SelectNewIdQuery;
-
-			using (var cmd = _cn.CreateCommand())
-			{
-				DisplayQuery(query);
-
-				cmd.Transaction = _tr;
-				cmd.CommandText = query.Statement;
-				cmd.CommandType = CommandType.Text;
-
-				Debug.WriteLine(query.Statement);
-
-				using (var r = cmd.ExecuteReader())
-				{
-					var dr = new SqlLiteDelegateDataReader(r);
-					if (dr.Read())
-					{
-						return query.Creator(dr);
-					}
-				}
-			}
-
-			throw new Exception(@"Unable to get the new Id");
 		}
 
 		public void Complete()

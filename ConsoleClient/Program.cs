@@ -158,21 +158,21 @@ namespace ConsoleClient
 			try
 			{
 				//var addViewModel = new AddActivityViewModel(new ActivityCreator(), new ConsoleDialog());
-				//using (var transactionContext = new TransactionContextCreator(string.Empty).Create())
+				//using (var dbContext = new TransactionContextCreator(string.Empty).Create())
 				//{
-				//	var modelData = new AddActivityViewModelData(transactionContext);
+				//	var modelData = new AddActivityViewModelData(dbContext);
 				//	modelData.Load();
 
 				//	addViewModel.Load(modelData);
 
-				//	transactionContext.Complete();
+				//	dbContext.Complete();
 				//}
 
-				var core = new Core((msg, level) =>
+				var core = new AppContext((msg, level) =>
 				{
 					Console.WriteLine(level + @":" + msg);
 				},
-				() => new TransactionContext(GetSqliteConnectionString(clientDbPath)), 
+				() => new DbContext(GetSqliteConnectionString(clientDbPath)), 
 				new ConsoleDialog());
 
 				var agendaViewModel = new AgendaViewModel(core);
@@ -367,10 +367,10 @@ namespace ConsoleClient
 			//var prj = new ClrProject();
 			//prj.Save(@"C:\temp\IfsaBuilder\IfsaBuilder\", project);
 
-			//var core = new Core();
-			//core.ContextCreator = new TransactionContextCreator(string.Empty);
-			//core.ModalDialog = new ConsoleDialog();
-			//var viewModel = new LoginsViewModel(core, new LoginAdapter());
+			//var AppContext = new AppContext();
+			//AppContext.DbContextCreator = new TransactionContextCreator(string.Empty);
+			//AppContext.ModalDialog = new ConsoleDialog();
+			//var viewModel = new LoginsViewModel(AppContext, new LoginAdapter());
 			//try
 			//{
 			//	viewModel.InsertAsync(new Login(1, @"PPetrov", @"Password", DateTime.Now, false)).Wait();
@@ -392,7 +392,7 @@ namespace ConsoleClient
 
 
 			//// Register helpers
-			//var cache = core.DataCache;
+			//var cache = AppContext.DataCache;
 			//cache.Add(new BrandHelper());
 			//cache.Add(new FlavorHelper());
 			//cache.Add(new ArticleHelper());
@@ -401,7 +401,7 @@ namespace ConsoleClient
 			//{
 			//	File.WriteAllText(@"C:\temp\diagnostics.txt", string.Empty);
 
-			//	//var viewModel = new LoginsViewModel(core, new LoginAdapter());
+			//	//var viewModel = new LoginsViewModel(AppContext, new LoginAdapter());
 			//	//viewModel.LoadData();
 
 			//	//var v = new LoginViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
@@ -542,7 +542,7 @@ namespace ConsoleClient
 			}
 			catch (Exception ex)
 			{
-				featureManager.WriteException(f, ex);
+				featureManager.Write(f, ex);
 			}
 
 			s.Stop();

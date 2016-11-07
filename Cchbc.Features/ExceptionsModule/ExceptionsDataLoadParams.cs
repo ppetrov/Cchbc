@@ -6,12 +6,12 @@ namespace Cchbc.Features.ExceptionsModule
 {
 	public sealed class ExceptionsDataLoadParams
 	{
-		public ITransactionContext Context { get; }
+		public IDbContext Context { get; }
 		public ExceptionsSettings Settings { get; set; }
 		public FeatureVersion Version { get; set; }
 		public TimePeriod TimePeriod { get; set; }
 
-		public ExceptionsDataLoadParams(ITransactionContext context, ExceptionsSettings settings)
+		public ExceptionsDataLoadParams(IDbContext context, ExceptionsSettings settings)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (settings == null) throw new ArgumentNullException(nameof(settings));

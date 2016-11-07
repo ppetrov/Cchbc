@@ -1,9 +1,8 @@
 ﻿using System;
-using Cchbc.Objects;
 
 namespace LoginModule.Objects
 {
-	public sealed class Login : IDbObject
+	public sealed class Login
 	{
 		public long Id { get; set; }
 		public string Name { get; }

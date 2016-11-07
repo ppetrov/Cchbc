@@ -20,14 +20,14 @@ namespace Cchbc.Features.DashboardUI
 
 		private async void DashboardScreenLoaded(object sender, RoutedEventArgs e)
 		{
-			var core = AppContext.Core;
+			var core = AppContextObsolete.AppContext;
 			var feature = Feature.StartNew(@"Dashboard", @"Load");
 
 			try
 			{
-				using (var coreContext = new CoreContext(core, feature))
+				using (var featureContext = new FeatureContext(core, feature))
 				{
-					await this.ViewModel.LoadAsync(coreContext,
+					await this.ViewModel.LoadAsync(featureContext,
 						DashboardDataProvider.GetSettingsAsync,
 						DashboardDataProvider.GetCommonDataAsync,
 						DashboardDataProvider.GetUsersAsync,
@@ -39,7 +39,7 @@ namespace Cchbc.Features.DashboardUI
 			catch (Exception ex)
 			{
 				core.Log(ex.ToString(), LogLevel.Error);
-				core.FeatureManager.WriteException(feature, ex);
+				core.FeatureManager.Write(feature, ex);
 			}
 		}
 

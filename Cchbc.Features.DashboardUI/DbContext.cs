@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.SQLite;
 using Cchbc.Data;
 
-namespace Cchbc.AppBuilder.UI
+namespace Cchbc.Features.DashboardUI
 {
-	public sealed class TransactionContext : ITransactionContext
+	public sealed class DbContext : IDbContext
 	{
 		private readonly SQLiteConnection _cn;
 
-		public TransactionContext(string cnString)
+		public DbContext(string cnString)
 		{
 			if (cnString == null) throw new ArgumentNullException(nameof(cnString));
 
@@ -120,30 +120,6 @@ namespace Cchbc.AppBuilder.UI
 					}
 				}
 			}
-		}
-
-		public long GetNewId()
-		{
-			var query = Query.SelectNewIdQuery;
-
-			using (var cmd = _cn.CreateCommand())
-			{
-				DisplayQuery(query);
-
-				cmd.CommandText = query.Statement;
-				cmd.CommandType = CommandType.Text;
-
-				using (var r = cmd.ExecuteReader())
-				{
-					var dr = new SqlLiteDelegateDataReader(r);
-					if (dr.Read())
-					{
-						return query.Creator(dr);
-					}
-				}
-			}
-
-			throw new Exception(@"Unable to get the new Id");
 		}
 
 		public void Complete()

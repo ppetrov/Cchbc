@@ -17,8 +17,8 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 		private static readonly string BrandKey = @"C";
 		private static readonly string FlavorKey = @"D";
 
-		private Core Core { get; }
-		private FeatureManager FeatureManager => this.Core.FeatureManager;
+		private AppContext AppContext { get; }
+		private FeatureManager FeatureManager => this.AppContext.FeatureManager;
 		private ReadOnlyModule<Article, ArticleViewModel> Module { get; }
 		private string Context { get; } = nameof(ArticlesViewModel);
 
@@ -66,12 +66,12 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 			}
 		}
 
-		public ArticlesViewModel(Core core)
+		public ArticlesViewModel(AppContext appContext)
 		{
-			if (core == null) throw new ArgumentNullException(nameof(core));
+			if (appContext == null) throw new ArgumentNullException(nameof(appContext));
 
-			this.Core = core;
-			var manager = core.LocalizationManager;
+			this.AppContext = appContext;
+			var manager = appContext.LocalizationManager;
 			var messages = manager.GetByContext(ContextKey);
 
 			var sorter = new Sorter<ArticleViewModel>(new[]
@@ -92,7 +92,7 @@ namespace Cchbc.App.ArticlesModule.ViewModels
 		{
 			var feature = Feature.StartNew(this.Context, nameof(LoadData));
 
-			var articlesHelper = this.Core.DataCache.GetValues<Article>(null);
+			var articlesHelper = this.AppContext.DataCache.GetValues<Article>(null);
 			var viewModels = articlesHelper.Values.Select(v => new ArticleViewModel(v)).ToArray();
 			this.DisplayArticles(feature, viewModels);
 

@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cchbc.Data;
 
 namespace Cchbc.Features.Data
 {
 	public static class FeatureAdapter
 	{
+		private static readonly Query<long> GetNewIdQuery = new Query<long>(@"SELECT LAST_INSERT_ROWID()", r => r.GetInt64(0));
+
 		private static readonly Query InsertContextQuery = new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)",
 			new[]
 			{
@@ -57,7 +60,7 @@ namespace Cchbc.Features.Data
 				new QueryParameter(@"@CONTENTS", string.Empty)
 			});
 
-		public static void CreateSchema(ITransactionContext context)
+		public static void CreateSchema(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -109,13 +112,12 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 )"));
 		}
 
-		public static void DropSchema(ITransactionContext context)
+		public static void DropSchema(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			foreach (var table in new[]
 			{
-				@"FEATURE_EXCEPTIONS_EXCLUDED",
 				@"FEATURE_EXCEPTION_ENTRIES",
 				@"FEATURE_ENTRIES",
 				@"FEATURES",
@@ -127,7 +129,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			}
 		}
 
-		public static ClientData GetData(ITransactionContext context)
+		public static ClientData GetData(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -140,7 +142,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return new ClientData(contextRows, exceptionRows, featureRows, featureEntryRows, exceptionEntryRows);
 		}
 
-		public static Dictionary<string, DbFeatureContextRow> GetContexts(ITransactionContext context)
+		public static Dictionary<string, DbFeatureContextRow> GetContexts(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -155,14 +157,14 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return result;
 		}
 
-		public static List<DbFeatureRow> GetFeatures(ITransactionContext context)
+		public static List<DbFeatureRow> GetFeatures(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return context.Execute(GetFeaturesQuery);
 		}
 
-		public static int GetOrCreateException(ITransactionContext context, string contents)
+		public static int GetOrCreateException(IDbContext context, string contents)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
@@ -177,7 +179,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return InsertException(context, contents);
 		}
 
-		public static int InsertContext(ITransactionContext context, string name)
+		public static int InsertContext(IDbContext context, string name)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
@@ -187,10 +189,10 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 
 			context.Execute(InsertContextQuery);
 
-			return (int)context.GetNewId();
+			return GetNewId(context);
 		}
 
-		public static int InsertException(ITransactionContext context, string contents)
+		public static int InsertException(IDbContext context, string contents)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
@@ -200,10 +202,10 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 
 			context.Execute(InsertExceptionQuery);
 
-			return (int)context.GetNewId();
+			return GetNewId(context);
 		}
 
-		public static int InsertFeature(ITransactionContext context, string name, long contextId)
+		public static int InsertFeature(IDbContext context, string name, long contextId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
@@ -214,10 +216,10 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 
 			context.Execute(InsertFeatureQuery);
 
-			return (int)context.GetNewId();
+			return GetNewId(context);
 		}
 
-		public static void InsertFeatureEntry(ITransactionContext context, int featureId, string details)
+		public static void InsertFeatureEntry(IDbContext context, int featureId, string details)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (details == null) throw new ArgumentNullException(nameof(details));
@@ -231,7 +233,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			context.Execute(InsertClientFeatureEntryQuery);
 		}
 
-		public static void InsertExceptionEntry(ITransactionContext context, int featureId, int exceptionId)
+		public static void InsertExceptionEntry(IDbContext context, int featureId, int exceptionId)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -242,7 +244,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			context.Execute(InsertExceptionEntryQuery);
 		}
 
-		public static long ExecuteInsert(ITransactionContext context, Query query)
+		public static long ExecuteInsert(IDbContext context, Query query)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (query == null) throw new ArgumentNullException(nameof(query));
@@ -250,8 +252,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			// Insert the record
 			context.Execute(query);
 
-			// Get new Id back
-			return context.GetNewId();
+			return GetNewId(context);
 		}
 
 		private static DbFeatureContextRow DbContextCreator(IFieldDataReader r)
@@ -277,6 +278,11 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 		private static DbFeatureExceptionEntryRow DbFeatureExceptionEntryRowCreator(IFieldDataReader r)
 		{
 			return new DbFeatureExceptionEntryRow(r.GetInt32(0), r.GetDateTime(1), r.GetInt32(2));
+		}
+
+		private static int GetNewId(IDbContext context)
+		{
+			return (int)context.Execute(GetNewIdQuery).FirstOrDefault();
 		}
 	}
 }

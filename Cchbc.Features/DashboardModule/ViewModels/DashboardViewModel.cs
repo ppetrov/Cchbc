@@ -44,13 +44,13 @@ namespace Cchbc.Features.DashboardModule.ViewModels
 			this.ExceptionsCaptions = @"Exceptions for the last 24 hours";
 		}
 
-		public async Task LoadAsync(CoreContext coreContext, Func<CoreContext, Task<DashboardSettings>> settingsProvider,
-			Func<CoreContext, Task<DashboardCommonData>> commonDataProvider,
+		public async Task LoadAsync(FeatureContext featureContext, Func<FeatureContext, Task<DashboardSettings>> settingsProvider,
+			Func<FeatureContext, Task<DashboardCommonData>> commonDataProvider,
 			Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider, Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider,
 			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider,
 			Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> leastUsedFeaturesProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByTime>>> slowestFeaturesProvider)
 		{
-			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
+			if (featureContext == null) throw new ArgumentNullException(nameof(featureContext));
 			if (usersProvider == null) throw new ArgumentNullException(nameof(usersProvider));
 			if (versionsProvider == null) throw new ArgumentNullException(nameof(versionsProvider));
 			if (exceptionsProvider == null) throw new ArgumentNullException(nameof(exceptionsProvider));
@@ -59,7 +59,7 @@ namespace Cchbc.Features.DashboardModule.ViewModels
 			if (slowestFeaturesProvider == null) throw new ArgumentNullException(nameof(slowestFeaturesProvider));
 			if (settingsProvider == null) throw new ArgumentNullException(nameof(settingsProvider));
 
-			await this.Dashboard.LoadAsync(coreContext, settingsProvider, commonDataProvider, usersProvider, versionsProvider, exceptionsProvider, mostUsedFeaturesProvider, leastUsedFeaturesProvider, slowestFeaturesProvider);
+			await this.Dashboard.LoadAsync(featureContext, settingsProvider, commonDataProvider, usersProvider, versionsProvider, exceptionsProvider, mostUsedFeaturesProvider, leastUsedFeaturesProvider, slowestFeaturesProvider);
 
 			LoadData(this.Dashboard.Users, this.Users, v => new DashboardUserViewModel(v));
 			LoadData(this.Dashboard.Versions, this.Versions, v => new DashboardVersionViewModel(v));

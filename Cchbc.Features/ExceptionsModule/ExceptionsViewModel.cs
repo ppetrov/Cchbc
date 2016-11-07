@@ -31,7 +31,7 @@ namespace Cchbc.Features.ExceptionsModule
 	{
 		private bool IsLoaded { get; set; }
 
-		private ExceptionsDataLoadParams GetExceptionsDataLoadParams(ITransactionContext context, ExceptionsSettings settings)
+		private ExceptionsDataLoadParams GetExceptionsDataLoadParams(IDbContext context, ExceptionsSettings settings)
 		{
 			var loadParams = new ExceptionsDataLoadParams(context, settings)
 			{
@@ -111,23 +111,23 @@ namespace Cchbc.Features.ExceptionsModule
 		}
 		public ObservableCollection<ExceptionsCountViewModel> ExceptionsCounts { get; } = new ObservableCollection<ExceptionsCountViewModel>();
 
-		public Func<ITransactionContext> ContextCreator { get; }
+		public Func<IDbContext> DbContextCreator { get; }
 		public Func<ExceptionsDataLoadParams, IEnumerable<FeatureExceptionEntry>> ExceptionsProvider { get; private set; }
 		public Func<ExceptionsDataLoadParams, IEnumerable<ExceptionsCount>> ExceptionsCountProvider { get; private set; }
 		public ExceptionsSettings Settings { get; }
 
-		public ExceptionsViewModel(Func<ITransactionContext> contextCreator, ExceptionsSettings settings)
+		public ExceptionsViewModel(Func<IDbContext> dbContextCreator, ExceptionsSettings settings)
 		{
-			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
+			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
 			if (settings == null) throw new ArgumentNullException(nameof(settings));
 
-			this.ContextCreator = contextCreator;
+			this.DbContextCreator = dbContextCreator;
 			this.Settings = settings;
 		}
 
 		public void Load(
-			Func<ITransactionContext, IEnumerable<TimePeriodRow>> timePeriodsProvider,
-			Func<ITransactionContext, IEnumerable<VersionRow>> versionsProvider,
+			Func<IDbContext, IEnumerable<TimePeriodRow>> timePeriodsProvider,
+			Func<IDbContext, IEnumerable<VersionRow>> versionsProvider,
 			Func<ExceptionsDataLoadParams, IEnumerable<FeatureExceptionEntry>> exceptionsProvider,
 			Func<ExceptionsDataLoadParams, IEnumerable<ExceptionsCount>> exceptionsCountProvider)
 		{
@@ -139,7 +139,7 @@ namespace Cchbc.Features.ExceptionsModule
 			this.ExceptionsProvider = exceptionsProvider;
 			this.ExceptionsCountProvider = exceptionsCountProvider;
 
-			using (var ctx = this.ContextCreator())
+			using (var ctx = this.DbContextCreator())
 			{
 				this.LoadPeriods(ctx, timePeriodsProvider);
 				this.LoadVersions(ctx, versionsProvider);
@@ -159,7 +159,7 @@ namespace Cchbc.Features.ExceptionsModule
 			this.IsLoaded = true;
 		}
 
-		private void LoadPeriods(ITransactionContext context, Func<ITransactionContext, IEnumerable<TimePeriodRow>> timePeriodsProvider)
+		private void LoadPeriods(IDbContext context, Func<IDbContext, IEnumerable<TimePeriodRow>> timePeriodsProvider)
 		{
 			this.TimePeriods.Clear();
 
@@ -169,7 +169,7 @@ namespace Cchbc.Features.ExceptionsModule
 			}
 		}
 
-		private void LoadVersions(ITransactionContext context, Func<ITransactionContext, IEnumerable<VersionRow>> versionsProvider)
+		private void LoadVersions(IDbContext context, Func<IDbContext, IEnumerable<VersionRow>> versionsProvider)
 		{
 			this.Versions.Clear();
 
@@ -179,7 +179,7 @@ namespace Cchbc.Features.ExceptionsModule
 			}
 		}
 
-		private void LoadExceptions(ITransactionContext context, ExceptionsSettings settings = null)
+		private void LoadExceptions(IDbContext context, ExceptionsSettings settings = null)
 		{
 			this.LatestExceptions.Clear();
 
@@ -189,7 +189,7 @@ namespace Cchbc.Features.ExceptionsModule
 			}
 		}
 
-		private void LoadExceptionsCounts(ITransactionContext context, ExceptionsSettings settings = null)
+		private void LoadExceptionsCounts(IDbContext context, ExceptionsSettings settings = null)
 		{
 			this.ExceptionsCounts.Clear();
 
@@ -203,7 +203,7 @@ namespace Cchbc.Features.ExceptionsModule
 		{
 			if (!this.IsLoaded) return;
 
-			using (var ctx = this.ContextCreator())
+			using (var ctx = this.DbContextCreator())
 			{
 				this.LoadExceptions(ctx, settings);
 				this.LoadExceptionsCounts(ctx, settings);
@@ -216,7 +216,7 @@ namespace Cchbc.Features.ExceptionsModule
 		{
 			if (!this.IsLoaded) return;
 
-			using (var ctx = this.ContextCreator())
+			using (var ctx = this.DbContextCreator())
 			{
 				this.LoadExceptionsCounts(ctx);
 

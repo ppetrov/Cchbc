@@ -38,13 +38,13 @@ namespace ConsoleClient
 			}
 		}
 
-		private ITransactionContext Context { get; }
+		private IDbContext Context { get; }
 
 		public List<Outlet> Outlets { get; } = new List<Outlet>();
 		public List<ActivityTypeCategory> Categories { get; } = new List<ActivityTypeCategory>();
 		public bool WithVisit { get; private set; }
 
-		public AddActivityViewModelData(ITransactionContext context)
+		public AddActivityViewModelData(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 

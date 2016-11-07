@@ -94,7 +94,7 @@ namespace Cchbc.Search
 			}
 		}
 
-		public void SetupCounts(IEnumerable<T> models)
+		public void SetupCounts(ICollection<T> models)
 		{
 			if (models == null) throw new ArgumentNullException(nameof(models));
 

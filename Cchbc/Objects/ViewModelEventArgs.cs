@@ -2,11 +2,11 @@
 
 namespace Cchbc.Objects
 {
-	public sealed class ObjectEventArgs<T> : EventArgs
+	public sealed class ViewModelEventArgs<T> : EventArgs
 	{
 		public T ViewModel { get; }
 
-		public ObjectEventArgs(T viewModel)
+		public ViewModelEventArgs(T viewModel)
 		{
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 

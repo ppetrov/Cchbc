@@ -14,7 +14,6 @@ using Cchbc.Validation;
 namespace Cchbc
 {
 	public abstract class Module<T, TViewModel>
-		where T : class, IDbObject
 		where TViewModel : ViewModel<T>
 	{
 		public List<TViewModel> ViewModels { get; } = new List<TViewModel>();
@@ -23,25 +22,21 @@ namespace Cchbc
 		public Action<Feature> OperationEnd { get; set; }
 		public Action<Feature, Exception> OperationError { get; set; }
 
-		public Action<ObjectEventArgs<TViewModel>> ItemInserted { get; set; }
-		public Action<ObjectEventArgs<TViewModel>> ItemUpdated { get; set; }
-		public Action<ObjectEventArgs<TViewModel>> ItemDeleted { get; set; }
+		public Action<ViewModelEventArgs<TViewModel>> ItemInserted { get; set; }
+		public Action<ViewModelEventArgs<TViewModel>> ItemUpdated { get; set; }
+		public Action<ViewModelEventArgs<TViewModel>> ItemDeleted { get; set; }
 
-		private IModifiableAdapter<T> Adapter { get; }
-
-		public Func<ITransactionContext> ContextCreator { get; }
+		public Func<IDbContext> DbContextCreator { get; }
 		public Sorter<TViewModel> Sorter { get; }
 		public Searcher<TViewModel> Searcher { get; }
 		public FilterOption<TViewModel>[] FilterOptions { get; set; }
 
-		protected Module(Func<ITransactionContext> contextCreator, IModifiableAdapter<T> adapter, Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
+		protected Module(Func<IDbContext> dbContextCreator, Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
 		{
-			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 			if (sorter == null) throw new ArgumentNullException(nameof(sorter));
 			if (searcher == null) throw new ArgumentNullException(nameof(searcher));
 
-			this.ContextCreator = contextCreator;
-			this.Adapter = adapter;
+			this.DbContextCreator = dbContextCreator;
 			this.Sorter = sorter;
 			this.Searcher = searcher;
 			this.FilterOptions = filterOptions;
@@ -63,7 +58,7 @@ namespace Cchbc
 
 			foreach (var viewModel in this.ViewModels)
 			{
-				if (viewModel.Model == model)
+				if (viewModel.Model.Equals(model))
 				{
 					return viewModel;
 				}
@@ -271,9 +266,10 @@ namespace Cchbc
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			// Add the item to the db
-			using (var context = this.ContextCreator())
+			using (var context = this.DbContextCreator())
 			{
-				await this.Adapter.InsertAsync(context, viewModel.Model);
+
+				//await this.Adapter.InsertAsync(context, viewModel.Model);
 
 				context.Complete();
 			}
@@ -301,7 +297,7 @@ namespace Cchbc
 			this.ViewModels.Insert(index, viewModel);
 
 			// Fire the event
-			this.ItemInserted?.Invoke(new ObjectEventArgs<TViewModel>(viewModel));
+			this.ItemInserted?.Invoke(new ViewModelEventArgs<TViewModel>(viewModel));
 		}
 
 		public async Task UpdateValidatedAsync(TViewModel viewModel, Feature feature)
@@ -310,15 +306,15 @@ namespace Cchbc
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			// Update the item from the db
-			using (var context = this.ContextCreator())
+			using (var context = this.DbContextCreator())
 			{
-				await this.Adapter.UpdateAsync(context, viewModel.Model);
+				//await this.Adapter.UpdateAsync(context, viewModel.Model);
 
 				context.Complete();
 			}
 
 			// Fire the event
-			this.ItemUpdated?.Invoke(new ObjectEventArgs<TViewModel>(viewModel));
+			this.ItemUpdated?.Invoke(new ViewModelEventArgs<TViewModel>(viewModel));
 		}
 
 		public async Task DeleteValidatedAsync(TViewModel viewModel, Feature feature)
@@ -327,9 +323,9 @@ namespace Cchbc
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			// Delete the item from the db
-			using (var context = this.ContextCreator())
+			using (var context = this.DbContextCreator())
 			{
-				await this.Adapter.DeleteAsync(context, viewModel.Model);
+				//await this.Adapter.DeleteAsync(context, viewModel.Model);
 
 				context.Complete();
 			}
@@ -338,7 +334,7 @@ namespace Cchbc
 			this.ViewModels.Remove(viewModel);
 
 			// Fire the event
-			this.ItemDeleted?.Invoke(new ObjectEventArgs<TViewModel>(viewModel));
+			this.ItemDeleted?.Invoke(new ViewModelEventArgs<TViewModel>(viewModel));
 		}
 
 		private int FindNewIndex(ObservableCollection<TViewModel> viewModels, TViewModel viewModel)

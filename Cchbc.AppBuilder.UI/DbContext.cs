@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.SQLite;
 using Cchbc.Data;
 
-namespace Cchbc.Features.DashboardUI
+namespace Cchbc.AppBuilder.UI
 {
-	public sealed class TransactionContext : ITransactionContext
+	public sealed class DbContext : IDbContext
 	{
 		private readonly SQLiteConnection _cn;
 
-		public TransactionContext(string cnString)
+		public DbContext(string cnString)
 		{
 			if (cnString == null) throw new ArgumentNullException(nameof(cnString));
 
@@ -124,7 +124,7 @@ namespace Cchbc.Features.DashboardUI
 
 		public long GetNewId()
 		{
-			var query = Query.SelectNewIdQuery;
+			var query = new Query<long>(@"SELECT LAST_INSERT_ROWID()", r => r.GetInt64(0));
 
 			using (var cmd = _cn.CreateCommand())
 			{

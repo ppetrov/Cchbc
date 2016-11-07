@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Windows.Input;
 using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
@@ -8,23 +7,23 @@ using Cchbc.Logs;
 
 namespace Cchbc
 {
-	public sealed class Core
+	public sealed class AppContext
 	{
 		public Action<string, LogLevel> Log { get; }
-		public Func<ITransactionContext> ContextCreator { get; }
+		public Func<IDbContext> DbContextCreator { get; }
 		public IModalDialog ModalDialog { get; }
 		public DataCache DataCache { get; } = new DataCache();
 		public FeatureManager FeatureManager { get; } = new FeatureManager();
 		public LocalizationManager LocalizationManager { get; } = new LocalizationManager();
 
-		public Core(Action<string, LogLevel> log, Func<ITransactionContext> contextCreator, IModalDialog modalDialog)
+		public AppContext(Action<string, LogLevel> log, Func<IDbContext> dbContextCreator, IModalDialog modalDialog)
 		{
 			if (log == null) throw new ArgumentNullException(nameof(log));
-			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
+			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
 			if (modalDialog == null) throw new ArgumentNullException(nameof(modalDialog));
 
 			this.Log = log;
-			this.ContextCreator = contextCreator;
+			this.DbContextCreator = dbContextCreator;
 			this.ModalDialog = modalDialog;
 		}
 	}

@@ -6,7 +6,7 @@ namespace ConsoleClient
 {
 	//public static class FeatureReportDataProvider
 	//{
-	//	public static FeatureUserRow GetFeatureUser(ITransactionContext context, long userId)
+	//	public static FeatureUserRow GetFeatureUser(IDbContext context, long userId)
 	//	{
 	//		if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -22,7 +22,7 @@ namespace ConsoleClient
 	//		return users.Count > 0 ? users[0] : null;
 	//	}
 
-	//	public static Dictionary<long, FeatureUserRow> GetFeatureUsers(ITransactionContext context)
+	//	public static Dictionary<long, FeatureUserRow> GetFeatureUsers(IDbContext context)
 	//	{
 	//		if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -33,7 +33,7 @@ namespace ConsoleClient
 	//		return users;
 	//	}
 
-	//	public static List<FeatureTimeEntry> GetFeatureTimeEntries(ITransactionContext context, DateTime date, long versionId)
+	//	public static List<FeatureTimeEntry> GetFeatureTimeEntries(IDbContext context, DateTime date, long versionId)
 	//	{
 	//		if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -54,7 +54,7 @@ namespace ConsoleClient
 	//		return context.Execute(query);
 	//	}
 
-	//	public static List<FeatureTimeEntry> GetFeatureTimeEntries(ITransactionContext context, DateTime date, long versionId, long userId)
+	//	public static List<FeatureTimeEntry> GetFeatureTimeEntries(IDbContext context, DateTime date, long versionId, long userId)
 	//	{
 	//		if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -81,7 +81,7 @@ namespace ConsoleClient
 	//		return new FeatureTimeEntry(Convert.ToDouble(r.GetDecimal(0)), r.GetInt64(1), r.GetInt64(2), r.GetInt64(3));
 	//	}
 
-	//	public static long GetLatestVersionId(ITransactionContext context)
+	//	public static long GetLatestVersionId(IDbContext context)
 	//	{
 	//		if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -229,7 +229,7 @@ namespace ConsoleClient
 
 	//public static class FeatureAnalyzer
 	//{
-	//	public static List<FeatureReport> GetFeatureReport(ITransactionContext context, FeatureReportSettings settings, DateTime date)
+	//	public static List<FeatureReport> GetFeatureReport(IDbContext context, FeatureReportSettings settings, DateTime date)
 	//	{
 	//		if (context == null) throw new ArgumentNullException(nameof(context));
 	//		if (settings == null) throw new ArgumentNullException(nameof(settings));
@@ -239,7 +239,7 @@ namespace ConsoleClient
 	//		return GetFeatureReport(context, settings, date, versionId);
 	//	}
 
-	//	public static List<FeatureReport> GetFeatureReport(ITransactionContext context, FeatureReportSettings settings, DateTime date, long versionId)
+	//	public static List<FeatureReport> GetFeatureReport(IDbContext context, FeatureReportSettings settings, DateTime date, long versionId)
 	//	{
 	//		if (context == null) throw new ArgumentNullException(nameof(context));
 	//		if (settings == null) throw new ArgumentNullException(nameof(settings));
@@ -279,7 +279,7 @@ namespace ConsoleClient
 	//		return reports;
 	//	}
 
-	//	public static FeatureReport GetFeatureReport(ITransactionContext context, FeatureReportSettings settings, DateTime date, long versionId, long userId)
+	//	public static FeatureReport GetFeatureReport(IDbContext context, FeatureReportSettings settings, DateTime date, long versionId, long userId)
 	//	{
 	//		if (context == null) throw new ArgumentNullException(nameof(context));
 	//		if (settings == null) throw new ArgumentNullException(nameof(settings));

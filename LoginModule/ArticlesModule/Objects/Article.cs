@@ -1,9 +1,8 @@
 ﻿using System;
-using Cchbc.Objects;
 
 namespace Cchbc.App.ArticlesModule.Objects
 {
-	public sealed class Article : IDbObject
+	public sealed class Article
 	{
 		public long Id { get; set; }
 		public string Name { get; }

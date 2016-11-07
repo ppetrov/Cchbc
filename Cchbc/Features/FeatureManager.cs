@@ -7,39 +7,39 @@ namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
-		private Func<ITransactionContext> ContextCreator { get; set; }
+		private Func<IDbContext> DbContextCreator { get; set; }
 		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }
 		private Dictionary<long, List<DbFeatureRow>> Features { get; set; }
 
-		public static void CreateSchema(Func<ITransactionContext> contextCreator)
+		public static void CreateSchema(Func<IDbContext> dbContextCreator)
 		{
-			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
+			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
 
-			using (var context = contextCreator())
+			using (var context = dbContextCreator())
 			{
 				FeatureAdapter.CreateSchema(context);
 				context.Complete();
 			}
 		}
 
-		public static void DropSchema(Func<ITransactionContext> contextCreator)
+		public static void DropSchema(Func<IDbContext> dbContextCreator)
 		{
-			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
+			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
 
-			using (var context = contextCreator())
+			using (var context = dbContextCreator())
 			{
 				FeatureAdapter.DropSchema(context);
 				context.Complete();
 			}
 		}
 
-		public void Load(Func<ITransactionContext> contextCreator)
+		public void Load(Func<IDbContext> dbContextCreator)
 		{
-			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
+			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
 
-			this.ContextCreator = contextCreator;
+			this.DbContextCreator = dbContextCreator;
 
-			using (var context = this.ContextCreator())
+			using (var context = this.DbContextCreator())
 			{
 				this.Contexts = FeatureAdapter.GetContexts(context);
 				this.Features = this.GetFeatures(context);
@@ -55,37 +55,28 @@ namespace Cchbc.Features
 			// Stop the feature
 			feature.Stop();
 
-			var featureData = new FeatureData(feature.Context, feature.Name);
-
-			var value = details;
+			var currentDetails = details;
 			if (feature.TimeSpent != TimeSpan.Zero)
 			{
-				value = feature.TimeSpent.ToString(@"c");
+				currentDetails = feature.TimeSpent.ToString(@"c");
 			}
 
-			Write(featureData, value);
-		}
-
-		public void Write(FeatureData featureData, string details = null)
-		{
-			if (featureData == null) throw new ArgumentNullException(nameof(featureData));
-
-			using (var context = this.ContextCreator())
+			using (var context = this.DbContextCreator())
 			{
-				var featureRow = this.Save(context, featureData.Context, featureData.Name);
+				var featureRow = this.Save(context, feature.Context, feature.Name);
 
-				FeatureAdapter.InsertFeatureEntry(context, featureRow.Id, details ?? string.Empty);
+				FeatureAdapter.InsertFeatureEntry(context, featureRow.Id, currentDetails ?? string.Empty);
 
 				context.Complete();
 			}
 		}
 
-		public void WriteException(Feature feature, Exception exception)
+		public void Write(Feature feature, Exception exception)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			using (var context = this.ContextCreator())
+			using (var context = this.DbContextCreator())
 			{
 				var featureRow = this.Save(context, feature.Context, feature.Name);
 				var exceptionId = FeatureAdapter.GetOrCreateException(context, exception.ToString());
@@ -96,19 +87,19 @@ namespace Cchbc.Features
 			}
 		}
 
-		private DbFeatureRow Save(ITransactionContext context, string featureContext, string name)
+		private DbFeatureRow Save(IDbContext context, string featureContext, string name)
 		{
 			return this.SaveFeature(context, this.SaveContext(context, featureContext), name);
 		}
 
-		private DbFeatureContextRow SaveContext(ITransactionContext transactionContext, string name)
+		private DbFeatureContextRow SaveContext(IDbContext dbContext, string name)
 		{
 			DbFeatureContextRow featureContextRow;
 
 			if (!this.Contexts.TryGetValue(name, out featureContextRow))
 			{
 				// Insert into database
-				var newContextId = FeatureAdapter.InsertContext(transactionContext, name);
+				var newContextId = FeatureAdapter.InsertContext(dbContext, name);
 
 				featureContextRow = new DbFeatureContextRow(newContextId, name);
 
@@ -119,7 +110,7 @@ namespace Cchbc.Features
 			return featureContextRow;
 		}
 
-		private DbFeatureRow SaveFeature(ITransactionContext transactionContext, DbFeatureContextRow featureContextRow, string name)
+		private DbFeatureRow SaveFeature(IDbContext dbContext, DbFeatureContextRow featureContextRow, string name)
 		{
 			var contextId = featureContextRow.Id;
 			List<DbFeatureRow> features;
@@ -141,7 +132,7 @@ namespace Cchbc.Features
 			}
 
 			// Insert into database
-			var newFeatureId = FeatureAdapter.InsertFeature(transactionContext, name, contextId);
+			var newFeatureId = FeatureAdapter.InsertFeature(dbContext, name, contextId);
 
 			var feature = new DbFeatureRow(newFeatureId, name, contextId);
 
@@ -151,7 +142,7 @@ namespace Cchbc.Features
 			return feature;
 		}
 
-		private Dictionary<long, List<DbFeatureRow>> GetFeatures(ITransactionContext context)
+		private Dictionary<long, List<DbFeatureRow>> GetFeatures(IDbContext context)
 		{
 			var featuresByContext = new Dictionary<long, List<DbFeatureRow>>(this.Contexts.Count);
 

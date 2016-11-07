@@ -14,14 +14,14 @@ namespace Cchbc.Features.DashboardModule
 		public List<DashboardFeatureByCount> LeastUsedFeatures { get; private set; }
 		public List<DashboardFeatureByTime> SlowestFeatures { get; private set; }
 
-		public async Task LoadAsync(CoreContext coreContext,
-			Func<CoreContext, Task<DashboardSettings>> settingsProvider,
-			Func<CoreContext, Task<DashboardCommonData>> commonDataProvider,
+		public async Task LoadAsync(FeatureContext featureContext,
+			Func<FeatureContext, Task<DashboardSettings>> settingsProvider,
+			Func<FeatureContext, Task<DashboardCommonData>> commonDataProvider,
 			Func<DashboarLoadParams, Task<List<DashboardUser>>> usersProvider, Func<DashboarLoadParams, Task<List<DashboardVersion>>> versionsProvider,
 			Func<DashboarLoadParams, Task<List<DashboardException>>> exceptionsProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> mostUsedFeaturesProvider,
 			Func<DashboarLoadParams, Task<List<DashboardFeatureByCount>>> leastUsedFeaturesProvider, Func<DashboarLoadParams, Task<List<DashboardFeatureByTime>>> slowestFeaturesProvider)
 		{
-			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
+			if (featureContext == null) throw new ArgumentNullException(nameof(featureContext));
 			if (settingsProvider == null) throw new ArgumentNullException(nameof(settingsProvider));
 			if (commonDataProvider == null) throw new ArgumentNullException(nameof(commonDataProvider));
 			if (usersProvider == null) throw new ArgumentNullException(nameof(usersProvider));
@@ -31,9 +31,9 @@ namespace Cchbc.Features.DashboardModule
 			if (leastUsedFeaturesProvider == null) throw new ArgumentNullException(nameof(leastUsedFeaturesProvider));
 			if (slowestFeaturesProvider == null) throw new ArgumentNullException(nameof(slowestFeaturesProvider));
 
-			var settings = await settingsProvider(coreContext);
-			var dataProvider = await commonDataProvider(coreContext);
-			var loadParams = new DashboarLoadParams(coreContext, settings, dataProvider);
+			var settings = await settingsProvider(featureContext);
+			var dataProvider = await commonDataProvider(featureContext);
+			var loadParams = new DashboarLoadParams(featureContext, settings, dataProvider);
 
 			this.Users = await usersProvider(loadParams);
 			this.Versions = await versionsProvider(loadParams);

@@ -8,9 +8,9 @@ using Cchbc.Dialog;
 
 namespace Cchbc.Features.DashboardUI
 {
-	public sealed class AppContext
+	public sealed class AppContextObsolete
 	{
-		public static Core Core { get; } = new Core((msg, level) =>
+		public static AppContext AppContext { get; } = new AppContext((msg, level) =>
 		{
 			Debug.WriteLine(msg, level.ToString());
 		}, new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"features.sqlite")).Create, new ModalDialog());

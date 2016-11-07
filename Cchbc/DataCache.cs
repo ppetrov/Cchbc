@@ -9,7 +9,7 @@ namespace Cchbc
 		private readonly Dictionary<string, object> _values = new Dictionary<string, object>();
 		private readonly Dictionary<string, object> _dataProviders = new Dictionary<string, object>();
 
-		public void Register<T>(Func<ITransactionContext, DataCache, Dictionary<long, T>> dataProvider)
+		public void Register<T>(Func<IDbContext, DataCache, Dictionary<long, T>> dataProvider)
 		{
 			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 
@@ -21,7 +21,7 @@ namespace Cchbc
 			_dataProviders.Remove(typeof(T).Name);
 		}
 
-		public Dictionary<long, T> GetValues<T>(ITransactionContext context)
+		public Dictionary<long, T> GetValues<T>(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -30,7 +30,7 @@ namespace Cchbc
 			object value;
 			if (!_values.TryGetValue(key, out value))
 			{
-				var dataProvider = (Func<ITransactionContext, DataCache, Dictionary<long, T>>)_dataProviders[key];
+				var dataProvider = (Func<IDbContext, DataCache, Dictionary<long, T>>)_dataProviders[key];
 				_values.Add(key, dataProvider(context, this));
 			}
 

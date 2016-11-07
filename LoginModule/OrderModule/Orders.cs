@@ -12,7 +12,7 @@ using Cchbc.Validation;
 
 namespace Cchbc.App.OrderModule
 {
-	public sealed class OrderType : IDbObject
+	public sealed class OrderType
 	{
 		public long Id { get; set; }
 		public string Name { get; }
@@ -26,9 +26,9 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class OrderTypeAdapter : IReadOnlyAdapter<OrderType>
+	public sealed class OrderTypeAdapter
 	{
-		public void Fill(ITransactionContext context, Dictionary<long, OrderType> items, Func<OrderType, long> selector)
+		public void Fill(IDbContext context, Dictionary<long, OrderType> items, Func<OrderType, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 			if (selector == null) throw new ArgumentNullException(nameof(selector));
@@ -42,7 +42,7 @@ namespace Cchbc.App.OrderModule
 
 
 
-	public sealed class DeliveryAddress : IDbObject
+	public sealed class DeliveryAddress
 	{
 		public long Id { get; set; }
 		public Outlet Outlet { get; }
@@ -61,7 +61,7 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class DeliveryAddressAdapter : IModifiableAdapter<DeliveryAddress>
+	public sealed class DeliveryAddressAdapter
 	{
 		public Task<List<DeliveryAddress>> GetByOutletAsync(Outlet outlet)
 		{
@@ -74,7 +74,7 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(addresses);
 		}
 
-		public Task InsertAsync(ITransactionContext context, DeliveryAddress item)
+		public Task InsertAsync(IDbContext context, DeliveryAddress item)
 		{
 			//public long Id { get; set; }
 			//public Outlet Outlet { get; }
@@ -84,12 +84,12 @@ namespace Cchbc.App.OrderModule
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(ITransactionContext context, DeliveryAddress item)
+		public Task UpdateAsync(IDbContext context, DeliveryAddress item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(ITransactionContext context, DeliveryAddress item)
+		public Task DeleteAsync(IDbContext context, DeliveryAddress item)
 		{
 			throw new NotImplementedException();
 		}
@@ -97,9 +97,9 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class DeliveryAddressModule : Module<DeliveryAddress, DeliveryAddressViewModel>
 	{
-		public DeliveryAddressModule(Func<ITransactionContext> contextCreator, IModifiableAdapter<DeliveryAddress> adapter,
+		public DeliveryAddressModule(Func<IDbContext> dbContextCreator,
 			Sorter<DeliveryAddressViewModel> sorter,
-			Searcher<DeliveryAddressViewModel> searcher, FilterOption<DeliveryAddressViewModel>[] filterOptions = null) : base(contextCreator, adapter, sorter, searcher, filterOptions)
+			Searcher<DeliveryAddressViewModel> searcher, FilterOption<DeliveryAddressViewModel>[] filterOptions = null) : base(dbContextCreator, sorter, searcher, filterOptions)
 		{
 		}
 
@@ -137,7 +137,7 @@ namespace Cchbc.App.OrderModule
 
 
 
-	public sealed class Vendor : IDbObject
+	public sealed class Vendor
 	{
 		public long Id { get; set; }
 		public string Name { get; }
@@ -161,9 +161,9 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class VendorAdapter : IReadOnlyAdapter<Vendor>
+	public sealed class VendorAdapter 
 	{
-		public void Fill(ITransactionContext context, Dictionary<long, Vendor> items, Func<Vendor, long> selector)
+		public void Fill(IDbContext context, Dictionary<long, Vendor> items, Func<Vendor, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
@@ -177,7 +177,7 @@ namespace Cchbc.App.OrderModule
 
 
 
-	public sealed class Wholesaler : IDbObject
+	public sealed class Wholesaler
 	{
 		public long Id { get; set; }
 		public string Name { get; }
@@ -201,9 +201,9 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class WholesalerAdapter : IReadOnlyAdapter<Wholesaler>
+	public sealed class WholesalerAdapter 
 	{
-		public void Fill(ITransactionContext context, Dictionary<long, Wholesaler> items, Func<Wholesaler, long> selector)
+		public void Fill(IDbContext context, Dictionary<long, Wholesaler> items, Func<Wholesaler, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
@@ -216,14 +216,14 @@ namespace Cchbc.App.OrderModule
 
 
 
-	public sealed class Outlet : IDbObject
+	public sealed class Outlet
 	{
 		public long Id { get; set; }
 		public long Number { get; set; }
 		public string Name { get; set; }
 	}
 
-	public sealed class Activity : IDbObject
+	public sealed class Activity
 	{
 		public long Id { get; set; }
 		public Outlet Outlet { get; set; }
@@ -235,9 +235,9 @@ namespace Cchbc.App.OrderModule
 
 
 
-	public sealed class OrderHeaderAdapter : IModifiableAdapter<OrderHeader>
+	public sealed class OrderHeaderAdapter 
 	{
-		public Task<OrderHeader> GetByIdAsync(Func<ITransactionContext> contextCreator, Activity activity, Dictionary<long, OrderType> orderTypes, Dictionary<long, Vendor> vendors, Dictionary<long, Wholesaler> wholesalers)
+		public Task<OrderHeader> GetByIdAsync(Func<IDbContext> dbContextCreator, Activity activity, Dictionary<long, OrderType> orderTypes, Dictionary<long, Vendor> vendors, Dictionary<long, Wholesaler> wholesalers)
 		{
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 			if (orderTypes == null) throw new ArgumentNullException(nameof(orderTypes));
@@ -263,17 +263,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(oh);
 		}
 
-		public Task InsertAsync(ITransactionContext context, OrderHeader item)
+		public Task InsertAsync(IDbContext context, OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(ITransactionContext context, OrderHeader item)
+		public Task UpdateAsync(IDbContext context, OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(ITransactionContext context, OrderHeader item)
+		public Task DeleteAsync(IDbContext context, OrderHeader item)
 		{
 			throw new NotImplementedException();
 		}
@@ -287,7 +287,7 @@ namespace Cchbc.App.OrderModule
 	}
 
 
-	public sealed class OrderHeader : IDbObject
+	public sealed class OrderHeader
 	{
 		public long Id { get; set; }
 		public Activity Activity { get; }
@@ -316,7 +316,7 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderManager
 	{
-		public Core Core { get; }
+		public AppContext AppContext { get; }
 		public Activity Activity { get; }
 		public Order Order { get; } = new Order();
 		public ObservableCollection<OrderTypeViewModel> OrderTypes = new ObservableCollection<OrderTypeViewModel>();
@@ -330,12 +330,12 @@ namespace Cchbc.App.OrderModule
 		private OrderNoteModule OrderNoteModule { get; }
 		private AssortmentModule AssortmentModule { get; }
 
-		public OrderManager(Core core, Activity activity)
+		public OrderManager(AppContext appContext, Activity activity)
 		{
-			if (core == null) throw new ArgumentNullException(nameof(core));
+			if (appContext == null) throw new ArgumentNullException(nameof(appContext));
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 
-			this.Core = core;
+			this.AppContext = appContext;
 			this.Activity = activity;
 
 			var deliveryAddressSorter = new Sorter<DeliveryAddressViewModel>(new[]
@@ -355,7 +355,7 @@ namespace Cchbc.App.OrderModule
 				new SearchOption<DeliveryAddressViewModel>(@"All", v=> true),
 				new SearchOption<DeliveryAddressViewModel>(@"Primary", v=> v.Model.IsPrimary),
 			}, (vi, s) => vi.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-			this.DeliveryAddressModule = new DeliveryAddressModule(core.ContextCreator, new DeliveryAddressAdapter(), deliveryAddressSorter, deliveryAddressSearcher);
+			this.DeliveryAddressModule = new DeliveryAddressModule(appContext.DbContextCreator, deliveryAddressSorter, deliveryAddressSearcher);
 
 
 			var orderNoteSorter = new Sorter<OrderNoteViewModel>(new[]
@@ -365,7 +365,7 @@ namespace Cchbc.App.OrderModule
 			var orderNoteSearcher =
 				new Searcher<OrderNoteViewModel>((vi, s) => vi.Type.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0 ||
 														   vi.Contents.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-			this.OrderNoteModule = new OrderNoteModule(core.ContextCreator, new OrderNoteAdapter(), orderNoteSorter, orderNoteSearcher);
+			this.OrderNoteModule = new OrderNoteModule(appContext.DbContextCreator,  orderNoteSorter, orderNoteSearcher);
 
 			var sorter = new Sorter<AssortmentViewModel>(new[]
 			{
@@ -378,12 +378,12 @@ namespace Cchbc.App.OrderModule
 			},
 				(vi, s) => vi.Number.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0 ||
 						   vi.Name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-			this.AssortmentModule = new AssortmentModule(core.ContextCreator, new AssortmentAdapter(), sorter, searcher);
+			this.AssortmentModule = new AssortmentModule(appContext.DbContextCreator, sorter, searcher);
 		}
 
 		public async Task LoadDataAsync()
 		{
-			var cache = this.Core.DataCache;
+			var cache = this.AppContext.DataCache;
 			var feature = Feature.StartNew(nameof(OrderManager), nameof(LoadDataAsync));
 
 			this.LoadOrderTypes(cache);
@@ -402,7 +402,7 @@ namespace Cchbc.App.OrderModule
 
 			await this.LoadOrderDetails();
 
-			this.Core.FeatureManager.Write(feature);
+			this.AppContext.FeatureManager.Write(feature);
 		}
 
 		private async Task LoadOrderDetails()
@@ -429,7 +429,7 @@ namespace Cchbc.App.OrderModule
 				if (viewModel == null)
 				{
 					// Create new assortment
-					var articleHelper = this.Core.DataCache.GetValues<Article>(null);
+					var articleHelper = this.AppContext.DataCache.GetValues<Article>(null);
 					var article = articleHelper[articleId];
 					var assortment = new Assortment(article);
 					viewModel = new AssortmentViewModel(assortment);
@@ -443,17 +443,17 @@ namespace Cchbc.App.OrderModule
 			}
 		}
 
-		private async Task LoadOrderHeader(ITransactionContext context)
+		private async Task LoadOrderHeader(IDbContext context)
 		{
-			var cache = this.Core.DataCache;
-			var orderHeader = await new OrderHeaderAdapter().GetByIdAsync(this.Core.ContextCreator, this.Activity,
+			var cache = this.AppContext.DataCache;
+			var orderHeader = await new OrderHeaderAdapter().GetByIdAsync(this.AppContext.DbContextCreator, this.Activity,
 				cache.GetValues<OrderType>(context),
 				cache.GetValues<Vendor>(context),
 				cache.GetValues<Wholesaler>(context));
 
-			orderHeader.Type = this.Core.DataCache.GetValues<OrderType>(context)[orderHeader.Type.Id];
-			orderHeader.Vendor = this.Core.DataCache.GetValues<Vendor>(context)[orderHeader.Vendor.Id];
-			orderHeader.Wholesaler = this.Core.DataCache.GetValues<Wholesaler>(context)[orderHeader.Wholesaler.Id];
+			orderHeader.Type = this.AppContext.DataCache.GetValues<OrderType>(context)[orderHeader.Type.Id];
+			orderHeader.Vendor = this.AppContext.DataCache.GetValues<Vendor>(context)[orderHeader.Vendor.Id];
+			orderHeader.Wholesaler = this.AppContext.DataCache.GetValues<Wholesaler>(context)[orderHeader.Wholesaler.Id];
 
 			var addressId = orderHeader.Address.Id;
 			foreach (var vi in this.Addresses)
@@ -507,7 +507,7 @@ namespace Cchbc.App.OrderModule
 		private async Task LoadOrderNotes()
 		{
 			var adapter = new OrderNoteAdapter();
-			var orderNotes = await adapter.GetByOutletAsync(this.Core.ContextCreator, this.Order.OrderHeader, this.Core.DataCache.GetValues<OrderNoteType>(null));
+			var orderNotes = await adapter.GetByOutletAsync(this.AppContext.DbContextCreator, this.Order.OrderHeader, this.AppContext.DataCache.GetValues<OrderNoteType>(null));
 			var orderNotesViewModels = new OrderNoteViewModel[orderNotes.Count];
 			for (var i = 0; i < orderNotes.Count; i++)
 			{
@@ -553,7 +553,7 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class OrderNoteType : IDbObject
+	public sealed class OrderNoteType
 	{
 		public long Id { get; set; }
 		public string Name { get; set; }
@@ -567,9 +567,9 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class OrderNoteTypeAdapter : IReadOnlyAdapter<OrderNoteType>
+	public sealed class OrderNoteTypeAdapter
 	{
-		public void Fill(ITransactionContext context, Dictionary<long, OrderNoteType> items, Func<OrderNoteType, long> selector)
+		public void Fill(IDbContext context, Dictionary<long, OrderNoteType> items, Func<OrderNoteType, long> selector)
 		{
 			if (items == null) throw new ArgumentNullException(nameof(items));
 
@@ -578,7 +578,7 @@ namespace Cchbc.App.OrderModule
 	}
 
 
-	public sealed class OrderNote : IDbObject
+	public sealed class OrderNote
 	{
 		public long Id { get; set; }
 		public OrderNoteType Type { get; set; }
@@ -595,9 +595,9 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class OrderNoteAdapter : IModifiableAdapter<OrderNote>
+	public sealed class OrderNoteAdapter
 	{
-		public Task<List<OrderNote>> GetByOutletAsync(Func<ITransactionContext> contextCreator, OrderHeader orderHeader, Dictionary<long, OrderNoteType> types)
+		public Task<List<OrderNote>> GetByOutletAsync(Func<IDbContext> dbContextCreator, OrderHeader orderHeader, Dictionary<long, OrderNoteType> types)
 		{
 			if (orderHeader == null) throw new ArgumentNullException(nameof(orderHeader));
 			if (types == null) throw new ArgumentNullException(nameof(types));
@@ -605,17 +605,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(new List<OrderNote>());
 		}
 
-		public Task InsertAsync(ITransactionContext context, OrderNote item)
+		public Task InsertAsync(IDbContext context, OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(ITransactionContext context, OrderNote item)
+		public Task UpdateAsync(IDbContext context, OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(ITransactionContext context, OrderNote item)
+		public Task DeleteAsync(IDbContext context, OrderNote item)
 		{
 			throw new NotImplementedException();
 		}
@@ -623,10 +623,10 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class OrderNoteModule : Module<OrderNote, OrderNoteViewModel>
 	{
-		public OrderNoteModule(Func<ITransactionContext> contextCreator, IModifiableAdapter<OrderNote> adapter,
+		public OrderNoteModule(Func<IDbContext> dbContextCreator,
 			Sorter<OrderNoteViewModel> sorter,
 			Searcher<OrderNoteViewModel> searcher,
-			FilterOption<OrderNoteViewModel>[] filterOptions = null) : base(contextCreator, adapter, sorter, searcher, filterOptions)
+			FilterOption<OrderNoteViewModel>[] filterOptions = null) : base(dbContextCreator, sorter, searcher, filterOptions)
 		{
 		}
 
@@ -663,14 +663,14 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class OrderDetail : IDbObject
+	public sealed class OrderDetail
 	{
 		public long Id { get; set; }
 		public long Article { get; set; }
 		public long Quantity { get; set; }
 	}
 
-	public sealed class OrderDetailAdapter : IModifiableAdapter<OrderDetail>
+	public sealed class OrderDetailAdapter
 	{
 		public Task<List<OrderDetail>> GetByOrderAsync(OrderHeader orderHeader)
 		{
@@ -679,23 +679,23 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(new List<OrderDetail>());
 		}
 
-		public Task InsertAsync(ITransactionContext context, OrderDetail item)
+		public Task InsertAsync(IDbContext context, OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(ITransactionContext context, OrderDetail item)
+		public Task UpdateAsync(IDbContext context, OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(ITransactionContext context, OrderDetail item)
+		public Task DeleteAsync(IDbContext context, OrderDetail item)
 		{
 			throw new NotImplementedException();
 		}
 	}
 
-	public sealed class Assortment : IDbObject
+	public sealed class Assortment
 	{
 		public long Id { get; set; }
 		public Article Article { get; }
@@ -716,7 +716,7 @@ namespace Cchbc.App.OrderModule
 		}
 	}
 
-	public sealed class AssortmentAdapter : IModifiableAdapter<Assortment>
+	public sealed class AssortmentAdapter
 	{
 		public Task<List<Assortment>> GetByOutletAsync(Outlet outlet)
 		{
@@ -727,17 +727,17 @@ namespace Cchbc.App.OrderModule
 			return Task.FromResult(assortments);
 		}
 
-		public Task InsertAsync(ITransactionContext context, Assortment item)
+		public Task InsertAsync(IDbContext context, Assortment item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task UpdateAsync(ITransactionContext context, Assortment item)
+		public Task UpdateAsync(IDbContext context, Assortment item)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task DeleteAsync(ITransactionContext context, Assortment item)
+		public Task DeleteAsync(IDbContext context, Assortment item)
 		{
 			throw new NotImplementedException();
 		}
@@ -745,10 +745,10 @@ namespace Cchbc.App.OrderModule
 
 	public sealed class AssortmentModule : Module<Assortment, AssortmentViewModel>
 	{
-		public AssortmentModule(Func<ITransactionContext> contextCreator, IModifiableAdapter<Assortment> adapter,
+		public AssortmentModule(Func<IDbContext> dbContextCreator,
 			Sorter<AssortmentViewModel> sorter,
 			Searcher<AssortmentViewModel> searcher,
-			FilterOption<AssortmentViewModel>[] filterOptions = null) : base(contextCreator, adapter, sorter, searcher, filterOptions)
+			FilterOption<AssortmentViewModel>[] filterOptions = null) : base(dbContextCreator, sorter, searcher, filterOptions)
 		{
 		}
 

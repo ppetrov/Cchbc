@@ -5,8 +5,6 @@ namespace Cchbc.Data
 {
 	public sealed class Query
 	{
-		public static readonly Query<long> SelectNewIdQuery = new Query<long>(@"SELECT LAST_INSERT_ROWID()", r => r.GetInt64(0));
-
 		public string Statement { get; }
 		public QueryParameter[] Parameters { get; }
 

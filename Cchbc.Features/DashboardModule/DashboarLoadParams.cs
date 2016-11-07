@@ -5,17 +5,17 @@ namespace Cchbc.Features.DashboardModule
 {
 	public sealed class DashboarLoadParams
 	{
-		public CoreContext CoreContext { get; }
+		public FeatureContext FeatureContext { get; }
 		public DashboardSettings Settings { get; }
 		public DashboardCommonData Data { get; }
 
-		public DashboarLoadParams(CoreContext coreContext, DashboardSettings settings, DashboardCommonData data)
+		public DashboarLoadParams(FeatureContext featureContext, DashboardSettings settings, DashboardCommonData data)
 		{
-			if (coreContext == null) throw new ArgumentNullException(nameof(coreContext));
+			if (featureContext == null) throw new ArgumentNullException(nameof(featureContext));
 			if (settings == null) throw new ArgumentNullException(nameof(settings));
 			if (data == null) throw new ArgumentNullException(nameof(data));
 
-			this.CoreContext = coreContext;
+			this.FeatureContext = featureContext;
 			this.Settings = settings;
 			this.Data = data;
 		}

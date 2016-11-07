@@ -10,7 +10,7 @@ namespace Cchbc.Features.Replication
 	{
 		private static readonly string SqliteFullDateTimeFormat = @"yyyy-MM-dd HH:mm:ss.fffffff";
 
-		public static void CreateSchema(ITransactionContext context)
+		public static void CreateSchema(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -100,7 +100,7 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 )"));
 		}
 
-		public static void DropSchema(ITransactionContext context)
+		public static void DropSchema(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -120,12 +120,12 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			}
 		}
 
-		public static long InsertVersion(ITransactionContext context, string version)
+		public static long InsertVersion(IDbContext context, string version)
 		{
 			return FeatureAdapter.ExecuteInsert(context, new Query(@"INSERT INTO FEATURE_VERSIONS(NAME) VALUES (@NAME)", new[] { new QueryParameter(@"NAME", version), }));
 		}
 
-		public static long InsertUser(ITransactionContext context, string userName, long versionId)
+		public static long InsertUser(IDbContext context, string userName, long versionId)
 		{
 			var sqlParams = new[]
 			{
@@ -137,7 +137,7 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			return FeatureAdapter.ExecuteInsert(context, new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT, VERSION_ID) VALUES (@NAME, @REPLICATED_AT, @VERSION_ID)", sqlParams));
 		}
 
-		public static void UpdateUser(ITransactionContext context, long userId, long versionId)
+		public static void UpdateUser(IDbContext context, long userId, long versionId)
 		{
 			var sqlParams = new[]
 			{
@@ -149,35 +149,35 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			context.Execute(new Query(@"UPDATE FEATURE_USERS SET REPLICATED_AT = @REPLICATED_AT, VERSION_ID = @VERSION WHERE ID = @ID", sqlParams));
 		}
 
-		public static Dictionary<string, long> GetUsers(ITransactionContext context)
+		public static Dictionary<string, long> GetUsers(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_USERS");
 		}
 
-		public static Dictionary<string, long> GetVersions(ITransactionContext context)
+		public static Dictionary<string, long> GetVersions(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_VERSIONS");
 		}
 
-		public static Dictionary<string, long> GetContexts(ITransactionContext context)
+		public static Dictionary<string, long> GetContexts(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_CONTEXTS");
 		}
 
-		public static Dictionary<string, long> GetExceptions(ITransactionContext context)
+		public static Dictionary<string, long> GetExceptions(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			return GetDataMapped(context, @"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS");
 		}
 
-		public static void InsertExceptionEntry(ITransactionContext context, IEnumerable<DbFeatureExceptionEntryRow> exceptionEntryRows, long userId, long versionId, Dictionary<int, long> exceptionsMap, Dictionary<int, long> featuresMap)
+		public static void InsertExceptionEntry(IDbContext context, IEnumerable<DbFeatureExceptionEntryRow> exceptionEntryRows, long userId, long versionId, Dictionary<int, long> exceptionsMap, Dictionary<int, long> featuresMap)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (exceptionEntryRows == null) throw new ArgumentNullException(nameof(exceptionEntryRows));
@@ -214,7 +214,7 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			context.Execute(new Query(buffer.ToString()));
 		}
 
-		public static void InsertFeatureEntry(ITransactionContext context, IEnumerable<DbFeatureEntryRow> featureEntryRows, long userId, long versionId, Dictionary<int, long> featuresMap)
+		public static void InsertFeatureEntry(IDbContext context, IEnumerable<DbFeatureEntryRow> featureEntryRows, long userId, long versionId, Dictionary<int, long> featuresMap)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (featureEntryRows == null) throw new ArgumentNullException(nameof(featureEntryRows));
@@ -252,7 +252,7 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			context.Execute(new Query(buffer.ToString()));
 		}
 
-		private static Dictionary<string, long> GetDataMapped(ITransactionContext context, string statement)
+		private static Dictionary<string, long> GetDataMapped(IDbContext context, string statement)
 		{
 			var result = new Dictionary<string, long>(32);
 

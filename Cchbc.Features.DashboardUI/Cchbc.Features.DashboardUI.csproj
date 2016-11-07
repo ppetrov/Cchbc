@@ -95,7 +95,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="AppContext.cs" />
+    <Compile Include="AppContextObsolete.cs" />
     <Compile Include="DashboardScreen.xaml.cs">
       <DependentUpon>DashboardScreen.xaml</DependentUpon>
     </Compile>
@@ -115,7 +115,7 @@
     <Compile Include="SQLite\SQLiteResult.cs" />
     <Compile Include="SQLite\SystemDataInterface.cs" />
     <Compile Include="SqlLiteDelegateDataReader.cs" />
-    <Compile Include="TransactionContext.cs" />
+    <Compile Include="DbContext.cs" />
     <Compile Include="TransactionContextCreator.cs" />
   </ItemGroup>
   <ItemGroup>

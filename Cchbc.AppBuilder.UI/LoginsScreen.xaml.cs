@@ -18,16 +18,16 @@ namespace Cchbc.AppBuilder.UI
 		public LoginsScreen()
 		{
 			this.InitializeComponent();
-			this.ViewModel = new LoginsViewModel(Context.Core, new LoginAdapter());
+			this.ViewModel = new LoginsViewModel(MainContext.AppContext, new LoginAdapter());
 		}
 
 		private async void LoginsScreenLoaded(object sender, RoutedEventArgs e)
 		{
 			try
 			{
-				var featureManager = Context.Core.FeatureManager;
+				var featureManager = MainContext.AppContext.FeatureManager;
 				//await featureManager.CreateSchema();
-				featureManager.Load(Context.Core.ContextCreator);
+				featureManager.Load(MainContext.AppContext.DbContextCreator);
 			}
 			catch (Exception ex)
 			{
@@ -37,7 +37,7 @@ namespace Cchbc.AppBuilder.UI
 
 		private async void CreateActivityTapped(object sender, TappedRoutedEventArgs e)
 		{
-			var featureManager = Context.Core.FeatureManager;
+			var featureManager = MainContext.AppContext.FeatureManager;
 
 			var feature = Feature.StartNew(@"Agenda", @"CreateActivity");
 			try
@@ -68,14 +68,14 @@ namespace Cchbc.AppBuilder.UI
 			}
 			catch (Exception ex)
 			{
-				featureManager.WriteException(feature, ex);
+				featureManager.Write(feature, ex);
 			}
 		}
 
 		private async void CopyActivityTapped(object sender, TappedRoutedEventArgs e)
 		{
 			var r = new Random(0);
-			var manager = Context.Core.FeatureManager;
+			var manager = MainContext.AppContext.FeatureManager;
 			var f = Feature.StartNew(@"Agenda", @"CopyActivity");
 			try
 			{

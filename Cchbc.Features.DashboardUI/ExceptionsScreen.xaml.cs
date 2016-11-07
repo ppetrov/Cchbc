@@ -20,7 +20,7 @@ namespace Cchbc.Features.DashboardUI
 
 		private void ExceptionsScreen_OnLoaded(object sender, RoutedEventArgs e)
 		{
-			var core = AppContext.Core;
+			var core = AppContextObsolete.AppContext;
 			var feature = new Feature(@"Exceptions", @"Load");
 			try
 			{
@@ -28,11 +28,11 @@ namespace Cchbc.Features.DashboardUI
 
 				try
 				{
-					FeatureManager.CreateSchema(core.ContextCreator);
+					FeatureManager.CreateSchema(core.DbContextCreator);
 				}
 				catch { }
 
-				core.FeatureManager.Load(core.ContextCreator);
+				core.FeatureManager.Load(core.DbContextCreator);
 
 				core.FeatureManager.Write(feature, string.Empty);
 				this.ViewModel.Load(
@@ -46,7 +46,7 @@ namespace Cchbc.Features.DashboardUI
 			catch (Exception ex)
 			{
 				core.Log(ex.ToString(), LogLevel.Error);
-				core.FeatureManager.WriteException(feature, ex);
+				core.FeatureManager.Write(feature, ex);
 			}
 		}
 	}

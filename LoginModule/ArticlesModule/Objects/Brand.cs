@@ -1,9 +1,8 @@
 ﻿using System;
-using Cchbc.Objects;
 
 namespace Cchbc.App.ArticlesModule.Objects
 {
-	public sealed class Brand : IDbObject
+	public sealed class Brand
 	{
 		public static readonly Brand Empty = new Brand(-1, string.Empty);
 

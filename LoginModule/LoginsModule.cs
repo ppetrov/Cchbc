@@ -17,9 +17,9 @@ namespace LoginModule
 	{
 		private LoginAdapter Adapter { get; }
 
-		public LoginsModule(Func<ITransactionContext> contextCreator, LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher,
+		public LoginsModule(Func<IDbContext> dbContextCreator, LoginAdapter adapter, Sorter<LoginViewModel> sorter, Searcher<LoginViewModel> searcher,
 			FilterOption<LoginViewModel>[] filterOptions = null)
-			: base(contextCreator, adapter, sorter, searcher, filterOptions)
+			: base(dbContextCreator, sorter, searcher, filterOptions)
 		{
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
@@ -28,7 +28,7 @@ namespace LoginModule
 
 		public Task<List<Login>> GetAllAsync()
 		{
-			using (var context = this.ContextCreator())
+			using (var context = this.DbContextCreator())
 			{
 				return this.Adapter.GetAllAsync(context);
 			}

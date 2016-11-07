@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Common
+namespace Cchbc.Settings
 {
 	public sealed class Setting
 	{

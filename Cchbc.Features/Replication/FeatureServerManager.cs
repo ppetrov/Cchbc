@@ -7,21 +7,21 @@ namespace Cchbc.Features.Replication
 {
 	public static class FeatureServerManager
 	{
-		public static void CreateSchema(ITransactionContext context)
+		public static void CreateSchema(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			FeatureServerAdapter.CreateSchema(context);
 		}
 
-		public static void DropSchema(ITransactionContext context)
+		public static void DropSchema(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
 			FeatureServerAdapter.DropSchema(context);
 		}
 
-		public static ServerData GetServerData(ITransactionContext context)
+		public static ServerData GetServerData(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -34,7 +34,7 @@ namespace Cchbc.Features.Replication
 			return new ServerData(versions, users, serverContexts, serverExceptions, serverFeaturesByContext);
 		}
 
-		public static void Replicate(string userName, string version, ITransactionContext serverContext, ClientData clientData, ServerData serverData)
+		public static void Replicate(string userName, string version, IDbContext serverContext, ClientData clientData, ServerData serverData)
 		{
 			if (serverContext == null) throw new ArgumentNullException(nameof(serverContext));
 			if (clientData == null) throw new ArgumentNullException(nameof(clientData));
@@ -80,7 +80,7 @@ namespace Cchbc.Features.Replication
 			FeatureServerAdapter.UpdateUser(serverContext, userId, versionId);
 		}
 
-		private static Dictionary<long, Dictionary<string, int>> GetFeaturesByContext(ITransactionContext context)
+		private static Dictionary<long, Dictionary<string, int>> GetFeaturesByContext(IDbContext context)
 		{
 			var serverFeaturesByContext = new Dictionary<long, Dictionary<string, int>>();
 
@@ -101,7 +101,7 @@ namespace Cchbc.Features.Replication
 			return serverFeaturesByContext;
 		}
 
-		private static Dictionary<int, long> ReplicateContexts(ITransactionContext serverContext, List<DbFeatureContextRow> clientContextRows, Dictionary<string, long> serverContexts)
+		private static Dictionary<int, long> ReplicateContexts(IDbContext serverContext, List<DbFeatureContextRow> clientContextRows, Dictionary<string, long> serverContexts)
 		{
 			var map = new Dictionary<int, long>(clientContextRows.Count);
 
@@ -123,7 +123,7 @@ namespace Cchbc.Features.Replication
 			return map;
 		}
 
-		private static Dictionary<int, long> ReplicateExceptions(ITransactionContext context, List<DbFeatureExceptionRow> clientExceptionRows, Dictionary<string, long> serverExceptions)
+		private static Dictionary<int, long> ReplicateExceptions(IDbContext context, List<DbFeatureExceptionRow> clientExceptionRows, Dictionary<string, long> serverExceptions)
 		{
 			var map = new Dictionary<int, long>(clientExceptionRows.Count);
 
@@ -145,7 +145,7 @@ namespace Cchbc.Features.Replication
 			return map;
 		}
 
-		private static Dictionary<int, long> ReplicateFeatures(ITransactionContext context, List<DbFeatureRow> clientFeatureRows, Dictionary<int, long> contextsMap, Dictionary<long, Dictionary<string, int>> serverFeaturesByContext)
+		private static Dictionary<int, long> ReplicateFeatures(IDbContext context, List<DbFeatureRow> clientFeatureRows, Dictionary<int, long> contextsMap, Dictionary<long, Dictionary<string, int>> serverFeaturesByContext)
 		{
 			var featuresMap = new Dictionary<int, long>(clientFeatureRows.Count);
 
@@ -176,7 +176,7 @@ namespace Cchbc.Features.Replication
 			return featuresMap;
 		}
 
-		private static void ReplicateFeatureEntries(ITransactionContext context, List<DbFeatureEntryRow> featureEntryRows, Dictionary<int, long> featuresMap, long userId, long versionId)
+		private static void ReplicateFeatureEntries(IDbContext context, List<DbFeatureEntryRow> featureEntryRows, Dictionary<int, long> featuresMap, long userId, long versionId)
 		{
 			if (featureEntryRows.Count == 0) return;
 

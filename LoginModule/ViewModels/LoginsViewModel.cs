@@ -77,14 +77,14 @@ namespace LoginModule.ViewModels
 			}
 		}
 
-		public LoginsViewModel(Core core, LoginAdapter adapter)
+		public LoginsViewModel(AppContext appContext, LoginAdapter adapter)
 		{
-			if (core == null) throw new ArgumentNullException(nameof(core));
+			if (appContext == null) throw new ArgumentNullException(nameof(appContext));
 			if (adapter == null) throw new ArgumentNullException(nameof(adapter));
 
-			this.ModalDialog = core.ModalDialog;
-			this.FeatureManager = core.FeatureManager;
-			this.Module = new LoginsModule(core.ContextCreator, adapter, new Sorter<LoginViewModel>(new[]
+			this.ModalDialog = appContext.ModalDialog;
+			this.FeatureManager = appContext.FeatureManager;
+			this.Module = new LoginsModule(appContext.DbContextCreator, adapter, new Sorter<LoginViewModel>(new[]
 			{
 				new SortOption<LoginViewModel>(string.Empty, (x, y) => 0)
 			}), new Searcher<LoginViewModel>((v, s) => false));
@@ -99,7 +99,7 @@ namespace LoginModule.ViewModels
 			};
 			this.Module.OperationError = (feature, ex) =>
 			{
-				this.FeatureManager.WriteException(feature, ex);
+				this.FeatureManager.Write(feature, ex);
 			};
 
 			this.Module.ItemInserted = ModuleOnItemInserted;
@@ -120,7 +120,7 @@ namespace LoginModule.ViewModels
 			}
 			catch (Exception ex)
 			{
-				this.FeatureManager.WriteException(feature, ex);
+				this.FeatureManager.Write(feature, ex);
 			}
 		}
 
@@ -136,7 +136,7 @@ namespace LoginModule.ViewModels
 			}
 			catch (Exception ex)
 			{
-				this.FeatureManager.WriteException(feature, ex);
+				this.FeatureManager.Write(feature, ex);
 			}
 		}
 
@@ -171,17 +171,17 @@ namespace LoginModule.ViewModels
 			return this.Module.DeleteAsync(viewModel, dialog, this.AddProgressDisplay(Feature.StartNew(this.Context, nameof(DeleteAsync))));
 		}
 
-		private void ModuleOnItemInserted(ObjectEventArgs<LoginViewModel> args)
+		private void ModuleOnItemInserted(ViewModelEventArgs<LoginViewModel> args)
 		{
 			this.Module.Insert(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
 		}
 
-		private void ModuleOnItemUpdated(ObjectEventArgs<LoginViewModel> args)
+		private void ModuleOnItemUpdated(ViewModelEventArgs<LoginViewModel> args)
 		{
 			this.Module.Update(this.Logins, args.ViewModel, this.TextSearch, this.SearchOption);
 		}
 
-		private void ModuleOnItemDeleted(ObjectEventArgs<LoginViewModel> args)
+		private void ModuleOnItemDeleted(ViewModelEventArgs<LoginViewModel> args)
 		{
 			this.Module.Delete(this.Logins, args.ViewModel);
 		}

@@ -9,7 +9,7 @@ namespace Cchbc.Features.ExceptionsModule
 {
 	public static class ExceptionsDataProvider
 	{
-		public static IEnumerable<TimePeriodRow> GetTimePeriods(ITransactionContext context)
+		public static IEnumerable<TimePeriodRow> GetTimePeriods(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -23,7 +23,7 @@ namespace Cchbc.Features.ExceptionsModule
 			};
 		}
 
-		public static IEnumerable<VersionRow> GetVersions(ITransactionContext context)
+		public static IEnumerable<VersionRow> GetVersions(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -141,14 +141,14 @@ namespace Cchbc.Features.ExceptionsModule
 			return counts;
 		}
 
-		private static Dictionary<long, FeatureRow> GetFeatures(ITransactionContext context, List<ExceptionEntryRow> entries)
+		private static Dictionary<long, FeatureRow> GetFeatures(IDbContext context, List<ExceptionEntryRow> entries)
 		{
 			var values = new Dictionary<long, FeatureRow>(entries.Count);
 
 			var batchSize = 16;
 			var sqlParams = CreateBatchParams(batchSize);
 
-			var query = new Query<FeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES WHERE ID IN (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15)", r => new FeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2)), sqlParams);
+			var query = new Query(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES WHERE ID IN (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15)", sqlParams);
 
 			var index = 0;
 			foreach (var id in entries.Select(r => r.FeatureId).Distinct())
@@ -159,7 +159,11 @@ namespace Cchbc.Features.ExceptionsModule
 					continue;
 				}
 
-				context.Fill(values, v => v.Id, query);
+				context.Fill(values, (r, map) =>
+				{
+					var row = new FeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
+					map.Add(row.Id, row);
+				}, query);
 
 				sqlParams[0].Value = id;
 				index = 1;
@@ -170,20 +174,24 @@ namespace Cchbc.Features.ExceptionsModule
 				{
 					sqlParams[i].Value = -1;
 				}
-				context.Fill(values, v => v.Id, query);
+				context.Fill(values, (r, map) =>
+				{
+					var row = new FeatureRow(r.GetInt64(0), r.GetString(1), r.GetInt64(2));
+					map.Add(row.Id, row);
+				}, query);
 			}
 
 			return values;
 		}
 
-		private static Dictionary<long, VersionRow> GetVersions(ITransactionContext context, List<ExceptionEntryRow> entries)
+		private static Dictionary<long, VersionRow> GetVersions(IDbContext context, List<ExceptionEntryRow> entries)
 		{
 			var values = new Dictionary<long, VersionRow>(entries.Count);
 
 			var batchSize = 16;
 			var sqlParams = CreateBatchParams(batchSize);
 
-			var query = new Query<VersionRow>(@"SELECT ID, NAME FROM FEATURE_VERSIONS WHERE ID IN (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15)", r => new VersionRow(r.GetInt64(0), r.GetString(1)), sqlParams);
+			var query = new Query(@"SELECT ID, NAME FROM FEATURE_VERSIONS WHERE ID IN (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15)", sqlParams);
 
 			var index = 0;
 			foreach (var id in entries.Select(r => r.VersionId).Distinct())
@@ -194,7 +202,11 @@ namespace Cchbc.Features.ExceptionsModule
 					continue;
 				}
 
-				context.Fill(values, v => v.Id, query);
+				context.Fill(values, (r, map) =>
+				{
+					var row = new VersionRow(r.GetInt64(0), r.GetString(1));
+					map.Add(row.Id, row);
+				}, query);
 
 				sqlParams[0].Value = id;
 				index = 1;
@@ -205,20 +217,24 @@ namespace Cchbc.Features.ExceptionsModule
 				{
 					sqlParams[i].Value = -1;
 				}
-				context.Fill(values, v => v.Id, query);
+				context.Fill(values, (r, map) =>
+				{
+					var row = new VersionRow(r.GetInt64(0), r.GetString(1));
+					map.Add(row.Id, row);
+				}, query);
 			}
 
 			return values;
 		}
 
-		private static Dictionary<long, ExceptionRow> GetExceptions(ITransactionContext context, List<ExceptionEntryRow> entries)
+		private static Dictionary<long, ExceptionRow> GetExceptions(IDbContext context, List<ExceptionEntryRow> entries)
 		{
 			var values = new Dictionary<long, ExceptionRow>(entries.Count);
 
 			var batchSize = 16;
 			var sqlParams = CreateBatchParams(batchSize);
 
-			var query = new Query<ExceptionRow>(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS WHERE ID IN (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15)", r => new ExceptionRow(r.GetInt64(0), r.GetString(1)), sqlParams);
+			var query = new Query(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS WHERE ID IN (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15)", sqlParams);
 
 			var index = 0;
 			foreach (var id in entries.Select(r => r.ExceptionId).Distinct())
@@ -229,7 +245,11 @@ namespace Cchbc.Features.ExceptionsModule
 					continue;
 				}
 
-				context.Fill(values, v => v.Id, query);
+				context.Fill(values, (r, map) =>
+				{
+					var row = new ExceptionRow(r.GetInt64(0), r.GetString(1));
+					map.Add(row.Id, row);
+				}, query);
 
 				sqlParams[0].Value = id;
 				index = 1;
@@ -240,20 +260,24 @@ namespace Cchbc.Features.ExceptionsModule
 				{
 					sqlParams[i].Value = -1;
 				}
-				context.Fill(values, v => v.Id, query);
+				context.Fill(values, (r, map) =>
+				{
+					var row = new ExceptionRow(r.GetInt64(0), r.GetString(1));
+					map.Add(row.Id, row);
+				}, query);
 			}
 
 			return values;
 		}
 
-		private static Dictionary<long, UserRow> GetUsers(ITransactionContext context, List<ExceptionEntryRow> entries)
+		private static Dictionary<long, UserRow> GetUsers(IDbContext context, List<ExceptionEntryRow> entries)
 		{
 			var values = new Dictionary<long, UserRow>(entries.Count);
 
 			var batchSize = 16;
 			var sqlParams = CreateBatchParams(batchSize);
 
-			var query = new Query<UserRow>(@"SELECT ID, NAME FROM FEATURE_USERS WHERE ID IN (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15)", r => new UserRow(r.GetInt64(0), r.GetString(1)), sqlParams);
+			var query = new Query(@"SELECT ID, NAME FROM FEATURE_USERS WHERE ID IN (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15)", sqlParams);
 
 			var index = 0;
 			foreach (var id in entries.Select(r => r.UserId).Distinct())
@@ -264,7 +288,11 @@ namespace Cchbc.Features.ExceptionsModule
 					continue;
 				}
 
-				context.Fill(values, v => v.Id, query);
+				context.Fill(values, (r, map) =>
+				{
+					var row = new UserRow(r.GetInt64(0), r.GetString(1));
+					map.Add(row.Id, row);
+				}, query);
 
 				sqlParams[0].Value = id;
 				index = 1;
@@ -275,7 +303,11 @@ namespace Cchbc.Features.ExceptionsModule
 				{
 					sqlParams[i].Value = -1;
 				}
-				context.Fill(values, v => v.Id, query);
+				context.Fill(values, (r, map) =>
+				{
+					var row = new UserRow(r.GetInt64(0), r.GetString(1));
+					map.Add(row.Id, row);
+				}, query);
 			}
 
 			return values;

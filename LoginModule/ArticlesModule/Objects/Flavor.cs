@@ -1,9 +1,8 @@
 ﻿using System;
-using Cchbc.Objects;
 
 namespace Cchbc.App.ArticlesModule.Objects
 {
-	public sealed class Flavor : IDbObject
+	public sealed class Flavor
 	{
 		public static readonly Flavor Empty = new Flavor(-1, string.Empty);
 

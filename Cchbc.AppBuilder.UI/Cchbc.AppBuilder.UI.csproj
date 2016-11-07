@@ -99,7 +99,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Context.cs" />
+    <Compile Include="MainContext.cs" />
     <Compile Include="SQLite\SQLiteColumnType.cs" />
     <Compile Include="SQLite\SQLiteCommand.cs" />
     <Compile Include="SQLite\SQLiteConfigOption.cs" />
@@ -112,7 +112,7 @@
     <Compile Include="SQLite\SQLiteResult.cs" />
     <Compile Include="SQLite\SystemDataInterface.cs" />
     <Compile Include="SqlLiteDelegateDataReader.cs" />
-    <Compile Include="TransactionContext.cs" />
+    <Compile Include="DbContext.cs" />
     <Compile Include="TransactionContextCreator.cs" />
     <Compile Include="LoginsScreen.xaml.cs">
       <DependentUpon>LoginsScreen.xaml</DependentUpon>

@@ -1,7 +1,7 @@
 using System;
 using Cchbc.Logs;
 
-namespace Cchbc.Common
+namespace Cchbc.Settings
 {
 	public static class ValueParser
 	{

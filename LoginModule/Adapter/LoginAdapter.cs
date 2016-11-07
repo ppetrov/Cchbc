@@ -6,30 +6,30 @@ using LoginModule.Objects;
 
 namespace LoginModule.Adapter
 {
-	public sealed class LoginAdapter : IModifiableAdapter<Login>
+	public sealed class LoginAdapter
 	{
-		public Task InsertAsync(ITransactionContext context, Login item)
+		public Task InsertAsync(IDbContext context, Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			return Task.FromResult(true);
 		}
 
-		public Task UpdateAsync(ITransactionContext context, Login item)
+		public Task UpdateAsync(IDbContext context, Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			return Task.FromResult(true);
 		}
 
-		public Task DeleteAsync(ITransactionContext context, Login item)
+		public Task DeleteAsync(IDbContext context, Login item)
 		{
 			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			return Task.FromResult(true);
 		}
-		
-		public Task<List<Login>> GetAllAsync(ITransactionContext context)
+
+		public Task<List<Login>> GetAllAsync(IDbContext context)
 		{
 			return Task.FromResult(new List<Login>());
 		}

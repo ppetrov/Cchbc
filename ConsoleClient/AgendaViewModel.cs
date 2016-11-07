@@ -12,12 +12,12 @@ namespace ConsoleClient
 {
 	public sealed class AgendaViewModelData
 	{
-		private ITransactionContext Context { get; }
+		private IDbContext Context { get; }
 		private DataCache Cache { get; }
 
 		public List<AgendaOutlet> Outlets { get; } = new List<AgendaOutlet>();
 
-		public AgendaViewModelData(ITransactionContext context, DataCache cache)
+		public AgendaViewModelData(IDbContext context, DataCache cache)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -62,7 +62,7 @@ namespace ConsoleClient
 
 	public static class DataProvider
 	{
-		public static Dictionary<long, Brand> GetBrands(ITransactionContext context, DataCache cache)
+		public static Dictionary<long, Brand> GetBrands(IDbContext context, DataCache cache)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (cache == null) throw new ArgumentNullException(nameof(cache));
@@ -72,7 +72,7 @@ namespace ConsoleClient
 			return null;
 		}
 
-		public static Dictionary<long, Flavor> GetFlavors(ITransactionContext context, DataCache cache)
+		public static Dictionary<long, Flavor> GetFlavors(IDbContext context, DataCache cache)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (cache == null) throw new ArgumentNullException(nameof(cache));
@@ -82,7 +82,7 @@ namespace ConsoleClient
 			return null;
 		}
 
-		public static Dictionary<long, Article> GetArticles(ITransactionContext context, DataCache cache)
+		public static Dictionary<long, Article> GetArticles(IDbContext context, DataCache cache)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (cache == null) throw new ArgumentNullException(nameof(cache));
@@ -101,7 +101,7 @@ namespace ConsoleClient
 			return null;
 		}
 
-		public static Dictionary<long, ActivityTypeCategory> GetActivityTypeCategories(ITransactionContext context, DataCache cache)
+		public static Dictionary<long, ActivityTypeCategory> GetActivityTypeCategories(IDbContext context, DataCache cache)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -111,7 +111,7 @@ namespace ConsoleClient
 			return null;
 		}
 
-		public static Dictionary<long, Outlet> GetOutlets(ITransactionContext context, DataCache cache)
+		public static Dictionary<long, Outlet> GetOutlets(IDbContext context, DataCache cache)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (cache == null) throw new ArgumentNullException(nameof(cache));
@@ -129,7 +129,7 @@ namespace ConsoleClient
 	public sealed class AgendaViewModel : ViewModel
 	{
 		public DateTime CurrentDate { get; private set; }
-		public Core Core { get; }
+		public AppContext AppContext { get; }
 
 		public ICommand GoToNextDay { get; }
 		public ICommand GoToPreviousDay { get; }
@@ -149,11 +149,11 @@ namespace ConsoleClient
 
 		public Func<string> CloseReasonSelector { get; }
 
-		public AgendaViewModel(Core core)
+		public AgendaViewModel(AppContext appContext)
 		{
-			if (core == null) throw new ArgumentNullException(nameof(core));
+			if (appContext == null) throw new ArgumentNullException(nameof(appContext));
 
-			this.Core = core;
+			this.AppContext = appContext;
 			this.CurrentDate = DateTime.Today;
 			this.GoToNextDay = new RelayCommand(() =>
 			{
@@ -181,9 +181,9 @@ namespace ConsoleClient
 		{
 			try
 			{
-				using (var ctx = this.Core.ContextCreator())
+				using (var ctx = this.AppContext.DbContextCreator())
 				{
-					var data = new AgendaViewModelData(ctx, this.Core.DataCache);
+					var data = new AgendaViewModelData(ctx, this.AppContext.DataCache);
 					data.Load(this.CurrentDate);
 
 					this.Outlets.Clear();
@@ -197,7 +197,7 @@ namespace ConsoleClient
 			}
 			catch (Exception ex)
 			{
-				this.Core.Log(ex.ToString(), LogLevel.Error);
+				this.AppContext.Log(ex.ToString(), LogLevel.Error);
 			}
 		}
 
