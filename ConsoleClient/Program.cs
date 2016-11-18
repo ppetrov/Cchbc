@@ -12,14 +12,12 @@ using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
 using Cchbc.ConsoleClient;
-using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Data;
 using Cchbc.Features.ExceptionsModule;
 using Cchbc.Features.Replication;
 using Cchbc.Validation;
-using Cchbc.Weather;
 
 namespace ConsoleClient
 {
@@ -93,7 +91,7 @@ namespace ConsoleClient
    at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, IEnumerable`1 parameters, Int32 capacity)
    at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, Int32 capacity)
    at SFA.BusinessLogic.DataAccess.OutletManagement.OutletAdapter.GetAll()
-   at SFA.BusinessLogic.Helpers.OutletHelper.Load(OutletAdapter outletAdapter, OutletHierLevelAdapter hierLevelAdapter, TradeChannelsAdapter channelsAdapter, OutletAssignmentAdapter assignmentAdapter, PayerAdapter payerAdapter, OutletAddressAdapter addressAdapter, MarketAttributesAdapter attributesAdapter, List`1 modifiedTables)
+   at SFA.BusinessLogic.Helpers.DataHelper.Load(OutletAdapter outletAdapter, OutletHierLevelAdapter hierLevelAdapter, TradeChannelsAdapter channelsAdapter, OutletAssignmentAdapter assignmentAdapter, PayerAdapter payerAdapter, OutletAddressAdapter addressAdapter, MarketAttributesAdapter attributesAdapter, List`1 modifiedTables)
    at SFA.BusinessLogic.Cache.<>c__DisplayClass62_0.<Load>b__32()
    at SFA.BusinessLogic.Cache.Load(Boolean useDependancies)")
 				};
@@ -146,12 +144,16 @@ namespace ConsoleClient
 	}
 
 
+
+
 	public class Program
 	{
 		public static readonly string DbPrefix = @"obppc_db_";
 
+
 		public static void Main(string[] args)
 		{
+			var freshDbPath = @"C:\Users\PetarPetrov\Desktop\data.sqlite";
 			var clientDbPath = @"C:\Users\PetarPetrov\Desktop\features.sqlite";
 			var serverDbPath = @"C:\Users\PetarPetrov\Desktop\server.sqlite";
 
@@ -168,15 +170,16 @@ namespace ConsoleClient
 				//	dbContext.Complete();
 				//}
 
-				var core = new AppContext((msg, level) =>
+				var context = new AppContext((msg, level) =>
 				{
 					Console.WriteLine(level + @":" + msg);
 				},
-				() => new DbContext(GetSqliteConnectionString(clientDbPath)), 
+				() => new DbContext(GetSqliteConnectionString(freshDbPath)),
 				new ConsoleDialog());
 
-				var agendaViewModel = new AgendaViewModel(core);
-				agendaViewModel.Load();
+				var module = new AppModule(context);
+				module.Init();
+				module.Load();
 
 				return;
 
@@ -434,17 +437,6 @@ namespace ConsoleClient
 		{
 			File.Delete(path);
 			FeatureManager.CreateSchema(new TransactionContextCreator(GetSqliteConnectionString(path)).Create);
-		}
-
-		private static void WeatherTest()
-		{
-			var forecaAppKey = @"p4ktTTTHknRT9ZbQTROIuwnfw";
-			var weathers = ForecaWeather.GetWeatherAsync(new ForecaCityLocation(42.7, 23.32)).Result;
-
-			foreach (var weather in weathers)
-			{
-				Console.WriteLine(weather);
-			}
 		}
 
 		private static void ReplicateData(string clientDb, string serverDb)
@@ -1297,7 +1289,7 @@ using System.Data;
 
 
 
-	public sealed class ConsoleDialog : IModalDialog
+	public sealed class ConsoleDialog : Cchbc.Dialog.IModalDialog
 	{
 		public Task<DialogResult> ShowAsync(string message, Feature feature, DialogType? type = null)
 		{

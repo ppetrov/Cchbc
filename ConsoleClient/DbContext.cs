@@ -11,27 +11,22 @@ namespace ConsoleClient
 {
 	public sealed class DbContext : IDbContext
 	{
-		private readonly SQLiteConnection _cn;
-
+		private readonly string _cnString;
+		private SQLiteConnection _cn;
 		private SQLiteTransaction _tr;
 
 		public DbContext(string cnString)
 		{
 			if (cnString == null) throw new ArgumentNullException(nameof(cnString));
 
-			// Create connection
-			_cn = new SQLiteConnection(cnString);
-
-			// Open connection
-			_cn.Open();
-
-			// Begin transaction
-			_tr = _cn.BeginTransaction();
+			_cnString = cnString;
 		}
 
 		public int Execute(Query query)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
+
+			this.OpenConnection();
 
 			using (var cmd = _cn.CreateCommand())
 			{
@@ -55,6 +50,8 @@ namespace ConsoleClient
 		public List<T> Execute<T>(Query<T> query)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
+
+			this.OpenConnection();
 
 			var items = new List<T>();
 
@@ -86,37 +83,10 @@ namespace ConsoleClient
 			return items;
 		}
 
-		public void Fill<T>(Dictionary<long, T> items, Func<T, long> selector, Query<T> query)
-		{
-			using (var cmd = _cn.CreateCommand())
-			{
-				DisplayQuery(query);
-
-				cmd.Transaction = _tr;
-				cmd.CommandText = query.Statement;
-				cmd.CommandType = CommandType.Text;
-
-				Debug.WriteLine(query.Statement);
-
-				foreach (var p in query.Parameters)
-				{
-					cmd.Parameters.Add(new SQLiteParameter(p.Name, p.Value));
-				}
-
-				using (var r = cmd.ExecuteReader())
-				{
-					var dr = new SqlLiteDelegateDataReader(r);
-					while (dr.Read())
-					{
-						var value = query.Creator(dr);
-						items.Add(selector(value), value);
-					}
-				}
-			}
-		}
-
 		public void Fill<TK, TV>(Dictionary<TK, TV> items, Action<IFieldDataReader, Dictionary<TK, TV>> filler, Query query)
 		{
+			this.OpenConnection();
+
 			using (var cmd = _cn.CreateCommand())
 			{
 				DisplayQuery(query);
@@ -159,8 +129,23 @@ namespace ConsoleClient
 			}
 			finally
 			{
-				_cn.Dispose();
+				_cn?.Dispose();
+				_cn = null;
 			}
+		}
+
+		private void OpenConnection()
+		{
+			if (_tr != null) return;
+
+			// Create connection
+			_cn = new SQLiteConnection(_cnString);
+
+			// Open connection
+			_cn.Open();
+
+			// Begin transaction
+			_tr = _cn.BeginTransaction();
 		}
 
 		private void DisplayQuery(Query query)
@@ -175,7 +160,7 @@ namespace ConsoleClient
 
 		private static void DisplayQuery(string statement)
 		{
-			if (false)
+			if (true)
 			{
 				Console.WriteLine(Regex.Replace(statement.Replace('\t', ' ').Replace(Environment.NewLine, @" "), @" +", @" ").Trim());
 			}

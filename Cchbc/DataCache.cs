@@ -13,25 +13,26 @@ namespace Cchbc
 		{
 			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 
-			_dataProviders.Add(typeof(T).Name, dataProvider);
+			_dataProviders.Add(typeof(T).FullName, dataProvider);
 		}
 
 		public void Unregister<T>()
 		{
-			_dataProviders.Remove(typeof(T).Name);
+			_dataProviders.Remove(typeof(T).FullName);
 		}
 
 		public Dictionary<long, T> GetValues<T>(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			var key = typeof(T).Name;
+			var key = typeof(T).FullName;
 
 			object value;
 			if (!_values.TryGetValue(key, out value))
 			{
 				var dataProvider = (Func<IDbContext, DataCache, Dictionary<long, T>>)_dataProviders[key];
-				_values.Add(key, dataProvider(context, this));
+				value = dataProvider(context, this);
+				_values.Add(key, value);
 			}
 
 			return (Dictionary<long, T>)value;

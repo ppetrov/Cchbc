@@ -93,9 +93,6 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddLoginContentDialog.xaml.cs">
-      <DependentUpon>AddLoginContentDialog.xaml</DependentUpon>
-    </Compile>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
@@ -114,9 +111,6 @@
     <Compile Include="SqlLiteDelegateDataReader.cs" />
     <Compile Include="DbContext.cs" />
     <Compile Include="TransactionContextCreator.cs" />
-    <Compile Include="LoginsScreen.xaml.cs">
-      <DependentUpon>LoginsScreen.xaml</DependentUpon>
-    </Compile>
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
@@ -156,14 +150,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="AddLoginContentDialog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="LoginsScreen.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -177,10 +163,6 @@
     <ProjectReference Include="..\Cchbc\Cchbc.csproj">
       <Project>{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}</Project>
       <Name>Cchbc</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\LoginModule\LoginModule.csproj">
-      <Project>{221F4E8E-6BB9-43C8-BE8B-64070B77CF4C}</Project>
-      <Name>LoginModule</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

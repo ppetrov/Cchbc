@@ -46,13 +46,11 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddActivityViewModel.cs" />
-    <Compile Include="AgendaViewModel.cs" />
     <Compile Include="AppUsageManager.cs" />
     <Compile Include="ContextCreator.cs" />
     <Compile Include="DayAnalyzerModule.cs" />
     <Compile Include="Dispatcher.cs" />
-    <Compile Include="IAddActivityViewModelData.cs" />
+    <Compile Include="AppModule.cs" />
     <Compile Include="Objects.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -71,17 +69,9 @@
       <Project>{7611601A-80E1-43FA-ADE0-4F25245DA724}</Project>
       <Name>Cchbc.Features</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Cchbc.Weather\Cchbc.Weather.csproj">
-      <Project>{246BEAC9-0A4A-4DA4-8D65-DCEA63FC42EB}</Project>
-      <Name>Cchbc.Weather</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Cchbc\Cchbc.csproj">
       <Project>{cf3bbbbd-5f7a-47b5-a5a5-71eb0ec6ad84}</Project>
       <Name>Cchbc</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\LoginModule\LoginModule.csproj">
-      <Project>{221F4E8E-6BB9-43C8-BE8B-64070B77CF4C}</Project>
-      <Name>LoginModule</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
