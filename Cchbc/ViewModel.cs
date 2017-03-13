@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace Cchbc.Objects
+namespace Cchbc
 {
 	public abstract class ViewModel : INotifyPropertyChanged
 	{
@@ -15,10 +15,13 @@ namespace Cchbc.Objects
 			handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
-		protected void SetProperty<T>(out T field, T value, [CallerMemberName] string propertyName = null)
+		protected void SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
 		{
-			field = value;
-			this.OnPropertyChanged(propertyName);
+			if (!EqualityComparer<T>.Default.Equals(field, value))
+			{
+				field = value;
+				this.OnPropertyChanged(propertyName);
+			}
 		}
 	}
 

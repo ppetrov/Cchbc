@@ -1,5 +1,4 @@
 using System;
-using Cchbc.Objects;
 
 namespace Cchbc.Search
 {
@@ -12,7 +11,7 @@ namespace Cchbc.Search
 		public bool IsSelected
 		{
 			get { return _isSelected; }
-			set { this.SetProperty(out _isSelected, value); }
+			set { this.SetProperty(ref _isSelected, value); }
 		}
 
 		public FilterOption(string name, Func<T, bool> isMatch, bool isSelected = false)

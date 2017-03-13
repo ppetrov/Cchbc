@@ -1,5 +1,4 @@
 using System;
-using Cchbc.Objects;
 
 namespace Cchbc.Sort
 {
@@ -13,7 +12,7 @@ namespace Cchbc.Sort
 		public bool? Ascending
 		{
 			get { return _ascending; }
-			set { this.SetProperty(out _ascending, value); }
+			set { this.SetProperty(ref _ascending, value); }
 		}
 
 		public SortOption(string name, Func<T, T, int> comparison, bool isDefault = false)

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Cchbc.Common;
-using Cchbc.Objects;
 
 namespace Cchbc.Features.DashboardModule.ViewModels
 {

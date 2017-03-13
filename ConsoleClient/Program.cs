@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
 using Cchbc.ConsoleClient;
+using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Data;
@@ -84,9 +86,9 @@ namespace ConsoleClient
 
 				var dbFeatureExceptionRows = new List<DbFeatureExceptionRow>
 				{
-					new DbFeatureExceptionRow(rnd.Next(1,1024), @"System.Collections.Generic.KeyNotFoundException: The given key was not present in the dictionary.
-   at System.Collections.Generic.Dictionary`2.get_Item(TKey key)
-   at System.SQLite.SQLiteDataReader.GetOrdinal(String name)
+					new DbFeatureExceptionRow(rnd.Next(1,1024), @"AppSystem.Collections.Generic.KeyNotFoundException: The given key was not present in the dictionary.
+   at AppSystem.Collections.Generic.Dictionary`2.get_Item(TKey key)
+   at AppSystem.SQLite.SQLiteDataReader.GetOrdinal(String name)
    at SFA.BusinessLogic.DataAccess.OutletManagement.OutletAdapter.OutletSnapCreator(IDataReader r)
    at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, IEnumerable`1 parameters, Int32 capacity)
    at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, Int32 capacity)
@@ -150,6 +152,83 @@ namespace ConsoleClient
 	{
 		public static readonly string DbPrefix = @"obppc_db_";
 
+		public static string GetCountryCode(string url)
+		{
+			if (url == null) throw new ArgumentNullException(nameof(url));
+
+			var value = url.Trim();
+			var start = value.LastIndexOf('/');
+			if (start >= 0)
+			{
+				return value.Substring(start + 1);
+			}
+
+			return string.Empty;
+		}
+
+
+		public sealed class MapEntry
+		{
+			public string Name { get; }
+			public int Sequence { get; set; }
+
+			public MapEntry(string name, int sequence)
+			{
+				if (name == null) throw new ArgumentNullException(nameof(name));
+
+				this.Name = name;
+				this.Sequence = sequence;
+			}
+		}
+
+		public static void Reorder(MapEntry[] items, int sourceIndex, int destinationIndex)
+		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
+			if (sourceIndex == destinationIndex) throw new ArgumentOutOfRangeException();
+
+			var sourceItem = items[sourceIndex];
+			var desctinationItem = items[destinationIndex];
+			var startOffset = 0;
+			var endOffset = 0;
+			Func<int, int> modifier;
+			if (sourceIndex < destinationIndex)
+			{
+				startOffset++;
+				modifier = s => s - 1;
+			}
+			else
+			{
+				endOffset--;
+				modifier = s => s + 1;
+			}
+
+			Action<MapEntry> dbUpdate = e =>
+			{
+				Console.WriteLine(@"Db Update => " + e.Name + " : " + e.Sequence);
+			};
+
+			// Copy the sequence from the destination item
+			sourceItem.Sequence = desctinationItem.Sequence;
+
+			var start = Math.Min(sourceIndex, destinationIndex) + startOffset;
+			var end = Math.Max(sourceIndex, destinationIndex) + endOffset;
+
+			for (var i = start; i <= end; i++)
+			{
+				// Check if we can index in the collection
+				var isValid = 0 <= i && i < items.Length;
+				if (isValid)
+				{
+					var item = items[i];
+
+					item.Sequence = modifier(item.Sequence);
+
+					dbUpdate(item);
+				}
+			}
+
+			dbUpdate(sourceItem);
+		}
 
 		public static void Main(string[] args)
 		{
@@ -159,6 +238,46 @@ namespace ConsoleClient
 
 			try
 			{
+				var cl = new[] { "a", "b", "c" };
+				var db = new[] { "a", "b", "c", "d", "e", "f" };
+				var miss = cl.Except(db, StringComparer.OrdinalIgnoreCase);
+				foreach (var p in miss)
+				{
+					Console.WriteLine(p);
+				}
+
+				return;
+				var query = @"SELECT name FROM sqlite_master WHERE type='table' order by name";
+
+				using (var client = new TransactionContextCreator(GetSqliteConnectionString(@"C:\Users\PetarPetrov\Desktop\BG000956.sqlite")).Create())
+				{
+					var names = client.Execute(new Query<string>(query, dr => dr.GetString(0)));
+
+					foreach (var n in names)
+					{
+						var q = @"select count(*) from " + n + " where rec_status <> 1";
+
+						try
+						{
+							var v = client.Execute(new Query<int>(q, r => r.GetInt32(0))).Single();
+							if (v != 0)
+							{
+								Console.WriteLine(n + " " + v);
+							}
+
+						}
+						catch (Exception)
+						{
+							//Console.WriteLine(n);
+						}
+					}
+
+					client.Complete();
+				}
+
+
+				return;
+
 				//var addViewModel = new AddActivityViewModel(new ActivityCreator(), new ConsoleDialog());
 				//using (var dbContext = new TransactionContextCreator(string.Empty).Create())
 				//{
@@ -170,46 +289,38 @@ namespace ConsoleClient
 				//	dbContext.Complete();
 				//}
 
-				var context = new AppContext((msg, level) =>
-				{
-					Console.WriteLine(level + @":" + msg);
-				},
-				() => new DbContext(GetSqliteConnectionString(freshDbPath)),
-				new ConsoleDialog());
+				//var context = new AppContext((msg, level) => { Console.WriteLine(level + @":" + msg); }, () => new DbContext(GetSqliteConnectionString(freshDbPath)), new ConsoleDialog());
 
-				var module = new AppModule(context);
-				module.Init();
-				module.Load();
+				//var module = new AppModule(context);
+				//module.Init();
+				//module.Load();
 
-				return;
+				//return;
 
-				if (!File.Exists(serverDbPath))
-				{
-					CreateSchema(GetSqliteConnectionString(serverDbPath));
-				}
-				foreach (var date in new[]
-				{
-					DateTime.Today.AddDays(-10),
-					DateTime.Today.AddDays(-9),
-					DateTime.Today.AddDays(-8),
-					DateTime.Today.AddDays(-7),
-					DateTime.Today.AddDays(-6),
-					DateTime.Today.AddDays(-5),
-					DateTime.Today.AddDays(-4),
-					DateTime.Today.AddDays(-3),
-					DateTime.Today.AddDays(-2),
-					DateTime.Today.AddDays(-1),
-					DateTime.Today,
-				})
-				{
-					ClientDataReplication.SimulateDay(serverDbPath, date);
-				}
+				//if (!File.Exists(serverDbPath))
+				//{
+				//	CreateSchema(GetSqliteConnectionString(serverDbPath));
+				//}
+				//foreach (var date in new[]
+				//{
+				//	//DateTime.Today.AddDays(-10), DateTime.Today.AddDays(-9), DateTime.Today.AddDays(-8), DateTime.Today.AddDays(-7), DateTime.Today.AddDays(-6), DateTime.Today.AddDays(-5), DateTime.Today.AddDays(-4), DateTime.Today.AddDays(-3), DateTime.Today.AddDays(-2), DateTime.Today.AddDays(-1), DateTime.Today,
+				//	DateTime.Today.AddDays(-10)
+				//})
+				//{
+				//	ClientDataReplication.SimulateDay(serverDbPath, date);
+				//}
 
-				var fm = new FeatureManager();
+				//return;
 
-				fm.Load(null);
+
 
 				return;
+
+				//var fm = new FeatureManager();
+
+				//fm.Load(null);
+
+				//return;
 
 				//GenerateData(clientDbPath);
 				//return;
@@ -262,17 +373,11 @@ namespace ConsoleClient
 				return;
 
 
-				var viewModel = new ExceptionsViewModel(
-					new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create,
-					ExceptionsSettings.Default);
+				var viewModel = new ExceptionsViewModel(new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create, ExceptionsSettings.Default);
 
 				for (var i = 0; i < 100; i++)
 				{
-					viewModel.Load(
-					ExceptionsDataProvider.GetTimePeriods,
-					ExceptionsDataProvider.GetVersions,
-					ExceptionsDataProvider.GetExceptions,
-					ExceptionsDataProvider.GetExceptionsCounts);
+					viewModel.Load(ExceptionsDataProvider.GetTimePeriods, ExceptionsDataProvider.GetVersions, ExceptionsDataProvider.GetExceptions, ExceptionsDataProvider.GetExceptionsCounts);
 				}
 
 				w.Stop();
@@ -306,9 +411,7 @@ namespace ConsoleClient
 				//return;
 
 
-
 				//GenerateDayReport(serverDbPath);
-
 
 
 				//
@@ -320,8 +423,6 @@ namespace ConsoleClient
 			return;
 
 
-
-
 			var c = @"Data Source = C:\Users\PetarPetrov\Desktop\ifsa.sqlite; Version = 3;";
 
 			ClientData data;
@@ -330,7 +431,6 @@ namespace ConsoleClient
 				data = FeatureAdapter.GetData(client);
 				client.Complete();
 			}
-
 
 
 			data.FeatureEntryRows.Add(new DbFeatureEntryRow(@"#", DateTime.Today.AddDays(-1), -4));
@@ -355,12 +455,7 @@ namespace ConsoleClient
 			//Console.WriteLine(result.Length);
 
 
-
 			return;
-
-
-
-
 
 
 			//GenerateProject(PhoenixModel(), @"C:\temp\IfsaBuilder\IfsaBuilder\Phoenix");
@@ -388,12 +483,6 @@ namespace ConsoleClient
 			//return;
 
 
-
-
-
-
-
-
 			//// Register helpers
 			//var cache = AppContext.DataCache;
 			//cache.Add(new BrandHelper());
@@ -407,7 +496,7 @@ namespace ConsoleClient
 			//	//var viewModel = new LoginsViewModel(AppContext, new LoginAdapter());
 			//	//viewModel.LoadData();
 
-			//	//var v = new LoginViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
+			//	//var v = new ViewModel(new Login(1, @"PPetrov", @"QWE234!", DateTime.Now, true));
 			//	//var dialog = new ConsoleDialog();
 			//	//viewModel.AddAsync(v, dialog).Wait();
 			//	//viewModel.AddAsync(v, dialog).Wait();
@@ -424,6 +513,21 @@ namespace ConsoleClient
 			//{
 			//	Console.WriteLine(e);
 			//}
+		}
+
+		private static void Display(MapEntry[] entries)
+		{
+			Array.Sort(entries, (x, y) => x.Sequence.CompareTo(y.Sequence));
+
+			foreach (var e in entries)
+			{
+				if (e.Name.EndsWith(e.Sequence.ToString()))
+				{
+					continue;
+				}
+				Console.WriteLine(e.Name + " : " + e.Sequence);
+			}
+			Console.WriteLine();
 		}
 
 		public static string GetSqliteConnectionString(string path)
@@ -461,12 +565,7 @@ namespace ConsoleClient
 		{
 			var versions = new[]
 			{
-				@"8.28.79.127",
-				@"7.74.19.727",
-				@"6.22.29.492",
-				@"5.96.69.792",
-				@"4.11.27.292",
-				@"3.85.19.223",
+				@"8.28.79.127", @"7.74.19.727", @"6.22.29.492", @"5.96.69.792", @"4.11.27.292", @"3.85.19.223",
 			};
 
 			using (var ctx = new TransactionContextCreator(serverDb).Create())
@@ -543,17 +642,12 @@ namespace ConsoleClient
 		}
 
 
-
-
-
 		private static TimeSpan GetTime(int min, int max)
 		{
 			return TimeSpan.FromTicks((long)((_r.Next(min, max) + _r.NextDouble()) * 10000));
 		}
 
-		static Random _r = new Random();
-
-
+		private static Random _r = new Random();
 
 
 		private static void SearchSourceCode()
@@ -581,9 +675,7 @@ namespace ConsoleClient
 			foreach (var file in Directory.GetFiles(inDir, @"*.*", SearchOption.AllDirectories))
 			{
 				var name = Path.GetFileName(file);
-				if (name.EndsWith(@".xib", StringComparison.OrdinalIgnoreCase) ||
-					name.EndsWith(@".dll", StringComparison.OrdinalIgnoreCase) ||
-					name.EndsWith(@".png", StringComparison.OrdinalIgnoreCase))
+				if (name.EndsWith(@".xib", StringComparison.OrdinalIgnoreCase) || name.EndsWith(@".dll", StringComparison.OrdinalIgnoreCase) || name.EndsWith(@".png", StringComparison.OrdinalIgnoreCase))
 				{
 					continue;
 				}
@@ -662,14 +754,6 @@ namespace ConsoleClient
 				return false;
 			}
 		}
-
-
-
-
-
-
-
-
 
 
 		private static string CreateVisit(Feature f)
@@ -806,9 +890,7 @@ namespace ConsoleClient
 				}
 
 				// Read Only adapters
-				var adapter = !project.IsModifiable(entity.Table)
-					? project.CreateEntityAdapter(entity)
-					: project.CreateEntityAdapter(entity);
+				var adapter = !project.IsModifiable(entity.Table) ? project.CreateEntityAdapter(entity) : project.CreateEntityAdapter(entity);
 				buffer.AppendLine(adapter);
 			}
 
@@ -836,8 +918,7 @@ namespace ConsoleClient
 			});
 			var visits = DbTable.Create(@"Visits", new[]
 			{
-				DbColumn.ForeignKey(outlets),
-				DbColumn.DateTime(@"Date"),
+				DbColumn.ForeignKey(outlets), DbColumn.DateTime(@"Date"),
 			});
 			var activityTypes = DbTable.Create(@"ActivityTypes", new[]
 			{
@@ -845,9 +926,7 @@ namespace ConsoleClient
 			});
 			var activities = DbTable.Create(@"Activities", new[]
 			{
-				DbColumn.DateTime(@"Date"),
-				DbColumn.ForeignKey(activityTypes),
-				DbColumn.ForeignKey(visits),
+				DbColumn.DateTime(@"Date"), DbColumn.ForeignKey(activityTypes), DbColumn.ForeignKey(visits),
 			}, @"Activity");
 			var brands = DbTable.Create(@"Brands", new[]
 			{
@@ -859,9 +938,7 @@ namespace ConsoleClient
 			});
 			var articles = DbTable.Create(@"Articles", new[]
 			{
-				DbColumn.String(@"Name"),
-				DbColumn.ForeignKey(brands),
-				DbColumn.ForeignKey(flavors),
+				DbColumn.String(@"Name"), DbColumn.ForeignKey(brands), DbColumn.ForeignKey(flavors),
 			});
 			var activityNoteTypes = DbTable.Create(@"ActivityNoteTypes", new[]
 			{
@@ -869,23 +946,12 @@ namespace ConsoleClient
 			});
 			var activityNotes = DbTable.Create(@"ActivityNotes", new[]
 			{
-				DbColumn.String(@"Contents"),
-				DbColumn.DateTime(@"Created_At"),
-				DbColumn.ForeignKey(activityNoteTypes),
-				DbColumn.ForeignKey(activities),
+				DbColumn.String(@"Contents"), DbColumn.DateTime(@"Created_At"), DbColumn.ForeignKey(activityNoteTypes), DbColumn.ForeignKey(activities),
 			});
 
 			var schema = new DbSchema(@"Phoenix", new[]
 			{
-				outlets,
-				visits,
-				activityTypes,
-				activities,
-				brands,
-				flavors,
-				articles,
-				activityNoteTypes,
-				activityNotes
+				outlets, visits, activityTypes, activities, brands, flavors, articles, activityNoteTypes, activityNotes
 			});
 
 			var project = new DbProject(schema);
@@ -913,33 +979,22 @@ namespace ConsoleClient
 
 			var blogs = DbTable.Create(@"Blogs", new[]
 			{
-				DbColumn.String(@"Name"),
-				DbColumn.String(@"Description"),
-				DbColumn.ForeignKey(users)
+				DbColumn.String(@"Name"), DbColumn.String(@"Description"), DbColumn.ForeignKey(users)
 			});
 
 			var posts = DbTable.Create(@"Posts", new[]
 			{
-				DbColumn.String(@"Title"),
-				DbColumn.String(@"Contents"),
-				DbColumn.DateTime(@"CreationDate"),
-				DbColumn.ForeignKey(blogs),
+				DbColumn.String(@"Title"), DbColumn.String(@"Contents"), DbColumn.DateTime(@"CreationDate"), DbColumn.ForeignKey(blogs),
 			});
 
 			var comments = DbTable.Create(@"Comments", new[]
 			{
-				DbColumn.String(@"Contents"),
-				DbColumn.DateTime(@"CreationDate"),
-				DbColumn.ForeignKey(users),
-				DbColumn.ForeignKey(posts),
+				DbColumn.String(@"Contents"), DbColumn.DateTime(@"CreationDate"), DbColumn.ForeignKey(users), DbColumn.ForeignKey(posts),
 			});
 
 			var schema = new DbSchema(@"WordPress", new[]
 			{
-				users,
-				blogs,
-				posts,
-				comments,
+				users, blogs, posts, comments,
 			});
 			var project = new DbProject(schema);
 
@@ -1002,7 +1057,6 @@ namespace ConsoleClient
 					//}
 				}
 			}
-
 		}
 
 		private static void Display(int[,] m)
@@ -1073,13 +1127,9 @@ namespace ConsoleClient
 						break;
 					}
 				}
-
-
-
 			}
 
 			Console.WriteLine(n);
-
 		}
 
 		private static void ToggleSet(int[,] grid, int startX, int startY, int endX, int endY, int value)
@@ -1164,21 +1214,20 @@ namespace ConsoleClient
 		private static void FixAdapterClasses()
 		{
 			var winrtUsingFlag = @"#if NETFX_CORE
-using System.SQLite;
+using AppSystem.SQLite;
 #else
-using System.Data;
+using AppSystem.Data;
 #endif";
 
 			var sqliteUsingFlag = @"#if SQLITE
-using System.SQLite;
+using AppSystem.SQLite;
 #else
-using System.Data;
+using AppSystem.Data;
 #endif";
 
 			winrtUsingFlag = @"NETFX_CORE";
 
-			var sourceFiles = Directory.GetFiles(@"C:\Cchbc\PhoenixClient\Phoenix SFA SAP\SFA 5.5\SFA.BusinessLogic", @"*.cs",
-				SearchOption.AllDirectories);
+			var sourceFiles = Directory.GetFiles(@"C:\Cchbc\PhoenixClient\Phoenix SFA SAP\SFA 5.5\SFA.BusinessLogic", @"*.cs", SearchOption.AllDirectories);
 			foreach (var file in sourceFiles)
 			{
 				var contents = File.ReadAllText(file);
@@ -1287,8 +1336,6 @@ using System.Data;
 	}
 
 
-
-
 	public sealed class ConsoleDialog : Cchbc.Dialog.IModalDialog
 	{
 		public Task<DialogResult> ShowAsync(string message, Feature feature, DialogType? type = null)
@@ -1296,17 +1343,5 @@ using System.Data;
 			return Task.FromResult(DialogResult.Cancel);
 		}
 	}
-
-
-
-
-
-
-
-
-
-
-
-
 }
 

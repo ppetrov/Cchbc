@@ -5,7 +5,6 @@ using System.Linq;
 using Cchbc.Data;
 using Cchbc.Features.ExceptionsModule.Objects;
 using Cchbc.Features.ExceptionsModule.Rows;
-using Cchbc.Objects;
 
 namespace Cchbc.Features.ExceptionsModule
 {
@@ -47,7 +46,7 @@ namespace Cchbc.Features.ExceptionsModule
 			get { return _removeExcluded; }
 			set
 			{
-				this.SetProperty(out _removeExcluded, value);
+				this.SetProperty(ref _removeExcluded, value);
 
 				this.LoadCurrentExceptionData(new ExceptionsSettings(this.Settings.MaxExceptionEntries, value ?? false));
 			}
@@ -58,7 +57,7 @@ namespace Cchbc.Features.ExceptionsModule
 		public bool IsVersionsLoading
 		{
 			get { return _isVersionsLoading; }
-			set { this.SetProperty(out _isVersionsLoading, value); }
+			set { this.SetProperty(ref _isVersionsLoading, value); }
 		}
 		private FeatureVersion _version;
 		public FeatureVersion Version
@@ -66,7 +65,7 @@ namespace Cchbc.Features.ExceptionsModule
 			get { return _version; }
 			set
 			{
-				this.SetProperty(out _version, value);
+				this.SetProperty(ref _version, value);
 				// We need to load the exceptions & counts
 				this.LoadCurrentExceptionData();
 			}
@@ -78,7 +77,7 @@ namespace Cchbc.Features.ExceptionsModule
 		public bool IsTimePeriodsLoading
 		{
 			get { return _isTimePeriodsLoading; }
-			set { this.SetProperty(out _isTimePeriodsLoading, value); }
+			set { this.SetProperty(ref _isTimePeriodsLoading, value); }
 		}
 		private TimePeriod _timePeriod;
 		public TimePeriod TimePeriod
@@ -86,7 +85,7 @@ namespace Cchbc.Features.ExceptionsModule
 			get { return _timePeriod; }
 			set
 			{
-				this.SetProperty(out _timePeriod, value);
+				this.SetProperty(ref _timePeriod, value);
 				// We only need to load counts because exceptions will be the same, they won't change
 				this.LoadCurrentExceptionsCounts();
 			}
@@ -98,7 +97,7 @@ namespace Cchbc.Features.ExceptionsModule
 		public bool IsExceptionsLoading
 		{
 			get { return _isExceptionsLoading; }
-			set { this.SetProperty(out _isExceptionsLoading, value); }
+			set { this.SetProperty(ref _isExceptionsLoading, value); }
 		}
 		public ObservableCollection<FeatureExceptionEntry> LatestExceptions { get; } = new ObservableCollection<FeatureExceptionEntry>();
 
@@ -107,7 +106,7 @@ namespace Cchbc.Features.ExceptionsModule
 		public bool IsExceptionsCountsLoading
 		{
 			get { return _isExceptionsCountsLoading; }
-			set { this.SetProperty(out _isExceptionsCountsLoading, value); }
+			set { this.SetProperty(ref _isExceptionsCountsLoading, value); }
 		}
 		public ObservableCollection<ExceptionsCountViewModel> ExceptionsCounts { get; } = new ObservableCollection<ExceptionsCountViewModel>();
 

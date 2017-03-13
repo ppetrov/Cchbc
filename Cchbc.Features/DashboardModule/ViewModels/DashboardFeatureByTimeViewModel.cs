@@ -1,5 +1,4 @@
 using System;
-using Cchbc.Objects;
 
 namespace Cchbc.Features.DashboardModule.ViewModels
 {

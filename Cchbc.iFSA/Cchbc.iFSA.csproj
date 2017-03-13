@@ -5,11 +5,11 @@
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{C925111E-12CE-4D75-93F8-348C5FD44EFD}</ProjectGuid>
+    <ProjectGuid>{41397028-0B7B-4EF3-92AB-C6E617CAEC5B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cchbc.AppBuilder</RootNamespace>
-    <AssemblyName>Cchbc.AppBuilder</AssemblyName>
+    <RootNamespace>Cchbc.iFSA</RootNamespace>
+    <AssemblyName>Cchbc.iFSA</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -35,29 +35,20 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <!-- A reference to the entire .NET Framework is automatically included -->
     <None Include="project.json" />
+    <!-- A reference to the entire .NET Framework is automatically included -->
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BufferHelper.cs" />
-    <Compile Include="ClrProject.cs" />
-    <Compile Include="Clr\ClrClass.cs" />
-    <Compile Include="Clr\ClrProperty.cs" />
-    <Compile Include="Clr\ClrType.cs" />
-    <Compile Include="DbProject.cs" />
-    <Compile Include="DbTableConverter.cs" />
-    <Compile Include="DDL\DbColumn.cs" />
-    <Compile Include="DDL\DbColumnType.cs" />
-    <Compile Include="DDL\DbForeignKey.cs" />
-    <Compile Include="DDL\DbSchema.cs" />
-    <Compile Include="DDL\DbScript.cs" />
-    <Compile Include="DDL\DbTable.cs" />
-    <Compile Include="DML\QueryBuilder.cs" />
-    <Compile Include="Entity.cs" />
-    <Compile Include="EntityAdapter.cs" />
-    <Compile Include="EntityClass.cs" />
-    <Compile Include="EntityHelper.cs" />
+    <Compile Include="Country.cs" />
+    <Compile Include="Login.cs" />
+    <Compile Include="LoginModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cchbc\Cchbc.csproj">
+      <Project>{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}</Project>
+      <Name>Cchbc</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

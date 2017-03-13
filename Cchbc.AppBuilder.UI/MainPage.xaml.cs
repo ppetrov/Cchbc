@@ -7,7 +7,6 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Common;
-using Cchbc.Objects;
 
 
 namespace Cchbc.AppBuilder.UI
@@ -65,7 +64,7 @@ namespace Cchbc.AppBuilder.UI
 		public string TableName
 		{
 			get { return _tableName; }
-			set { this.SetProperty(out _tableName, value); }
+			set { this.SetProperty(ref _tableName, value); }
 		}
 
 		private DbTableViewModel _selectedTable;
@@ -74,7 +73,7 @@ namespace Cchbc.AppBuilder.UI
 			get { return _selectedTable; }
 			set
 			{
-				this.SetProperty(out _selectedTable, value);
+				this.SetProperty(ref _selectedTable, value);
 				this.Select(value);
 			}
 		}
@@ -210,13 +209,13 @@ namespace Cchbc.AppBuilder.UI
 		public string InputName
 		{
 			get { return _inputName; }
-			set { this.SetProperty(out _inputName, value); }
+			set { this.SetProperty(ref _inputName, value); }
 		}
 		private bool _isSelected;
 		public bool IsSelected
 		{
 			get { return _isSelected; }
-			set { this.SetProperty(out _isSelected, value); }
+			set { this.SetProperty(ref _isSelected, value); }
 		}
 		public string IconPath { get; }
 		public ICommand CreateCommand { get; }

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.Objects
+namespace Cchbc
 {
 	public sealed class ViewModelEventArgs<T> : EventArgs
 	{

@@ -30,23 +30,19 @@ namespace Cchbc.Localization
 			}
 		}
 
-		public IReadOnlyDictionary<string, string> GetByContext(string context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			Dictionary<string, string> values;
-			this.ByContextValues.TryGetValue(context, out values);
-
-			return values ?? new Dictionary<string, string>(0);
-		}
-
-		public string GetBy(IReadOnlyDictionary<string, string> context, string key)
+		public string GetBy(string context, string key)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (key == null) throw new ArgumentNullException(nameof(key));
 
-			string message;
-			context.TryGetValue(key, out message);
+			var message = default(string);
+
+			Dictionary<string, string> messages;
+			if (this.ByContextValues.TryGetValue(context, out messages))
+			{
+				messages.TryGetValue(key, out message);
+			}
+
 			return message ?? @"N/A";
 		}
 

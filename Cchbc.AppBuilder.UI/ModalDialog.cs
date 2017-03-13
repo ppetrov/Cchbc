@@ -22,7 +22,7 @@ namespace Cchbc.AppBuilder.UI
 
 			feature.Pause();
 
-			var task = dialog.ShowAsync().AsTask();			
+			var task = dialog.ShowAsync().AsTask();
 			var result = await task;
 
 			feature.Resume();
