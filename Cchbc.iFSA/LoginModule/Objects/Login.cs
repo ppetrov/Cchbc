@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.iFSA
+namespace Cchbc.iFSA.LoginModule.Objects
 {
 	public sealed class Login
 	{

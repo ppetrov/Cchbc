@@ -39,10 +39,26 @@
     <!-- A reference to the entire .NET Framework is automatically included -->
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Country.cs" />
-    <Compile Include="Login.cs" />
-    <Compile Include="LoginModule.cs" />
+    <Compile Include="AppModule.cs" />
+    <Compile Include="AppScreen.cs" />
+    <Compile Include="LoginModule\Data\LoginModuleDataProvider.cs" />
+    <Compile Include="GlobalAppContext.cs" />
+    <Compile Include="IAppNavigator.cs" />
+    <Compile Include="IUserSettingsProvider.cs" />
+    <Compile Include="LoginModule\LoginScreenViewModel.cs" />
+    <Compile Include="LoginModule\Objects\AppSystem.cs" />
+    <Compile Include="ReplicationModule\Objects\ReplicationConfig.cs" />
+    <Compile Include="ReplicationModule\Objects\ReplicationSettings.cs" />
+    <Compile Include="User.cs" />
+    <Compile Include="LoginModule\Objects\SystemSource.cs" />
+    <Compile Include="LoginModule\Objects\Country.cs" />
+    <Compile Include="LoginModule\Objects\Login.cs" />
+    <Compile Include="LoginModuleClasses.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UserSettings.cs" />
+    <Compile Include="LoginModule\ViewModels\SystemViewModel.cs" />
+    <Compile Include="LoginModule\ViewModels\CountryViewModel.cs" />
+    <Compile Include="UserSettingsProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cchbc\Cchbc.csproj">
