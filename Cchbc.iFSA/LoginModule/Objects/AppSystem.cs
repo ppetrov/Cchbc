@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.iFSA.LoginModule.Objects
+namespace iFSA.LoginModule.Objects
 {
 	public sealed class AppSystem
 	{

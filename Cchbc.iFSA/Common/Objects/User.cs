@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.iFSA.Objects
+namespace iFSA.Common.Objects
 {
 	public sealed class User
 	{

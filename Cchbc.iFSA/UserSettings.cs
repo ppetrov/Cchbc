@@ -1,7 +1,7 @@
-using Cchbc.iFSA.Objects;
-using Cchbc.iFSA.ReplicationModule.Objects;
+using iFSA.Common.Objects;
+using iFSA.ReplicationModule.Objects;
 
-namespace Cchbc.iFSA
+namespace iFSA
 {
 	public sealed class UserSettings
 	{

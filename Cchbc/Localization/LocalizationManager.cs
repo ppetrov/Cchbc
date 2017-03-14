@@ -14,6 +14,8 @@ namespace Cchbc.Localization
 			this.ByContextValues.Clear();
 
 			//Context.Name:Message
+			var previousContext = default(string);
+
 			foreach (var line in lines)
 			{
 				var index = line.IndexOf('.');
@@ -21,40 +23,72 @@ namespace Cchbc.Localization
 				{
 					index++;
 					var separatorIndex = line.IndexOf(':', index) - index;
-					var context = line.Substring(0, index - 1);
+
+					var context = previousContext;
+					if (context == null || IsContextChanged(line, index, previousContext))
+					{
+						context = line.Substring(0, index - 1);
+					}
+					previousContext = context;
+
 					var key = line.Substring(index, separatorIndex);
 					var message = line.Substring(context.Length + key.Length + 2);
 
-					this.Add(context, key, message);
+					Dictionary<string, string> values;
+					if (!this.ByContextValues.TryGetValue(context, out values))
+					{
+						values = new Dictionary<string, string>();
+						this.ByContextValues.Add(context, values);
+					}
+
+					// Guard against duplicated entries
+					string current;
+					if (!values.TryGetValue(key, out current))
+					{
+						values.Add(key, message);
+					}
 				}
 			}
 		}
 
-		public string GetBy(string context, string key)
+		public string Get(LocalizationKey key)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (key == null) throw new ArgumentNullException(nameof(key));
 
+			var defaultValue = key.Name;
 			var message = default(string);
 
 			Dictionary<string, string> messages;
-			if (this.ByContextValues.TryGetValue(context, out messages))
+			if (this.ByContextValues.TryGetValue(key.Context, out messages))
 			{
-				messages.TryGetValue(key, out message);
+				messages.TryGetValue(key.Name, out message);
 			}
 
-			return message ?? @"N/A";
+			return message ?? defaultValue;
 		}
 
-		private void Add(string context, string key, string message)
+		private static bool IsContextChanged(string line, int index, string previousContext)
 		{
-			Dictionary<string, string> values;
-			if (!this.ByContextValues.TryGetValue(context, out values))
+			if (index == previousContext.Length)
 			{
-				values = new Dictionary<string, string>();
-				this.ByContextValues.Add(context, values);
+				// Compare every symbol
+				for (var i = 0; i < index; i++)
+				{
+					var x = line[i];
+					var y = previousContext[i];
+					if (!char.ToUpperInvariant(x).Equals(char.ToUpperInvariant(y)))
+					{
+						// symbols don't match - context is changed
+						return true;
+					}
+				}
+
+				// No early return - same context
+				return false;
 			}
-			values.Add(key, message);
+
+			// Different lengths - context is changed
+			return true;
 		}
 	}
 }

@@ -20,7 +20,7 @@ namespace Cchbc.Features.DashboardUI
 
 		private async void DashboardScreenLoaded(object sender, RoutedEventArgs e)
 		{
-			var core = AppContextObsolete.AppContext;
+			var core = AppContextObsolete.MainContext;
 			var feature = Feature.StartNew(@"Dashboard", @"Load");
 
 			try
@@ -39,7 +39,7 @@ namespace Cchbc.Features.DashboardUI
 			catch (Exception ex)
 			{
 				core.Log(ex.ToString(), LogLevel.Error);
-				core.FeatureManager.Write(feature, ex);
+				core.FeatureManager.Save(feature, ex);
 			}
 		}
 

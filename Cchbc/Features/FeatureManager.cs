@@ -48,7 +48,7 @@ namespace Cchbc.Features
 			}
 		}
 
-		public void Write(Feature feature, string details = null)
+		public void Save(Feature feature, string details = null)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
@@ -71,7 +71,7 @@ namespace Cchbc.Features
 			}
 		}
 
-		public void Write(Feature feature, Exception exception)
+		public void Save(Feature feature, Exception exception)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));

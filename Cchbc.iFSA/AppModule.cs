@@ -1,34 +1,36 @@
 using System;
 using System.Diagnostics;
+using Cchbc;
+using iFSA.Common.Objects;
 
-namespace Cchbc.iFSA
+namespace iFSA
 {
 	public sealed class AppModule
 	{
-		public AppContext AppContext { get; }
+		public MainContext MainContext { get; }
 
-		public AppModule(AppContext appContext)
+		public AppModule(MainContext mainContext)
 		{
-			if (appContext == null) throw new ArgumentNullException(nameof(appContext));
+			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 
-			this.AppContext = appContext;
+			this.MainContext = mainContext;
 		}
 
 		public void Init()
 		{
-			var cache = this.AppContext.DataCache;
-			cache.Register(DataProvider.GetActivityCancelReasons);
-			cache.Register(DataProvider.GetActivityCloseReasons);
-			cache.Register(DataProvider.GetActivityTypes);
-			cache.Register(DataProvider.GetActivityTypeCategories);
-			cache.Register(DataProvider.GetActivityStatuses);
+			var cache = this.MainContext.DataCache;
+			//cache.Register(DataProvider.GetActivityCancelReasons);
+			//cache.Register(DataProvider.GetActivityCloseReasons);
+			//cache.Register(DataProvider.GetActivityTypes);
+			//cache.Register(DataProvider.GetActivityTypeCategories);
+			//cache.Register(DataProvider.GetActivityStatuses);
 		}
 
 		public void Load()
 		{
-			using (var ctx = this.AppContext.DbContextCreator())
+			using (var ctx = this.MainContext.DbContextCreator())
 			{
-				var cache = this.AppContext.DataCache;
+				var cache = this.MainContext.DataCache;
 
 				var s = Stopwatch.StartNew();
 				var types = cache.GetValues<ActivityType>(ctx).Values;

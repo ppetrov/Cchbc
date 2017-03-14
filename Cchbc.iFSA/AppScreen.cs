@@ -1,4 +1,4 @@
-namespace Cchbc.iFSA
+namespace iFSA
 {
 	public enum AppScreen
 	{

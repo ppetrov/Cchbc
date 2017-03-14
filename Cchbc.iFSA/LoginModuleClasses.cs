@@ -4,20 +4,20 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Cchbc;
 using Cchbc.Common;
 using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
-using Cchbc.iFSA.LoginModule;
-using Cchbc.iFSA.Objects;
-using Cchbc.Localization;
 using Cchbc.Logs;
+using iFSA.Common.Objects;
+using iFSA.LoginModule;
 
-namespace Cchbc.iFSA
+namespace iFSA
 {
 	public sealed class LoginScreen
 	{
-		public LoginScreenViewModel ViewModel { get; } = new LoginScreenViewModel(GlobalAppContext.AppContext, GlobalAppContext.AppNavigator, null, null, null, null);
+		public LoginScreenViewModel ViewModel { get; } = new LoginScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.AppNavigator, null);
 
 		public async void LoadData()
 		{
@@ -27,18 +27,27 @@ namespace Cchbc.iFSA
 			}
 			catch (Exception ex)
 			{
-				GlobalAppContext.AppContext.Log(ex.ToString(), LogLevel.Error);
+				GlobalAppContext.MainContext.Log(ex.ToString(), LogLevel.Error);
 			}
 		}
 	}
 
 	public sealed class AgendaScreen
 	{
-		public AgendaViewModel ViewModel { get; } = new AgendaViewModel(GlobalAppContext.AppContext, GlobalAppContext.Agenda, GlobalAppContext.AppNavigator);
+		public AgendaViewModel ViewModel { get; } = new AgendaViewModel(GlobalAppContext.MainContext, GlobalAppContext.Agenda, GlobalAppContext.AppNavigator);
 
 		public void LoadData()
 		{
-
+			try
+			{
+				// Get from parameter
+				var visits = default(List<Visit>);
+				this.ViewModel.LoadData(visits);
+			}
+			catch (Exception ex)
+			{
+				GlobalAppContext.MainContext.Log(ex.ToString(), LogLevel.Error);
+			}
 		}
 	}
 
@@ -48,37 +57,37 @@ namespace Cchbc.iFSA
 		public User User { get; private set; }
 		public DateTime CurrentDate { get; private set; }
 
-		private Func<AppContext, User, DateTime, List<Visit>> DataProvider { get; }
+		private Func<MainContext, User, DateTime, List<Visit>> DataProvider { get; }
 
-		public Agenda(Func<AppContext, User, DateTime, List<Visit>> dataProvider)
+		public Agenda(Func<MainContext, User, DateTime, List<Visit>> dataProvider)
 		{
 			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 
 			this.DataProvider = dataProvider;
 		}
 
-		public void LoadDay(AppContext appContext, User user, DateTime dateTime)
+		public void LoadDay(MainContext mainContext, User user, DateTime dateTime)
 		{
-			if (appContext == null) throw new ArgumentNullException(nameof(appContext));
+			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
 			this.User = user;
 			this.CurrentDate = dateTime;
 
 			this.Visits.Clear();
-			this.Visits.AddRange(this.DataProvider(appContext, user, dateTime));
+			this.Visits.AddRange(this.DataProvider(mainContext, user, dateTime));
 		}
 
-		public void LoadNextDay(AppContext appContext)
+		public void LoadNextDay(MainContext mainContext)
 		{
-			if (appContext == null) throw new ArgumentNullException(nameof(appContext));
+			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 
-			this.LoadDay(appContext, this.User, this.CurrentDate.AddDays(1));
+			this.LoadDay(mainContext, this.User, this.CurrentDate.AddDays(1));
 		}
 
-		public void LoadPreviousDay(AppContext appContext)
+		public void LoadPreviousDay(MainContext mainContext)
 		{
-			this.LoadDay(appContext, this.User, this.CurrentDate.AddDays(-1));
+			this.LoadDay(mainContext, this.User, this.CurrentDate.AddDays(-1));
 		}
 	}
 
@@ -91,7 +100,7 @@ namespace Cchbc.iFSA
 	{
 		private Agenda Agenda { get; }
 		private IAppNavigator AppNavigator { get; }
-		private AppContext AppContext { get; }
+		private MainContext MainContext { get; }
 
 		private DateTime _currentDate;
 		public DateTime CurrentDate
@@ -106,22 +115,22 @@ namespace Cchbc.iFSA
 
 		public ObservableCollection<AgendaOutletViewModel> Outlets { get; } = new ObservableCollection<AgendaOutletViewModel>();
 
-		public AgendaViewModel(AppContext appContext, Agenda agenda, IAppNavigator appNavigator)
+		public AgendaViewModel(MainContext mainContext, Agenda agenda, IAppNavigator appNavigator)
 		{
 			if (agenda == null) throw new ArgumentNullException(nameof(agenda));
 			if (appNavigator == null) throw new ArgumentNullException(nameof(appNavigator));
 
 			this.Agenda = agenda;
 			this.AppNavigator = appNavigator;
-			this.AppContext = appContext;
+			this.MainContext = mainContext;
 			this.PreviousDayCommand = new RelayCommand(() =>
 			{
-				this.Agenda.LoadPreviousDay(this.AppContext);
+				this.Agenda.LoadPreviousDay(this.MainContext);
 				this.SetupData();
 			});
 			this.NextDayCommand = new RelayCommand(() =>
 			{
-				this.Agenda.LoadNextDay(this.AppContext);
+				this.Agenda.LoadNextDay(this.MainContext);
 				this.SetupData();
 			});
 			this.DisplayCalendarCommand = new RelayCommand(() =>
@@ -132,14 +141,6 @@ namespace Cchbc.iFSA
 				// How to close/cancel multiple days ???
 				this.AppNavigator.NavigateTo(AppScreen.Calendar, this.CurrentDate);
 			});
-		}
-
-		public void LoadData(User user, DateTime dateTime)
-		{
-			if (user == null) throw new ArgumentNullException(nameof(user));
-
-			this.Agenda.LoadDay(this.AppContext, user, dateTime);
-			this.SetupData();
 		}
 
 		public void LoadData(List<Visit> visits)
@@ -169,171 +170,9 @@ namespace Cchbc.iFSA
 		}
 	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	public static class DataHelper
-	{
-		public static TradeChannel GetTradeChannel(IDbContext context, DataCache cache, Outlet outlet)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (cache == null) throw new ArgumentNullException(nameof(cache));
-			if (outlet == null) throw new ArgumentNullException(nameof(outlet));
-
-			TradeChannel result;
-			cache.GetValues<TradeChannel>(context).TryGetValue(-1, out result);
-
-			return result ?? TradeChannel.Empty;
-		}
-
-		public static SubTradeChannel GetSubTradeChannel(IDbContext context, DataCache cache, Outlet outlet)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (cache == null) throw new ArgumentNullException(nameof(cache));
-			if (outlet == null) throw new ArgumentNullException(nameof(outlet));
-
-			SubTradeChannel result;
-			cache.GetValues<SubTradeChannel>(context).TryGetValue(-1, out result);
-
-			return result ?? SubTradeChannel.Empty;
-		}
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-	public sealed class Outlet
-	{
-		public long Id { get; }
-		public string Name { get; }
-		public List<OutletAddress> Addresses { get; } = new List<OutletAddress>();
-
-		public Outlet(long id, string name)
-		{
-			Id = id;
-			Name = name;
-		}
-	}
-
-	public sealed class OutletAddress
-	{
-		public long Outlet { get; }
-		public long Id { get; }
-		public string Street { get; }
-		public string Number { get; }
-		public string City { get; }
-
-		public OutletAddress(long outlet, long id, string street, string number, string city)
-		{
-			Outlet = outlet;
-			Id = id;
-			Street = street;
-			Number = number;
-			City = city;
-		}
-	}
-
-	public sealed class TradeChannel
-	{
-		public static readonly TradeChannel Empty = new TradeChannel(0, string.Empty, string.Empty);
-
-		public long Id { get; }
-		public string Name { get; }
-		public string Description { get; }
-
-		public TradeChannel(long id, string name, string description)
-		{
-			this.Id = id;
-			this.Name = name;
-			this.Description = description;
-		}
-	}
-
-	public sealed class SubTradeChannel
-	{
-		public static readonly SubTradeChannel Empty = new SubTradeChannel(0, string.Empty, string.Empty);
-
-		public long Id { get; }
-		public string Name { get; }
-		public string Description { get; }
-
-		public SubTradeChannel(long id, string name, string description)
-		{
-			this.Id = id;
-			this.Name = name;
-			this.Description = description;
-		}
-	}
-
-
-	public sealed class Article
-	{
-		public long Id { get; }
-		public string Name { get; }
-		public Brand Brand { get; }
-		public Flavor Flavor { get; }
-	}
-
-	public sealed class Brand
-	{
-		public static readonly Brand Empty = new Brand(0, string.Empty);
-
-		public long Id { get; }
-		public string Name { get; }
-
-		public Brand(long id, string name)
-		{
-			Id = id;
-			Name = name;
-		}
-	}
-
-	public sealed class Flavor
-	{
-		public static readonly Flavor Empty = new Flavor(0, string.Empty);
-
-		public long Id { get; }
-		public string Name { get; }
-
-		public Flavor(long id, string name)
-		{
-			Id = id;
-			Name = name;
-		}
-	}
-
-
-
-
 	public sealed class AgendaOutletViewModel : ViewModel<AgendaOutlet>
 	{
-		public AppContext Context { get; }
+		public MainContext Context { get; }
 
 		public string Number { get; }
 		public string Name { get; }
@@ -343,7 +182,7 @@ namespace Cchbc.iFSA
 
 		public ObservableCollection<ActivityViewModel> Activities { get; } = new ObservableCollection<ActivityViewModel>();
 
-		public AgendaOutletViewModel(AppContext context, AgendaOutlet model) : base(model)
+		public AgendaOutletViewModel(MainContext context, AgendaOutlet model) : base(model)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -355,7 +194,7 @@ namespace Cchbc.iFSA
 			{
 				var address = outlet.Addresses[0];
 				this.Street = address.Street;
-				this.StreetNumber = address.Number;
+				this.StreetNumber = address.Number.ToString();
 				this.City = address.City;
 			}
 
@@ -502,7 +341,20 @@ namespace Cchbc.iFSA
 	}
 
 
+	public sealed class AgendaOutlet
+	{
+		public Outlet Outlet { get; }
+		public List<Activity> Activities { get; }
 
+		public AgendaOutlet(Outlet outlet, List<Activity> activities)
+		{
+			if (outlet == null) throw new ArgumentNullException(nameof(outlet));
+			if (activities == null) throw new ArgumentNullException(nameof(activities));
+
+			this.Outlet = outlet;
+			this.Activities = activities;
+		}
+	}
 
 	public sealed class AgendaDataProvider
 	{
@@ -553,6 +405,12 @@ namespace Cchbc.iFSA
 
 
 
+
+
+
+
+
+
 	public interface ICancelReasonSelector
 	{
 		Task<CancelReason> SelectReasonAsync();
@@ -566,15 +424,11 @@ namespace Cchbc.iFSA
 
 		public CancelReason(long id, string name)
 		{
-			Id = id;
-			Name = name;
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			this.Id = id;
+			this.Name = name;
 		}
-	}
-
-
-	public interface ILocalizationManager
-	{
-		string GetBy(string context, string key);
 	}
 
 	public sealed class CalendarViewModel : ViewModel
@@ -584,7 +438,7 @@ namespace Cchbc.iFSA
 		private Agenda Agenda { get; }
 		private IModalDialog ModalDialog { get; }
 		private IAppNavigator AppNavigator { get; }
-		private ILocalizationManager LocalizationManager { get; }
+		private Func<string, string, string> LocalizationManager { get; }
 		private ICalendarDataProvider DataProvider { get; }
 		private ICancelReasonSelector CancelReasonSelector { get; }
 		private DataCache DataCache { get; }
@@ -597,7 +451,7 @@ namespace Cchbc.iFSA
 		public ICommand NextDayCommand { get; }
 		public ICommand PreviousDayCommand { get; }
 
-		public CalendarViewModel(Agenda agenda, IModalDialog modalDialog, ICancelReasonSelector cancelReasonSelector, IAppNavigator appNavigator, ICalendarDataProvider dataProvider, ILocalizationManager localizationManager, DataCache dataCache)
+		public CalendarViewModel(Agenda agenda, IModalDialog modalDialog, ICancelReasonSelector cancelReasonSelector, IAppNavigator appNavigator, ICalendarDataProvider dataProvider, Func<string, string, string> localizationManager, DataCache dataCache)
 		{
 			if (modalDialog == null) throw new ArgumentNullException(nameof(modalDialog));
 			if (cancelReasonSelector == null) throw new ArgumentNullException(nameof(cancelReasonSelector));
@@ -644,7 +498,7 @@ namespace Cchbc.iFSA
 		{
 			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
 
-			var confirmationMessage = this.LocalizationManager.GetBy(@"Calendar", @"ConfirmCancelDay");
+			var confirmationMessage = this.LocalizationManager(@"Calendar", @"ConfirmCancelDay");
 			var isConfirmed = (await this.ModalDialog.ShowAsync(confirmationMessage, Feature.None, DialogType.AcceptDecline)) == DialogResult.Accept;
 			if (!isConfirmed) return;
 
@@ -664,7 +518,7 @@ namespace Cchbc.iFSA
 				var hasActiveDayBefore = activeDay != null;
 				if (hasActiveDayBefore)
 				{
-					var message = this.LocalizationManager.GetBy(@"Calendar", @"ActiveDayBefore") + activeDay.Date.ToString(@"D");
+					var message = this.LocalizationManager(@"Calendar", @"ActiveDayBefore") + activeDay.Date.ToString(@"D");
 					await this.ModalDialog.ShowAsync(message, Feature.None);
 					break;
 				}
@@ -1015,294 +869,12 @@ namespace Cchbc.iFSA
 		}
 	}
 
-	public sealed class AgendaOutlet
-	{
-		public Outlet Outlet { get; }
-		public List<Activity> Activities { get; }
-
-		public AgendaOutlet(Outlet outlet, List<Activity> activities)
-		{
-			if (outlet == null) throw new ArgumentNullException(nameof(outlet));
-			if (activities == null) throw new ArgumentNullException(nameof(activities));
-
-			this.Outlet = outlet;
-			this.Activities = activities;
-		}
-	}
-
-
-	public static class DataProvider
-	{
-		public static Dictionary<long, List<ActivityCloseReason>> GetActivityCloseReasons(IDbContext context, DataCache cache)
-		{
-			var closeReasons = new Dictionary<long, List<ActivityCloseReason>>();
-
-			context.Fill(closeReasons, (r, map) =>
-			{
-				var id = r.GetInt64(0);
-				var name = r.GetString(1);
-				var typeId = r.GetInt64(2);
-
-				List<ActivityCloseReason> local;
-				if (!map.TryGetValue(typeId, out local))
-				{
-					local = new List<ActivityCloseReason>();
-					map.Add(typeId, local);
-				}
-				local.Add(new ActivityCloseReason(id, name));
-			}, new Query(@"SELECT ID, NAME, ACTIVITY_TYPE_ID FROM ACTIVITY_CLOSE_REASONS"));
-
-			return closeReasons;
-		}
-
-		public static Dictionary<long, List<ActivityCancelReason>> GetActivityCancelReasons(IDbContext context, DataCache cache)
-		{
-			var cancelReasons = new Dictionary<long, List<ActivityCancelReason>>();
-
-			context.Fill(cancelReasons, (r, map) =>
-			{
-				var id = r.GetInt64(0);
-				var name = r.GetString(1);
-				var typeId = r.GetInt64(2);
-
-				List<ActivityCancelReason> local;
-				if (!map.TryGetValue(typeId, out local))
-				{
-					local = new List<ActivityCancelReason>();
-					map.Add(typeId, local);
-				}
-				local.Add(new ActivityCancelReason(id, name));
-			}, new Query(@"SELECT ID, NAME, ACTIVITY_TYPE_ID FROM ACTIVITY_CANCEL_REASONS"));
-
-			return cancelReasons;
-		}
-
-		public static Dictionary<long, ActivityType> GetActivityTypes(IDbContext context, DataCache cache)
-		{
-			var categories = cache.GetValues<ActivityTypeCategory>(context);
-			var byTypeCloseReasons = cache.GetValues<List<ActivityCloseReason>>(context);
-			var byTypeCancelReasons = cache.GetValues<List<ActivityCancelReason>>(context);
-
-			var types = new Dictionary<long, ActivityType>();
-
-			context.Fill(types, (r, map) =>
-			{
-				var id = r.GetInt64(0);
-				var name = r.GetString(1);
-				var categoryId = r.GetInt64(2);
-
-				var type = new ActivityType(id, name);
-				var category = categories[categoryId];
-
-				// Set Auto Selected ActivityType to the current if it's matching
-				if (category.AutoSelectedActivityType != null && category.AutoSelectedActivityType.Id == id)
-				{
-					category.AutoSelectedActivityType = type;
-				}
-
-				// Add to related category
-				category.Types.Add(type);
-
-				List<ActivityCloseReason> closeReasonsByType;
-				if (byTypeCloseReasons.TryGetValue(id, out closeReasonsByType))
-				{
-					type.CloseReasons.AddRange(closeReasonsByType);
-				}
-
-				List<ActivityCancelReason> cancelReasonsByType;
-				if (byTypeCancelReasons.TryGetValue(id, out cancelReasonsByType))
-				{
-					type.CancelReasons.AddRange(cancelReasonsByType);
-				}
-
-				map.Add(id, type);
-			}, new Query(@"SELECT ID, NAME, ACTIVITY_TYPE_CATEGORY_ID FROM ACTIVITY_TYPES"));
-
-			// We don't need this rows anymore
-			cache.RemoveValues<List<ActivityCloseReason>>();
-			cache.RemoveValues<List<ActivityCancelReason>>();
-
-			return types;
-		}
-
-		public static Dictionary<long, ActivityStatus> GetActivityStatuses(IDbContext context, DataCache cache)
-		{
-			var statuses = new Dictionary<long, ActivityStatus>();
-
-			context.Fill(statuses, (r, map) =>
-			{
-				var id = r.GetInt64(0);
-				var name = r.GetString(1);
-
-				map.Add(id, new ActivityStatus(id, name));
-			}, new Query(@"SELECT ID, NAME FROM ACTIVITY_STATUSES"));
-
-			return statuses;
-		}
-
-		public static Dictionary<long, ActivityTypeCategory> GetActivityTypeCategories(IDbContext context, DataCache cache)
-		{
-			var categories = new Dictionary<long, ActivityTypeCategory>();
-
-			context.Fill(categories, (r, map) =>
-			{
-				var id = r.GetInt64(0);
-				var name = r.GetString(1);
-
-				var category = new ActivityTypeCategory(id, name);
-				if (!r.IsDbNull(2))
-				{
-					category.AutoSelectedActivityType = new ActivityType(r.GetInt64(2), string.Empty);
-				}
-
-				map.Add(id, category);
-			}, new Query(@"SELECT ID, NAME, AUTO_SELECTED_ACTIVITY_TYPE_ID FROM ACTIVITY_TYPE_CATEGORIES"));
-
-			return categories;
-		}
-
-		public static Dictionary<long, Outlet> GetOutlets(IDbContext context, DataCache cache)
-		{
-			var outlets = new Dictionary<long, Outlet>();
-
-			context.Fill(outlets, (r, map) =>
-			{
-				var id = r.GetInt64(0);
-				var name = r.GetString(1);
-
-				var outlet = new Outlet(id, name);
-
-				map.Add(id, outlet);
-			}, new Query(@"SELECT ID, NAME, AUTO_SELECTED_ACTIVITY_TYPE_ID FROM ACTIVITY_TYPE_CATEGORIES"));
-
-
-			var addresses = cache.GetValues<List<OutletAddress>>(context);
-			foreach (var outlet in outlets.Values)
-			{
-				List<OutletAddress> byOutlet;
-				if (addresses.TryGetValue(outlet.Id, out byOutlet))
-				{
-					outlet.Addresses.AddRange(byOutlet);
-				}
-			}
-
-			// We don't need them anymore as they are assigned to the respective outlets
-			cache.RemoveValues<List<OutletAddress>>();
 
 
 
-			return outlets;
-		}
 
-		public static Dictionary<long, List<OutletAddress>> GetOutletAddressed(IDbContext context, DataCache cache)
-		{
-			var addresses = new Dictionary<long, List<OutletAddress>>();
 
-			context.Fill(addresses, (r, map) =>
-			{
-				List<OutletAddress> byOutlet;
-				if (!map.TryGetValue(-1, out byOutlet))
-				{
-					byOutlet = new List<OutletAddress>();
-					map.Add(-1, byOutlet);
-				}
 
-				byOutlet.Add(new OutletAddress(-1, 0, string.Empty, string.Empty, string.Empty));
-			}, new Query(@"SELECT ID, NAME, AUTO_SELECTED_ACTIVITY_TYPE_ID FROM ACTIVITY_TYPE_CATEGORIES"));
 
-			return addresses;
-		}
-	}
 
-	public sealed class ActivityType
-	{
-		public long Id { get; }
-		public string Name { get; }
-		public List<ActivityCloseReason> CloseReasons { get; } = new List<ActivityCloseReason>();
-		public List<ActivityCancelReason> CancelReasons { get; } = new List<ActivityCancelReason>();
-
-		public ActivityType(long id, string name)
-		{
-			Id = id;
-			Name = name;
-		}
-	}
-
-	public sealed class ActivityTypeCategory
-	{
-		public long Id { get; }
-		public string Name { get; }
-		public List<ActivityType> Types { get; } = new List<ActivityType>();
-		public ActivityType AutoSelectedActivityType { get; set; }
-
-		public ActivityTypeCategory(long id, string name)
-		{
-			Id = id;
-			Name = name;
-		}
-	}
-
-	public sealed class Visit
-	{
-		public long Id { get; set; }
-		public Outlet Outlet { get; set; }
-		public DateTime FromDate { get; }
-		public DateTime ToDate { get; }
-		public List<Activity> Activities { get; } = new List<Activity>();
-
-		public Visit(long id, Outlet outlet, DateTime fromDate, DateTime toDate)
-		{
-			Id = id;
-			Outlet = outlet;
-			FromDate = fromDate;
-			ToDate = toDate;
-		}
-	}
-
-	public sealed class Activity
-	{
-		public long Id { get; set; }
-		public ActivityType Type { get; }
-		public ActivityStatus Status { get; }
-		public DateTime Date { get; }
-		public string Details { get; }
-	}
-
-	public sealed class ActivityStatus
-	{
-		public long Id { get; }
-		public string Name { get; }
-		public bool IsActive => this.Id == 0 || this.IsWorking;
-		public bool IsWorking => this.Id == 1;
-
-		public ActivityStatus(long id, string name)
-		{
-			this.Id = id;
-			this.Name = name;
-		}
-	}
-
-	public sealed class ActivityCloseReason
-	{
-		public long Id { get; }
-		public string Name { get; }
-
-		public ActivityCloseReason(long id, string name)
-		{
-			Id = id;
-			Name = name;
-		}
-	}
-
-	public sealed class ActivityCancelReason
-	{
-		public long Id { get; }
-		public string Name { get; }
-
-		public ActivityCancelReason(long id, string name)
-		{
-			Id = id;
-			Name = name;
-		}
-	}
 }

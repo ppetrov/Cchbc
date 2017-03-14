@@ -1,7 +1,7 @@
 using System;
-using Cchbc.iFSA.LoginModule.Objects;
+using iFSA.LoginModule.Objects;
 
-namespace Cchbc.iFSA.ReplicationModule.Objects
+namespace iFSA.ReplicationModule.Objects
 {
 	public sealed class ReplicationSettings
 	{

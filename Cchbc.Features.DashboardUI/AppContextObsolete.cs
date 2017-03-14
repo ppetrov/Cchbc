@@ -10,7 +10,7 @@ namespace Cchbc.Features.DashboardUI
 {
 	public sealed class AppContextObsolete
 	{
-		public static AppContext AppContext { get; } = new AppContext((msg, level) =>
+		public static MainContext MainContext { get; } = new MainContext((msg, level) =>
 		{
 			Debug.WriteLine(msg, level.ToString());
 		}, new TransactionContextCreator(Path.Combine(ApplicationData.Current.LocalFolder.Path, @"features.sqlite")).Create, new ModalDialog());

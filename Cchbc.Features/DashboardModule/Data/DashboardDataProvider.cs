@@ -22,7 +22,7 @@ namespace Cchbc.Features.DashboardModule.Data
 				var maxUsers = default(int?);
 				var maxMostUsedFeatures = default(int?);
 
-				var log = featureContext.AppContext.Log;
+				var log = featureContext.MainContext.Log;
 				// TODO : Load settings from db for the context
 				var contextForSettings = nameof(Dashboard);
 				var settings = new List<Setting>();

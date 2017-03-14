@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.iFSA
+namespace iFSA
 {
 	public sealed class UserSettingsProvider : IUserSettingsProvider
 	{

@@ -7,7 +7,7 @@ using Cchbc.Logs;
 
 namespace Cchbc
 {
-	public sealed class AppContext
+	public sealed class MainContext
 	{
 		public Action<string, LogLevel> Log { get; }
 		public Func<IDbContext> DbContextCreator { get; }
@@ -16,7 +16,7 @@ namespace Cchbc
 		public FeatureManager FeatureManager { get; } = new FeatureManager();
 		public LocalizationManager LocalizationManager { get; } = new LocalizationManager();
 
-		public AppContext(Action<string, LogLevel> log, Func<IDbContext> dbContextCreator, IModalDialog modalDialog)
+		public MainContext(Action<string, LogLevel> log, Func<IDbContext> dbContextCreator, IModalDialog modalDialog)
 		{
 			if (log == null) throw new ArgumentNullException(nameof(log));
 			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.iFSA.ReplicationModule.Objects
+namespace iFSA.ReplicationModule.Objects
 {
 	public sealed class ReplicationConfig
 	{

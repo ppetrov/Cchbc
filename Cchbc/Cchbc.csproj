@@ -40,9 +40,10 @@
     <Compile Include="Archive\ZipHeader.cs" />
     <Compile Include="Common\FeatureContext.cs" />
     <Compile Include="Common\RelayCommand.cs" />
+    <Compile Include="Localization\LocalizationKey.cs" />
     <Compile Include="Settings\Setting.cs" />
     <Compile Include="Settings\ValueParser.cs" />
-    <Compile Include="AppContext.cs" />
+    <Compile Include="MainContext.cs" />
     <Compile Include="DataCache.cs" />
     <Compile Include="Data\IFieldDataReader.cs" />
     <Compile Include="Data\Query.cs" />

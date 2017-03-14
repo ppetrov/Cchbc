@@ -629,11 +629,11 @@ namespace ConsoleClient
 			{
 				throw new Exception(@"Unable to display feature");
 
-				featureManager.Write(f);
+				featureManager.Save(f);
 			}
 			catch (Exception ex)
 			{
-				featureManager.Write(f, ex);
+				featureManager.Save(f, ex);
 			}
 
 			s.Stop();

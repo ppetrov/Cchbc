@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cchbc.Features", "Cchbc.Fea
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cchbc.Features.DashboardUI", "Cchbc.Features.DashboardUI\Cchbc.Features.DashboardUI.csproj", "{3763062F-B096-4304-8F1E-147081C92BE9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cchbc.iFSA", "Cchbc.iFSA\Cchbc.iFSA.csproj", "{41397028-0B7B-4EF3-92AB-C6E617CAEC5B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iFSA", "Cchbc.iFSA\iFSA.csproj", "{41397028-0B7B-4EF3-92AB-C6E617CAEC5B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

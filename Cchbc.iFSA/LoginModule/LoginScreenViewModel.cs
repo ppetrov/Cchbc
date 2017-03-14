@@ -3,28 +3,31 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Cchbc;
 using Cchbc.Common;
 using Cchbc.Features;
-using Cchbc.iFSA.LoginModule.Objects;
-using Cchbc.iFSA.LoginModule.ViewModels;
-using Cchbc.iFSA.Objects;
-using Cchbc.iFSA.ReplicationModule.Objects;
+using Cchbc.Localization;
+using Cchbc.Logs;
+using iFSA.Common.Objects;
+using iFSA.LoginModule.Objects;
+using iFSA.LoginModule.ViewModels;
+using iFSA.ReplicationModule.Objects;
 
-namespace Cchbc.iFSA.LoginModule
+namespace iFSA.LoginModule
 {
 	public sealed class LoginScreenViewModel : ViewModel
 	{
+		private string GetCustomized(string name)
+		{
+			return this.MainContext.LocalizationManager.Get(new LocalizationKey(@"LoginScreen", name));
+		}
+
+		private MainContext MainContext { get; }
+		private IAppNavigator AppNavigator { get; }
+		private LoginScreenDataProvider DataProvider { get; }
+
 		private List<User> Users { get; set; }
 		private List<Visit> Visits { get; set; }
-
-		private AppContext AppContext { get; }
-		private IAppNavigator AppNavigator { get; }
-
-		// TODO : Unify this into a separate class
-		private IUserSettingsProvider UserSettingsProvider { get; }
-		private Func<AppContext, List<User>> UsersProvider { get; }
-		private Func<AppContext, User, DateTime, List<Visit>> VisitsProvider { get; }
-		private Func<AppSystem, Country, Task<ReplicationConfig>> ReplicationConfigProvider { get; }
 
 		public string NameCaption { get; }
 		public string PasswordCaption { get; }
@@ -75,162 +78,213 @@ namespace Cchbc.iFSA.LoginModule
 		}
 		public ObservableCollection<CountryViewModel> Countries { get; } = new ObservableCollection<CountryViewModel>();
 
-		public LoginScreenViewModel(AppContext appContext, IAppNavigator appNavigator, Func<IEnumerable<Country>> countriesProvider, Func<AppContext, List<User>> usersProvider, Func<UserSettings> userSettingsProvider, Action<UserSettings> userSettingsSaver)
+		public LoginScreenViewModel(MainContext mainContext, IAppNavigator appNavigator, LoginScreenDataProvider dataProvider)
 		{
+			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
+			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 			if (appNavigator == null) throw new ArgumentNullException(nameof(appNavigator));
-			if (countriesProvider == null) throw new ArgumentNullException(nameof(countriesProvider));
 
+			this.DataProvider = dataProvider;
+			this.MainContext = mainContext;
 			this.AppNavigator = appNavigator;
-			this.UsersProvider = usersProvider;
-			this.AppContext = appContext;
 
-			// TODO : Customize
-			this.NameCaption = @"Name";
-			this.PasswordCaption = @"Password";
-			this.LoginCaption = @"Login";
-			this.AdvancedCaption = @"Advanced";
+			this.NameCaption = this.GetCustomized(@"Name");
+			this.PasswordCaption = this.GetCustomized(@"Password");
+			this.LoginCaption = this.GetCustomized(@"Login");
+			this.AdvancedCaption = this.GetCustomized(@"Advanced");
 
-			// TODO : Customize
-			this.Systems.Add(new SystemViewModel(new AppSystem(@"Production", SystemSource.Production)));
-			this.Systems.Add(new SystemViewModel(new AppSystem(@"Quality", SystemSource.Quality)));
-			this.Systems.Add(new SystemViewModel(new AppSystem(@"Development", SystemSource.Development)));
+			this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Production"), SystemSource.Production)));
+			this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Quality"), SystemSource.Quality)));
+			this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Development"), SystemSource.Development)));
 
-			foreach (var country in countriesProvider())
+			foreach (var country in this.DataProvider.CountriesProvider())
 			{
 				this.Countries.Add(new CountryViewModel(country));
 			}
 
-			this.AdvancedCommand = new RelayCommand(this.AdvancedAction);
-			this.LoginCommand = new RelayCommand(this.LoginAction);
+			this.AdvancedCommand = new RelayCommand(this.Advanced);
+			this.LoginCommand = new RelayCommand(this.Login);
 		}
-
-		public string Context => @"Login";
 
 		public Task LoadDataAsync()
 		{
-			// TODO : !!! Customize
-			this.Progress = @"Load data";
 			this.IsLoadingData = true;
+			this.Progress = this.GetCustomized(@"LoadData");
 
-			var userSettings = this.UserSettingsProvider.Load();
+			var userSettings = this.DataProvider.UserSettingsProvider.Load();
 			if (userSettings != null)
 			{
-				var user = userSettings.User;
-				this.Username = user.Name;
-				this.Password = user.Password;
+				this.Username = userSettings.User.Name;
 			}
-			this.Users = this.UsersProvider(this.AppContext);
+			this.Users = this.DataProvider.UsersProvider(this.MainContext);
 
-			if (this.Users.Count > 0)
+			if (this.Users.Count == 0) return Task.CompletedTask;
+
+			var currentUser = this.Users[0];
+
+			if (this.Username != string.Empty)
 			{
-				var currentUser = this.Users[0];
-
-				if (this.Username != string.Empty)
+				foreach (var login in this.Users)
 				{
-					foreach (var login in this.Users)
+					if (login.Name.Equals(this.Username, StringComparison.OrdinalIgnoreCase))
 					{
-						if (login.Name.Equals(this.Username, StringComparison.OrdinalIgnoreCase))
-						{
-							currentUser = login;
-							break;
-						}
-					}
-				}
-
-				return Task.Run(() =>
-				{
-					var feature = Feature.StartNew(this.Context, @"LoadData");
-
-					this.Visits = this.VisitsProvider(this.AppContext, currentUser, DateTime.Today);
-
-					this.AppContext.FeatureManager.Write(feature);
-				}).ContinueWith(t =>
-				{
-					// TODO : !!! Customize
-					this.Progress = @"Completed";
-					this.IsLoadingData = false;
-				}, TaskScheduler.FromCurrentSynchronizationContext());
-			}
-			return Task.FromResult(true);
-		}
-
-		private async void LoginAction()
-		{
-			var username = (this.Username ?? string.Empty).Trim();
-			var password = (this.Password ?? string.Empty);
-
-			if (this.Users.Count > 0)
-			{
-				var user = default(User);
-
-				foreach (var current in this.Users)
-				{
-					if (username.Equals(current.Name, StringComparison.OrdinalIgnoreCase) &&
-						password.Equals(current.Password))
-					{
-						user = current;
+						currentUser = login;
 						break;
 					}
 				}
-
-				if (user != null)
-				{
-					// Load & Save the current Login
-					var userSettings = this.UserSettingsProvider.Load();
-					if (userSettings != null)
-					{
-						userSettings.User = user;
-						this.UserSettingsProvider.Save(userSettings);
-					}
-
-					// Wait while the data is loaded
-					while (this.IsLoadingData)
-					{
-						await Task.Delay(TimeSpan.FromMilliseconds(100));
-					}
-
-					// We can load agenda with a date or with a list of visits
-					this.AppNavigator.NavigateTo(AppScreen.Agenda, this.Visits);
-				}
-				else
-				{
-					// TODO : Customize
-					await this.AppContext.ModalDialog.ShowAsync(@"Wrong user/pass", Feature.None);
-				}
-				return;
 			}
 
-			var systemViewModel = this.SelectedSystem;
-			if (systemViewModel == null)
+			return Task.Run(() =>
 			{
-				// TODO : Customize
-				await this.AppContext.ModalDialog.ShowAsync(@"No AppSystem selected", Feature.None);
-				return;
-			}
-			var countryViewModel = this.SelectedCountry;
-			if (countryViewModel == null)
+				var feature = Feature.StartNew(nameof(LoginScreenViewModel), nameof(LoadDataAsync));
+				try
+				{
+					this.Visits = this.DataProvider.VisitsProvider(this.MainContext, currentUser, DateTime.Today);
+				}
+				catch (Exception ex)
+				{
+					this.MainContext.Log(ex.ToString(), LogLevel.Error);
+				}
+				finally
+				{
+					this.MainContext.FeatureManager.Save(feature);
+				}
+			}).ContinueWith(t =>
 			{
-				// TODO : Customize
-				await this.AppContext.ModalDialog.ShowAsync(@"No Country selected", Feature.None);
-				return;
-			}
-
-			var config = await this.ReplicationConfigProvider(systemViewModel.AppSystem, countryViewModel.Country);
-			var settings = new ReplicationSettings(config, new Login(this.Username, this.Password));
-
-			// TODO : Replicate !!!
+				this.Progress = this.GetCustomized(@"DataLoadCompleted");
+				this.IsLoadingData = false;
+			}, TaskScheduler.FromCurrentSynchronizationContext());
 		}
 
-		private void AdvancedAction()
+		private async void Login()
 		{
-			var config = new ReplicationConfig(string.Empty, 0);
-			var userSettings = this.UserSettingsProvider.Load();
-			if (userSettings != null)
+			var feature = Feature.StartNew(nameof(LoginScreenViewModel), nameof(Login));
+			try
 			{
-				config = userSettings.ReplicationConfig;
+				var username = (this.Username ?? string.Empty).Trim();
+				var password = (this.Password ?? string.Empty);
+
+				var hasUsers = this.Users.Count > 0;
+				if (hasUsers)
+				{
+					var user = default(User);
+
+					foreach (var current in this.Users)
+					{
+						if (username.Equals(current.Name, StringComparison.OrdinalIgnoreCase) &&
+							password.Equals(current.Password))
+						{
+							user = current;
+							break;
+						}
+					}
+
+					if (user != null)
+					{
+						// Save the current username
+						var userSettings = this.DataProvider.UserSettingsProvider.Load();
+						if (userSettings != null)
+						{
+							userSettings.User = user;
+							this.DataProvider.UserSettingsProvider.Save(userSettings);
+						}
+
+						// Wait while the data is loaded
+						while (this.IsLoadingData)
+						{
+							await Task.Delay(TimeSpan.FromMilliseconds(25));
+						}
+
+						// Display agenda with the list of visits
+						this.AppNavigator.NavigateTo(AppScreen.Agenda, this.Visits);
+					}
+					else
+					{
+						await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"WrongCredentials"), feature);
+					}
+					return;
+				}
+
+				var systemViewModel = this.SelectedSystem;
+				if (systemViewModel == null)
+				{
+					await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"NoSystemSelected"), feature);
+					return;
+				}
+				var countryViewModel = this.SelectedCountry;
+				if (countryViewModel == null)
+				{
+					await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"NoCountrySelected"), feature);
+					return;
+				}
+
+				var system = systemViewModel.AppSystem;
+				var country = countryViewModel.Country;
+				var config = await this.DataProvider.ReplicationConfigProvider(system, country);
+				if (config != null)
+				{
+					var login = new Login(this.Username, this.Password);
+					var settings = new ReplicationSettings(config, login);
+
+					// TODO : Replicate !!!	
+
+					var success = true;
+					if (success)
+					{
+						try
+						{
+							// Save the current replication config
+							var userSettings = this.DataProvider.UserSettingsProvider.Load();
+							if (userSettings != null)
+							{
+								userSettings.ReplicationConfig = config;
+								this.DataProvider.UserSettingsProvider.Save(userSettings);
+							}
+
+							await LoadDataAsync();
+
+							this.LoginCommand.Execute(null);
+						}
+						catch (Exception ex)
+						{
+							this.MainContext.Log(ex.ToString(), LogLevel.Error);
+						}
+					}
+				}
 			}
-			var settings = new ReplicationSettings(config, new Login(this.Username, this.Password));
-			this.AppNavigator.NavigateTo(AppScreen.Replication, settings);
+			catch (Exception ex)
+			{
+				this.MainContext.Log(ex.ToString(), LogLevel.Error);
+			}
+			finally
+			{
+				this.MainContext.FeatureManager.Save(feature);
+			}
+		}
+
+		private void Advanced()
+		{
+			var feature = Feature.StartNew(nameof(LoginScreenViewModel), nameof(Advanced));
+			try
+			{
+				var config = new ReplicationConfig(string.Empty, 0);
+				var userSettings = this.DataProvider.UserSettingsProvider.Load();
+				if (userSettings != null)
+				{
+					config = userSettings.ReplicationConfig;
+				}
+				var login = new Login(this.Username, this.Password);
+				var settings = new ReplicationSettings(config, login);
+				this.AppNavigator.NavigateTo(AppScreen.Replication, settings);
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Log(ex.ToString(), LogLevel.Error);
+			}
+			finally
+			{
+				this.MainContext.FeatureManager.Save(feature);
+			}
 		}
 	}
 }

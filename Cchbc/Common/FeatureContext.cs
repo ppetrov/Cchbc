@@ -6,18 +6,18 @@ namespace Cchbc.Common
 {
 	public sealed class FeatureContext : IDisposable
 	{
-		public AppContext AppContext { get; }
+		public MainContext MainContext { get; }
 		public Feature Feature { get; }
 		public IDbContext DbContext { get; }
 
-		public FeatureContext(AppContext appContext, Feature feature)
+		public FeatureContext(MainContext mainContext, Feature feature)
 		{
-			if (appContext == null) throw new ArgumentNullException(nameof(appContext));
+			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			this.AppContext = appContext;
+			this.MainContext = mainContext;
 			this.Feature = feature;
-			this.DbContext = appContext.DbContextCreator();
+			this.DbContext = mainContext.DbContextCreator();
 		}
 
 		public void Dispose()

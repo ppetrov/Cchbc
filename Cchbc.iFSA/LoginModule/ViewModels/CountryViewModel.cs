@@ -1,7 +1,7 @@
 ﻿using System;
-using Cchbc.iFSA.LoginModule.Objects;
+using iFSA.LoginModule.Objects;
 
-namespace Cchbc.iFSA.LoginModule.ViewModels
+namespace iFSA.LoginModule.ViewModels
 {
 	public sealed class CountryViewModel
 	{

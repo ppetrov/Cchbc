@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cchbc.Data;
-using Cchbc.iFSA.LoginModule.Objects;
-using Cchbc.iFSA.Objects;
-using Cchbc.Localization;
+using iFSA.Common.Objects;
+using iFSA.LoginModule.Objects;
 
-namespace Cchbc.iFSA.LoginModule.Data
+namespace iFSA.LoginModule.Data
 {
-	public static class LoginModuleDataProvider
+	public static class DataProvider
 	{
-		public static IEnumerable<Country> GetCountryCodes(LocalizationManager localizationManager)
+		public static IEnumerable<Country> GetCountries()
 		{
-			if (localizationManager == null) throw new ArgumentNullException(nameof(localizationManager));
-
-			// TODO : Customize captions
 			var countries = new[]
 			{
 				new Country(@"Bulgaria", @"BG"),

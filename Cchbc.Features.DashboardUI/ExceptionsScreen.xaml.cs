@@ -20,7 +20,7 @@ namespace Cchbc.Features.DashboardUI
 
 		private void ExceptionsScreen_OnLoaded(object sender, RoutedEventArgs e)
 		{
-			var core = AppContextObsolete.AppContext;
+			var core = AppContextObsolete.MainContext;
 			var feature = new Feature(@"Exceptions", @"Load");
 			try
 			{
@@ -34,7 +34,7 @@ namespace Cchbc.Features.DashboardUI
 
 				core.FeatureManager.Load(core.DbContextCreator);
 
-				core.FeatureManager.Write(feature, string.Empty);
+				core.FeatureManager.Save(feature, string.Empty);
 				this.ViewModel.Load(
 					ExceptionsDataProvider.GetTimePeriods,
 					ExceptionsDataProvider.GetVersions,
@@ -46,7 +46,7 @@ namespace Cchbc.Features.DashboardUI
 			catch (Exception ex)
 			{
 				core.Log(ex.ToString(), LogLevel.Error);
-				core.FeatureManager.Write(feature, ex);
+				core.FeatureManager.Save(feature, ex);
 			}
 		}
 	}
