@@ -27,7 +27,7 @@ namespace iFSA.LoginModule
 		private LoginScreenDataProvider DataProvider { get; }
 
 		private List<User> Users { get; set; }
-		private List<Visit> Visits { get; set; }
+		//private List<Visit> Visits { get; set; }
 
 		public string NameCaption { get; }
 		public string PasswordCaption { get; }
@@ -139,7 +139,7 @@ namespace iFSA.LoginModule
 				var feature = Feature.StartNew(nameof(LoginScreenViewModel), nameof(LoadDataAsync));
 				try
 				{
-					this.Visits = this.DataProvider.VisitsProvider(this.MainContext, currentUser, DateTime.Today);
+					//this.Visits = this.DataProvider.VisitsProvider(this.MainContext, currentUser, DateTime.Today);
 				}
 				catch (Exception ex)
 				{
@@ -196,7 +196,8 @@ namespace iFSA.LoginModule
 						}
 
 						// Display agenda with the list of visits
-						this.AppNavigator.NavigateTo(AppScreen.Agenda, this.Visits);
+						// TODO : !!!!
+						this.AppNavigator.NavigateTo(AppScreen.Agenda, null);
 					}
 					else
 					{

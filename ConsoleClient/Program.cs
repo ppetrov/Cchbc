@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -238,18 +239,38 @@ namespace ConsoleClient
 
 			try
 			{
-				var cl = new[] { "a", "b", "c" };
-				var db = new[] { "a", "b", "c", "d", "e", "f" };
-				var miss = cl.Except(db, StringComparer.OrdinalIgnoreCase);
-				foreach (var p in miss)
+				var bc = new BlockingCollection<string>();
+				ThreadPool.QueueUserWorkItem(_ =>
 				{
-					Console.WriteLine(p);
-				}
+					var col = _ as BlockingCollection<string>;
+					foreach (var symbol in new[] {"A", "B", "C"})
+					{
+						col.Add(symbol);
+					}
+					col.CompleteAdding();
+				}, bc);
+				ThreadPool.QueueUserWorkItem(_ =>
+				{
+					using (var col = _ as BlockingCollection<string>)
+					{
+						foreach (var v in col.GetConsumingEnumerable())
+						{
+							Console.WriteLine(v);
+						}
+					}
+				}, bc);
+
+				Console.ReadLine();
+				Console.WriteLine(@"Done");
+
 
 				return;
 				var query = @"SELECT name FROM sqlite_master WHERE type='table' order by name";
 
-				using (var client = new TransactionContextCreator(GetSqliteConnectionString(@"C:\Users\PetarPetrov\Desktop\BG000956.sqlite")).Create())
+				using (
+					var client =
+						new TransactionContextCreator(GetSqliteConnectionString(@"C:\Users\PetarPetrov\Desktop\BG000956.sqlite")).Create()
+					)
 				{
 					var names = client.Execute(new Query<string>(query, dr => dr.GetString(0)));
 
@@ -264,7 +285,6 @@ namespace ConsoleClient
 							{
 								Console.WriteLine(n + " " + v);
 							}
-
 						}
 						catch (Exception)
 						{
@@ -311,7 +331,6 @@ namespace ConsoleClient
 				//}
 
 				//return;
-
 
 
 				return;
@@ -373,11 +392,14 @@ namespace ConsoleClient
 				return;
 
 
-				var viewModel = new ExceptionsViewModel(new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create, ExceptionsSettings.Default);
+				var viewModel =
+					new ExceptionsViewModel(new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create,
+						ExceptionsSettings.Default);
 
 				for (var i = 0; i < 100; i++)
 				{
-					viewModel.Load(ExceptionsDataProvider.GetTimePeriods, ExceptionsDataProvider.GetVersions, ExceptionsDataProvider.GetExceptions, ExceptionsDataProvider.GetExceptionsCounts);
+					viewModel.Load(ExceptionsDataProvider.GetTimePeriods, ExceptionsDataProvider.GetVersions,
+						ExceptionsDataProvider.GetExceptions, ExceptionsDataProvider.GetExceptionsCounts);
 				}
 
 				w.Stop();
@@ -400,7 +422,8 @@ namespace ConsoleClient
 				Console.WriteLine(@"Exceptions");
 				foreach (var vm in viewModel.LatestExceptions)
 				{
-					Console.WriteLine('\t' + string.Empty + new string(vm.Message.Take(40).ToArray()) + $@"... ({vm.CreatedAt.ToString(@"T")}) " + vm.User.Name + $@"({vm.Version.Name})");
+					Console.WriteLine('\t' + string.Empty + new string(vm.Message.Take(40).ToArray()) +
+					                  $@"... ({vm.CreatedAt.ToString(@"T")}) " + vm.User.Name + $@"({vm.Version.Name})");
 				}
 				Console.WriteLine();
 

@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Cchbc;
@@ -10,175 +13,66 @@ using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Logs;
+using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
 using iFSA.LoginModule;
 
 namespace iFSA
 {
-	public sealed class LoginScreen
-	{
-		public LoginScreenViewModel ViewModel { get; } = new LoginScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.AppNavigator, null);
+	//public sealed class LoginScreen
+	//{
+	//	public LoginScreenViewModel ViewModel { get; } = new LoginScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.AppNavigator, null);
 
-		public async void LoadData()
-		{
-			try
-			{
-				await this.ViewModel.LoadDataAsync();
-			}
-			catch (Exception ex)
-			{
-				GlobalAppContext.MainContext.Log(ex.ToString(), LogLevel.Error);
-			}
-		}
-	}
+	//	public async void LoadData()
+	//	{
+	//		try
+	//		{
+	//			await this.ViewModel.LoadDataAsync();
+	//		}
+	//		catch (Exception ex)
+	//		{
+	//			GlobalAppContext.MainContext.Log(ex.ToString(), LogLevel.Error);
+	//		}
+	//	}
+	//}
 
-	public sealed class AgendaScreen
-	{
-		public AgendaViewModel ViewModel { get; } = new AgendaViewModel(GlobalAppContext.MainContext, GlobalAppContext.Agenda, GlobalAppContext.AppNavigator);
+	//public sealed class AgendaScreen
+	//{
+	//	public AgendaScreenViewModel ViewModel { get; } = new AgendaScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.Agenda, GlobalAppContext.AppNavigator, GlobalAppContext.UIThreadDispatcher);
 
-		public void LoadData()
-		{
-			try
-			{
-				// Get from parameter
-				var visits = default(List<Visit>);
-				this.ViewModel.LoadData(visits);
-			}
-			catch (Exception ex)
-			{
-				GlobalAppContext.MainContext.Log(ex.ToString(), LogLevel.Error);
-			}
-		}
-	}
+	//	public void LoadData()
+	//	{
+	//		try
+	//		{
+	//			// Get from parameter
+	//			var outlets = default(List<AgendaOutlet>);
+	//			this.ViewModel.LoadData(outlets);
+	//		}
+	//		catch (Exception ex)
+	//		{
+	//			GlobalAppContext.MainContext.Log(ex.ToString(), LogLevel.Error);
+	//		}
+	//	}
+	//}
 
-	public sealed class Agenda
-	{
-		public List<Visit> Visits { get; }
-		public User User { get; private set; }
-		public DateTime CurrentDate { get; private set; }
 
-		private Func<MainContext, User, DateTime, List<Visit>> DataProvider { get; }
-
-		public Agenda(Func<MainContext, User, DateTime, List<Visit>> dataProvider)
-		{
-			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
-
-			this.DataProvider = dataProvider;
-		}
-
-		public void LoadDay(MainContext mainContext, User user, DateTime dateTime)
-		{
-			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
-			if (user == null) throw new ArgumentNullException(nameof(user));
-
-			this.User = user;
-			this.CurrentDate = dateTime;
-
-			this.Visits.Clear();
-			this.Visits.AddRange(this.DataProvider(mainContext, user, dateTime));
-		}
-
-		public void LoadNextDay(MainContext mainContext)
-		{
-			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
-
-			this.LoadDay(mainContext, this.User, this.CurrentDate.AddDays(1));
-		}
-
-		public void LoadPreviousDay(MainContext mainContext)
-		{
-			this.LoadDay(mainContext, this.User, this.CurrentDate.AddDays(-1));
-		}
-	}
-
-	public sealed class Calendar
-	{
-
-	}
-
-	public sealed class AgendaViewModel : ViewModel
-	{
-		private Agenda Agenda { get; }
-		private IAppNavigator AppNavigator { get; }
-		private MainContext MainContext { get; }
-
-		private DateTime _currentDate;
-		public DateTime CurrentDate
-		{
-			get { return _currentDate; }
-			set { this.SetProperty(ref _currentDate, value); }
-		}
-
-		public ICommand PreviousDayCommand { get; }
-		public ICommand NextDayCommand { get; }
-		public ICommand DisplayCalendarCommand { get; }
-
-		public ObservableCollection<AgendaOutletViewModel> Outlets { get; } = new ObservableCollection<AgendaOutletViewModel>();
-
-		public AgendaViewModel(MainContext mainContext, Agenda agenda, IAppNavigator appNavigator)
-		{
-			if (agenda == null) throw new ArgumentNullException(nameof(agenda));
-			if (appNavigator == null) throw new ArgumentNullException(nameof(appNavigator));
-
-			this.Agenda = agenda;
-			this.AppNavigator = appNavigator;
-			this.MainContext = mainContext;
-			this.PreviousDayCommand = new RelayCommand(() =>
-			{
-				this.Agenda.LoadPreviousDay(this.MainContext);
-				this.SetupData();
-			});
-			this.NextDayCommand = new RelayCommand(() =>
-			{
-				this.Agenda.LoadNextDay(this.MainContext);
-				this.SetupData();
-			});
-			this.DisplayCalendarCommand = new RelayCommand(() =>
-			{
-				// TODO : Probably it's better to pass Agenda as reference
-				// Close/Cancel is performed via Agenda ONLY
-
-				// How to close/cancel multiple days ???
-				this.AppNavigator.NavigateTo(AppScreen.Calendar, this.CurrentDate);
-			});
-		}
-
-		public void LoadData(List<Visit> visits)
-		{
-			if (visits == null) throw new ArgumentNullException(nameof(visits));
-
-			this.SetupData(visits);
-		}
-
-		private void SetupData()
-		{
-			this.SetupData(this.Agenda.Visits);
-		}
-
-		private void SetupData(IEnumerable<Visit> visits)
-		{
-			this.Outlets.Clear();
-			foreach (var byOutlet in visits.GroupBy(v => v.Outlet))
-			{
-				var outlet = byOutlet.Key;
-				var activities = byOutlet.SelectMany(v => v.Activities).ToList();
-
-				this.Outlets.Add(new AgendaOutletViewModel(null, new AgendaOutlet(outlet, activities)));
-			}
-
-			// TODO : Sort outlets & activities
-		}
-	}
 
 	public sealed class AgendaOutletViewModel : ViewModel<AgendaOutlet>
 	{
 		public MainContext Context { get; }
 
-		public string Number { get; }
+		public long Number { get; }
 		public string Name { get; }
 		public string Street { get; }
 		public string StreetNumber { get; }
 		public string City { get; }
+
+		private string _outletImage;
+		public string OutletImage
+		{
+			get { return _outletImage; }
+			set { this.SetProperty(ref _outletImage, value); }
+		}
 
 		public ObservableCollection<ActivityViewModel> Activities { get; } = new ObservableCollection<ActivityViewModel>();
 
@@ -188,7 +82,7 @@ namespace iFSA
 
 			this.Context = context;
 			var outlet = model.Outlet;
-			this.Number = outlet.Id.ToString();
+			this.Number = outlet.Id;
 			this.Name = outlet.Name;
 			if (outlet.Addresses.Count > 0)
 			{
@@ -272,6 +166,138 @@ namespace iFSA
 		}
 	}
 
+	public sealed class Calendar
+	{
+
+	}
+
+	public sealed class AgendaScreenViewModel : ViewModel
+	{
+		private Agenda Agenda { get; }
+		private IAppNavigator AppNavigator { get; }
+		private IUIThreadDispatcher UIThreadDispatcher { get; }
+		private MainContext MainContext { get; }
+
+		private DateTime _currentDate;
+		public DateTime CurrentDate
+		{
+			get { return _currentDate; }
+			set { this.SetProperty(ref _currentDate, value); }
+		}
+
+		public ICommand PreviousDayCommand { get; }
+		public ICommand NextDayCommand { get; }
+		public ICommand DisplayCalendarCommand { get; }
+
+		public ObservableCollection<AgendaOutletViewModel> Outlets { get; } = new ObservableCollection<AgendaOutletViewModel>();
+
+		public AgendaScreenViewModel(MainContext mainContext, Agenda agenda, IAppNavigator appNavigator, IUIThreadDispatcher uiThreadDispatcher)
+		{
+			if (agenda == null) throw new ArgumentNullException(nameof(agenda));
+			if (appNavigator == null) throw new ArgumentNullException(nameof(appNavigator));
+			if (uiThreadDispatcher == null) throw new ArgumentNullException(nameof(uiThreadDispatcher));
+
+			this.Agenda = agenda;
+			this.AppNavigator = appNavigator;
+			this.UIThreadDispatcher = uiThreadDispatcher;
+			this.MainContext = mainContext;
+			this.PreviousDayCommand = new RelayCommand(() =>
+			{
+				try
+				{
+					this.Agenda.LoadPreviousDay(this.MainContext);
+					this.SetupData();
+				}
+				catch (Exception ex)
+				{
+					this.MainContext.Log(ex.ToString(), LogLevel.Error);
+				}
+			});
+			this.NextDayCommand = new RelayCommand(() =>
+			{
+				try
+				{
+					this.Agenda.LoadNextDay(this.MainContext);
+					this.SetupData();
+				}
+				catch (Exception ex)
+				{
+					this.MainContext.Log(ex.ToString(), LogLevel.Error);
+				}
+			});
+			this.DisplayCalendarCommand = new RelayCommand(() =>
+			{
+				// TODO : Probably it's better to pass Agenda as reference
+				// Close/Cancel is performed via Agenda ONLY
+
+				// How to close/cancel multiple days ???
+				this.AppNavigator.NavigateTo(AppScreen.Calendar, this.CurrentDate);
+			});
+
+
+		}
+
+		public void LoadData(User user, DateTime dateTime)
+		{
+			this.Agenda.LoadDay(this.MainContext, user, dateTime);
+			var outlets = new List<AgendaOutlet>
+			{
+				new AgendaOutlet(new Outlet(1, "Billa"), new List<Activity>() ),
+				new AgendaOutlet(new Outlet(2, "Metro"), new List<Activity>() ),
+			};
+			this.SetupData(outlets);
+		}
+
+		private void SetupData()
+		{
+			var outlets = new List<AgendaOutlet>()
+			{
+				new AgendaOutlet(new Outlet(1, "Billa"), new List<Activity>() ),
+				new AgendaOutlet(new Outlet(2, "Metro"), new List<Activity>() ),
+			};
+			this.SetupData(outlets);
+		}
+
+		private void SetupData(IEnumerable<AgendaOutlet> outlets)
+		{
+			this.Outlets.Clear();
+			foreach (var outlet in outlets)
+			{
+				this.Outlets.Add(new AgendaOutletViewModel(this.MainContext, outlet));
+			}
+
+			Task.Run(() =>
+			{
+				while (!this.Agenda.ImagesLoadedEvent.IsSet)
+				{
+					OutletImage outletImage;
+					while (this.Agenda.OutletImages.TryDequeue(out outletImage))
+					{
+						var number = outletImage.Outlet;
+						Debug.WriteLine(number.ToString());
+
+						foreach (var viewModel in this.Outlets)
+						{
+							if (viewModel.Number == number)
+							{
+								this.UIThreadDispatcher.Dispatch(() =>
+								{
+									Debug.WriteLine(@"Match:" + number);
+									viewModel.OutletImage = DateTime.Now.ToString(@"G");
+								});
+								break;
+							}
+						}
+					}
+
+					Task.Delay(100).Wait();
+				}
+			});
+		}
+	}
+
+
+
 	public sealed class ActivityViewModel : ViewModel<Activity>
 	{
 		public AgendaOutletViewModel OutletViewModel { get; }
@@ -341,20 +367,7 @@ namespace iFSA
 	}
 
 
-	public sealed class AgendaOutlet
-	{
-		public Outlet Outlet { get; }
-		public List<Activity> Activities { get; }
 
-		public AgendaOutlet(Outlet outlet, List<Activity> activities)
-		{
-			if (outlet == null) throw new ArgumentNullException(nameof(outlet));
-			if (activities == null) throw new ArgumentNullException(nameof(activities));
-
-			this.Outlet = outlet;
-			this.Activities = activities;
-		}
-	}
 
 	public sealed class AgendaDataProvider
 	{

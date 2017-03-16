@@ -39,6 +39,9 @@
     <!-- A reference to the entire .NET Framework is automatically included -->
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AgendaModule\Objects\Agenda.cs" />
+    <Compile Include="AgendaModule\Objects\AgendaOutlet.cs" />
+    <Compile Include="AgendaModule\Objects\OutletImage.cs" />
     <Compile Include="AppModule.cs" />
     <Compile Include="AppScreen.cs" />
     <Compile Include="ArticlesModule\Objects\Brand.cs" />
@@ -55,7 +58,6 @@
     <Compile Include="Common\Objects\OutletAddress.cs" />
     <Compile Include="Common\Objects\Visit.cs" />
     <Compile Include="LoginModule\Data\DataProvider.cs" />
-    <Compile Include="GlobalAppContext.cs" />
     <Compile Include="IAppNavigator.cs" />
     <Compile Include="IUserSettingsProvider.cs" />
     <Compile Include="LoginModule\LoginScreenDataProvider.cs" />
@@ -84,7 +86,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="AgendaModule\" />
     <Folder Include="MasterDataModule\Data\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
