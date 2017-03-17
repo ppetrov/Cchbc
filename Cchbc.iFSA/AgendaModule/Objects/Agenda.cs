@@ -2,7 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Cchbc;
@@ -14,39 +13,60 @@ namespace iFSA.AgendaModule.Objects
 	{
 		private CancellationTokenSource _cts = new CancellationTokenSource();
 
-		public ManualResetEventSlim ImagesLoadedEvent { get; } = new ManualResetEventSlim(false);
-		public ConcurrentQueue<OutletImage> OutletImages { get; } = new ConcurrentQueue<OutletImage>();
 		public List<AgendaOutlet> Outlets { get; } = new List<AgendaOutlet>();
+		public BlockingCollection<OutletImage> OutletImages { get; } = new BlockingCollection<OutletImage>();
 
-		public User User { get; private set; }
+		public User User { get; }
+		private AgendaData Data { get; }
+
 		public DateTime CurrentDate { get; private set; }
 
-		private Func<MainContext, User, DateTime, List<Visit>> DataProvider { get; }
-		private Func<MainContext, HashSet<long>, List<OutletImage>> OutletImagesProvider { get; }
-
-		public Agenda(Func<MainContext, User, DateTime, List<Visit>> dataProvider)
+		public Agenda(User user, AgendaData data)
 		{
-			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
-
-			this.DataProvider = dataProvider;
-		}
-
-		public void LoadDay(MainContext mainContext, User user, DateTime dateTime)
-		{
-			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 			if (user == null) throw new ArgumentNullException(nameof(user));
+			if (data == null) throw new ArgumentNullException(nameof(data));
 
 			this.User = user;
+			this.Data = data;
+		}
+
+		public void LoadDay(MainContext mainContext, DateTime dateTime)
+		{
+			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
+
 			this.CurrentDate = dateTime;
 
-			// TODO : !!!
-			this.Outlets.Clear();
-			foreach (var byOutlet in this.DataProvider(mainContext, user, dateTime).GroupBy(v => v.Outlet))
-			{
-				var outlet = byOutlet.Key;
-				var activities = byOutlet.SelectMany(v => v.Activities).ToList();
+			this.LoadCurrent(mainContext);
+		}
 
-				this.Outlets.Add(new AgendaOutlet(outlet, activities));
+		public void LoadNextDay(MainContext mainContext)
+		{
+			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
+
+			this.CurrentDate = this.CurrentDate.AddDays(1);
+
+			this.LoadCurrent(mainContext);
+		}
+
+		public void LoadPreviousDay(MainContext mainContext)
+		{
+			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
+
+			this.CurrentDate = this.CurrentDate.AddDays(-1);
+
+			this.LoadCurrent(mainContext);
+		}
+
+		private void LoadCurrent(MainContext mainContext)
+		{
+			this.Outlets.Clear();
+			this.Outlets.AddRange(this.Data.GetAgendaOutlets(mainContext, this.User, this.CurrentDate));
+
+			var outlets = new Outlet[this.Outlets.Count];
+			for (var index = 0; index < this.Outlets.Count; index++)
+			{
+				var agendaOutlet = this.Outlets[index];
+				outlets[index] = agendaOutlet.Outlet;
 			}
 
 			// Cancel any pending Images Load
@@ -55,48 +75,29 @@ namespace iFSA.AgendaModule.Objects
 			// Start new Images Load
 			_cts = new CancellationTokenSource();
 
-			this.ImagesLoadedEvent.Reset();
-
-			var token = _cts.Token;
 			Task.Run(() =>
 			{
 				try
 				{
-					var cts = token;
-					for (var i = 0; i < 10; i++)
+					var cts = _cts;
+					foreach (var outlet in outlets)
 					{
 						if (cts.IsCancellationRequested)
 						{
 							break;
 						}
-						Task.Delay(178).Wait();
-						// TODO : Signal data availability
-						this.OutletImages.Enqueue(new OutletImage(i + 1, new byte[1024]));
+						var outletImage = this.Data.GetDefaultOutletImage(mainContext, outlet);
+						if (outletImage != null)
+						{
+							this.OutletImages.Add(outletImage);
+						}
 					}
 				}
 				catch (Exception ex)
 				{
 					Debug.WriteLine(ex);
 				}
-				finally
-				{
-					this.ImagesLoadedEvent.Set();
-				}
-			}, token);
-		}
-
-		public void LoadNextDay(MainContext mainContext)
-		{
-			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
-
-			this.LoadDay(mainContext, this.User, this.CurrentDate.AddDays(1));
-		}
-
-		public void LoadPreviousDay(MainContext mainContext)
-		{
-			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
-
-			this.LoadDay(mainContext, this.User, this.CurrentDate.AddDays(-1));
+			}, _cts.Token);
 		}
 	}
 }

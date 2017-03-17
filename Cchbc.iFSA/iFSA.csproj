@@ -39,9 +39,14 @@
     <!-- A reference to the entire .NET Framework is automatically included -->
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AgendaModule\AgendaScreenParam.cs" />
     <Compile Include="AgendaModule\Objects\Agenda.cs" />
+    <Compile Include="AgendaModule\Objects\AgendaData.cs" />
     <Compile Include="AgendaModule\Objects\AgendaOutlet.cs" />
+    <Compile Include="AgendaModule\Data\AgendaDataProvider.cs" />
     <Compile Include="AgendaModule\Objects\OutletImage.cs" />
+    <Compile Include="AgendaModule\AgendaScreenViewModel.cs" />
+    <Compile Include="AgendaModule\ViewModels\AgendaOutletViewModel.cs" />
     <Compile Include="AppModule.cs" />
     <Compile Include="AppScreen.cs" />
     <Compile Include="ArticlesModule\Objects\Brand.cs" />
@@ -57,10 +62,9 @@
     <Compile Include="Common\Objects\Outlet.cs" />
     <Compile Include="Common\Objects\OutletAddress.cs" />
     <Compile Include="Common\Objects\Visit.cs" />
-    <Compile Include="LoginModule\Data\DataProvider.cs" />
+    <Compile Include="LoginModule\Data\LoginScreenDataProvider.cs" />
     <Compile Include="IAppNavigator.cs" />
-    <Compile Include="IUserSettingsProvider.cs" />
-    <Compile Include="LoginModule\LoginScreenDataProvider.cs" />
+    <Compile Include="LoginModule\Data\LoginScreenData.cs" />
     <Compile Include="LoginModule\LoginScreenViewModel.cs" />
     <Compile Include="LoginModule\Objects\AppSystem.cs" />
     <Compile Include="MasterDataModule\DataHelper.cs" />

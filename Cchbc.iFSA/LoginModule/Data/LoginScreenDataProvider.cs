@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cchbc.Data;
+using Cchbc;
 using iFSA.Common.Objects;
 using iFSA.LoginModule.Objects;
 
 namespace iFSA.LoginModule.Data
 {
-	public static class DataProvider
+	public static class LoginScreenDataProvider
 	{
 		public static IEnumerable<Country> GetCountries()
 		{
@@ -21,8 +21,10 @@ namespace iFSA.LoginModule.Data
 			return countries;
 		}
 
-		public static List<User> GetUsers(IDbContext dbContext)
+		public static List<User> GetUsers(MainContext context)
 		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
 			// TODO : Query the database
 			return null;
 		}

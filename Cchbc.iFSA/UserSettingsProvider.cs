@@ -2,15 +2,15 @@ using System;
 
 namespace iFSA
 {
-	public sealed class UserSettingsProvider : IUserSettingsProvider
+	public static class UserSettingsProvider
 	{
-		public UserSettings Load()
+		public static UserSettings Load()
 		{
 			// TODO : !!! Platform dependant
 			return null;
 		}
 
-		public void Save(UserSettings settings)
+		public static void Save(UserSettings settings)
 		{
 			if (settings == null) throw new ArgumentNullException(nameof(settings));
 

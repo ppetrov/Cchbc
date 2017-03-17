@@ -8,7 +8,9 @@ using Cchbc.Common;
 using Cchbc.Features;
 using Cchbc.Localization;
 using Cchbc.Logs;
+using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
+using iFSA.LoginModule.Data;
 using iFSA.LoginModule.Objects;
 using iFSA.LoginModule.ViewModels;
 using iFSA.ReplicationModule.Objects;
@@ -24,21 +26,21 @@ namespace iFSA.LoginModule
 
 		private MainContext MainContext { get; }
 		private IAppNavigator AppNavigator { get; }
-		private LoginScreenDataProvider DataProvider { get; }
+		private LoginScreenData Data { get; }
 
 		private List<User> Users { get; set; }
-		//private List<Visit> Visits { get; set; }
+		private Agenda Agenda { get; set; }
 
 		public string NameCaption { get; }
 		public string PasswordCaption { get; }
 		public string LoginCaption { get; }
 		public string AdvancedCaption { get; }
 
-		private string _progress = string.Empty;
-		public string Progress
+		private string _dataLoadProgress = string.Empty;
+		public string DataLoadProgress
 		{
-			get { return _progress; }
-			set { this.SetProperty(ref _progress, value); }
+			get { return _dataLoadProgress; }
+			set { this.SetProperty(ref _dataLoadProgress, value); }
 		}
 		private bool _isLoadingData;
 		public bool IsLoadingData
@@ -57,6 +59,12 @@ namespace iFSA.LoginModule
 		{
 			get { return _password; }
 			set { this.SetProperty(ref _password, value); }
+		}
+		private string _downloadReplicationConfigProgress = string.Empty;
+		public string DownloadReplicationConfigProgress
+		{
+			get { return _downloadReplicationConfigProgress; }
+			set { this.SetProperty(ref _downloadReplicationConfigProgress, value); }
 		}
 
 		public ICommand AdvancedCommand { get; }
@@ -78,13 +86,13 @@ namespace iFSA.LoginModule
 		}
 		public ObservableCollection<CountryViewModel> Countries { get; } = new ObservableCollection<CountryViewModel>();
 
-		public LoginScreenViewModel(MainContext mainContext, IAppNavigator appNavigator, LoginScreenDataProvider dataProvider)
+		public LoginScreenViewModel(MainContext mainContext, IAppNavigator appNavigator, LoginScreenData data)
 		{
-			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
+			if (data == null) throw new ArgumentNullException(nameof(data));
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 			if (appNavigator == null) throw new ArgumentNullException(nameof(appNavigator));
 
-			this.DataProvider = dataProvider;
+			this.Data = data;
 			this.MainContext = mainContext;
 			this.AppNavigator = appNavigator;
 
@@ -97,7 +105,7 @@ namespace iFSA.LoginModule
 			this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Quality"), SystemSource.Quality)));
 			this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Development"), SystemSource.Development)));
 
-			foreach (var country in this.DataProvider.CountriesProvider())
+			foreach (var country in this.Data.GetCountries())
 			{
 				this.Countries.Add(new CountryViewModel(country));
 			}
@@ -109,14 +117,14 @@ namespace iFSA.LoginModule
 		public Task LoadDataAsync()
 		{
 			this.IsLoadingData = true;
-			this.Progress = this.GetCustomized(@"LoadData");
+			this.DataLoadProgress = this.GetCustomized(@"LoadData");
 
-			var userSettings = this.DataProvider.UserSettingsProvider.Load();
+			var userSettings = this.Data.GetUserSettings();
 			if (userSettings != null)
 			{
 				this.Username = userSettings.User.Name;
 			}
-			this.Users = this.DataProvider.UsersProvider(this.MainContext);
+			this.Users = this.Data.GetUsers(this.MainContext);
 
 			if (this.Users.Count == 0) return Task.CompletedTask;
 
@@ -139,7 +147,8 @@ namespace iFSA.LoginModule
 				var feature = Feature.StartNew(nameof(LoginScreenViewModel), nameof(LoadDataAsync));
 				try
 				{
-					//this.Visits = this.DataProvider.VisitsProvider(this.MainContext, currentUser, DateTime.Today);
+					this.Agenda = new Agenda(currentUser, this.Data.AgendaData);
+					this.Agenda.LoadDay(this.MainContext, DateTime.Today);
 				}
 				catch (Exception ex)
 				{
@@ -151,7 +160,7 @@ namespace iFSA.LoginModule
 				}
 			}).ContinueWith(t =>
 			{
-				this.Progress = this.GetCustomized(@"DataLoadCompleted");
+				this.DataLoadProgress = this.GetCustomized(@"DataLoadCompleted");
 				this.IsLoadingData = false;
 			}, TaskScheduler.FromCurrentSynchronizationContext());
 		}
@@ -182,11 +191,11 @@ namespace iFSA.LoginModule
 					if (user != null)
 					{
 						// Save the current username
-						var userSettings = this.DataProvider.UserSettingsProvider.Load();
+						var userSettings = this.Data.GetUserSettings();
 						if (userSettings != null)
 						{
 							userSettings.User = user;
-							this.DataProvider.UserSettingsProvider.Save(userSettings);
+							this.Data.SaveUserSettings(userSettings);
 						}
 
 						// Wait while the data is loaded
@@ -195,9 +204,8 @@ namespace iFSA.LoginModule
 							await Task.Delay(TimeSpan.FromMilliseconds(25));
 						}
 
-						// Display agenda with the list of visits
-						// TODO : !!!!
-						this.AppNavigator.NavigateTo(AppScreen.Agenda, null);
+						// Display agenda
+						this.AppNavigator.NavigateTo(AppScreen.Agenda, this.Agenda);
 					}
 					else
 					{
@@ -221,7 +229,8 @@ namespace iFSA.LoginModule
 
 				var system = systemViewModel.AppSystem;
 				var country = countryViewModel.Country;
-				var config = await this.DataProvider.ReplicationConfigProvider(system, country);
+				
+				var config = await this.Data.GetReplicationConfig(system, country);
 				if (config != null)
 				{
 					var login = new Login(this.Username, this.Password);
@@ -235,11 +244,11 @@ namespace iFSA.LoginModule
 						try
 						{
 							// Save the current replication config
-							var userSettings = this.DataProvider.UserSettingsProvider.Load();
+							var userSettings = this.Data.GetUserSettings();
 							if (userSettings != null)
 							{
 								userSettings.ReplicationConfig = config;
-								this.DataProvider.UserSettingsProvider.Save(userSettings);
+								this.Data.SaveUserSettings(userSettings);
 							}
 
 							await LoadDataAsync();
@@ -269,7 +278,7 @@ namespace iFSA.LoginModule
 			try
 			{
 				var config = new ReplicationConfig(string.Empty, 0);
-				var userSettings = this.DataProvider.UserSettingsProvider.Load();
+				var userSettings = this.Data.GetUserSettings();
 				if (userSettings != null)
 				{
 					config = userSettings.ReplicationConfig;

@@ -1,38 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.UI.Core;
-using Windows.UI.Notifications;
 using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Input;
 using Cchbc;
 using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using iFSA;
+using iFSA.AgendaModule;
+using iFSA.AgendaModule.Data;
 using iFSA.AgendaModule.Objects;
-using iFSA.Common.Objects;
+using iFSA.LoginModule;
+using iFSA.LoginModule.Data;
+using iFSA.ReplicationModule.Objects;
 
 namespace UIDemo
 {
 	public static class GlobalAppContext
 	{
-		public static Agenda Agenda { get; set; }
 		public static MainContext MainContext { get; set; }
+		public static IAppNavigator AppNavigator { get; set; }
 
 		static GlobalAppContext()
 		{
-			Agenda = new Agenda((m, u, d) =>
+			MainContext = new MainContext((message, logLevel) =>
 			{
-				return new List<Visit>();
-			});
-			MainContext = new MainContext((m, l) =>
-			{
-				Debug.WriteLine(l.ToString() + ":" + m);
+				Debug.WriteLine(logLevel.ToString() + ":" + message);
 			},
 			() => default(IDbContext), new ModalDialog());
+
+			AppNavigator = new AppNavigator(false);
 		}
 	}
 
@@ -46,6 +44,10 @@ namespace UIDemo
 
 	public sealed class AppNavigator : IAppNavigator
 	{
+		public AppNavigator(bool _)
+		{
+
+		}
 		public void NavigateTo(AppScreen screen, object args)
 		{
 			throw new System.NotImplementedException();
@@ -74,20 +76,62 @@ namespace UIDemo
 		}
 	}
 
+	public static class DataCreator
+	{
+		public static AgendaData CreateAgendaData()
+		{
+			return new AgendaData(AgendaDataProvider.GetAgendaOutlets, AgendaDataProvider.GetDefaultOutletImage);
+		}
+
+		public static LoginScreenData CreateLoginScreenData()
+		{
+			return new LoginScreenData(
+				UserSettingsProvider.Load,
+				UserSettingsProvider.Save,
+				LoginScreenDataProvider.GetCountries,
+				LoginScreenDataProvider.GetUsers,
+				CreateAgendaData(),
+				(s, c) =>
+				{
+					var config = new ReplicationConfig(string.Empty, 0);
+					return Task.FromResult(config);
+				});
+		}
+	}
+
 	public sealed partial class MainPage
 	{
-		public AgendaScreenViewModel ViewModel { get; }
+		public AgendaScreenParam ScreenParam { get; set; }
+		public AgendaScreenViewModel ViewModel { get; set; }
+
+		public LoginScreenViewModel LoginScreenViewModel { get; set; }
 
 		public MainPage()
 		{
 			this.InitializeComponent();
 
-			this.ViewModel = new AgendaScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.Agenda, new AppNavigator(), new UIThreadDispatcher(this.Dispatcher));
+			this.LoginScreenViewModel = new LoginScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.AppNavigator, DataCreator.CreateLoginScreenData());
 		}
 
 		private void MainPage_OnLoaded(object sender, RoutedEventArgs e)
-		{			
-			this.ViewModel.LoadData(new User(1, @"PPetrov", string.Empty), DateTime.Today);
+		{
+			// TODO : !!! Get from the parameter
+			var screenParam = this.ScreenParam;
+
+			var agenda = screenParam.Agenda;
+
+			var loadData = (agenda == null);
+			if (agenda == null)
+			{
+				agenda = new Agenda(screenParam.User, DataCreator.CreateAgendaData());
+			}
+			this.ViewModel = new AgendaScreenViewModel(GlobalAppContext.MainContext, agenda, GlobalAppContext.AppNavigator, new UIThreadDispatcher(this.Dispatcher));
+			this.DataContext = this.ViewModel;
+
+			if (loadData)
+			{
+				this.ViewModel.LoadDay(screenParam.Date);
+			}
 		}
 	}
 }

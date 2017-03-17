@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Cchbc;
@@ -14,8 +11,8 @@ using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Logs;
 using iFSA.AgendaModule.Objects;
+using iFSA.AgendaModule.ViewModels;
 using iFSA.Common.Objects;
-using iFSA.LoginModule;
 
 namespace iFSA
 {
@@ -56,246 +53,10 @@ namespace iFSA
 	//}
 
 
-
-	public sealed class AgendaOutletViewModel : ViewModel<AgendaOutlet>
-	{
-		public MainContext Context { get; }
-
-		public long Number { get; }
-		public string Name { get; }
-		public string Street { get; }
-		public string StreetNumber { get; }
-		public string City { get; }
-
-		private string _outletImage;
-		public string OutletImage
-		{
-			get { return _outletImage; }
-			set { this.SetProperty(ref _outletImage, value); }
-		}
-
-		public ObservableCollection<ActivityViewModel> Activities { get; } = new ObservableCollection<ActivityViewModel>();
-
-		public AgendaOutletViewModel(MainContext context, AgendaOutlet model) : base(model)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			this.Context = context;
-			var outlet = model.Outlet;
-			this.Number = outlet.Id;
-			this.Name = outlet.Name;
-			if (outlet.Addresses.Count > 0)
-			{
-				var address = outlet.Addresses[0];
-				this.Street = address.Street;
-				this.StreetNumber = address.Number.ToString();
-				this.City = address.City;
-			}
-
-			foreach (var activity in model.Activities)
-			{
-				this.Activities.Add(new ActivityViewModel(this, activity));
-			}
-		}
-
-		public async Task CloseAsync(ActivityViewModel activityViewModel)
-		{
-			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
-
-			var hasActiveDayBefore = false;
-			throw new NotImplementedException();
-		}
-
-		public async Task CancelAsync(ActivityViewModel activityViewModel)
-		{
-			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
-
-			// TODO : !!!
-			var cancelReasonSelector = default(ICancelReasonSelector);
-			var cancelReason = await cancelReasonSelector.SelectReasonAsync();
-			if (cancelReason == null)
-			{
-				return;
-			}
-
-			// TODO : !!!
-			var cancelOperation = new CalendarCancelOperation(new CalendarDataProvider(this.Context.DbContextCreator));
-			cancelOperation.CancelActivities(new[] { activityViewModel.Model }, cancelReason, a =>
-			{
-				var aid = a.Id;
-
-				var activities = this.Activities;
-				for (var i = 0; i < activities.Count; i++)
-				{
-					var activity = activities[i];
-					if (activity.Model.Id == aid)
-					{
-						activities[i] = new ActivityViewModel(this, a);
-						break;
-					}
-				}
-			});
-		}
-
-		public void Copy(ActivityViewModel activityViewModel)
-		{
-			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
-
-			throw new NotImplementedException();
-		}
-
-		public void Move(ActivityViewModel activityViewModel)
-		{
-			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
-
-			throw new NotImplementedException();
-		}
-
-		public void Delete(ActivityViewModel activityViewModel)
-		{
-			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
-
-			throw new NotImplementedException();
-		}
-
-		public void Execute(ActivityViewModel activityViewModel)
-		{
-			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
-
-			throw new NotImplementedException();
-		}
-	}
-
 	public sealed class Calendar
 	{
 
 	}
-
-	public sealed class AgendaScreenViewModel : ViewModel
-	{
-		private Agenda Agenda { get; }
-		private IAppNavigator AppNavigator { get; }
-		private IUIThreadDispatcher UIThreadDispatcher { get; }
-		private MainContext MainContext { get; }
-
-		private DateTime _currentDate;
-		public DateTime CurrentDate
-		{
-			get { return _currentDate; }
-			set { this.SetProperty(ref _currentDate, value); }
-		}
-
-		public ICommand PreviousDayCommand { get; }
-		public ICommand NextDayCommand { get; }
-		public ICommand DisplayCalendarCommand { get; }
-
-		public ObservableCollection<AgendaOutletViewModel> Outlets { get; } = new ObservableCollection<AgendaOutletViewModel>();
-
-		public AgendaScreenViewModel(MainContext mainContext, Agenda agenda, IAppNavigator appNavigator, IUIThreadDispatcher uiThreadDispatcher)
-		{
-			if (agenda == null) throw new ArgumentNullException(nameof(agenda));
-			if (appNavigator == null) throw new ArgumentNullException(nameof(appNavigator));
-			if (uiThreadDispatcher == null) throw new ArgumentNullException(nameof(uiThreadDispatcher));
-
-			this.Agenda = agenda;
-			this.AppNavigator = appNavigator;
-			this.UIThreadDispatcher = uiThreadDispatcher;
-			this.MainContext = mainContext;
-			this.PreviousDayCommand = new RelayCommand(() =>
-			{
-				try
-				{
-					this.Agenda.LoadPreviousDay(this.MainContext);
-					this.SetupData();
-				}
-				catch (Exception ex)
-				{
-					this.MainContext.Log(ex.ToString(), LogLevel.Error);
-				}
-			});
-			this.NextDayCommand = new RelayCommand(() =>
-			{
-				try
-				{
-					this.Agenda.LoadNextDay(this.MainContext);
-					this.SetupData();
-				}
-				catch (Exception ex)
-				{
-					this.MainContext.Log(ex.ToString(), LogLevel.Error);
-				}
-			});
-			this.DisplayCalendarCommand = new RelayCommand(() =>
-			{
-				// TODO : Probably it's better to pass Agenda as reference
-				// Close/Cancel is performed via Agenda ONLY
-
-				// How to close/cancel multiple days ???
-				this.AppNavigator.NavigateTo(AppScreen.Calendar, this.CurrentDate);
-			});
-
-
-		}
-
-		public void LoadData(User user, DateTime dateTime)
-		{
-			this.Agenda.LoadDay(this.MainContext, user, dateTime);
-			var outlets = new List<AgendaOutlet>
-			{
-				new AgendaOutlet(new Outlet(1, "Billa"), new List<Activity>() ),
-				new AgendaOutlet(new Outlet(2, "Metro"), new List<Activity>() ),
-			};
-			this.SetupData(outlets);
-		}
-
-		private void SetupData()
-		{
-			var outlets = new List<AgendaOutlet>()
-			{
-				new AgendaOutlet(new Outlet(1, "Billa"), new List<Activity>() ),
-				new AgendaOutlet(new Outlet(2, "Metro"), new List<Activity>() ),
-			};
-			this.SetupData(outlets);
-		}
-
-		private void SetupData(IEnumerable<AgendaOutlet> outlets)
-		{
-			this.Outlets.Clear();
-			foreach (var outlet in outlets)
-			{
-				this.Outlets.Add(new AgendaOutletViewModel(this.MainContext, outlet));
-			}
-
-			Task.Run(() =>
-			{
-				while (!this.Agenda.ImagesLoadedEvent.IsSet)
-				{
-					OutletImage outletImage;
-					while (this.Agenda.OutletImages.TryDequeue(out outletImage))
-					{
-						var number = outletImage.Outlet;
-						Debug.WriteLine(number.ToString());
-
-						foreach (var viewModel in this.Outlets)
-						{
-							if (viewModel.Number == number)
-							{
-								this.UIThreadDispatcher.Dispatch(() =>
-								{
-									Debug.WriteLine(@"Match:" + number);
-									viewModel.OutletImage = DateTime.Now.ToString(@"G");
-								});
-								break;
-							}
-						}
-					}
-
-					Task.Delay(100).Wait();
-				}
-			});
-		}
-	}
-
 
 
 	public sealed class ActivityViewModel : ViewModel<Activity>
@@ -366,70 +127,6 @@ namespace iFSA
 		}
 	}
 
-
-
-
-	public sealed class AgendaDataProvider
-	{
-		public List<AgendaOutlet> GetAgendaOutlets(IDbContext context, DataCache cache, User user, DateTime date)
-		{
-			var outlets = new List<AgendaOutlet>();
-
-			var visits = GetVisits(context, cache, user, date);
-
-			//visits.Sort();
-
-			foreach (var byOutlet in visits.GroupBy(v => v.Outlet))
-			{
-				var activities = byOutlet.SelectMany(v => v.Activities).ToList();
-
-				Sort(activities);
-
-				outlets.Add(new AgendaOutlet(byOutlet.Key, activities));
-			}
-
-			return outlets;
-		}
-
-		private List<Visit> GetVisits(IDbContext context, DataCache cache, User user, DateTime date)
-		{
-			// TODO : Query the database Visit, Activities
-			// Get outlets from the cache
-
-			// What about filtering to only the active ones ???
-			throw new NotImplementedException();
-		}
-
-		private static void Sort(List<Activity> activities)
-		{
-			activities.Sort((x, y) =>
-			{
-				var cmp = string.Compare(x.Type.Name, y.Type.Name, StringComparison.OrdinalIgnoreCase);
-
-				if (cmp == 0)
-				{
-					cmp = x.Id.CompareTo(y.Id);
-				}
-
-				return cmp;
-			});
-		}
-	}
-
-
-
-
-
-
-
-
-
-	public interface ICancelReasonSelector
-	{
-		Task<CancelReason> SelectReasonAsync();
-	}
-
-
 	public sealed class CancelReason
 	{
 		public long Id { get; }
@@ -448,12 +145,12 @@ namespace iFSA
 	{
 		private DateTime CurrentMonth { get; set; }
 
-		private Agenda Agenda { get; }
+		private User User { get; }
 		private IModalDialog ModalDialog { get; }
 		private IAppNavigator AppNavigator { get; }
 		private Func<string, string, string> LocalizationManager { get; }
 		private ICalendarDataProvider DataProvider { get; }
-		private ICancelReasonSelector CancelReasonSelector { get; }
+		private Func<Task<CancelReason>> CancelReasonSelector { get; }
 		private DataCache DataCache { get; }
 
 		public ObservableCollection<CalendarDayViewModel> Days { get; } = new ObservableCollection<CalendarDayViewModel>();
@@ -464,12 +161,12 @@ namespace iFSA
 		public ICommand NextDayCommand { get; }
 		public ICommand PreviousDayCommand { get; }
 
-		public CalendarViewModel(Agenda agenda, IModalDialog modalDialog, ICancelReasonSelector cancelReasonSelector, IAppNavigator appNavigator, ICalendarDataProvider dataProvider, Func<string, string, string> localizationManager, DataCache dataCache)
+		public CalendarViewModel(IModalDialog modalDialog, Func<Task<CancelReason>> cancelReasonSelector, IAppNavigator appNavigator, ICalendarDataProvider dataProvider, Func<string, string, string> localizationManager, DataCache dataCache)
 		{
 			if (modalDialog == null) throw new ArgumentNullException(nameof(modalDialog));
 			if (cancelReasonSelector == null) throw new ArgumentNullException(nameof(cancelReasonSelector));
 
-			this.Agenda = agenda;
+			
 			this.ModalDialog = modalDialog;
 			this.CancelReasonSelector = cancelReasonSelector;
 			this.AppNavigator = appNavigator;
@@ -493,10 +190,10 @@ namespace iFSA
 		{
 			this.CurrentMonth = date;
 
-			foreach (var day in this.DataProvider.GetCalendar(this.Agenda.User, this.CurrentMonth))
-			{
-				this.Days.Add(new CalendarDayViewModel(day, this));
-			}
+			//foreach (var day in this.DataProvider.GetCalendar(this.Agenda.User, this.CurrentMonth))
+			//{
+			//	this.Days.Add(new CalendarDayViewModel(day, this));
+			//}
 		}
 
 		public void ViewAgenda(CalendarDayViewModel viewModel)
@@ -549,7 +246,7 @@ namespace iFSA
 					if (hasActivitiesForCancel || this.DataProvider.HasActivitiesForCancel(day))
 					{
 						// Prompt for a cancel cancelReason selection	
-						cancelReason = await this.CancelReasonSelector.SelectReasonAsync();
+						cancelReason = await this.CancelReasonSelector();
 
 						// Cancel the operation
 						if (cancelReason == null) return;
@@ -704,7 +401,7 @@ namespace iFSA
 	{
 		public static CalendarViewModel GetCalendarViewModel(DataCache cache, User user, DateTime date)
 		{
-			return new CalendarViewModel(null, null, null, null, null, null, cache);
+			return new CalendarViewModel(null, null, null, null, null, cache);
 		}
 	}
 
