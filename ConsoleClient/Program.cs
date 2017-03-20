@@ -243,7 +243,7 @@ namespace ConsoleClient
 				ThreadPool.QueueUserWorkItem(_ =>
 				{
 					var col = _ as BlockingCollection<string>;
-					foreach (var symbol in new[] {"A", "B", "C"})
+					foreach (var symbol in new[] { "A", "B", "C" })
 					{
 						col.Add(symbol);
 					}
@@ -423,7 +423,7 @@ namespace ConsoleClient
 				foreach (var vm in viewModel.LatestExceptions)
 				{
 					Console.WriteLine('\t' + string.Empty + new string(vm.Message.Take(40).ToArray()) +
-					                  $@"... ({vm.CreatedAt.ToString(@"T")}) " + vm.User.Name + $@"({vm.Version.Name})");
+									  $@"... ({vm.CreatedAt.ToString(@"T")}) " + vm.User.Name + $@"({vm.Version.Name})");
 				}
 				Console.WriteLine();
 
@@ -617,7 +617,7 @@ namespace ConsoleClient
 		{
 			var contextCreator = new TransactionContextCreator(GetSqliteConnectionString(path));
 
-			var featureManager = new FeatureManager();
+			var featureManager = new FeatureManager(() => contextCreator.Create());
 
 			if (!File.Exists(path))
 			{
@@ -626,7 +626,7 @@ namespace ConsoleClient
 			}
 
 			// Load the manager
-			featureManager.Load(contextCreator.Create);
+			featureManager.Load();
 
 			// TODO : !!!
 			// Generate exceptions

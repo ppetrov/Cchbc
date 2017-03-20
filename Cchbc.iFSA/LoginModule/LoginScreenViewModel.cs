@@ -9,7 +9,6 @@ using Cchbc.Features;
 using Cchbc.Localization;
 using Cchbc.Logs;
 using iFSA.AgendaModule;
-using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
 using iFSA.LoginModule.Data;
 using iFSA.LoginModule.Objects;
@@ -30,25 +29,12 @@ namespace iFSA.LoginModule
 		private LoginScreenData Data { get; }
 
 		private List<User> Users { get; set; }
-		private Agenda Agenda { get; set; }
 
 		public string NameCaption { get; }
 		public string PasswordCaption { get; }
 		public string LoginCaption { get; }
 		public string AdvancedCaption { get; }
 
-		private string _dataLoadProgress = string.Empty;
-		public string DataLoadProgress
-		{
-			get { return _dataLoadProgress; }
-			set { this.SetProperty(ref _dataLoadProgress, value); }
-		}
-		private bool _isLoadingData;
-		public bool IsLoadingData
-		{
-			get { return _isLoadingData; }
-			set { this.SetProperty(ref _isLoadingData, value); }
-		}
 		private string _username = string.Empty;
 		public string Username
 		{
@@ -117,9 +103,6 @@ namespace iFSA.LoginModule
 
 		public Task LoadDataAsync()
 		{
-			this.IsLoadingData = true;
-			this.DataLoadProgress = this.GetCustomized(@"LoadData");
-
 			var userSettings = this.Data.GetUserSettings();
 			if (userSettings != null)
 			{
@@ -127,43 +110,7 @@ namespace iFSA.LoginModule
 			}
 			this.Users = this.Data.GetUsers(this.MainContext);
 
-			if (this.Users.Count == 0) return Task.CompletedTask;
-
-			var currentUser = this.Users[0];
-
-			if (this.Username != string.Empty)
-			{
-				foreach (var login in this.Users)
-				{
-					if (login.Name.Equals(this.Username, StringComparison.OrdinalIgnoreCase))
-					{
-						currentUser = login;
-						break;
-					}
-				}
-			}
-
-			return Task.Run(() =>
-			{
-				var feature = Feature.StartNew(nameof(LoginScreenViewModel), nameof(LoadDataAsync));
-				try
-				{
-					this.Agenda = new Agenda(currentUser, this.Data.AgendaData);
-					this.Agenda.LoadDay(this.MainContext, DateTime.Today);
-				}
-				catch (Exception ex)
-				{
-					this.MainContext.Log(ex.ToString(), LogLevel.Error);
-				}
-				finally
-				{
-					this.MainContext.FeatureManager.Save(feature);
-				}
-			}).ContinueWith(t =>
-			{
-				this.DataLoadProgress = this.GetCustomized(@"DataLoadCompleted");
-				this.IsLoadingData = false;
-			}, TaskScheduler.FromCurrentSynchronizationContext());
+			return Task.CompletedTask;
 		}
 
 		private async void Login()
@@ -199,14 +146,8 @@ namespace iFSA.LoginModule
 							this.Data.SaveUserSettings(userSettings);
 						}
 
-						// Wait while the data is loaded
-						while (this.IsLoadingData)
-						{
-							await Task.Delay(TimeSpan.FromMilliseconds(25));
-						}
-
 						// Display agenda
-						this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaScreenParam(this.Agenda));
+						this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaScreenParam(user, DateTime.Today));
 					}
 					else
 					{

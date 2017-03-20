@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Cchbc;
 using Cchbc.Common;
+using Cchbc.Features;
 using Cchbc.Logs;
 using iFSA.AgendaModule.Objects;
 using iFSA.AgendaModule.ViewModels;
+using iFSA.Common.Objects;
 
 namespace iFSA.AgendaModule
 {
@@ -19,7 +21,7 @@ namespace iFSA.AgendaModule
 		private MainContext MainContext { get; }
 		private List<AgendaOutletViewModel> AllOutlets { get; } = new List<AgendaOutletViewModel>();
 
-		private DateTime _currentDate = DateTime.Today;
+		private DateTime _currentDate;
 		public DateTime CurrentDate
 		{
 			get { return _currentDate; }
@@ -62,12 +64,58 @@ namespace iFSA.AgendaModule
 			this.RemoveActivityCommand = new RelayCommand(this.RemoveActivity);
 		}
 
-		public void LoadCurrentDay()
+		public void LoadDay(User user, DateTime dateTime)
 		{
-			this.LoadDay(_ =>
+			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(LoadDay));
+			try
 			{
-				this.Agenda.LoadDay(_, this.CurrentDate);
-			});
+				this.LoadData(user, dateTime);
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Log(ex.ToString(), LogLevel.Error);
+				this.MainContext.FeatureManager.Save(feature, ex);
+			}
+			finally
+			{
+				this.MainContext.FeatureManager.Save(feature, dateTime.ToString(@"O"));
+			}
+		}
+
+		private void LoadNextDay()
+		{
+			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(LoadNextDay));
+			try
+			{
+				this.LoadData(this.CurrentDate.AddDays(-1));
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Log(ex.ToString(), LogLevel.Error);
+				this.MainContext.FeatureManager.Save(feature, ex);
+			}
+			finally
+			{
+				this.MainContext.FeatureManager.Save(feature);
+			}
+		}
+
+		private void LoadPreviousDay()
+		{
+			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(LoadPreviousDay));
+			try
+			{
+				this.LoadData(this.CurrentDate.AddDays(-1));
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Log(ex.ToString(), LogLevel.Error);
+				this.MainContext.FeatureManager.Save(feature, ex);
+			}
+			finally
+			{
+				this.MainContext.FeatureManager.Save(feature);
+			}
 		}
 
 		private void ApplyCurrentTextSearch()
@@ -82,16 +130,6 @@ namespace iFSA.AgendaModule
 					this.Outlets.Add(viewModel);
 				}
 			}
-		}
-
-		private void LoadNextDay()
-		{
-			this.LoadDay(this.Agenda.LoadNextDay);
-		}
-
-		private void LoadPreviousDay()
-		{
-			this.LoadDay(this.Agenda.LoadPreviousDay);
 		}
 
 		private void DisplayCalendar()
@@ -112,9 +150,15 @@ namespace iFSA.AgendaModule
 			// TODO : !!! Add support for Delete
 		}
 
-		private void LoadDay(Action<MainContext> dayLoader)
+		private void LoadData(DateTime dateTime)
 		{
-			dayLoader(this.MainContext);
+			this.LoadData(this.Agenda.User, dateTime);
+		}
+
+		private void LoadData(User user, DateTime dateTime)
+		{
+			this.CurrentDate = dateTime;
+			this.Agenda.LoadDay(this.MainContext, user, dateTime);
 
 			this.Outlets.Clear();
 			this.AllOutlets.Clear();

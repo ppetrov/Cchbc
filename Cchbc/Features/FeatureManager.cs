@@ -7,7 +7,7 @@ namespace Cchbc.Features
 {
 	public sealed class FeatureManager
 	{
-		private Func<IDbContext> DbContextCreator { get; set; }
+		private Func<IDbContext> DbContextCreator { get; }
 		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }
 		private Dictionary<long, List<DbFeatureRow>> Features { get; set; }
 
@@ -33,12 +33,15 @@ namespace Cchbc.Features
 			}
 		}
 
-		public void Load(Func<IDbContext> dbContextCreator)
+		public FeatureManager(Func<IDbContext> dbContextCreator)
 		{
 			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
 
 			this.DbContextCreator = dbContextCreator;
+		}
 
+		public void Load()
+		{
 			using (var context = this.DbContextCreator())
 			{
 				this.Contexts = FeatureAdapter.GetContexts(context);

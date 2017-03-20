@@ -9,11 +9,17 @@ namespace Cchbc
 {
 	public sealed class MainContext
 	{
+		// For logging
 		public Action<string, LogLevel> Log { get; }
+		// For Query the db
 		public Func<IDbContext> DbContextCreator { get; }
+		// For displaying modal dialogs
 		public IModalDialog ModalDialog { get; }
+		// For the cache of data
 		public DataCache DataCache { get; } = new DataCache();
-		public FeatureManager FeatureManager { get; } = new FeatureManager();
+		// For feature tracking & timings
+		public FeatureManager FeatureManager { get; }
+		// For localization
 		public LocalizationManager LocalizationManager { get; } = new LocalizationManager();
 
 		public MainContext(Action<string, LogLevel> log, Func<IDbContext> dbContextCreator, IModalDialog modalDialog)
@@ -25,6 +31,7 @@ namespace Cchbc
 			this.Log = log;
 			this.DbContextCreator = dbContextCreator;
 			this.ModalDialog = modalDialog;
+			this.FeatureManager = new FeatureManager(this.DbContextCreator);
 		}
 	}
 }

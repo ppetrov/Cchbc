@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Cchbc;
@@ -14,57 +13,33 @@ namespace iFSA.AgendaModule.Objects
 	{
 		private CancellationTokenSource _cts = new CancellationTokenSource();
 
+		public User User { get; private set; }
+		public DateTime CurrentDate { get; private set; }
+
 		public List<AgendaOutlet> Outlets { get; } = new List<AgendaOutlet>();
+
 		public ConcurrentQueue<OutletImage> OutletImages { get; } = new ConcurrentQueue<OutletImage>();
 		public ManualResetEventSlim ImagesLoadedEvent { get; } = new ManualResetEventSlim(false);
 
-		private User User { get; }
 		private AgendaData Data { get; }
 
-		public DateTime CurrentDate { get; private set; }
-
-		public Agenda(User user, AgendaData data)
+		public Agenda(AgendaData data)
 		{
-			if (user == null) throw new ArgumentNullException(nameof(user));
 			if (data == null) throw new ArgumentNullException(nameof(data));
 
-			this.User = user;
 			this.Data = data;
 		}
 
-		public void LoadDay(MainContext mainContext, DateTime dateTime)
+		public void LoadDay(MainContext mainContext, User user, DateTime dateTime)
 		{
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
+			if (user == null) throw new ArgumentNullException(nameof(user));
 
+			this.User = user;
 			this.CurrentDate = dateTime;
 
-			this.LoadCurrent(mainContext);
-		}
-
-		public void LoadNextDay(MainContext mainContext)
-		{
-			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
-
-			this.CurrentDate = this.CurrentDate.AddDays(1);
-
-			this.LoadCurrent(mainContext);
-		}
-
-		public void LoadPreviousDay(MainContext mainContext)
-		{
-			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
-
-			this.CurrentDate = this.CurrentDate.AddDays(-1);
-
-			this.LoadCurrent(mainContext);
-		}
-
-		private void LoadCurrent(MainContext mainContext)
-		{
-			Debug.WriteLine(@"Load Agenda:" + this.CurrentDate);
-
 			this.Outlets.Clear();
-			this.Outlets.AddRange(this.Data.GetAgendaOutlets(mainContext, this.User, this.CurrentDate));
+			this.Outlets.AddRange(this.Data.GetAgendaOutlets(mainContext, this.User, dateTime));
 
 			var outlets = new Outlet[this.Outlets.Count];
 			for (var index = 0; index < this.Outlets.Count; index++)
@@ -73,10 +48,10 @@ namespace iFSA.AgendaModule.Objects
 			}
 
 			// Cancel any pending Images Load
-			_cts.Cancel();
+			this._cts.Cancel();
 
 			// Start new Images Load
-			_cts = new CancellationTokenSource();
+			this._cts = new CancellationTokenSource();
 
 			Task.Run(() =>
 			{
@@ -84,7 +59,7 @@ namespace iFSA.AgendaModule.Objects
 				{
 					this.ImagesLoadedEvent.Reset();
 
-					var cts = _cts;
+					var cts = this._cts;
 					foreach (var outlet in outlets)
 					{
 						if (cts.IsCancellationRequested)
@@ -106,7 +81,7 @@ namespace iFSA.AgendaModule.Objects
 				{
 					this.ImagesLoadedEvent.Set();
 				}
-			}, _cts.Token);
+			}, this._cts.Token);
 		}
 	}
 }

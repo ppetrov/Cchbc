@@ -102,56 +102,29 @@ namespace UIDemo
 
 	public sealed partial class MainPage
 	{
-		public AgendaScreenParam ScreenParam { get; set; }
-		public AgendaScreenViewModel ViewModel { get; set; }
+		private AgendaScreenParam _args;
+		public AgendaScreenViewModel ViewModel { get; }
 
 		public MainPage()
 		{
 			this.InitializeComponent();
+			this.ViewModel = new AgendaScreenViewModel(GlobalAppContext.MainContext, new Agenda(DataCreator.CreateAgendaData()), GlobalAppContext.AppNavigator, new UIThreadDispatcher(this.Dispatcher));
 		}
 
 		protected override void OnNavigatedTo(NavigationEventArgs e)
 		{
 			base.OnNavigatedTo(e);
 
-			var mode = e.NavigationMode;
-			switch (mode)
-			{
-				case NavigationMode.New:
-					break;
-				case NavigationMode.Back:
-					break;
-				case NavigationMode.Forward:
-					break;
-				case NavigationMode.Refresh:
-					break;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			_args = e.Parameter as AgendaScreenParam;
 
-			var agenda = new Agenda(new User(1, @"PPETROV", string.Empty), DataCreator.CreateAgendaData());
-			this.ViewModel = new AgendaScreenViewModel(GlobalAppContext.MainContext, agenda, GlobalAppContext.AppNavigator, new UIThreadDispatcher(this.Dispatcher));
-
-			this.ScreenParam = e.Parameter as AgendaScreenParam;
-			if (this.ScreenParam != null)
-			{
-				// TODO : !!! Get from the parameter
-				//var agenda = this.ScreenParam.Agenda;
-				var loadData = (agenda == null);
-				if (loadData)
-				{
-					//this.ViewModel.LoadDay(this.ScreenParam.Date);
-				}
-			}
+			_args = _args ?? new AgendaScreenParam(new User(1, @"PPetrov", string.Empty), DateTime.Today);
 		}
 
 		private void MainPage_OnLoaded(object sender, RoutedEventArgs e)
 		{
 			try
 			{
-				this.DataContext = this.ViewModel;
-
-				this.ViewModel.LoadCurrentDay();
+				this.ViewModel.LoadDay(_args.User, _args.DateTime);
 			}
 			catch (Exception ex)
 			{
