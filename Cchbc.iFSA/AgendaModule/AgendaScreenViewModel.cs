@@ -74,15 +74,12 @@ namespace iFSA.AgendaModule
 		{
 			var search = this.Search;
 
-			lock (this)
+			this.Outlets.Clear();
+			foreach (var viewModel in this.AllOutlets)
 			{
-				this.Outlets.Clear();
-				foreach (var viewModel in this.AllOutlets)
+				if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
 				{
-					if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
-					{
-						this.Outlets.Add(viewModel);
-					}
+					this.Outlets.Add(viewModel);
 				}
 			}
 		}
@@ -107,37 +104,25 @@ namespace iFSA.AgendaModule
 
 		private void AddActivity()
 		{
-			this.AppNavigator.NavigateTo(AppScreen.Outlets, this.Agenda);
-			// TODO : !!! Add support for Add
-			//lock (this.Outlets)
-			//{
-			//	this.Outlets.Add(new AgendaOutletViewModel(this.MainContext, null));
-			//}
+			this.AppNavigator.NavigateTo(AppScreen.Outlets, this);
 		}
 
 		private void RemoveActivity()
 		{
 			// TODO : !!! Add support for Delete
-			//lock (this.Outlets)
-			//{
-			//	this.Outlets.RemoveAt(0);
-			//}
 		}
 
 		private void LoadDay(Action<MainContext> dayLoader)
 		{
 			dayLoader(this.MainContext);
 
-			lock (this)
+			this.Outlets.Clear();
+			this.AllOutlets.Clear();
+			foreach (var outlet in this.Agenda.Outlets)
 			{
-				this.Outlets.Clear();
-				this.AllOutlets.Clear();
-				foreach (var outlet in this.Agenda.Outlets)
-				{
-					var viewModel = new AgendaOutletViewModel(this.MainContext, outlet);
-					this.Outlets.Add(viewModel);
-					this.AllOutlets.Add(viewModel);
-				}
+				var viewModel = new AgendaOutletViewModel(this.MainContext, outlet);
+				this.Outlets.Add(viewModel);
+				this.AllOutlets.Add(viewModel);
 			}
 
 			Task.Run(() =>
@@ -150,26 +135,19 @@ namespace iFSA.AgendaModule
 						if (this.Agenda.OutletImages.TryDequeue(out outletImage))
 						{
 							var match = default(AgendaOutletViewModel);
-
-							lock (this)
+							var number = outletImage.Outlet;
+							foreach (var viewModel in this.AllOutlets)
 							{
-								var number = outletImage.Outlet;
-								foreach (var viewModel in this.AllOutlets)
+								if (viewModel.Number == number)
 								{
-									if (viewModel.Number == number)
-									{
-										match = viewModel;
-										break;
-									}
+									match = viewModel;
+									break;
 								}
 							}
 
 							if (match != null)
 							{
-								this.UIThreadDispatcher.Dispatch(() =>
-								{
-									match.OutletImage = DateTime.Now.ToString(@"G");
-								});
+								this.UIThreadDispatcher.Dispatch(() => { match.OutletImage = DateTime.Now.ToString(@"G"); });
 							}
 						}
 						Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();

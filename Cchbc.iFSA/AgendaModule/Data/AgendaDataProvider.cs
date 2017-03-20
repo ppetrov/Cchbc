@@ -13,7 +13,7 @@ namespace iFSA.AgendaModule.Data
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
-			// TODO : Sort outlets
+			// TODO : Sort Outlets
 			// TODO : Sort Activities
 
 			//this.Outlets.Clear();
