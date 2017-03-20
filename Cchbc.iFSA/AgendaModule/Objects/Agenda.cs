@@ -14,7 +14,8 @@ namespace iFSA.AgendaModule.Objects
 		private CancellationTokenSource _cts = new CancellationTokenSource();
 
 		public List<AgendaOutlet> Outlets { get; } = new List<AgendaOutlet>();
-		public BlockingCollection<OutletImage> OutletImages { get; } = new BlockingCollection<OutletImage>();
+		public ConcurrentQueue<OutletImage> OutletImages { get; } = new ConcurrentQueue<OutletImage>();
+		public ManualResetEventSlim ImagesLoadedEvent { get; } = new ManualResetEventSlim(false);
 
 		public User User { get; }
 		private AgendaData Data { get; }
@@ -79,6 +80,8 @@ namespace iFSA.AgendaModule.Objects
 			{
 				try
 				{
+					this.ImagesLoadedEvent.Reset();
+
 					var cts = _cts;
 					foreach (var outlet in outlets)
 					{
@@ -89,13 +92,17 @@ namespace iFSA.AgendaModule.Objects
 						var outletImage = this.Data.GetDefaultOutletImage(mainContext, outlet);
 						if (outletImage != null)
 						{
-							this.OutletImages.Add(outletImage);
+							this.OutletImages.Enqueue(outletImage);
 						}
 					}
 				}
 				catch (Exception ex)
 				{
 					Debug.WriteLine(ex);
+				}
+				finally
+				{
+					this.ImagesLoadedEvent.Set();
 				}
 			}, _cts.Token);
 		}

@@ -80,35 +80,40 @@ namespace iFSA.AgendaModule
 
 			Task.Run(() =>
 			{
-				foreach (var outletImage in this.Agenda.OutletImages.GetConsumingEnumerable())
+				// We need to wait until the data is loaded
+				// before tring to setup the image
+				// It's possible that the image comes from a thread before the rest of the data
+				this.DataLoadedEvent.Wait();
+
+				while (!this.Agenda.ImagesLoadedEvent.IsSet)
 				{
-					// We need to wait until the data is loaded
-					// before tring to setup the image
-					// It's possible that the image comes from a thread before the rest of the data
-					this.DataLoadedEvent.Wait();
-
-					var match = default(AgendaOutletViewModel);
-
-					lock (this.Outlets)
+					OutletImage outletImage;
+					if (this.Agenda.OutletImages.TryDequeue(out outletImage))
 					{
-						var number = outletImage.Outlet;
-						foreach (var viewModel in this.Outlets)
+						var match = default(AgendaOutletViewModel);
+
+						lock (this.Outlets)
 						{
-							if (viewModel.Number == number)
+							var number = outletImage.Outlet;
+							foreach (var viewModel in this.Outlets)
 							{
-								match = viewModel;
-								break;
+								if (viewModel.Number == number)
+								{
+									match = viewModel;
+									break;
+								}
 							}
 						}
-					}
 
-					if (match != null)
-					{
-						this.UIThreadDispatcher.Dispatch(() =>
+						if (match != null)
 						{
-							match.OutletImage = DateTime.Now.ToString(@"G");
-						});
+							this.UIThreadDispatcher.Dispatch(() =>
+							{
+								match.OutletImage = DateTime.Now.ToString(@"G");
+							});
+						}
 					}
+					Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();
 				}
 			});
 		}

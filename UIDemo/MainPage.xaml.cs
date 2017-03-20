@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Navigation;
 using Cchbc;
 using Cchbc.Data;
 using Cchbc.Dialog;
@@ -104,17 +105,33 @@ namespace UIDemo
 		public AgendaScreenParam ScreenParam { get; set; }
 		public AgendaScreenViewModel ViewModel { get; set; }
 
-		public LoginScreenViewModel LoginScreenViewModel { get; set; }
-
 		public MainPage()
 		{
 			this.InitializeComponent();
-
-			this.LoginScreenViewModel = new LoginScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.AppNavigator, DataCreator.CreateLoginScreenData());
 		}
 
-		private void MainPage_OnLoaded(object sender, RoutedEventArgs e)
+		protected override void OnNavigatedTo(NavigationEventArgs e)
 		{
+			base.OnNavigatedTo(e);
+
+			var mode = e.NavigationMode;
+			switch (mode)
+			{
+				case NavigationMode.New:
+					break;
+				case NavigationMode.Back:
+					break;
+				case NavigationMode.Forward:
+					break;
+				case NavigationMode.Refresh:
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+
+
+			this.ScreenParam = e.Parameter as AgendaScreenParam;
+
 			// TODO : !!! Get from the parameter
 			var screenParam = this.ScreenParam;
 
@@ -126,12 +143,19 @@ namespace UIDemo
 				agenda = new Agenda(screenParam.User, DataCreator.CreateAgendaData());
 			}
 			this.ViewModel = new AgendaScreenViewModel(GlobalAppContext.MainContext, agenda, GlobalAppContext.AppNavigator, new UIThreadDispatcher(this.Dispatcher));
-			this.DataContext = this.ViewModel;
+
 
 			if (loadData)
 			{
 				this.ViewModel.LoadDay(screenParam.Date);
 			}
+		}
+
+		private void MainPage_OnLoaded(object sender, RoutedEventArgs e)
+		{
+			this.DataContext = this.ViewModel;
+
+
 		}
 	}
 }
