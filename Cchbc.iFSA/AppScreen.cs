@@ -4,6 +4,7 @@ namespace iFSA
 	{
 		Agenda,
 		Replication,
-		Calendar
+		Calendar,
+		Outlets
 	}
 }

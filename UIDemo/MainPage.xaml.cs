@@ -12,7 +12,7 @@ using iFSA;
 using iFSA.AgendaModule;
 using iFSA.AgendaModule.Data;
 using iFSA.AgendaModule.Objects;
-using iFSA.LoginModule;
+using iFSA.Common.Objects;
 using iFSA.LoginModule.Data;
 using iFSA.ReplicationModule.Objects;
 
@@ -129,33 +129,34 @@ namespace UIDemo
 					throw new ArgumentOutOfRangeException();
 			}
 
-
-			this.ScreenParam = e.Parameter as AgendaScreenParam;
-
-			// TODO : !!! Get from the parameter
-			var screenParam = this.ScreenParam;
-
-			var agenda = screenParam.Agenda;
-
-			var loadData = (agenda == null);
-			if (agenda == null)
-			{
-				agenda = new Agenda(screenParam.User, DataCreator.CreateAgendaData());
-			}
+			var agenda = new Agenda(new User(1, @"PPETROV", string.Empty), DataCreator.CreateAgendaData());
 			this.ViewModel = new AgendaScreenViewModel(GlobalAppContext.MainContext, agenda, GlobalAppContext.AppNavigator, new UIThreadDispatcher(this.Dispatcher));
 
-
-			if (loadData)
+			this.ScreenParam = e.Parameter as AgendaScreenParam;
+			if (this.ScreenParam != null)
 			{
-				this.ViewModel.LoadDay(screenParam.Date);
+				// TODO : !!! Get from the parameter
+				//var agenda = this.ScreenParam.Agenda;
+				var loadData = (agenda == null);
+				if (loadData)
+				{
+					//this.ViewModel.LoadDay(this.ScreenParam.Date);
+				}
 			}
 		}
 
 		private void MainPage_OnLoaded(object sender, RoutedEventArgs e)
 		{
-			this.DataContext = this.ViewModel;
+			try
+			{
+				this.DataContext = this.ViewModel;
 
-
+				this.ViewModel.LoadCurrentDay();
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine(ex);
+			}
 		}
 	}
 }

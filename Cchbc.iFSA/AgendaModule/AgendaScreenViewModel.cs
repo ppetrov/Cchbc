@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Cchbc;
@@ -13,18 +13,28 @@ namespace iFSA.AgendaModule
 {
 	public sealed class AgendaScreenViewModel : ViewModel
 	{
-		private ManualResetEventSlim DataLoadedEvent { get; } = new ManualResetEventSlim(false);
-
 		private Agenda Agenda { get; }
 		private IAppNavigator AppNavigator { get; }
 		private IUIThreadDispatcher UIThreadDispatcher { get; }
 		private MainContext MainContext { get; }
+		private List<AgendaOutletViewModel> AllOutlets { get; } = new List<AgendaOutletViewModel>();
 
-		private DateTime _currentDate;
+		private DateTime _currentDate = DateTime.Today;
 		public DateTime CurrentDate
 		{
 			get { return _currentDate; }
 			set { this.SetProperty(ref _currentDate, value); }
+		}
+
+		private string _search = string.Empty;
+		public string Search
+		{
+			get { return _search; }
+			set
+			{
+				this.SetProperty(ref _search, value);
+				this.ApplyCurrentTextSearch();
+			}
 		}
 
 		public ICommand PreviousDayCommand { get; }
@@ -45,112 +55,131 @@ namespace iFSA.AgendaModule
 			this.AppNavigator = appNavigator;
 			this.UIThreadDispatcher = uiThreadDispatcher;
 			this.MainContext = mainContext;
-			this.PreviousDayCommand = new RelayCommand(() =>
-			{
-				this.LoadDay(this.Agenda.LoadPreviousDay);
-			});
-			this.NextDayCommand = new RelayCommand(() =>
-			{
-				this.LoadDay(this.Agenda.LoadNextDay);
-			});
-			this.DisplayCalendarCommand = new RelayCommand(() =>
-			{
-				// TODO : Probably it's better to pass Agenda as reference
-				// Close/Cancel is performed via Agenda ONLY
-
-				// How to close/cancel multiple days ???
-				this.AppNavigator.NavigateTo(AppScreen.Calendar, this.CurrentDate);
-			});
-			this.AddActvityCommand = new RelayCommand(() =>
-			{
-				// TODO : !!! Add support for Add
-				lock (this.Outlets)
-				{
-					this.Outlets.Add(new AgendaOutletViewModel(this.MainContext, null));
-				}
-			});
-			this.RemoveActivityCommand = new RelayCommand(() =>
-			{
-				// TODO : !!! Add support for Delete
-				lock (this.Outlets)
-				{
-					this.Outlets.RemoveAt(0);
-				}
-			});
-
-			Task.Run(() =>
-			{
-				// We need to wait until the data is loaded
-				// before tring to setup the image
-				// It's possible that the image comes from a thread before the rest of the data
-				this.DataLoadedEvent.Wait();
-
-				while (!this.Agenda.ImagesLoadedEvent.IsSet)
-				{
-					OutletImage outletImage;
-					if (this.Agenda.OutletImages.TryDequeue(out outletImage))
-					{
-						var match = default(AgendaOutletViewModel);
-
-						lock (this.Outlets)
-						{
-							var number = outletImage.Outlet;
-							foreach (var viewModel in this.Outlets)
-							{
-								if (viewModel.Number == number)
-								{
-									match = viewModel;
-									break;
-								}
-							}
-						}
-
-						if (match != null)
-						{
-							this.UIThreadDispatcher.Dispatch(() =>
-							{
-								match.OutletImage = DateTime.Now.ToString(@"G");
-							});
-						}
-					}
-					Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();
-				}
-			});
+			this.PreviousDayCommand = new RelayCommand(this.LoadPreviousDay);
+			this.NextDayCommand = new RelayCommand(this.LoadNextDay);
+			this.DisplayCalendarCommand = new RelayCommand(this.DisplayCalendar);
+			this.AddActvityCommand = new RelayCommand(this.AddActivity);
+			this.RemoveActivityCommand = new RelayCommand(this.RemoveActivity);
 		}
 
-		public void LoadDay(DateTime dateTime)
+		public void LoadCurrentDay()
 		{
 			this.LoadDay(_ =>
 			{
-				this.Agenda.LoadDay(_, dateTime);
+				this.Agenda.LoadDay(_, this.CurrentDate);
 			});
+		}
+
+		private void ApplyCurrentTextSearch()
+		{
+			var search = this.Search;
+
+			lock (this)
+			{
+				this.Outlets.Clear();
+				foreach (var viewModel in this.AllOutlets)
+				{
+					if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						this.Outlets.Add(viewModel);
+					}
+				}
+			}
+		}
+
+		private void LoadNextDay()
+		{
+			this.LoadDay(this.Agenda.LoadNextDay);
+		}
+
+		private void LoadPreviousDay()
+		{
+			this.LoadDay(this.Agenda.LoadPreviousDay);
+		}
+
+		private void DisplayCalendar()
+		{
+			// TODO : Probably it's better to pass Agenda as reference
+			// Close/Cancel is performed via Agenda ONLY, or maybe not
+			// How to close/cancel multiple days ???
+			this.AppNavigator.NavigateTo(AppScreen.Calendar, this.CurrentDate);
+		}
+
+		private void AddActivity()
+		{
+			this.AppNavigator.NavigateTo(AppScreen.Outlets, this.Agenda);
+			// TODO : !!! Add support for Add
+			//lock (this.Outlets)
+			//{
+			//	this.Outlets.Add(new AgendaOutletViewModel(this.MainContext, null));
+			//}
+		}
+
+		private void RemoveActivity()
+		{
+			// TODO : !!! Add support for Delete
+			//lock (this.Outlets)
+			//{
+			//	this.Outlets.RemoveAt(0);
+			//}
 		}
 
 		private void LoadDay(Action<MainContext> dayLoader)
 		{
-			try
+			dayLoader(this.MainContext);
+
+			lock (this)
 			{
-				this.DataLoadedEvent.Reset();
-
-				dayLoader(this.MainContext);
-
-				lock (this.Outlets)
+				this.Outlets.Clear();
+				this.AllOutlets.Clear();
+				foreach (var outlet in this.Agenda.Outlets)
 				{
-					this.Outlets.Clear();
-					foreach (var outlet in this.Agenda.Outlets)
-					{
-						this.Outlets.Add(new AgendaOutletViewModel(this.MainContext, outlet));
-					}
+					var viewModel = new AgendaOutletViewModel(this.MainContext, outlet);
+					this.Outlets.Add(viewModel);
+					this.AllOutlets.Add(viewModel);
 				}
 			}
-			catch (Exception ex)
+
+			Task.Run(() =>
 			{
-				this.MainContext.Log(ex.ToString(), LogLevel.Error);
-			}
-			finally
-			{
-				this.DataLoadedEvent.Set();
-			}
+				try
+				{
+					while (!this.Agenda.ImagesLoadedEvent.IsSet)
+					{
+						OutletImage outletImage;
+						if (this.Agenda.OutletImages.TryDequeue(out outletImage))
+						{
+							var match = default(AgendaOutletViewModel);
+
+							lock (this)
+							{
+								var number = outletImage.Outlet;
+								foreach (var viewModel in this.AllOutlets)
+								{
+									if (viewModel.Number == number)
+									{
+										match = viewModel;
+										break;
+									}
+								}
+							}
+
+							if (match != null)
+							{
+								this.UIThreadDispatcher.Dispatch(() =>
+								{
+									match.OutletImage = DateTime.Now.ToString(@"G");
+								});
+							}
+						}
+						Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();
+					}
+				}
+				catch (Exception ex)
+				{
+					this.MainContext.Log(ex.ToString(), LogLevel.Error);
+				}
+			});
 		}
 	}
 }

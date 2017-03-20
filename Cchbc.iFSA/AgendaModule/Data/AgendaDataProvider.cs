@@ -31,11 +31,9 @@ namespace iFSA.AgendaModule.Data
 
 			using (var ctx = context.DbContextCreator())
 			{
-				var outlets = context.DataCache.GetValues<Outlet>(ctx);
-
 				// TODO : !!! Query the database
-
-				ctx.Complete();
+				//var outlets = context.DataCache.GetValues<Outlet>(ctx);
+				//ctx.Complete();
 			}
 
 			return new List<AgendaOutlet>();

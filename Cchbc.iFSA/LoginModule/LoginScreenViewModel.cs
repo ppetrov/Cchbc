@@ -8,6 +8,7 @@ using Cchbc.Common;
 using Cchbc.Features;
 using Cchbc.Localization;
 using Cchbc.Logs;
+using iFSA.AgendaModule;
 using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
 using iFSA.LoginModule.Data;
@@ -205,7 +206,7 @@ namespace iFSA.LoginModule
 						}
 
 						// Display agenda
-						this.AppNavigator.NavigateTo(AppScreen.Agenda, this.Agenda);
+						this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaScreenParam(this.Agenda));
 					}
 					else
 					{
@@ -229,7 +230,7 @@ namespace iFSA.LoginModule
 
 				var system = systemViewModel.AppSystem;
 				var country = countryViewModel.Country;
-				
+
 				var config = await this.Data.GetReplicationConfig(system, country);
 				if (config != null)
 				{

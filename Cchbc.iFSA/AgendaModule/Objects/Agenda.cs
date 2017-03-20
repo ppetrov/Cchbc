@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Cchbc;
+using Cchbc.Logs;
 using iFSA.Common.Objects;
 
 namespace iFSA.AgendaModule.Objects
@@ -17,7 +18,7 @@ namespace iFSA.AgendaModule.Objects
 		public ConcurrentQueue<OutletImage> OutletImages { get; } = new ConcurrentQueue<OutletImage>();
 		public ManualResetEventSlim ImagesLoadedEvent { get; } = new ManualResetEventSlim(false);
 
-		public User User { get; }
+		private User User { get; }
 		private AgendaData Data { get; }
 
 		public DateTime CurrentDate { get; private set; }
@@ -60,14 +61,15 @@ namespace iFSA.AgendaModule.Objects
 
 		private void LoadCurrent(MainContext mainContext)
 		{
+			Debug.WriteLine(@"Load Agenda:" + this.CurrentDate);
+
 			this.Outlets.Clear();
 			this.Outlets.AddRange(this.Data.GetAgendaOutlets(mainContext, this.User, this.CurrentDate));
 
 			var outlets = new Outlet[this.Outlets.Count];
 			for (var index = 0; index < this.Outlets.Count; index++)
 			{
-				var agendaOutlet = this.Outlets[index];
-				outlets[index] = agendaOutlet.Outlet;
+				outlets[index] = this.Outlets[index].Outlet;
 			}
 
 			// Cancel any pending Images Load
@@ -98,7 +100,7 @@ namespace iFSA.AgendaModule.Objects
 				}
 				catch (Exception ex)
 				{
-					Debug.WriteLine(ex);
+					mainContext.Log(ex.ToString(), LogLevel.Error);
 				}
 				finally
 				{
