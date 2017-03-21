@@ -4,10 +4,6 @@ using System.Threading.Tasks;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Navigation;
-using Cchbc;
-using Cchbc.Data;
-using Cchbc.Dialog;
-using Cchbc.Features;
 using iFSA;
 using iFSA.AgendaModule;
 using iFSA.AgendaModule.Data;
@@ -18,31 +14,6 @@ using iFSA.ReplicationModule.Objects;
 
 namespace UIDemo
 {
-	public static class GlobalAppContext
-	{
-		public static MainContext MainContext { get; set; }
-		public static IAppNavigator AppNavigator { get; set; }
-
-		static GlobalAppContext()
-		{
-			MainContext = new MainContext((message, logLevel) =>
-			{
-				Debug.WriteLine(logLevel.ToString() + ":" + message);
-			},
-			() => default(IDbContext), new ModalDialog());
-
-			AppNavigator = new AppNavigator(false);
-		}
-	}
-
-	public sealed class ModalDialog : IModalDialog
-	{
-		public Task<DialogResult> ShowAsync(string message, Feature feature, DialogType? type = null)
-		{
-			throw new NotImplementedException();
-		}
-	}
-
 	public sealed class AppNavigator : IAppNavigator
 	{
 		public AppNavigator(bool _)

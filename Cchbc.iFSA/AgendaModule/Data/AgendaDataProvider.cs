@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Cchbc;
 using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
@@ -13,6 +14,7 @@ namespace iFSA.AgendaModule.Data
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
+			Debug.WriteLine(nameof(GetAgendaOutlets));
 			// TODO : Sort Outlets
 			// TODO : Sort Activities
 

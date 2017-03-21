@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Cchbc.Localization
 {
-	public sealed class LocalizationManager
+	public sealed class LocalizationManager : ILocalizationManager
 	{
 		private Dictionary<string, Dictionary<string, string>> ByContextValues { get; } = new Dictionary<string, Dictionary<string, string>>();
 

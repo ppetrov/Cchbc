@@ -5,7 +5,14 @@ using Cchbc.Features.Data;
 
 namespace Cchbc.Features
 {
-	public sealed class FeatureManager
+	public interface IFeatureManager
+	{
+		void Load();
+		void Save(Feature feature, string details = null);
+		void Save(Feature feature, Exception exception);
+	}
+
+	public sealed class FeatureManager : IFeatureManager
 	{
 		private Func<IDbContext> DbContextCreator { get; }
 		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }

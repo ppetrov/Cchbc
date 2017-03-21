@@ -18,20 +18,22 @@ namespace Cchbc
 		// For the cache of data
 		public DataCache DataCache { get; } = new DataCache();
 		// For feature tracking & timings
-		public FeatureManager FeatureManager { get; }
+		public IFeatureManager FeatureManager { get; }
 		// For localization
-		public LocalizationManager LocalizationManager { get; } = new LocalizationManager();
+		public ILocalizationManager LocalizationManager { get; }
 
-		public MainContext(Action<string, LogLevel> log, Func<IDbContext> dbContextCreator, IModalDialog modalDialog)
+		public MainContext(Action<string, LogLevel> log, Func<IDbContext> dbContextCreator, IModalDialog modalDialog, IFeatureManager featureManager, ILocalizationManager localizationManager)
 		{
 			if (log == null) throw new ArgumentNullException(nameof(log));
 			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
 			if (modalDialog == null) throw new ArgumentNullException(nameof(modalDialog));
+			if (featureManager == null) throw new ArgumentNullException(nameof(featureManager));
 
 			this.Log = log;
 			this.DbContextCreator = dbContextCreator;
 			this.ModalDialog = modalDialog;
-			this.FeatureManager = new FeatureManager(this.DbContextCreator);
+			this.FeatureManager = featureManager;
+			this.LocalizationManager = localizationManager;
 		}
 	}
 }
