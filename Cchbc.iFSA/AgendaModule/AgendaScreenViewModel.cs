@@ -28,6 +28,8 @@ namespace iFSA.AgendaModule
 			set { this.SetProperty(ref _currentDate, value); }
 		}
 
+		private User User { get; set; }
+
 		private string _search = string.Empty;
 		public string Search
 		{
@@ -62,10 +64,43 @@ namespace iFSA.AgendaModule
 			this.DisplayCalendarCommand = new RelayCommand(this.DisplayCalendar);
 			this.AddActvityCommand = new RelayCommand(this.AddActivity);
 			this.RemoveActivityCommand = new RelayCommand(this.RemoveActivity);
+
+			this.Agenda.ActivityAdded += this.ActivityAdded;
+		}
+
+		private void ActivityAdded(object sender, ActivityEventArgs e)
+		{
+			var activity = e.Activity;
+			var outlet = activity.Outlet;
+
+			var outletViewModel = default(AgendaOutletViewModel);
+
+			foreach (var viewModel in this.Outlets)
+			{
+				if (outlet == viewModel.Outlet)
+				{
+					outletViewModel = viewModel;
+					break;
+				}
+			}
+
+			if (outletViewModel == null)
+			{
+				outletViewModel = new AgendaOutletViewModel(this.MainContext, new AgendaOutlet(outlet, new List<Activity>()));
+			}
+
+			outletViewModel.Activities.Add(new ActivityViewModel(outletViewModel, activity));
+
+			// TODO : !!! Sort the collection
+
+			// TODO : !!! Filter the collection
+			this.ApplyCurrentTextSearch();
 		}
 
 		public void LoadDay(User user, DateTime dateTime)
 		{
+			if (user == null) throw new ArgumentNullException(nameof(user));
+
 			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(LoadDay));
 			try
 			{
@@ -152,11 +187,12 @@ namespace iFSA.AgendaModule
 
 		private void LoadData(DateTime dateTime)
 		{
-			this.LoadData(this.Agenda.User, dateTime);
+			this.LoadData(this.User, dateTime);
 		}
 
 		private void LoadData(User user, DateTime dateTime)
 		{
+			this.User = user;
 			this.CurrentDate = dateTime;
 			this.Agenda.LoadDay(this.MainContext, user, dateTime);
 

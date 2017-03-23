@@ -9,5 +9,6 @@ namespace iFSA.Common.Objects
 		public ActivityStatus Status { get; }
 		public DateTime Date { get; }
 		public string Details { get; }
+		public Outlet Outlet { get; }
 	}
 }

@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Cchbc;
 using iFSA.AgendaModule.Objects;
+using iFSA.Common.Objects;
 
 namespace iFSA.AgendaModule.ViewModels
 {
@@ -10,6 +11,7 @@ namespace iFSA.AgendaModule.ViewModels
 	{
 		public MainContext Context { get; }
 
+		public Outlet Outlet { get; }
 		public long Number { get; }
 		public string Name { get; }
 		public string Street { get; }
@@ -31,6 +33,7 @@ namespace iFSA.AgendaModule.ViewModels
 
 			this.Context = context;
 			var outlet = model.Outlet;
+			this.Outlet = outlet;
 			this.Number = outlet.Id;
 			this.Name = outlet.Name;
 			if (outlet.Addresses.Count > 0)
@@ -46,6 +49,7 @@ namespace iFSA.AgendaModule.ViewModels
 				this.Activities.Add(new ActivityViewModel(this, activity));
 			}
 		}
+
 
 		public async Task CloseAsync(ActivityViewModel activityViewModel)
 		{

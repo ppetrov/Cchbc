@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Cchbc;
@@ -10,12 +9,21 @@ using iFSA.Common.Objects;
 
 namespace iFSA.AgendaModule.Objects
 {
+	public sealed class ActivityEventArgs : EventArgs
+	{
+		public Activity Activity { get; }
+
+		public ActivityEventArgs(Activity activity)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			this.Activity = activity;
+		}
+	}
+
 	public sealed class Agenda
 	{
 		private CancellationTokenSource _cts = new CancellationTokenSource();
-
-		public User User { get; private set; }
-		public DateTime CurrentDate { get; private set; }
 
 		public List<AgendaOutlet> Outlets { get; } = new List<AgendaOutlet>();
 
@@ -23,6 +31,8 @@ namespace iFSA.AgendaModule.Objects
 		public ManualResetEventSlim ImagesLoadedEvent { get; } = new ManualResetEventSlim(false);
 
 		private AgendaData Data { get; }
+
+		public EventHandler<ActivityEventArgs> ActivityAdded { get; set; }
 
 		public Agenda(AgendaData data)
 		{
@@ -36,11 +46,8 @@ namespace iFSA.AgendaModule.Objects
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
-			this.User = user;
-			this.CurrentDate = dateTime;
-
 			this.Outlets.Clear();
-			this.Outlets.AddRange(this.Data.GetAgendaOutlets(mainContext, this.User, dateTime));
+			this.Outlets.AddRange(this.Data.GetAgendaOutlets(mainContext, user, dateTime));
 
 			var outlets = new Outlet[this.Outlets.Count];
 			for (var index = 0; index < this.Outlets.Count; index++)
@@ -83,6 +90,40 @@ namespace iFSA.AgendaModule.Objects
 					this.ImagesLoadedEvent.Set();
 				}
 			}, this._cts.Token);
+		}
+
+		public void Add(Outlet outlet, Activity activity)
+		{
+			if (outlet == null) throw new ArgumentNullException(nameof(outlet));
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			var activities = new List<Activity>(1);
+
+			var agendaOutlet = this.FindAgendaOutlet(outlet);
+			if (agendaOutlet != null)
+			{
+				activities = agendaOutlet.Activities;
+			}
+
+			// Insert into db
+
+
+			// Insert into collection
+			activities.Add(activity);
+
+			this.Outlets.Add(new AgendaOutlet(outlet, activities));
+		}
+
+		private AgendaOutlet FindAgendaOutlet(Outlet outlet)
+		{
+			foreach (var agendaOutlet in this.Outlets)
+			{
+				if (agendaOutlet.Outlet == outlet)
+				{
+					return agendaOutlet;
+				}
+			}
+			return null;
 		}
 	}
 }

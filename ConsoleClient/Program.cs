@@ -239,29 +239,10 @@ namespace ConsoleClient
 
 			try
 			{
-				var bc = new BlockingCollection<string>();
-				ThreadPool.QueueUserWorkItem(_ =>
-				{
-					var col = _ as BlockingCollection<string>;
-					foreach (var symbol in new[] { "A", "B", "C" })
-					{
-						col.Add(symbol);
-					}
-					col.CompleteAdding();
-				}, bc);
-				ThreadPool.QueueUserWorkItem(_ =>
-				{
-					using (var col = _ as BlockingCollection<string>)
-					{
-						foreach (var v in col.GetConsumingEnumerable())
-						{
-							Console.WriteLine(v);
-						}
-					}
-				}, bc);
-
-				Console.ReadLine();
-				Console.WriteLine(@"Done");
+				var imgAsString = File.ReadAllBytes(@"C:\Sources\DemoUI\Assets\c5.png");
+				//imgAsString = File.ReadAllBytes(@"C:\Users\PetarPetrov\Desktop\signature.jpg");
+				var b64 = Convert.ToBase64String(imgAsString);
+				Console.WriteLine(b64.Length);
 
 
 				return;

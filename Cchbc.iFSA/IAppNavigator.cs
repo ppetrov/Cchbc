@@ -10,6 +10,6 @@ namespace iFSA
 
 	public interface IUIThreadDispatcher
 	{
-		void Dispatch(Action action);
+		void Dispatch(Action operation);
 	}
 }

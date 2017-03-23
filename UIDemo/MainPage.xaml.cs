@@ -42,9 +42,9 @@ namespace UIDemo
 			this.CoreDispatcher = coreDispatcher;
 		}
 
-		public void Dispatch(Action action)
+		public void Dispatch(Action operation)
 		{
-			this.CoreDispatcher.RunAsync(CoreDispatcherPriority.Normal, () => action());
+			this.CoreDispatcher.RunAsync(CoreDispatcherPriority.Normal, () => operation());
 		}
 	}
 
@@ -79,6 +79,7 @@ namespace UIDemo
 		public MainPage()
 		{
 			this.InitializeComponent();
+
 			this.ViewModel = new AgendaScreenViewModel(GlobalAppContext.MainContext, new Agenda(DataCreator.CreateAgendaData()), GlobalAppContext.AppNavigator, new UIThreadDispatcher(this.Dispatcher));
 		}
 
