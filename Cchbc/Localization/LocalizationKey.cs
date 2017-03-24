@@ -4,8 +4,8 @@ namespace Cchbc.Localization
 {
 	public sealed class LocalizationKey
 	{
-		public string Context { get; }		
-		public string Name  { get; }
+		public string Context { get; }
+		public string Name { get; }
 
 		public LocalizationKey(string context, string name)
 		{

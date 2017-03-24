@@ -6,15 +6,13 @@ namespace Cchbc.Validation
 	{
 		public static readonly ValidationResult Success = new ValidationResult(string.Empty);
 
-		public string ErrorMessage { get; }
-		public string Property { get; }
+		public string LocalizationKeyName { get; }
 
-		public ValidationResult(string errorMessage, string property = null)
+		public ValidationResult(string localizationKeyName)
 		{
-			if (errorMessage == null) throw new ArgumentNullException(nameof(errorMessage));
+			if (localizationKeyName == null) throw new ArgumentNullException(nameof(localizationKeyName));
 
-			this.ErrorMessage = errorMessage;
-			this.Property = property ?? string.Empty;
+			this.LocalizationKeyName = localizationKeyName;
 		}
 	}
 }

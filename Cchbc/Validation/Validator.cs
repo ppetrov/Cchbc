@@ -1,20 +1,19 @@
 ﻿using System;
-using System.Text;
 
 namespace Cchbc.Validation
 {
 	public static class Validator
 	{
-		public static ValidationResult ValidateNotNull(object value, string message)
+		public static ValidationResult ValidateNotNull(object value, string localizationKeyName)
 		{
-			if (message == null) throw new ArgumentNullException(nameof(message));
+			if (localizationKeyName == null) throw new ArgumentNullException(nameof(localizationKeyName));
 
-			return value == null ? new ValidationResult(message) : ValidationResult.Success;
+			return value == null ? new ValidationResult(localizationKeyName) : ValidationResult.Success;
 		}
 
-		public static ValidationResult ValidateNotEmpty(string value, string message)
+		public static ValidationResult ValidateNotEmpty(string value, string localizationKeyName)
 		{
-			return string.IsNullOrWhiteSpace(value) ? new ValidationResult(message) : ValidationResult.Success;
+			return string.IsNullOrWhiteSpace(value) ? new ValidationResult(localizationKeyName) : ValidationResult.Success;
 		}
 
 		public static ValidationResult[] GetViolated(ValidationResult[] results)
@@ -48,60 +47,34 @@ namespace Cchbc.Validation
 			return new ValidationResult[0];
 		}
 
-		public static string CombineResults(ValidationResult[] results)
-		{
-			if (results == null) throw new ArgumentNullException(nameof(results));
-
-			if (results.Length == 0)
-			{
-				return string.Empty;
-			}
-
-			var buffer = new StringBuilder();
-
-			foreach (var result in results)
-			{
-				if (result != ValidationResult.Success)
-				{
-					if (buffer.Length > 0)
-					{
-						buffer.Append(@", ");
-					}
-					buffer.Append(result.ErrorMessage);
-				}
-			}
-
-			return buffer.ToString();
-		}
-
-		public static ValidationResult ValidateMinLength(string value, int minLength, string message)
+		public static ValidationResult ValidateMinLength(string value, int minLength, string localizationKeyName)
 		{
 			if (value == null) throw new ArgumentNullException(nameof(value));
 
 			if (value.Length < minLength)
 			{
-				return new ValidationResult(message);
+				return new ValidationResult(localizationKeyName);
 			}
 			return ValidationResult.Success;
 		}
 
-		public static ValidationResult ValidateMaxLength(string value, int maxLength, string message)
+		public static ValidationResult ValidateMaxLength(string value, int maxLength, string localizationKeyName)
 		{
 			if (value.Length > maxLength)
 			{
-				return new ValidationResult(message);
+				return new ValidationResult(localizationKeyName);
 			}
 			return ValidationResult.Success;
 		}
 
-		public static ValidationResult ValidateLength(string value, int min, int max, string message)
+		public static ValidationResult ValidateLength(string value, int min, int max, string localizationKeyName)
 		{
 			var length = value.Length;
 			if (min <= length && length <= max)
 			{
 				return ValidationResult.Success;
 			}
-			return new ValidationResult(message + $@"({min}:{max})");
+			return new ValidationResult(localizationKeyName + $@"({min}:{max})");
 		}
 	}
 }
