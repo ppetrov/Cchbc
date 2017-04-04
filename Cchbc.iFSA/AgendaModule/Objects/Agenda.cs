@@ -16,7 +16,6 @@ namespace iFSA.AgendaModule.Objects
 		public ActivityEventArgs(Activity activity)
 		{
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
-
 			this.Activity = activity;
 		}
 	}
@@ -106,7 +105,6 @@ namespace iFSA.AgendaModule.Objects
 			}
 
 			// Insert into db
-
 
 			// Insert into collection
 			activities.Add(activity);

@@ -1,33 +1,32 @@
 ﻿using System;
-using System.Threading.Tasks;
 
 namespace Cchbc.Validation
 {
 	public sealed class PermissionResult
 	{
-		public static readonly Task<PermissionResult> Allow = Task.FromResult(new PermissionResult(PermissionType.Allow, string.Empty));
+		public static readonly PermissionResult Allow = new PermissionResult(PermissionType.Allow, string.Empty);
 
-		public PermissionType Type { get; private set; }
-		public string Message { get; private set; }
+		public PermissionType Type { get; }
+		public string LocalizationKeyName { get; }
 
-		public PermissionResult(PermissionType type, string message)
+		public PermissionResult(PermissionType type, string localizationKeyName)
 		{
 			this.Type = type;
-			this.Message = message;
+			this.LocalizationKeyName = localizationKeyName;
 		}
 
-		public static PermissionResult Deny(string message)
+		public static PermissionResult Deny(string localizationKeyName)
 		{
-			if (message == null) throw new ArgumentNullException(nameof(message));
+			if (localizationKeyName == null) throw new ArgumentNullException(nameof(localizationKeyName));
 
-			return new PermissionResult(PermissionType.Deny, message);
+			return new PermissionResult(PermissionType.Deny, localizationKeyName);
 		}
 
-		public static PermissionResult Confirm(string message)
+		public static PermissionResult Confirm(string localizationKeyName)
 		{
-			if (message == null) throw new ArgumentNullException(nameof(message));
+			if (localizationKeyName == null) throw new ArgumentNullException(nameof(localizationKeyName));
 
-			return new PermissionResult(PermissionType.Confirm, message);
+			return new PermissionResult(PermissionType.Confirm, localizationKeyName);
 		}
 	}
 }

@@ -168,6 +168,32 @@ namespace ConsoleClient
 		}
 
 
+		public sealed class Person
+		{
+			public Person(string firstName, string secondName)
+			{
+				if (firstName == null) throw new ArgumentNullException(nameof(firstName));
+				if (secondName == null) throw new ArgumentNullException(nameof(secondName));
+				this.FirstName = firstName;
+				this.SecondName = secondName;
+			}
+
+			public string FirstName { get; }
+			public string SecondName { get; }
+
+			public void Method()
+			{
+				var buffer = new StringBuilder();
+
+				for (int i = 0; i < 100; i++)
+				{
+					buffer.AppendLine(string.Empty);
+				}
+
+				var result = buffer.ToString();
+			}
+		}
+
 		public sealed class MapEntry
 		{
 			public string Name { get; }
@@ -176,7 +202,6 @@ namespace ConsoleClient
 			public MapEntry(string name, int sequence)
 			{
 				if (name == null) throw new ArgumentNullException(nameof(name));
-
 				this.Name = name;
 				this.Sequence = sequence;
 			}
@@ -203,10 +228,7 @@ namespace ConsoleClient
 				modifier = s => s + 1;
 			}
 
-			Action<MapEntry> dbUpdate = e =>
-			{
-				Console.WriteLine(@"Db Update => " + e.Name + " : " + e.Sequence);
-			};
+			Action<MapEntry> dbUpdate = e => Console.WriteLine(@"Db Update => " + e.Name + " : " + e.Sequence);
 
 			// Copy the sequence from the destination item
 			sourceItem.Sequence = desctinationItem.Sequence;
@@ -245,31 +267,24 @@ namespace ConsoleClient
 				Console.WriteLine(b64.Length);
 
 
-				return;
-				var query = @"SELECT name FROM sqlite_master WHERE type='table' order by name";
 
-				using (
-					var client =
-						new TransactionContextCreator(GetSqliteConnectionString(@"C:\Users\PetarPetrov\Desktop\BG000956.sqlite")).Create()
-					)
+
+				using (var client = new TransactionContextCreator(GetSqliteConnectionString(@"C:\Users\PetarPetrov\Desktop\BG000956.sqlite")).Create())
 				{
-					var names = client.Execute(new Query<string>(query, dr => dr.GetString(0)));
-
-					foreach (var n in names)
+					foreach (var name in client.Execute(new Query<string>(@"SELECT name FROM sqlite_master WHERE type='table' order by name", dr => dr.GetString(0))))
 					{
-						var q = @"select count(*) from " + n + " where rec_status <> 1";
-
+						var localQuery = @"select count(*) from " + name + " where rec_status <> 1";
 						try
 						{
-							var v = client.Execute(new Query<int>(q, r => r.GetInt32(0))).Single();
+							var v = client.Execute(new Query<int>(localQuery, r => r.GetInt32(0))).Single();
 							if (v != 0)
 							{
-								Console.WriteLine(n + " " + v);
+								Console.WriteLine(name + " " + v);
 							}
 						}
-						catch (Exception)
+						catch
 						{
-							//Console.WriteLine(n);
+							Console.WriteLine(name);
 						}
 					}
 
@@ -793,7 +808,7 @@ namespace ConsoleClient
 				//Is R E D Activities Allowed
 				{
 					// TODO : !!!
-					return PermissionResult.Allow.Result;
+					return PermissionResult.Allow;
 				}
 			}
 		}
@@ -1340,12 +1355,5 @@ using AppSystem.Data;
 	}
 
 
-	public sealed class ConsoleDialog : Cchbc.Dialog.IModalDialog
-	{
-		public Task<DialogResult> ShowAsync(string message, Feature feature, DialogType? type = null)
-		{
-			return Task.FromResult(DialogResult.Cancel);
-		}
-	}
 }
 

@@ -3,12 +3,13 @@ using System.Threading.Tasks;
 using Windows.UI.Popups;
 using Cchbc.Dialog;
 using Cchbc.Features;
+using Cchbc.Validation;
 
 namespace Cchbc.AppBuilder.UI
 {
 	public sealed class ModalDialog : IModalDialog
 	{
-		public async Task<DialogResult> ShowAsync(string message, Feature feature, DialogType? type = null)
+		public async Task<DialogResult> ShowAsync(string message, Feature feature, PermissionType? type = null)
 		{
 			if (message == null) throw new ArgumentNullException(nameof(message));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));

@@ -4,19 +4,19 @@ namespace Cchbc.Validation
 {
 	public static class Validator
 	{
-		public static ValidationResult ValidateNotNull(object value, string localizationKeyName)
+		public static PermissionResult ValidateNotNull(object value, string localizationKeyName)
 		{
 			if (localizationKeyName == null) throw new ArgumentNullException(nameof(localizationKeyName));
 
-			return value == null ? new ValidationResult(localizationKeyName) : ValidationResult.Success;
+			return value == null ? PermissionResult.Deny(localizationKeyName) : PermissionResult.Allow;
 		}
 
-		public static ValidationResult ValidateNotEmpty(string value, string localizationKeyName)
+		public static PermissionResult ValidateNotEmpty(string value, string localizationKeyName)
 		{
-			return string.IsNullOrWhiteSpace(value) ? new ValidationResult(localizationKeyName) : ValidationResult.Success;
+			return string.IsNullOrWhiteSpace(value) ? PermissionResult.Deny(localizationKeyName) : PermissionResult.Allow;
 		}
 
-		public static ValidationResult[] GetViolated(ValidationResult[] results)
+		public static PermissionResult[] GetViolated(PermissionResult[] results)
 		{
 			if (results == null) throw new ArgumentNullException(nameof(results));
 			if (results.Length == 0) throw new ArgumentOutOfRangeException(nameof(results));
@@ -24,19 +24,19 @@ namespace Cchbc.Validation
 			var totalViolations = 0;
 			foreach (var result in results)
 			{
-				if (result != ValidationResult.Success)
+				if (result != PermissionResult.Allow)
 				{
 					totalViolations++;
 				}
 			}
 			if (totalViolations > 0)
 			{
-				var violations = new ValidationResult[totalViolations];
+				var violations = new PermissionResult[totalViolations];
 
 				var index = 0;
 				foreach (var result in results)
 				{
-					if (result != ValidationResult.Success)
+					if (result != PermissionResult.Allow)
 					{
 						violations[index++] = result;
 					}
@@ -44,37 +44,37 @@ namespace Cchbc.Validation
 
 				return violations;
 			}
-			return new ValidationResult[0];
+			return new PermissionResult[0];
 		}
 
-		public static ValidationResult ValidateMinLength(string value, int minLength, string localizationKeyName)
+		public static PermissionResult ValidateMinLength(string value, int minLength, string localizationKeyName)
 		{
 			if (value == null) throw new ArgumentNullException(nameof(value));
 
 			if (value.Length < minLength)
 			{
-				return new ValidationResult(localizationKeyName);
+				return PermissionResult.Deny(localizationKeyName);
 			}
-			return ValidationResult.Success;
+			return PermissionResult.Allow;
 		}
 
-		public static ValidationResult ValidateMaxLength(string value, int maxLength, string localizationKeyName)
+		public static PermissionResult ValidateMaxLength(string value, int maxLength, string localizationKeyName)
 		{
 			if (value.Length > maxLength)
 			{
-				return new ValidationResult(localizationKeyName);
+				return PermissionResult.Deny(localizationKeyName);
 			}
-			return ValidationResult.Success;
+			return PermissionResult.Allow;
 		}
 
-		public static ValidationResult ValidateLength(string value, int min, int max, string localizationKeyName)
+		public static PermissionResult ValidateLength(string value, int min, int max, string localizationKeyName)
 		{
 			var length = value.Length;
-			if (min <= length && length <= max)
+			if (min > length || length > max)
 			{
-				return ValidationResult.Success;
+				return PermissionResult.Deny(localizationKeyName + $@"({min}:{max})");
 			}
-			return new ValidationResult(localizationKeyName + $@"({min}:{max})");
+			return PermissionResult.Allow;
 		}
 	}
 }

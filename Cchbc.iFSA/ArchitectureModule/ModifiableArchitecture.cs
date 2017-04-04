@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows.Input;
 using Cchbc;
 using Cchbc.Common;
+using Cchbc.Data;
+using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Localization;
+using Cchbc.Logs;
 using Cchbc.Validation;
 
 namespace iFSA.ArchitectureModule
@@ -119,96 +121,126 @@ namespace iFSA.ArchitectureModule
 		}
 	}
 
-	public sealed class AgendaHeaderAddValidatorDataProvider
+
+	public static class AgendaHeaderDataProvider
 	{
-		public Func<string, bool> AgendaHeaderExists { get; }
-		public Func<DateTime, bool> DateExists { get; }
 
-		public AgendaHeaderAddValidatorDataProvider(Func<string, bool> agendaHeaderExists, Func<DateTime, bool> dateExists)
-		{
-			if (agendaHeaderExists == null) throw new ArgumentNullException(nameof(agendaHeaderExists));
-			if (dateExists == null) throw new ArgumentNullException(nameof(dateExists));
-
-			this.AgendaHeaderExists = agendaHeaderExists;
-			this.DateExists = dateExists;
-		}
 	}
 
-	public sealed class ValidatorDataProvider
+	public static class AgendaHeaderValidator
 	{
-		private MainContext MainContext { get; }
-
-		private List<string> _values;
-
-		public ValidatorDataProvider(MainContext mainContext)
+		public static PermissionResult CanAddHeader(MainContext context, AgendaHeader header, IEnumerable<AgendaHeader> headers)
 		{
-			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
-
-			this.MainContext = mainContext;
-		}
-
-		public bool IsAgendaHeaderExists(string name)
-		{
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			this.LoadDataIfNotLoaded();
-			Debug.WriteLine(@"Find the name in the list");
-			return false;
-		}
-
-		public bool IsDateExists(DateTime date)
-		{
-			this.LoadDataIfNotLoaded();
-			Debug.WriteLine(@"Find the date in the list");
-			return false;
-		}
-
-		private void LoadDataIfNotLoaded()
-		{
-			if (_values == null)
-			{
-				Debug.WriteLine(@"Load Data");
-				_values = new List<string>();
-			}
-		}
-	}
-
-	public static class AgendaHeaderLogic
-	{
-		public static ValidationResult CanAddHeader(AgendaHeaderAddValidatorDataProvider dataProvider, AgendaHeader header)
-		{
-			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 			if (header == null) throw new ArgumentNullException(nameof(header));
+			if (headers == null) throw new ArgumentNullException(nameof(headers));
 
 			var result = Validator.ValidateNotEmpty(header.Name, @"HeaderNameIsRequired");
-			if (result != ValidationResult.Success)
+			if (result != PermissionResult.Allow)
 			{
 				return result;
 			}
 			var name = (header.Name ?? string.Empty).Trim();
-			if (dataProvider.AgendaHeaderExists(name))
+			foreach (var h in headers)
 			{
-				return new ValidationResult(@"HeaderWithTheSameNameAlreadyExists");
+				if (h.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+				{
+					return PermissionResult.Deny(@"HeaderWithTheSameNameAlreadyExists");
+				}
+			}
+			var values = GetData(context);
+
+			context.Log(nameof(IsAgendaHeaderExists), LogLevel.Info);
+			if (IsAgendaHeaderExists(values, name))
+			{
+				return PermissionResult.Deny(@"HeaderWithTheSameNameAlreadyExists");
 			}
 			var date = header.DateTime.Date;
-			if (dataProvider.DateExists(date))
+			context.Log(nameof(IsDateExists), LogLevel.Info);
+			if (IsDateExists(values, date))
 			{
-				return new ValidationResult(@"HeaderWithTheSameDateAlreadyExists");
+				return PermissionResult.Deny(@"HeaderWithTheSameDateAlreadyExists");
 			}
-			return ValidationResult.Success;
+			// TODO : Parameter ???
+			if (date < DateTime.Today.AddDays(-30))
+			{
+				return PermissionResult.Confirm(@"HeaderDateConfirmTooOld");
+			}
+			return PermissionResult.Allow;
+		}
+
+		public static PermissionResult CanUpdateHeaderDate(MainContext context, AgendaHeader header, IEnumerable<AgendaHeader> headers, DateTime newDate)
+		{
+			if (header == null) throw new ArgumentNullException(nameof(header));
+			if (headers == null) throw new ArgumentNullException(nameof(headers));
+
+			// TODO : !!!
+			return PermissionResult.Allow;
+		}
+
+		public static PermissionResult CanUpdateHeaderAddress(MainContext context, AgendaHeader header, IEnumerable<AgendaHeader> headers, string address)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (header == null) throw new ArgumentNullException(nameof(header));
+			if (headers == null) throw new ArgumentNullException(nameof(headers));
+
+			throw new NotImplementedException();
+		}
+
+		private static bool IsAgendaHeaderExists(IEnumerable<string> values, string name)
+		{
+			foreach (var value in values)
+			{
+				if (name.Equals(value, StringComparison.OrdinalIgnoreCase))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private static bool IsDateExists(IEnumerable<string> values, DateTime date)
+		{
+			foreach (var value in values)
+			{
+
+			}
+			return false;
+		}
+
+		private static List<string> GetData(MainContext context)
+		{
+			// TODO : Query the db
+			context.Log(nameof(GetData), LogLevel.Info);
+			return new List<string>();
 		}
 	}
+
 
 	public static class AgendaHeaderScreen
 	{
 		public static void Load()
 		{
-			var viewModel = new AgendaHeaderScreenViewModel(null, default(IAgendaHeaderScreenDataProvider), ctx =>
-			{
-				var validator = new ValidatorDataProvider(ctx);
-				return new AgendaHeaderAddValidatorDataProvider(validator.IsAgendaHeaderExists, validator.IsDateExists);
-			});
+			var context = default(MainContext);
+			var viewModel = new AgendaHeaderScreenViewModel(context, default(IAgendaHeaderScreenDataProvider),
+				AgendaHeaderValidator.CanAddHeader,
+				AgendaHeaderValidator.CanUpdateHeaderDate,
+				AgendaHeaderValidator.CanUpdateHeaderAddress
+				);
 		}
+	}
+
+	public interface IAgendaHeaderScreenDataProvider
+	{
+		IEnumerable<AgendaHeader> GetAgendaHeaders(IDbContext dbContext);
+
+		void Insert(IDbContext dbContext, AgendaHeader header);
+		void Update(IDbContext dbContext, AgendaHeader header);
+		void Delete(IDbContext dbContext, AgendaHeader header);
+
+		void Insert(IDbContext dbContext, AgendaDetail detail);
+		void Update(IDbContext dbContext, AgendaDetail detail);
+		void Delete(IDbContext dbContext, AgendaDetail detail);
 	}
 
 	public sealed class AgendaHeaderScreenViewModel : ViewModel
@@ -217,7 +249,25 @@ namespace iFSA.ArchitectureModule
 		private Func<AgendaHeaderViewModel, string, bool> IsTextSearchMatch { get; }
 		private List<AgendaHeaderViewModel> AgendaHeaders { get; } = new List<AgendaHeaderViewModel>();
 
+		private AgendaHeaderViewModel _selectedAgendaHeader;
+		public AgendaHeaderViewModel SelectedAgendaHeader
+		{
+			get { return _selectedAgendaHeader; }
+			set { this.SetProperty(ref _selectedAgendaHeader, value); }
+		}
 		public ObservableCollection<AgendaHeaderViewModel> CurrentAgendaHeaders { get; } = new ObservableCollection<AgendaHeaderViewModel>();
+		private DateTime _agendaHeaderNewDate;
+		public DateTime AgendaHeaderNewDate
+		{
+			get { return _agendaHeaderNewDate; }
+			set { this.SetProperty(ref _agendaHeaderNewDate, value); }
+		}
+		private string _agendaHeaderAddress = string.Empty;
+		public string AgendaHeaderAddress
+		{
+			get { return _agendaHeaderAddress; }
+			set { this.SetProperty(ref _agendaHeaderAddress, value); }
+		}
 
 		private SortOption<AgendaHeaderViewModel> _currentSortOption;
 		public SortOption<AgendaHeaderViewModel> CurrentSortOption
@@ -257,11 +307,16 @@ namespace iFSA.ArchitectureModule
 			}
 		}
 
-		public AgendaHeaderScreenViewModel(MainContext mainContext, IAgendaHeaderScreenDataProvider dataProvider, Func<MainContext, AgendaHeaderAddValidatorDataProvider> dataProviderCreator)
+		public AgendaHeaderScreenViewModel(MainContext mainContext, IAgendaHeaderScreenDataProvider dataProvider,
+			Func<MainContext, AgendaHeader, IEnumerable<AgendaHeader>, PermissionResult> canAddHeader,
+			Func<MainContext, AgendaHeader, IEnumerable<AgendaHeader>, DateTime, PermissionResult> canUpdateHeaderDate,
+			Func<MainContext, AgendaHeader, IEnumerable<AgendaHeader>, string, PermissionResult> canUpdateHeaderAddress)
 		{
 			DataProvider = dataProvider;
+			CanAddHeader = canAddHeader;
+			CanUpdateHeaderDate = canUpdateHeaderDate;
+			CanUpdateHeaderAddress = canUpdateHeaderAddress;
 			MainContext = mainContext;
-			DataProviderCreator = dataProviderCreator;
 			this.SortOptions.Add(new SortOption<AgendaHeaderViewModel>(@"Name", (x, y) =>
 			{
 				var cmp = string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
@@ -276,6 +331,8 @@ namespace iFSA.ArchitectureModule
 			this.IsTextSearchMatch = (vm, search) => vm.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
 
 			this.AddHeaderCommand = new RelayCommand(this.AddHeader);
+			this.UpdateHeaderDateCommand = new RelayCommand(this.UpdateHeaderDate);
+			this.UpdateHeaderAddressCommand = new RelayCommand(this.UpdateHeaderAddress);
 		}
 
 		private string _headerName = string.Empty;
@@ -293,8 +350,13 @@ namespace iFSA.ArchitectureModule
 		}
 
 		public MainContext MainContext { get; }
+		public ICommand AddHeaderCommand { get; }
+		public ICommand UpdateHeaderDateCommand { get; }
+		public ICommand UpdateHeaderAddressCommand { get; }
 
-		public Func<MainContext, AgendaHeaderAddValidatorDataProvider> DataProviderCreator { get; }
+		private Func<MainContext, AgendaHeader, IEnumerable<AgendaHeader>, PermissionResult> CanAddHeader { get; }
+		private Func<MainContext, AgendaHeader, IEnumerable<AgendaHeader>, DateTime, PermissionResult> CanUpdateHeaderDate { get; }
+		private Func<MainContext, AgendaHeader, IEnumerable<AgendaHeader>, string, PermissionResult> CanUpdateHeaderAddress { get; }
 
 		private async void AddHeader()
 		{
@@ -305,19 +367,26 @@ namespace iFSA.ArchitectureModule
 				// Create model
 				var header = new AgendaHeader(0, this.HeaderName) { DateTime = HeaderDateTime };
 
-				var result = AgendaHeaderLogic.CanAddHeader(this.DataProviderCreator(this.MainContext), header);
-				if (result != ValidationResult.Success)
+				var result = this.CanAddHeader(this.MainContext, header, this.AgendaHeaders.Select(v => v.Model));
+				if (result.Type != PermissionType.Allow)
 				{
 					var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));
-					await this.MainContext.ModalDialog.ShowAsync(message, feature);
-					return;
+					var confirmation = await this.MainContext.ModalDialog.ShowAsync(message, feature, result.Type);
+					if (confirmation != DialogResult.Accept)
+					{
+						return;
+					}
 				}
 
 				// Create view model
 				var viewModel = new AgendaHeaderViewModel(header);
 
 				// Insert into db
-				this.DataProvider.Insert(viewModel.Model);
+				using (var ctx = this.MainContext.DbContextCreator())
+				{
+					this.DataProvider.Insert(ctx, viewModel.Model);
+					ctx.Complete();
+				}
 
 				// Insert to view models
 				this.AgendaHeaders.Add(viewModel);
@@ -335,72 +404,112 @@ namespace iFSA.ArchitectureModule
 			}
 		}
 
-		public void Load()
+		private async void UpdateHeaderDate()
 		{
-			this.AgendaHeaders.Clear();
-			foreach (var agendaHeader in this.DataProvider.GetAgendaHeaders())
+			var context = nameof(AgendaHeaderScreenViewModel);
+			var feature = Feature.StartNew(context, nameof(UpdateHeaderDate));
+			try
 			{
-				this.AgendaHeaders.Add(new AgendaHeaderViewModel(agendaHeader));
-			}
-			this.DisplayData();
-		}
-
-		public ICommand AddHeaderCommand { get; }
-
-		public void Update(AgendaHeaderViewModel viewModel)
-		{
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-
-			this.DataProvider.Update(viewModel.Model);
-			this.DisplayData();
-		}
-
-		public void Delete(AgendaHeaderViewModel viewModel)
-		{
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-
-			this.AgendaHeaders.Remove(viewModel);
-			this.DataProvider.Delete(viewModel.Model);
-			this.DisplayData();
-		}
-
-		public void Add(AgendaHeaderViewModel header, AgendaDetail detail)
-		{
-			if (header == null) throw new ArgumentNullException(nameof(header));
-			if (detail == null) throw new ArgumentNullException(nameof(detail));
-
-			header.Details.Add(new AgendaDetailViewModel(detail));
-
-			this.DataProvider.Insert(detail);
-
-			this.DisplayData();
-		}
-
-		public void Update(AgendaDetailViewModel viewModel)
-		{
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-
-			this.DataProvider.Update(viewModel.Model);
-			this.DisplayData();
-		}
-
-		public void Delete(AgendaDetailViewModel viewModel)
-		{
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-
-			foreach (var header in AgendaHeaders)
-			{
-				foreach (var detail in header.Details)
+				var viewModel = this.SelectedAgendaHeader;
+				if (viewModel == null)
 				{
-					if (detail == viewModel)
+					this.MainContext.Log(nameof(UpdateHeaderDate) + " without selected header", LogLevel.Warn);
+					return;
+				}
+
+				// Check newDate and other logic
+				var result = this.CanUpdateHeaderDate(this.MainContext, viewModel.Model, this.AgendaHeaders.Select(v => v.Model), this.AgendaHeaderNewDate);
+				if (result.Type != PermissionType.Allow)
+				{
+					var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));
+					var confirmation = await this.MainContext.ModalDialog.ShowAsync(message, feature, result.Type);
+					if (confirmation != DialogResult.Accept)
 					{
-						header.Details.Remove(detail);
-						break;
+						return;
 					}
 				}
-			}
 
-			this.DataProvider.Delete(viewModel.Model);
+				// Set the new date
+				viewModel.DateTime = this.AgendaHeaderNewDate;
+
+				// Update the model
+				using (var ctx = this.MainContext.DbContextCreator())
+				{
+					this.DataProvider.Update(ctx, viewModel.Model);
+				}
+
+				// Refresh the screen
+				this.DisplayData();
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.FeatureManager.Save(feature, ex);
+			}
+			finally
+			{
+				this.MainContext.FeatureManager.Save(feature);
+			}
+		}
+
+		private async void UpdateHeaderAddress()
+		{
+			var context = nameof(AgendaHeaderScreenViewModel);
+			var feature = Feature.StartNew(context, nameof(UpdateHeaderAddress));
+			try
+			{
+				var viewModel = this.SelectedAgendaHeader;
+				if (viewModel == null)
+				{
+					this.MainContext.Log(nameof(UpdateHeaderAddress) + " without selected header", LogLevel.Warn);
+					return;
+				}
+
+				// Check newDate and other logic
+				var result = this.CanUpdateHeaderAddress(this.MainContext, viewModel.Model, this.AgendaHeaders.Select(v => v.Model), this.AgendaHeaderAddress);
+				if (result.Type != PermissionType.Allow)
+				{
+					var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));
+					var confirmation = await this.MainContext.ModalDialog.ShowAsync(message, feature, result.Type);
+					if (confirmation != DialogResult.Accept)
+					{
+						return;
+					}
+				}
+
+				// Set the new date
+				viewModel.Address = this.AgendaHeaderAddress;
+
+				// Update the model
+				using (var ctx = this.MainContext.DbContextCreator())
+				{
+					this.DataProvider.Update(ctx, viewModel.Model);
+				}
+
+				// Refresh the screen
+				this.DisplayData();
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.FeatureManager.Save(feature, ex);
+			}
+			finally
+			{
+				this.MainContext.FeatureManager.Save(feature);
+			}
+		}
+
+		public void Load()
+		{
+			using (var ctx = this.MainContext.DbContextCreator())
+			{
+				this.AgendaHeaders.Clear();
+
+				foreach (var agendaHeader in this.DataProvider.GetAgendaHeaders(ctx))
+				{
+					this.AgendaHeaders.Add(new AgendaHeaderViewModel(agendaHeader));
+				}
+				ctx.Complete();
+			}
 
 			this.DisplayData();
 		}
@@ -423,64 +532,6 @@ namespace iFSA.ArchitectureModule
 					this.CurrentAgendaHeaders.Add(vm);
 				}
 			}
-		}
-	}
-
-	public interface IAgendaHeaderScreenDataProvider
-	{
-		IEnumerable<AgendaHeader> GetAgendaHeaders();
-
-		void Insert(AgendaHeader header);
-		void Update(AgendaHeader header);
-		void Delete(AgendaHeader header);
-
-		void Insert(AgendaDetail detail);
-		void Update(AgendaDetail detail);
-		void Delete(AgendaDetail detail);
-	}
-
-	public sealed class DebugAgendaHeaderScreenDataProvider : IAgendaHeaderScreenDataProvider
-	{
-		public IEnumerable<AgendaHeader> GetAgendaHeaders()
-		{
-			throw new NotImplementedException();
-		}
-
-		public void Insert(AgendaHeader header)
-		{
-			header.Id = int.MaxValue;
-			var query = @"insert into AGENDA_HEADERS(ID,NAME,ADDRESS) values(@id,@name,@address)";
-			throw new NotImplementedException();
-		}
-
-		public void Update(AgendaHeader header)
-		{
-			var query = @"update AGENDA_HEADERS set name = @name, address = @address where id = @id";
-			throw new NotImplementedException();
-		}
-
-		public void Delete(AgendaHeader header)
-		{
-			var query = @"delete from AGENDA_HEADERS where id = @id";
-			throw new NotImplementedException();
-		}
-
-		public void Insert(AgendaDetail detail)
-		{
-			var query = @"insert into AGENDA_DETAILS(ID,NAME,STATUS,DETAILS) values ...";
-			throw new NotImplementedException();
-		}
-
-		public void Update(AgendaDetail detail)
-		{
-			var query = @"updte AGENDA_DETAILS set name = @name, status = @status, details = @details where id = @id";
-			throw new NotImplementedException();
-		}
-
-		public void Delete(AgendaDetail detail)
-		{
-			var query = @"delete from AGENDA_DETAILS where id = @id";
-			throw new NotImplementedException();
 		}
 	}
 }

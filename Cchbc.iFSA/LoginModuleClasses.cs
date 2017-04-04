@@ -10,6 +10,7 @@ using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Logs;
+using Cchbc.Validation;
 using iFSA.AgendaModule.Objects;
 using iFSA.AgendaModule.ViewModels;
 using iFSA.Common.Objects;
@@ -209,7 +210,7 @@ namespace iFSA
 			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
 
 			var confirmationMessage = this.LocalizationManager(@"Calendar", @"ConfirmCancelDay");
-			var isConfirmed = (await this.ModalDialog.ShowAsync(confirmationMessage, Feature.None, DialogType.AcceptDecline)) == DialogResult.Accept;
+			var isConfirmed = (await this.ModalDialog.ShowAsync(confirmationMessage, Feature.None, PermissionType.Confirm)) == DialogResult.Accept;
 			if (!isConfirmed) return;
 
 			// We don't have any selected days

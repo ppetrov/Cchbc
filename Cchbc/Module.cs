@@ -66,7 +66,7 @@ namespace Cchbc
 			return null;
 		}
 
-		public abstract IEnumerable<ValidationResult> ValidateProperties(TViewModel viewModel, Feature feature);
+		public abstract IEnumerable<PermissionResult> ValidateProperties(TViewModel viewModel, Feature feature);
 
 		public abstract Task<PermissionResult> CanInsertAsync(TViewModel viewModel, Feature feature);
 
@@ -128,14 +128,14 @@ namespace Cchbc
 								await performer(viewModel, feature);
 								break;
 							case PermissionType.Confirm:
-								var dialogResult = await dialog.ShowAsync(permissionResult.Message, feature, DialogType.AcceptDecline);
+								var dialogResult = await dialog.ShowAsync(permissionResult.LocalizationKeyName, feature, PermissionType.Confirm);
 								if (dialogResult == DialogResult.Accept)
 								{
 									await performer(viewModel, feature);
 								}
 								break;
 							case PermissionType.Deny:
-								await dialog.ShowAsync(permissionResult.Message, feature);
+								await dialog.ShowAsync(permissionResult.LocalizationKeyName, feature);
 								break;
 							default:
 								throw new ArgumentOutOfRangeException();

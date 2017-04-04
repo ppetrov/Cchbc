@@ -69,7 +69,6 @@
     <Compile Include="Search\Searcher.cs" />
     <Compile Include="Search\SearchOption.cs" />
     <Compile Include="Module.cs" />
-    <Compile Include="Dialog\DialogType.cs" />
     <Compile Include="ViewModelEventArgs.cs" />
     <Compile Include="ViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -78,7 +77,6 @@
     <Compile Include="Validation\Validator.cs" />
     <Compile Include="Validation\PermissionResult.cs" />
     <Compile Include="Validation\PermissionStatus.cs" />
-    <Compile Include="Validation\ValidationResult.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="project.json" />
