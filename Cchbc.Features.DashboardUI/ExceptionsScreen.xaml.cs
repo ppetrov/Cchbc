@@ -21,7 +21,7 @@ namespace Cchbc.Features.DashboardUI
 		private void ExceptionsScreen_OnLoaded(object sender, RoutedEventArgs e)
 		{
 			var core = AppContextObsolete.MainContext;
-			var feature = new Feature(@"Exceptions", @"Load");
+			var feature = Feature.StartNew(@"Exceptions", @"Load");
 			try
 			{
 				var s = Stopwatch.StartNew();

@@ -62,15 +62,12 @@ namespace Cchbc.Features
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			// Stop the feature
-			feature.Stop();
-
 			var currentDetails = details;
-			if (feature.TimeSpent != TimeSpan.Zero)
+			var timeSpent = feature.TimeSpent;
+			if (timeSpent != TimeSpan.Zero)
 			{
-				currentDetails = feature.TimeSpent.ToString(@"c");
+				currentDetails = timeSpent.ToString(@"c");
 			}
-
 			using (var context = this.DbContextCreator())
 			{
 				var featureRow = this.Save(context, feature.Context, feature.Name);

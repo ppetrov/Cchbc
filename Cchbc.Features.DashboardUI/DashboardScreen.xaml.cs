@@ -27,13 +27,13 @@ namespace Cchbc.Features.DashboardUI
 			{
 				using (var featureContext = new FeatureContext(core, feature))
 				{
-					await this.ViewModel.LoadAsync(featureContext,
-						DashboardDataProvider.GetSettingsAsync,
-						DashboardDataProvider.GetCommonDataAsync,
-						DashboardDataProvider.GetUsersAsync,
-						DashboardDataProvider.GetVersionsAsync,
-						DashboardDataProvider.GetExceptionsAsync, DashboardDataProvider.GetMostUsedFeaturesAsync,
-						DashboardDataProvider.GetLeastUsedFeaturesAsync, DashboardDataProvider.GetSlowestFeaturesAsync);
+					//await this.ViewModel.LoadAsync(featureContext,
+					//	DashboardDataProvider.GetSettingsAsync,
+					//	DashboardDataProvider.GetCommonDataAsync,
+					//	DashboardDataProvider.GetUsersAsync,
+					//	DashboardDataProvider.GetVersionsAsync,
+					//	DashboardDataProvider.GetExceptionsAsync, DashboardDataProvider.GetMostUsedFeaturesAsync,
+					//	DashboardDataProvider.GetLeastUsedFeaturesAsync, DashboardDataProvider.GetSlowestFeaturesAsync);
 				}
 			}
 			catch (Exception ex)

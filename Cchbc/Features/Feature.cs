@@ -5,61 +5,37 @@ namespace Cchbc.Features
 {
 	public sealed class Feature
 	{
-		public static readonly Feature None = new Feature(string.Empty, string.Empty);
+		public static readonly Feature None = new Feature(string.Empty, string.Empty, null);
+
+		private readonly Stopwatch _stopwatch;
 
 		public string Context { get; }
 		public string Name { get; }
-		public TimeSpan TimeSpent => _stopwatch == null ? TimeSpan.Zero : this.Stopwatch.Elapsed;
-
-		public Action<Feature> Started;
-		public Action<Feature> Stopped;
-
-		private Stopwatch _stopwatch;
-		private Stopwatch Stopwatch => _stopwatch ?? (_stopwatch = new Stopwatch());
-
-		public TimeSpan Elapsed => this.Stopwatch.Elapsed;
+		public TimeSpan TimeSpent => _stopwatch?.Elapsed ?? TimeSpan.Zero;
 
 		public static Feature StartNew(string context, string name)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
-			var feature = new Feature(context, name);
-
-			feature.Start();
-
-			return feature;
+			return new Feature(context, name, Stopwatch.StartNew());
 		}
 
-		public Feature(string context, string name)
+		private Feature(string context, string name, Stopwatch stopwatch)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
 			this.Context = context;
 			this.Name = name;
-		}
-
-		public void Start()
-		{
-			this.Stopwatch.Start();
-			this.Started?.Invoke(this);
-		}
-
-		public void Stop()
-		{
-			this.Stopwatch.Stop();
-			this.Stopped?.Invoke(this);
+			_stopwatch = stopwatch;
 		}
 
 		public void Pause()
 		{
-			this.Stopwatch.Stop();
+			_stopwatch?.Stop();
 		}
 
 		public void Resume()
 		{
-			this.Stopwatch.Start();
+			_stopwatch?.Start();
 		}
 	}
 }
