@@ -81,50 +81,50 @@ namespace Cchbc.Features.Data
 			var offset = 0;
 			var buffer = new char[short.MaxValue];
 
-			var featureContextRows = new FeatureContextRow[ReadLong(bytes, ref offset)];
-			for (var i = 0; i < featureContextRows.Length; i++)
+			var contexts = new FeatureContextRow[ReadLong(bytes, ref offset)];
+			for (var i = 0; i < contexts.Length; i++)
 			{
 				var id = ReadLong(bytes, ref offset);
 				var name = ReadString(bytes, ref offset, buffer);
-				featureContextRows[i] = new FeatureContextRow(id, name);
+				contexts[i] = new FeatureContextRow(id, name);
 			}
 
-			var featureExceptionRows = new FeatureExceptionRow[ReadLong(bytes, ref offset)];
-			for (var i = 0; i < featureExceptionRows.Length; i++)
-			{
-				var id = ReadLong(bytes, ref offset);
-				var contents = ReadString(bytes, ref offset, buffer);
-				featureExceptionRows[i] = new FeatureExceptionRow(id, contents);
-			}
-
-			var featureRows = new FeatureRow[ReadLong(bytes, ref offset)];
-			for (var i = 0; i < featureRows.Length; i++)
+			var features = new FeatureRow[ReadLong(bytes, ref offset)];
+			for (var i = 0; i < features.Length; i++)
 			{
 				var id = ReadLong(bytes, ref offset);
 				var name = ReadString(bytes, ref offset, buffer);
 				var contextId = ReadLong(bytes, ref offset);
-				featureRows[i] = new FeatureRow(id, name, contextId);
+				features[i] = new FeatureRow(id, name, contextId);
 			}
 
-			var featureEntryRows = new FeatureEntryRow[ReadLong(bytes, ref offset)];
-			for (var i = 0; i < featureEntryRows.Length; i++)
+			var featureEntries = new FeatureEntryRow[ReadLong(bytes, ref offset)];
+			for (var i = 0; i < featureEntries.Length; i++)
 			{
 				var featureId = ReadLong(bytes, ref offset);
 				var details = ReadString(bytes, ref offset, buffer);
 				var createdAt = DateTime.FromBinary(ReadLong(bytes, ref offset));
-				featureEntryRows[i] = new FeatureEntryRow(featureId, details, createdAt);
+				featureEntries[i] = new FeatureEntryRow(featureId, details, createdAt);
 			}
 
-			var featureExceptionEntryRows = new FeatureExceptionEntryRow[ReadLong(bytes, ref offset)];
-			for (var i = 0; i < featureExceptionEntryRows.Length; i++)
+			var exceptionEntries = new FeatureExceptionEntryRow[ReadLong(bytes, ref offset)];
+			for (var i = 0; i < exceptionEntries.Length; i++)
 			{
 				var exceptionRowId = ReadLong(bytes, ref offset);
 				var createdAt = DateTime.FromBinary(ReadLong(bytes, ref offset));
 				var featureId = ReadLong(bytes, ref offset);
-				featureExceptionEntryRows[i] = new FeatureExceptionEntryRow(exceptionRowId, createdAt, featureId);
+				exceptionEntries[i] = new FeatureExceptionEntryRow(exceptionRowId, createdAt, featureId);
 			}
 
-			return new ClientData(featureContextRows, featureRows, featureEntryRows, featureExceptionEntryRows, featureExceptionRows);
+			var exceptions = new FeatureExceptionRow[ReadLong(bytes, ref offset)];
+			for (var i = 0; i < exceptions.Length; i++)
+			{
+				var id = ReadLong(bytes, ref offset);
+				var contents = ReadString(bytes, ref offset, buffer);
+				exceptions[i] = new FeatureExceptionRow(id, contents);
+			}
+
+			return new ClientData(contexts, features, featureEntries, exceptionEntries, exceptions);
 		}
 
 		private static string ReadString(byte[] buffer, ref int offset, char[] symbolBuffer)
