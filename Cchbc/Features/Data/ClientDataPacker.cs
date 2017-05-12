@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
 
 namespace Cchbc.Features.Data
 {
 	public static class ClientDataPacker
 	{
 		private const int ShortSize = 2;
-		private const int IntSize = 4;
 		private const int LongSize = 8;
 
 		public static byte[] Pack(ClientData clientData)
@@ -16,38 +14,38 @@ namespace Cchbc.Features.Data
 			var offset = 0;
 			var buffer = new byte[GetBufferSize(clientData)];
 
-			Write(buffer, ref offset, (short)clientData.ContextRows.Count);
-			foreach (var row in clientData.ContextRows)
+			Write(buffer, ref offset, (short)clientData.Contexts.Length);
+			foreach (var row in clientData.Contexts)
 			{
 				Write(buffer, ref offset, row.Id);
 				Write(buffer, ref offset, row.Name);
 			}
 
-			Write(buffer, ref offset, (short)clientData.ExceptionRows.Count);
-			foreach (var row in clientData.ExceptionRows)
+			Write(buffer, ref offset, (short)clientData.Exceptions.Length);
+			foreach (var row in clientData.Exceptions)
 			{
 				Write(buffer, ref offset, row.Id);
 				Write(buffer, ref offset, row.Contents);
 			}
 
-			Write(buffer, ref offset, (short)clientData.FeatureRows.Count);
-			foreach (var row in clientData.FeatureRows)
+			Write(buffer, ref offset, (short)clientData.Features.Length);
+			foreach (var row in clientData.Features)
 			{
 				Write(buffer, ref offset, row.Id);
 				Write(buffer, ref offset, row.Name);
 				Write(buffer, ref offset, row.ContextId);
 			}
 
-			Write(buffer, ref offset, (short)clientData.FeatureEntryRows.Count);
-			foreach (var row in clientData.FeatureEntryRows)
+			Write(buffer, ref offset, (short)clientData.FeatureEntries.Length);
+			foreach (var row in clientData.FeatureEntries)
 			{
 				Write(buffer, ref offset, row.Details);
 				Write(buffer, ref offset, row.CreatedAt.ToBinary());
 				Write(buffer, ref offset, row.FeatureId);
 			}
 
-			Write(buffer, ref offset, (short)clientData.ExceptionEntryRows.Count);
-			foreach (var row in clientData.ExceptionEntryRows)
+			Write(buffer, ref offset, (short)clientData.ExceptionEntries.Length);
+			foreach (var row in clientData.ExceptionEntries)
 			{
 				Write(buffer, ref offset, row.ExceptionId);
 				Write(buffer, ref offset, row.CreatedAt.ToBinary());
@@ -65,51 +63,51 @@ namespace Cchbc.Features.Data
 			var symbolBuffer = new char[short.MaxValue];
 
 			var count = ReadShort(buffer, ref offset);
-			var dbFeatureContextRows = new List<DbFeatureContextRow>(count);
+			var dbFeatureContextRows = new FeatureContextRow[count];
 			for (var i = 0; i < count; i++)
 			{
-				var id = ReadInt(buffer, ref offset);
+				var id = ReadLong(buffer, ref offset);
 				var name = ReadString(buffer, ref offset, symbolBuffer);
-				dbFeatureContextRows.Add(new DbFeatureContextRow(id, name));
+				dbFeatureContextRows[i] = new FeatureContextRow(id, name);
 			}
 
 			count = ReadShort(buffer, ref offset);
-			var dbFeatureExceptionRows = new List<DbFeatureExceptionRow>(count);
+			var dbFeatureExceptionRows = new FeatureExceptionRow[count];
 			for (var i = 0; i < count; i++)
 			{
-				var id = ReadInt(buffer, ref offset);
+				var id = ReadLong(buffer, ref offset);
 				var contents = ReadString(buffer, ref offset, symbolBuffer);
-				dbFeatureExceptionRows.Add(new DbFeatureExceptionRow(id, contents));
+				dbFeatureExceptionRows[i] = new FeatureExceptionRow(id, contents);
 			}
 
 			count = ReadShort(buffer, ref offset);
-			var dbFeatureRows = new List<DbFeatureRow>(count);
+			var dbFeatureRows = new FeatureRow[count];
 			for (var i = 0; i < count; i++)
 			{
-				var id = ReadInt(buffer, ref offset);
+				var id = ReadLong(buffer, ref offset);
 				var name = ReadString(buffer, ref offset, symbolBuffer);
-				var contextId = ReadInt(buffer, ref offset);
-				dbFeatureRows.Add(new DbFeatureRow(id, name, contextId));
+				var contextId = ReadLong(buffer, ref offset);
+				dbFeatureRows[i] = new FeatureRow(id, name, contextId);
 			}
 
 			count = ReadShort(buffer, ref offset);
-			var dbFeatureEntryRows = new List<DbFeatureEntryRow>(count);
+			var dbFeatureEntryRows = new FeatureEntryRow[count];
 			for (var i = 0; i < count; i++)
 			{
 				var details = ReadString(buffer, ref offset, symbolBuffer);
 				var createdAt = DateTime.FromBinary(ReadLong(buffer, ref offset));
-				var featureId = ReadInt(buffer, ref offset);
-				dbFeatureEntryRows.Add(new DbFeatureEntryRow(details, createdAt, featureId));
+				var featureId = ReadLong(buffer, ref offset);
+				dbFeatureEntryRows[i] = new FeatureEntryRow(featureId, createdAt, details);
 			}
 
 			count = ReadShort(buffer, ref offset);
-			var dbFeatureExceptionEntryRows = new List<DbFeatureExceptionEntryRow>(count);
+			var dbFeatureExceptionEntryRows = new FeatureExceptionEntryRow[count];
 			for (var i = 0; i < count; i++)
 			{
-				var exceptionRowId = ReadInt(buffer, ref offset);
+				var exceptionRowId = ReadLong(buffer, ref offset);
 				var createdAt = DateTime.FromBinary(ReadLong(buffer, ref offset));
-				var featureId = ReadInt(buffer, ref offset);
-				dbFeatureExceptionEntryRows.Add(new DbFeatureExceptionEntryRow(exceptionRowId, createdAt, featureId));
+				var featureId = ReadLong(buffer, ref offset);
+				dbFeatureExceptionEntryRows[i] = new FeatureExceptionEntryRow(exceptionRowId, createdAt, featureId);
 			}
 
 			return new ClientData(dbFeatureContextRows, dbFeatureExceptionRows, dbFeatureRows, dbFeatureEntryRows, dbFeatureExceptionEntryRows);
@@ -134,13 +132,6 @@ namespace Cchbc.Features.Data
 			return value;
 		}
 
-		private static int ReadInt(byte[] buffer, ref int offset)
-		{
-			var value = BitConverter.ToInt32(buffer, offset);
-			offset += IntSize;
-			return value;
-		}
-
 		private static long ReadLong(byte[] buffer, ref int offset)
 		{
 			var value = BitConverter.ToInt64(buffer, offset);
@@ -155,43 +146,45 @@ namespace Cchbc.Features.Data
 			var size = totalLists * ShortSize;
 
 			// Id 
-			size += IntSize * clientData.ContextRows.Count;
-			foreach (var row in clientData.ContextRows)
+			size += LongSize * clientData.Contexts.Length;
+			foreach (var row in clientData.Contexts)
 			{
 				// Name
 				size += GetBufferSize(row.Name);
 			}
 
 			// Id
-			size += IntSize * clientData.ExceptionRows.Count;
-			foreach (var row in clientData.ExceptionRows)
+			size += LongSize * clientData.Exceptions.Length;
+			foreach (var row in clientData.Exceptions)
 			{
 				// Contents
 				size += GetBufferSize(row.Contents);
 			}
 
 			// Id & Context Id
-			size += 2 * IntSize * clientData.FeatureRows.Count;
-			foreach (var row in clientData.FeatureRows)
+			size += 2 * LongSize * clientData.Features.Length;
+			foreach (var row in clientData.Features)
 			{
 				// Name
 				size += GetBufferSize(row.Name);
 			}
 
 			// Id, CreatedAt
-			size += LongSize * clientData.FeatureEntryRows.Count;
+			var totalFeatureEntries = clientData.FeatureEntries.Length;
+			size += LongSize * totalFeatureEntries;
 			// FeatureId
-			size += IntSize * clientData.FeatureEntryRows.Count;
+			size += LongSize * totalFeatureEntries;
 			// Details
-			foreach (var row in clientData.FeatureEntryRows)
+			foreach (var row in clientData.FeatureEntries)
 			{
 				size += GetBufferSize(row.Details);
 			}
 
 			// Exception Id & Feature Id
-			size += 2 * IntSize * clientData.ExceptionEntryRows.Count;
+			var totalExceptionentries = clientData.ExceptionEntries.Length;
+			size += 2 * LongSize * totalExceptionentries;
 			// Created At
-			size += LongSize * clientData.ExceptionEntryRows.Count;
+			size += LongSize * totalExceptionentries;
 
 			return size;
 		}
@@ -206,14 +199,6 @@ namespace Cchbc.Features.Data
 		{
 			buffer[offset++] = (byte)(value);
 			buffer[offset++] = (byte)(value >> 8);
-		}
-
-		private static void Write(byte[] buffer, ref int offset, int value)
-		{
-			buffer[offset++] = (byte)(value);
-			buffer[offset++] = (byte)(value >> 8);
-			buffer[offset++] = (byte)(value >> 16);
-			buffer[offset++] = (byte)(value >> 24);
 		}
 
 		private static void Write(byte[] buffer, ref int offset, long value)

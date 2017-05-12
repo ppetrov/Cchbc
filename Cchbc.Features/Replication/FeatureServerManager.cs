@@ -29,7 +29,7 @@ namespace Cchbc.Features.Replication
 			var users = FeatureServerAdapter.GetUsers(context);
 			var serverContexts = FeatureServerAdapter.GetContexts(context);
 			var serverExceptions = FeatureServerAdapter.GetExceptions(context);
-			var serverFeaturesByContext = GetFeaturesByContext(context);
+			var serverFeaturesByContext = FeatureAdapter.GetFeaturesByContext(context);
 
 			return new ServerData(versions, users, serverContexts, serverExceptions, serverFeaturesByContext);
 		}
@@ -54,56 +54,35 @@ namespace Cchbc.Features.Replication
 				userId = FeatureServerAdapter.InsertUser(serverContext, userName, versionId);
 				serverData.Users.Add(userName, userId);
 			}
-			var contextsMap = ReplicateContexts(serverContext, clientData.ContextRows, serverData.Contexts);
-			var exceptionsMap = ReplicateExceptions(serverContext, clientData.ExceptionRows, serverData.Exceptions);
-			var featuresMap = ReplicateFeatures(serverContext, clientData.FeatureRows, contextsMap, serverData.FeaturesByContext);
-			ReplicateFeatureEntries(serverContext, clientData.FeatureEntryRows, featuresMap, userId, versionId);
+			var contextsMap = ReplicateContexts(serverContext, clientData.Contexts, serverData.Contexts);
+			var exceptionsMap = ReplicateExceptions(serverContext, clientData.Exceptions, serverData.Exceptions);
+			var featuresMap = ReplicateFeatures(serverContext, clientData.Features, contextsMap, serverData.FeaturesByContext);
+			ReplicateFeatureEntries(serverContext, clientData.FeatureEntries, featuresMap, userId, versionId);
 
 			var batchSize = 256;
 
 			// Process Exceptions
-			var clientFeatureExceptionEntryRows = clientData.ExceptionEntryRows;
-			var total = clientFeatureExceptionEntryRows.Count;
+			var clientFeatureExceptionEntryRows = clientData.ExceptionEntries;
+			var total = clientFeatureExceptionEntryRows.Length;
 			var remaining = total % batchSize;
 			var totalBatches = total / batchSize;
 			for (var i = 0; i < totalBatches; i++)
 			{
 				var offset = i * batchSize;
-				FeatureServerAdapter.InsertExceptionEntry(serverContext, GetRange(clientFeatureExceptionEntryRows, offset, batchSize), userId, versionId, exceptionsMap, featuresMap);
+				FeatureServerAdapter.InsertExceptionEntry(serverContext, new ArraySegment<FeatureExceptionEntryRow>(clientFeatureExceptionEntryRows, offset, batchSize), userId, versionId, exceptionsMap, featuresMap);
 			}
 			if (remaining > 0)
 			{
 				var offset = totalBatches * batchSize;
-				FeatureServerAdapter.InsertExceptionEntry(serverContext, GetRange(clientFeatureExceptionEntryRows, offset, remaining), userId, versionId, exceptionsMap, featuresMap);
+				FeatureServerAdapter.InsertExceptionEntry(serverContext, new ArraySegment<FeatureExceptionEntryRow>(clientFeatureExceptionEntryRows, offset, remaining), userId, versionId, exceptionsMap, featuresMap);
 			}
 
 			FeatureServerAdapter.UpdateUser(serverContext, userId, versionId);
 		}
 
-		private static Dictionary<long, Dictionary<string, int>> GetFeaturesByContext(IDbContext context)
+		private static Dictionary<long, long> ReplicateContexts(IDbContext serverContext, FeatureContextRow[] clientContextRows, Dictionary<string, long> serverContexts)
 		{
-			var serverFeaturesByContext = new Dictionary<long, Dictionary<string, int>>();
-
-			foreach (var feature in FeatureAdapter.GetFeatures(context))
-			{
-				Dictionary<string, int> byContext;
-
-				var contextId = feature.ContextId;
-				if (!serverFeaturesByContext.TryGetValue(contextId, out byContext))
-				{
-					byContext = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-					serverFeaturesByContext.Add(contextId, byContext);
-				}
-
-				byContext.Add(feature.Name, feature.Id);
-			}
-
-			return serverFeaturesByContext;
-		}
-
-		private static Dictionary<int, long> ReplicateContexts(IDbContext serverContext, List<DbFeatureContextRow> clientContextRows, Dictionary<string, long> serverContexts)
-		{
-			var map = new Dictionary<int, long>(clientContextRows.Count);
+			var map = new Dictionary<long, long>(clientContextRows.Length);
 
 			foreach (var context in clientContextRows)
 			{
@@ -123,9 +102,9 @@ namespace Cchbc.Features.Replication
 			return map;
 		}
 
-		private static Dictionary<int, long> ReplicateExceptions(IDbContext context, List<DbFeatureExceptionRow> clientExceptionRows, Dictionary<string, long> serverExceptions)
+		private static Dictionary<long, long> ReplicateExceptions(IDbContext context, FeatureExceptionRow[] clientExceptionRows, Dictionary<string, long> serverExceptions)
 		{
-			var map = new Dictionary<int, long>(clientExceptionRows.Count);
+			var map = new Dictionary<long, long>(clientExceptionRows.Length);
 
 			foreach (var exception in clientExceptionRows)
 			{
@@ -145,17 +124,17 @@ namespace Cchbc.Features.Replication
 			return map;
 		}
 
-		private static Dictionary<int, long> ReplicateFeatures(IDbContext context, List<DbFeatureRow> clientFeatureRows, Dictionary<int, long> contextsMap, Dictionary<long, Dictionary<string, int>> serverFeaturesByContext)
+		private static Dictionary<long, long> ReplicateFeatures(IDbContext context, FeatureRow[] clientFeatureRows, Dictionary<long, long> contextsMap, Dictionary<long, Dictionary<string, long>> serverFeaturesByContext)
 		{
-			var featuresMap = new Dictionary<int, long>(clientFeatureRows.Count);
+			var featuresMap = new Dictionary<long, long>(clientFeatureRows.Length);
 
 			foreach (var feature in clientFeatureRows)
 			{
 				var name = feature.Name;
 				var contextId = contextsMap[feature.ContextId];
 
-				int featureId;
-				Dictionary<string, int> byContext;
+				long featureId;
+				Dictionary<string, long> byContext;
 
 				// Entirely New feature or New feature in the context
 				if (!serverFeaturesByContext.TryGetValue(contextId, out byContext) || !byContext.TryGetValue(name, out featureId))
@@ -164,7 +143,7 @@ namespace Cchbc.Features.Replication
 
 					if (byContext == null)
 					{
-						byContext = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+						byContext = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
 						serverFeaturesByContext.Add(contextId, byContext);
 					}
 					byContext.Add(name, featureId);
@@ -176,33 +155,25 @@ namespace Cchbc.Features.Replication
 			return featuresMap;
 		}
 
-		private static void ReplicateFeatureEntries(IDbContext context, List<DbFeatureEntryRow> featureEntryRows, Dictionary<int, long> featuresMap, long userId, long versionId)
+		private static void ReplicateFeatureEntries(IDbContext context, FeatureEntryRow[] featureEntryRows, Dictionary<long, long> featuresMap, long userId, long versionId)
 		{
-			if (featureEntryRows.Count == 0) return;
+			if (featureEntryRows.Length == 0) return;
 
 			var batchSize = 16;
 
 			// Process Steps in batches
-			var total = featureEntryRows.Count;
+			var total = featureEntryRows.Length;
 			var remaining = total % batchSize;
 			var totalBatches = total / batchSize;
 			for (var i = 0; i < totalBatches; i++)
 			{
 				var offset = i * batchSize;
-				FeatureServerAdapter.InsertFeatureEntry(context, GetRange(featureEntryRows, offset, batchSize), userId, versionId, featuresMap);
+				FeatureServerAdapter.InsertFeatureEntry(context, new ArraySegment<FeatureEntryRow>(featureEntryRows, offset, batchSize), userId, versionId, featuresMap);
 			}
 			if (remaining > 0)
 			{
 				var offset = totalBatches * batchSize;
-				FeatureServerAdapter.InsertFeatureEntry(context, GetRange(featureEntryRows, offset, remaining), userId, versionId, featuresMap);
-			}
-		}
-
-		private static IEnumerable<T> GetRange<T>(List<T> entries, int offset, int total)
-		{
-			for (var i = 0; i < total; i++)
-			{
-				yield return entries[offset + i];
+				FeatureServerAdapter.InsertFeatureEntry(context, new ArraySegment<FeatureEntryRow>(featureEntryRows, offset, remaining), userId, versionId, featuresMap);
 			}
 		}
 	}

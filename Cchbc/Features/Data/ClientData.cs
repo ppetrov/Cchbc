@@ -1,32 +1,28 @@
 using System;
-using System.Collections.Generic;
 
 namespace Cchbc.Features.Data
 {
 	public sealed class ClientData
 	{
-		public readonly List<DbFeatureContextRow> ContextRows;
-		public readonly List<DbFeatureExceptionRow> ExceptionRows;
-		public readonly List<DbFeatureRow> FeatureRows;
-		public readonly List<DbFeatureEntryRow> FeatureEntryRows;
-		public readonly List<DbFeatureExceptionEntryRow> ExceptionEntryRows;
+		public readonly FeatureContextRow[] Contexts;
+		public readonly FeatureExceptionRow[] Exceptions;
+		public readonly FeatureRow[] Features;
+		public readonly FeatureEntryRow[] FeatureEntries;
+		public readonly FeatureExceptionEntryRow[] ExceptionEntries;
 
-		public ClientData(
-			List<DbFeatureContextRow> contextRows, List<DbFeatureExceptionRow> exceptionRows,
-			List<DbFeatureRow> featureRows, List<DbFeatureEntryRow> featureEntryRows,
-			List<DbFeatureExceptionEntryRow> exceptionEntryRows)
+		public ClientData(FeatureContextRow[] contexts, FeatureExceptionRow[] exceptions, FeatureRow[] features, FeatureEntryRow[] featureEntries, FeatureExceptionEntryRow[] exceptionEntries)
 		{
-			if (contextRows == null) throw new ArgumentNullException(nameof(contextRows));
-			if (featureRows == null) throw new ArgumentNullException(nameof(featureRows));
-			if (featureEntryRows == null) throw new ArgumentNullException(nameof(featureEntryRows));
-			if (exceptionRows == null) throw new ArgumentNullException(nameof(exceptionRows));
-			if (exceptionEntryRows == null) throw new ArgumentNullException(nameof(exceptionEntryRows));
+			if (contexts == null) throw new ArgumentNullException(nameof(contexts));
+			if (exceptions == null) throw new ArgumentNullException(nameof(exceptions));
+			if (features == null) throw new ArgumentNullException(nameof(features));
+			if (featureEntries == null) throw new ArgumentNullException(nameof(featureEntries));
+			if (exceptionEntries == null) throw new ArgumentNullException(nameof(exceptionEntries));
 
-			this.ContextRows = contextRows;
-			this.ExceptionRows = exceptionRows;
-			this.FeatureRows = featureRows;
-			this.FeatureEntryRows = featureEntryRows;
-			this.ExceptionEntryRows = exceptionEntryRows;
+			this.Contexts = contexts;
+			this.Exceptions = exceptions;
+			this.Features = features;
+			this.FeatureEntries = featureEntries;
+			this.ExceptionEntries = exceptionEntries;
 		}
 	}
 }

@@ -40,11 +40,9 @@ namespace Cchbc.Features.DashboardUI
 			}
 		}
 
-		public List<T> Execute<T>(Query<T> query)
+		public IEnumerable<T> Execute<T>(Query<T> query)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
-
-			var items = new List<T>();
 
 			using (var cmd = _cn.CreateCommand())
 			{
@@ -63,12 +61,10 @@ namespace Cchbc.Features.DashboardUI
 					var dr = new SqlLiteDelegateDataReader(r);
 					while (dr.Read())
 					{
-						items.Add(query.Creator(dr));
+						yield return query.Creator(dr);
 					}
 				}
 			}
-
-			return items;
 		}
 
 		public void Fill<T>(Dictionary<long, T> items, Func<T, long> selector, Query<T> query)

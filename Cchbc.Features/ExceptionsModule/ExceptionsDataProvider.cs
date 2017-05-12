@@ -30,7 +30,7 @@ namespace Cchbc.Features.ExceptionsModule
 			var query = @"SELECT ID, NAME FROM FEATURE_VERSIONS ORDER BY NAME";
 
 			var versions = context.Execute(new Query<VersionRow>(query, r => new VersionRow(r.GetInt64(0), r.GetString(1))));
-			versions.Insert(0, new VersionRow(-1, @"All"));
+			//versions.Insert(0, new VersionRow(-1, @"All"));
 			return versions;
 		}
 
@@ -64,23 +64,24 @@ namespace Cchbc.Features.ExceptionsModule
 				new QueryParameter(@"@maxEntries", settings.MaxExceptionEntries)
 			};
 
-			var context = dataLoadParams.Context;
-			var exceptionEntries = context.Execute(new Query<ExceptionEntryRow>(query, FeatureExceptionEntryRowCreator, sqlParams));
-			if (exceptionEntries.Count == 0) return Enumerable.Empty<FeatureExceptionEntry>().ToArray();
+			//var context = dataLoadParams.Context;
+			//var exceptionEntries = context.Execute(new Query<ExceptionEntryRow>(query, FeatureExceptionEntryRowCreator, sqlParams));
+			//if (exceptionEntries.Count == 0) return Enumerable.Empty<FeatureExceptionEntry>().ToArray();
 
-			var features = GetFeatures(context, exceptionEntries);
-			var exceptions = GetExceptions(context, exceptionEntries);
-			var users = GetUsers(context, exceptionEntries);
-			var versions = GetVersions(context, exceptionEntries);
+			//var features = GetFeatures(context, exceptionEntries);
+			//var exceptions = GetExceptions(context, exceptionEntries);
+			//var users = GetUsers(context, exceptionEntries);
+			//var versions = GetVersions(context, exceptionEntries);
 
-			var featureExceptions = new FeatureExceptionEntry[exceptionEntries.Count];
-			for (var i = 0; i < exceptionEntries.Count; i++)
-			{
-				var r = exceptionEntries[i];
-				featureExceptions[i] = new FeatureExceptionEntry(r.Id, features[r.FeatureId], exceptions[r.ExceptionId], users[r.UserId], versions[r.VersionId], r.CreatedAt);
-			}
+			//var featureExceptions = new FeatureExceptionEntry[exceptionEntries.Count];
+			//for (var i = 0; i < exceptionEntries.Count; i++)
+			//{
+			//	var r = exceptionEntries[i];
+			//	featureExceptions[i] = new FeatureExceptionEntry(r.Id, features[r.FeatureId], exceptions[r.ExceptionId], users[r.UserId], versions[r.VersionId], r.CreatedAt);
+			//}
 
-			return featureExceptions;
+			//return featureExceptions;
+			return null;
 		}
 
 		public static IEnumerable<ExceptionsCount> GetExceptionsCounts(ExceptionsDataLoadParams dataLoadParams)

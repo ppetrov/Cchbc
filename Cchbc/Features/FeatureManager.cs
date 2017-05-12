@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cchbc.Data;
 using Cchbc.Features.Data;
 
@@ -7,7 +8,6 @@ namespace Cchbc.Features
 {
 	public interface IFeatureManager
 	{
-		void Load();
 		void Save(Feature feature, string details = null);
 		void Save(Feature feature, Exception exception);
 	}
@@ -15,8 +15,8 @@ namespace Cchbc.Features
 	public sealed class FeatureManager : IFeatureManager
 	{
 		private Func<IDbContext> DbContextCreator { get; }
-		private Dictionary<string, DbFeatureContextRow> Contexts { get; set; }
-		private Dictionary<long, List<DbFeatureRow>> Features { get; set; }
+		private Dictionary<string, FeatureContextRow> Contexts { get; set; }
+		private Dictionary<long, List<FeatureRow>> Features { get; set; }
 
 		public static void CreateSchema(Func<IDbContext> dbContextCreator)
 		{
@@ -47,34 +47,19 @@ namespace Cchbc.Features
 			this.DbContextCreator = dbContextCreator;
 		}
 
-		public void Load()
-		{
-			using (var context = this.DbContextCreator())
-			{
-				this.Contexts = FeatureAdapter.GetContexts(context);
-				this.Features = this.GetFeatures(context);
-
-				context.Complete();
-			}
-		}
-
 		public void Save(Feature feature, string details = null)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			var currentDetails = details;
-			var timeSpent = feature.TimeSpent;
-			if (timeSpent != TimeSpan.Zero)
+			using (var dbContext = this.DbContextCreator())
 			{
-				currentDetails = timeSpent.ToString(@"c");
-			}
-			using (var context = this.DbContextCreator())
-			{
-				var featureRow = this.Save(context, feature.Context, feature.Name);
+				this.Load(dbContext);
 
-				FeatureAdapter.InsertFeatureEntry(context, featureRow.Id, currentDetails ?? string.Empty);
+				var featureRow = this.SaveFeature(dbContext, this.SaveContext(dbContext, feature.Context), feature.Name);
 
-				context.Complete();
+				FeatureAdapter.InsertFeatureEntry(dbContext, featureRow.Id, details ?? string.Empty);
+
+				dbContext.Complete();
 			}
 		}
 
@@ -83,93 +68,97 @@ namespace Cchbc.Features
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			using (var context = this.DbContextCreator())
+			using (var dbContext = this.DbContextCreator())
 			{
-				var featureRow = this.Save(context, feature.Context, feature.Name);
-				var exceptionId = FeatureAdapter.GetOrCreateException(context, exception.ToString());
+				this.Load(dbContext);
 
-				FeatureAdapter.InsertExceptionEntry(context, featureRow.Id, exceptionId);
+				var featureRow = this.SaveFeature(dbContext, this.SaveContext(dbContext, feature.Context), feature.Name);
 
-				context.Complete();
+				var exceptionId = FeatureAdapter.GetOrCreateException(dbContext, exception.ToString());
+				FeatureAdapter.InsertExceptionEntry(dbContext, exceptionId, featureRow.Id);
+
+				dbContext.Complete();
 			}
 		}
 
-		private DbFeatureRow Save(IDbContext context, string featureContext, string name)
+		public ClientData GetData()
 		{
-			return this.SaveFeature(context, this.SaveContext(context, featureContext), name);
+			using (var dbContext = this.DbContextCreator())
+			{
+				this.Load(dbContext);
+
+				var contexts = this.Contexts.Values.ToArray();
+				var exceptions = FeatureAdapter.GetExceptions(dbContext).ToArray();
+				var features = this.Features.Values.SelectMany(f => f).ToArray();
+				var featureEntries = FeatureAdapter.GetFeatureEntries(dbContext).ToArray();
+				var exceptionEntries = FeatureAdapter.GetFeatureExceptionEntries(dbContext).ToArray();
+
+				var data = new ClientData(contexts, exceptions, features, featureEntries, exceptionEntries);
+
+				dbContext.Complete();
+
+				return data;
+			}
 		}
 
-		private DbFeatureContextRow SaveContext(IDbContext dbContext, string name)
+		private void Load(IDbContext context)
 		{
-			DbFeatureContextRow featureContextRow;
+			if (this.Contexts == null)
+			{
+				this.Contexts = FeatureAdapter.GetContexts(context);
+				this.Features = FeatureAdapter.GetFeatures(context);
+			}
+		}
 
-			if (!this.Contexts.TryGetValue(name, out featureContextRow))
+		private FeatureContextRow SaveContext(IDbContext dbContext, string contextName)
+		{
+			FeatureContextRow context;
+
+			if (!this.Contexts.TryGetValue(contextName, out context))
 			{
 				// Insert into database
-				var newContextId = FeatureAdapter.InsertContext(dbContext, name);
+				var newContextId = FeatureAdapter.InsertContext(dbContext, contextName);
 
-				featureContextRow = new DbFeatureContextRow(newContextId, name);
+				context = new FeatureContextRow(newContextId, contextName);
 
-				// Insert the new context into the collection
-				this.Contexts.Add(name, featureContextRow);
+				// Insert the new context into the cache
+				this.Contexts.Add(contextName, context);
 			}
 
-			return featureContextRow;
+			return context;
 		}
 
-		private DbFeatureRow SaveFeature(IDbContext dbContext, DbFeatureContextRow featureContextRow, string name)
+		private FeatureRow SaveFeature(IDbContext dbContext, FeatureContextRow context, string featureName)
 		{
-			var contextId = featureContextRow.Id;
-			List<DbFeatureRow> features;
+			var contextId = context.Id;
+
+			List<FeatureRow> features;
 			if (this.Features.TryGetValue(contextId, out features))
 			{
-				foreach (var featureRow in features)
+				foreach (var f in features)
 				{
-					if (featureRow.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+					if (f.Name.Equals(featureName, StringComparison.OrdinalIgnoreCase))
 					{
-						return featureRow;
+						return f;
 					}
 				}
 			}
 			else
 			{
 				// Create feature collection for this context
-				features = new List<DbFeatureRow>();
+				features = new List<FeatureRow>();
 				this.Features.Add(contextId, features);
 			}
 
 			// Insert into database
-			var newFeatureId = FeatureAdapter.InsertFeature(dbContext, name, contextId);
+			var newFeatureId = FeatureAdapter.InsertFeature(dbContext, featureName, contextId);
 
-			var feature = new DbFeatureRow(newFeatureId, name, contextId);
+			var feature = new FeatureRow(newFeatureId, featureName, contextId);
 
-			//Insert the new feature into the collection
+			//Insert the new feature into the cache
 			features.Add(feature);
 
 			return feature;
-		}
-
-		private Dictionary<long, List<DbFeatureRow>> GetFeatures(IDbContext context)
-		{
-			var featuresByContext = new Dictionary<long, List<DbFeatureRow>>(this.Contexts.Count);
-
-			// Fetch & add new values
-			foreach (var feature in FeatureAdapter.GetFeatures(context))
-			{
-				var contextId = feature.ContextId;
-
-				// Find features by context
-				List<DbFeatureRow> byContext;
-				if (!featuresByContext.TryGetValue(contextId, out byContext))
-				{
-					byContext = new List<DbFeatureRow>();
-					featuresByContext.Add(contextId, byContext);
-				}
-
-				byContext.Add(feature);
-			}
-
-			return featuresByContext;
 		}
 	}
 }

@@ -2,19 +2,17 @@ using System;
 
 namespace Cchbc.Features.Data
 {
-	public sealed class DbFeatureRow
+	public sealed class FeatureContextRow
 	{
-		public readonly int Id;
+		public readonly long Id;
 		public readonly string Name;
-		public readonly int ContextId;
 
-		public DbFeatureRow(int id, string name, int contextId)
+		public FeatureContextRow(long id, string name)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			this.Id = id;
 			this.Name = name;
-			this.ContextId = contextId;
 		}
 	}
 }

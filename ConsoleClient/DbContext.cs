@@ -47,13 +47,11 @@ namespace ConsoleClient
 			}
 		}
 
-		public List<T> Execute<T>(Query<T> query)
+		public IEnumerable<T> Execute<T>(Query<T> query)
 		{
 			if (query == null) throw new ArgumentNullException(nameof(query));
 
 			this.OpenConnection();
-
-			var items = new List<T>();
 
 			using (var cmd = _cn.CreateCommand())
 			{
@@ -75,12 +73,10 @@ namespace ConsoleClient
 					var dr = new SqlLiteDelegateDataReader(r);
 					while (dr.Read())
 					{
-						items.Add(query.Creator(dr));
+						yield return query.Creator(dr);
 					}
 				}
 			}
-
-			return items;
 		}
 
 		public void Fill<TK, TV>(Dictionary<TK, TV> items, Action<IFieldDataReader, Dictionary<TK, TV>> filler, Query query)

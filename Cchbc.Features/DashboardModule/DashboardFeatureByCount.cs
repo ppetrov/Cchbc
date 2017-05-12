@@ -5,11 +5,11 @@ namespace Cchbc.Features.DashboardModule
 {
 	public sealed class DashboardFeatureByCount
 	{
-		public DbFeatureContextRow Context { get; }
-		public DbFeatureRow Feature { get; }
+		public FeatureContextRow Context { get; }
+		public FeatureRow Feature { get; }
 		public int Count { get; }
 
-		public DashboardFeatureByCount(DbFeatureContextRow context, DbFeatureRow feature, int count)
+		public DashboardFeatureByCount(FeatureContextRow context, FeatureRow feature, int count)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));

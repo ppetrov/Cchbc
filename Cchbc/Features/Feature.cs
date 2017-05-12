@@ -11,7 +11,8 @@ namespace Cchbc.Features
 
 		public string Context { get; }
 		public string Name { get; }
-		public TimeSpan TimeSpent => _stopwatch?.Elapsed ?? TimeSpan.Zero;
+		// TODO : !!! Integrate into features
+		//public TimeSpan TimeSpent => _stopwatch?.Elapsed ?? TimeSpan.Zero;
 
 		public static Feature StartNew(string context, string name)
 		{

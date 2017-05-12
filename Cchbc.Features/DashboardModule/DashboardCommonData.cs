@@ -6,10 +6,10 @@ namespace Cchbc.Features.DashboardModule
 {
 	public sealed class DashboardCommonData
 	{
-		public Dictionary<long, DbFeatureContextRow> Contexts { get; }
-		public Dictionary<long, DbFeatureRow> Features { get; }
+		public Dictionary<long, FeatureContextRow> Contexts { get; }
+		public Dictionary<long, FeatureRow> Features { get; }
 
-		public DashboardCommonData(Dictionary<long, DbFeatureContextRow> contexts, Dictionary<long, DbFeatureRow> features)
+		public DashboardCommonData(Dictionary<long, FeatureContextRow> contexts, Dictionary<long, FeatureRow> features)
 		{
 			if (contexts == null) throw new ArgumentNullException(nameof(contexts));
 			if (features == null) throw new ArgumentNullException(nameof(features));

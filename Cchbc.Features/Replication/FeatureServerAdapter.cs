@@ -120,21 +120,29 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			}
 		}
 
-		public static long InsertVersion(IDbContext context, string version)
+		public static long InsertVersion(IDbContext dbContext, string version)
 		{
-			return FeatureAdapter.ExecuteInsert(context, new Query(@"INSERT INTO FEATURE_VERSIONS(NAME) VALUES (@NAME)", new[] { new QueryParameter(@"NAME", version), }));
+			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+			if (version == null) throw new ArgumentNullException(nameof(version));
+
+			dbContext.Execute(new Query(@"INSERT INTO FEATURE_VERSIONS(NAME) VALUES (@NAME)", new[] { new QueryParameter(@"NAME", version), }));
+			return FeatureAdapter.GetNewId(dbContext);
 		}
 
-		public static long InsertUser(IDbContext context, string userName, long versionId)
+		public static long InsertUser(IDbContext dbContext, string userName, long versionId)
 		{
+			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+			if (userName == null) throw new ArgumentNullException(nameof(userName));
+
 			var sqlParams = new[]
 			{
 				new QueryParameter(@"NAME", userName),
 				new QueryParameter(@"REPLICATED_AT", DateTime.Now),
 				new QueryParameter(@"@VERSION_ID", versionId),
 			};
+			dbContext.Execute(new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT, VERSION_ID) VALUES (@NAME, @REPLICATED_AT, @VERSION_ID)", sqlParams));
 
-			return FeatureAdapter.ExecuteInsert(context, new Query(@"INSERT INTO FEATURE_USERS(NAME, REPLICATED_AT, VERSION_ID) VALUES (@NAME, @REPLICATED_AT, @VERSION_ID)", sqlParams));
+			return FeatureAdapter.GetNewId(dbContext);
 		}
 
 		public static void UpdateUser(IDbContext context, long userId, long versionId)
@@ -177,7 +185,7 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			return GetDataMapped(context, @"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS");
 		}
 
-		public static void InsertExceptionEntry(IDbContext context, IEnumerable<DbFeatureExceptionEntryRow> exceptionEntryRows, long userId, long versionId, Dictionary<int, long> exceptionsMap, Dictionary<int, long> featuresMap)
+		public static void InsertExceptionEntry(IDbContext context, IEnumerable<FeatureExceptionEntryRow> exceptionEntryRows, long userId, long versionId, Dictionary<long, long> exceptionsMap, Dictionary<long, long> featuresMap)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (exceptionEntryRows == null) throw new ArgumentNullException(nameof(exceptionEntryRows));
@@ -214,7 +222,7 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			context.Execute(new Query(buffer.ToString()));
 		}
 
-		public static void InsertFeatureEntry(IDbContext context, IEnumerable<DbFeatureEntryRow> featureEntryRows, long userId, long versionId, Dictionary<int, long> featuresMap)
+		public static void InsertFeatureEntry(IDbContext context, ArraySegment<FeatureEntryRow> featureEntryRows, long userId, long versionId, Dictionary<long, long> featuresMap)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (featureEntryRows == null) throw new ArgumentNullException(nameof(featureEntryRows));

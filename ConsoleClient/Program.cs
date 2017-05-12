@@ -81,60 +81,60 @@ namespace ConsoleClient
 			var toDate = date.AddHours(19);
 			var diff = (int)((toDate - fromDate).TotalSeconds);
 
-			foreach (var replication in replications)
-			{
-				var referenceDate = fromDate.AddSeconds(rnd.Next(diff));
+			//foreach (var replication in replications)
+			//{
+			//	var referenceDate = fromDate.AddSeconds(rnd.Next(diff));
 
-				var dbFeatureExceptionRows = new List<DbFeatureExceptionRow>
-				{
-					new DbFeatureExceptionRow(rnd.Next(1,1024), @"AppSystem.Collections.Generic.KeyNotFoundException: The given key was not present in the dictionary.
-   at AppSystem.Collections.Generic.Dictionary`2.get_Item(TKey key)
-   at AppSystem.SQLite.SQLiteDataReader.GetOrdinal(String name)
-   at SFA.BusinessLogic.DataAccess.OutletManagement.OutletAdapter.OutletSnapCreator(IDataReader r)
-   at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, IEnumerable`1 parameters, Int32 capacity)
-   at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, Int32 capacity)
-   at SFA.BusinessLogic.DataAccess.OutletManagement.OutletAdapter.GetAll()
-   at SFA.BusinessLogic.Helpers.DataHelper.Load(OutletAdapter outletAdapter, OutletHierLevelAdapter hierLevelAdapter, TradeChannelsAdapter channelsAdapter, OutletAssignmentAdapter assignmentAdapter, PayerAdapter payerAdapter, OutletAddressAdapter addressAdapter, MarketAttributesAdapter attributesAdapter, List`1 modifiedTables)
-   at SFA.BusinessLogic.Cache.<>c__DisplayClass62_0.<Load>b__32()
-   at SFA.BusinessLogic.Cache.Load(Boolean useDependancies)")
-				};
+			//	var dbFeatureExceptionRows = new List<DbFeatureExceptionRow>
+			//	{
+			//		new DbFeatureExceptionRow(rnd.Next(1,1024), @"AppSystem.Collections.Generic.KeyNotFoundException: The given key was not present in the dictionary.
+			//at AppSystem.Collections.Generic.Dictionary`2.get_Item(TKey key)
+			//at AppSystem.SQLite.SQLiteDataReader.GetOrdinal(String name)
+			//at SFA.BusinessLogic.DataAccess.OutletManagement.OutletAdapter.OutletSnapCreator(IDataReader r)
+			//at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, IEnumerable`1 parameters, Int32 capacity)
+			//at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, Int32 capacity)
+			//at SFA.BusinessLogic.DataAccess.OutletManagement.OutletAdapter.GetAll()
+			//at SFA.BusinessLogic.Helpers.DataHelper.Load(OutletAdapter outletAdapter, OutletHierLevelAdapter hierLevelAdapter, TradeChannelsAdapter channelsAdapter, OutletAssignmentAdapter assignmentAdapter, PayerAdapter payerAdapter, OutletAddressAdapter addressAdapter, MarketAttributesAdapter attributesAdapter, List`1 modifiedTables)
+			//at SFA.BusinessLogic.Cache.<>c__DisplayClass62_0.<Load>b__32()
+			//at SFA.BusinessLogic.Cache.Load(Boolean useDependancies)")
+			//	};
 
-				var dbFeatureContextRows = new List<DbFeatureContextRow>
-				{
-					new DbFeatureContextRow(rnd.Next(1,1024), @"Cache"),
-					new DbFeatureContextRow(rnd.Next(1024,2024), @"Agenda"),
-				};
-				var dbFeatureRows = new List<DbFeatureRow>
-				{
-					new DbFeatureRow(rnd.Next(1, 1024), @"Load", dbFeatureContextRows[0].Id),
-					new DbFeatureRow(rnd.Next(1024, 2024), @"Load", dbFeatureContextRows[1].Id),
+			//	var dbFeatureContextRows = new List<DbFeatureContextRow>
+			//	{
+			//		new DbFeatureContextRow(rnd.Next(1,1024), @"Cache"),
+			//		new DbFeatureContextRow(rnd.Next(1024,2024), @"Agenda"),
+			//	};
+			//	var dbFeatureRows = new List<DbFeatureRow>
+			//	{
+			//		new DbFeatureRow(rnd.Next(1, 1024), @"Load", dbFeatureContextRows[0].Id),
+			//		new DbFeatureRow(rnd.Next(1024, 2024), @"Load", dbFeatureContextRows[1].Id),
 
-					new DbFeatureRow(rnd.Next(2024, 3024), @"Close Activity", dbFeatureContextRows[1].Id),
-					new DbFeatureRow(rnd.Next(3024, 4024), @"Cancel Activity", dbFeatureContextRows[1].Id),
-					new DbFeatureRow(rnd.Next(4024, 5024), @"Edit Activity", dbFeatureContextRows[1].Id),
+			//		new DbFeatureRow(rnd.Next(2024, 3024), @"Close Activity", dbFeatureContextRows[1].Id),
+			//		new DbFeatureRow(rnd.Next(3024, 4024), @"Cancel Activity", dbFeatureContextRows[1].Id),
+			//		new DbFeatureRow(rnd.Next(4024, 5024), @"Edit Activity", dbFeatureContextRows[1].Id),
 
-					new DbFeatureRow(rnd.Next(5024, 6024), @"Synchronize", dbFeatureContextRows[1].Id),
-					new DbFeatureRow(rnd.Next(6024, 7024), @"View Outlet Details", dbFeatureContextRows[1].Id),
-				};
-				var dbFeatureExceptionEntryRows = new List<DbFeatureExceptionEntryRow>
-				{
-					new DbFeatureExceptionEntryRow(dbFeatureExceptionRows[0].Id, GetRandomDate(rnd, fromDate, referenceDate), dbFeatureRows[0].Id)
-				};
+			//		new DbFeatureRow(rnd.Next(5024, 6024), @"Synchronize", dbFeatureContextRows[1].Id),
+			//		new DbFeatureRow(rnd.Next(6024, 7024), @"View Outlet Details", dbFeatureContextRows[1].Id),
+			//	};
+			//	var dbFeatureExceptionEntryRows = new List<DbFeatureExceptionEntryRow>
+			//	{
+			//		new DbFeatureExceptionEntryRow(dbFeatureExceptionRows[0].Id, GetRandomDate(rnd, fromDate, referenceDate), dbFeatureRows[0].Id)
+			//	};
 
-				var dbFeatureEntryRows = new List<DbFeatureEntryRow>
-				{
-					new DbFeatureEntryRow(string.Empty, DateTime.Now, dbFeatureRows[rnd.Next(dbFeatureRows.Count)].Id),
-					new DbFeatureEntryRow(string.Empty, DateTime.Now, dbFeatureRows[rnd.Next(dbFeatureRows.Count)].Id)
-				};
+			//	var dbFeatureEntryRows = new List<DbFeatureEntryRow>
+			//	{
+			//		new DbFeatureEntryRow(string.Empty, DateTime.Now, dbFeatureRows[rnd.Next(dbFeatureRows.Count)].Id),
+			//		new DbFeatureEntryRow(string.Empty, DateTime.Now, dbFeatureRows[rnd.Next(dbFeatureRows.Count)].Id)
+			//	};
 
-				var clientData = new ClientData(dbFeatureContextRows, dbFeatureExceptionRows, dbFeatureRows, dbFeatureEntryRows, dbFeatureExceptionEntryRows);
+			//	var clientData = new ClientData(dbFeatureContextRows, dbFeatureExceptionRows, dbFeatureRows, dbFeatureEntryRows, dbFeatureExceptionEntryRows);
 
-				using (var ctx = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
-				{
-					FeatureServerManager.Replicate(replication.Item1, replication.Item2, ctx, clientData, serverData);
-					ctx.Complete();
-				}
-			}
+			//	using (var ctx = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
+			//	{
+			//		FeatureServerManager.Replicate(replication.Item1, replication.Item2, ctx, clientData, serverData);
+			//		ctx.Complete();
+			//	}
+			//}
 
 			s.Stop();
 			Console.WriteLine(s.ElapsedMilliseconds);
@@ -261,7 +261,9 @@ namespace ConsoleClient
 
 			try
 			{
-				var imgAsString = File.ReadAllBytes(@"C:\Sources\DemoUI\Assets\c5.png");
+				return;
+
+				var imgAsString = File.ReadAllBytes(@"C:\Users\PetarPetrov\Desktop\signature.jpg");
 				//imgAsString = File.ReadAllBytes(@"C:\Users\PetarPetrov\Desktop\signature.jpg");
 				var b64 = Convert.ToBase64String(imgAsString);
 				Console.WriteLine(b64.Length);
@@ -354,13 +356,13 @@ namespace ConsoleClient
 				Console.WriteLine(@"Load client data");
 				var s = Stopwatch.StartNew();
 
-				ClientData clientData;
-				using (var client = new TransactionContextCreator(GetSqliteConnectionString(clientDbPath)).Create())
-				{
-					clientData = FeatureAdapter.GetData(client);
-					clientData.FeatureEntryRows.Clear();
-					client.Complete();
-				}
+				//ClientData clientData;
+				//using (var client = new TransactionContextCreator(GetSqliteConnectionString(clientDbPath)).Create())
+				//{
+				//	clientData = FeatureAdapter.GetData(client);
+				//	clientData.FeatureEntryRows.Clear();
+				//	client.Complete();
+				//}
 
 				File.Delete(clientDbPath);
 
@@ -374,14 +376,14 @@ namespace ConsoleClient
 					client.Complete();
 				}
 
-				while (true)
-				{
-					s.Restart();
-					Replicate(GetSqliteConnectionString(serverDbPath), clientData, serverData);
-					s.Stop();
-					Console.WriteLine(s.ElapsedMilliseconds);
-					//Console.ReadLine();
-				}
+				//while (true)
+				//{
+				//	s.Restart();
+				//	Replicate(GetSqliteConnectionString(serverDbPath), clientData, serverData);
+				//	s.Stop();
+				//	Console.WriteLine(s.ElapsedMilliseconds);
+				//	//Console.ReadLine();
+				//}
 
 				w.Stop();
 				Console.WriteLine(w.ElapsedMilliseconds);
@@ -442,17 +444,17 @@ namespace ConsoleClient
 			return;
 
 
-			var c = @"Data Source = C:\Users\PetarPetrov\Desktop\ifsa.sqlite; Version = 3;";
+			//var c = @"Data Source = C:\Users\PetarPetrov\Desktop\ifsa.sqlite; Version = 3;";
 
-			ClientData data;
-			using (var client = new TransactionContextCreator(c).Create())
-			{
-				data = FeatureAdapter.GetData(client);
-				client.Complete();
-			}
+			//ClientData data;
+			//using (var client = new TransactionContextCreator(c).Create())
+			//{
+			//	data = FeatureAdapter.GetData(client);
+			//	client.Complete();
+			//}
 
 
-			data.FeatureEntryRows.Add(new DbFeatureEntryRow(@"#", DateTime.Today.AddDays(-1), -4));
+			//data.FeatureEntryRows.Add(new DbFeatureEntryRow(@"#", DateTime.Today.AddDays(-1), -4));
 
 
 			//var s = Stopwatch.StartNew();
@@ -534,6 +536,44 @@ namespace ConsoleClient
 			//}
 		}
 
+		private static string GetFormatted()
+		{
+			var name = @"Coca Cola (UC)";
+			var headers = new[] { @"Header 1", @"Header 2", @"Header 3", @"Day" };
+			var subHeaders = new[] { @"Sub 1", @"Sub 2", @"S 3", @"Planned" };
+			var values = new[] { "123.23", "23.17", "0", @"13" };
+
+			var title = name + @" : ";
+			var emptyTitle = new string(' ', title.Length);
+			var lines = new string[3];
+			lines[0] = title;
+			for (var i = 1; i < lines.Length; i++)
+			{
+				lines[i] = emptyTitle;
+			}
+			for (var i = 0; i < headers.Length; i++)
+			{
+				var column = new[] { headers[i], subHeaders[i], values[i] };
+				var width = column.Select(c => c.Length).Max();
+				// Center captions
+				for (var j = 0; j < lines.Length - 1; j++)
+				{
+					var value = column[j];
+					var half = (int)Math.Floor((width - value.Length) / 2.0M);
+					var space = new string(' ', half);
+					var padded = (space + value + space).PadLeft(width);
+					lines[j] = lines[j] + @" " + padded;
+				}
+				// Align right values
+				for (var j = lines.Length - 1; j < lines.Length; j++)
+				{
+					lines[j] = lines[j] + @" " + column[j].PadLeft(width);
+				}
+			}
+
+			return string.Join(Environment.NewLine, lines);
+		}
+
 		private static void Display(MapEntry[] entries)
 		{
 			Array.Sort(entries, (x, y) => x.Sequence.CompareTo(y.Sequence));
@@ -568,11 +608,11 @@ namespace ConsoleClient
 			var s = Stopwatch.StartNew();
 
 			ClientData data;
-			using (var client = new TransactionContextCreator(clientDb).Create())
-			{
-				data = FeatureAdapter.GetData(client);
-				client.Complete();
-			}
+			//using (var client = new TransactionContextCreator(clientDb).Create())
+			//{
+			//	data = FeatureAdapter.GetData(client);
+			//	client.Complete();
+			//}
 
 			s.Stop();
 			Console.WriteLine(s.ElapsedMilliseconds);
@@ -620,9 +660,6 @@ namespace ConsoleClient
 				// Create the schema
 				FeatureManager.CreateSchema(contextCreator.Create);
 			}
-
-			// Load the manager
-			featureManager.Load();
 
 			// TODO : !!!
 			// Generate exceptions

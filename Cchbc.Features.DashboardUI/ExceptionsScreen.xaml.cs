@@ -32,8 +32,6 @@ namespace Cchbc.Features.DashboardUI
 				}
 				catch { }
 
-				core.FeatureManager.Load();
-
 				core.FeatureManager.Save(feature, string.Empty);
 				this.ViewModel.Load(
 					ExceptionsDataProvider.GetTimePeriods,

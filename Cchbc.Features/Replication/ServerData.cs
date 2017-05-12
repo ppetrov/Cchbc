@@ -9,9 +9,9 @@ namespace Cchbc.Features.Replication
 		public Dictionary<string, long> Users { get; }
 		public Dictionary<string, long> Contexts { get; }
 		public Dictionary<string, long> Exceptions { get; }
-		public Dictionary<long, Dictionary<string, int>> FeaturesByContext { get; }
+		public Dictionary<long, Dictionary<string, long>> FeaturesByContext { get; }
 
-		public ServerData(Dictionary<string, long> versions, Dictionary<string, long> users, Dictionary<string, long> contexts, Dictionary<string, long> exceptions, Dictionary<long, Dictionary<string, int>> featuresByContext)
+		public ServerData(Dictionary<string, long> versions, Dictionary<string, long> users, Dictionary<string, long> contexts, Dictionary<string, long> exceptions, Dictionary<long, Dictionary<string, long>> featuresByContext)
 		{
 			if (versions == null) throw new ArgumentNullException(nameof(versions));
 			if (users == null) throw new ArgumentNullException(nameof(users));
