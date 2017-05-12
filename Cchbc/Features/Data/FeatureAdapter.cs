@@ -7,7 +7,7 @@ namespace Cchbc.Features.Data
 {
 	public static class FeatureAdapter
 	{
-		private static readonly Query<long> GetNewIdQuery = new Query<long>(@"SELECT LAST_INSERT_ROWID()", r => r.GetInt64(0));
+		private static readonly Query<long> GetNewIdQuery = new Query<long>(@"SELECT LAST_INSERT_ROWID()", IdCreator);
 
 		private static readonly Query InsertContextQuery = new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)",
 			new[]
@@ -55,7 +55,7 @@ namespace Cchbc.Features.Data
 		private static readonly Query<FeatureExceptionEntryRow> GetFeatureExceptionEntriesQuery = new Query<FeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
 
 		private static readonly Query<long> GetExceptionQuery =
-			new Query<long>(@"SELECT ID FROM FEATURE_EXCEPTIONS WHERE CONTENTS = @CONTENTS", r => r.GetInt64(0), new[]
+			new Query<long>(@"SELECT ID FROM FEATURE_EXCEPTIONS WHERE CONTENTS = @CONTENTS", IdCreator, new[]
 			{
 				new QueryParameter(@"@CONTENTS", string.Empty)
 			});
@@ -260,6 +260,11 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			InsertExceptionEntryQuery.Parameters[2].Value = featureId;
 
 			dbContext.Execute(InsertExceptionEntryQuery);
+		}
+
+		private static long IdCreator(IFieldDataReader r)
+		{
+			return r.GetInt64(0);
 		}
 
 		private static FeatureContextRow DbContextCreator(IFieldDataReader r)

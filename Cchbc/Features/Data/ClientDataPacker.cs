@@ -110,7 +110,7 @@ namespace Cchbc.Features.Data
 				dbFeatureExceptionEntryRows[i] = new FeatureExceptionEntryRow(exceptionRowId, createdAt, featureId);
 			}
 
-			return new ClientData(dbFeatureContextRows, dbFeatureExceptionRows, dbFeatureRows, dbFeatureEntryRows, dbFeatureExceptionEntryRows);
+			return new ClientData(dbFeatureContextRows, dbFeatureRows, dbFeatureEntryRows, dbFeatureExceptionEntryRows, dbFeatureExceptionRows);
 		}
 
 		private static string ReadString(byte[] buffer, ref int offset, char[] symbolBuffer)
