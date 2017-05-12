@@ -206,12 +206,6 @@ namespace Cchbc.Features.Data
 			return ShortSize + value.Length;
 		}
 
-		private void Write(byte[] buffer, ref int offset, short value)
-		{
-			buffer[offset++] = (byte)(value);
-			buffer[offset++] = (byte)(value >> 8);
-		}
-
 		private void Write(byte[] buffer, ref int offset, long value)
 		{
 			buffer[offset++] = (byte)(value);
@@ -226,7 +220,9 @@ namespace Cchbc.Features.Data
 
 		private void Write(byte[] buffer, ref int offset, string value)
 		{
-			Write(buffer, ref offset, (short)value.Length);
+			var length = (short)value.Length;
+			buffer[offset++] = (byte)(length);
+			buffer[offset++] = (byte)(length >> 8);
 
 			foreach (var symbol in value)
 			{
