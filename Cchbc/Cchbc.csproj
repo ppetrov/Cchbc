@@ -52,7 +52,6 @@
     <Compile Include="Data\IDbContext.cs" />
     <Compile Include="Dialog\DialogResult.cs" />
     <Compile Include="Dialog\IModalDialog.cs" />
-    <Compile Include="Features\Data\ClientDataPacker.cs" />
     <Compile Include="Features\Data\FeatureAdapter.cs" />
     <Compile Include="Features\Data\FeatureEntryRow.cs" />
     <Compile Include="Features\Data\FeatureExceptionEntryRow.cs" />
