@@ -8,7 +8,7 @@ namespace Cchbc.Features.Data
 		public readonly string Details;
 		public readonly DateTime CreatedAt;
 
-		public FeatureEntryRow(long featureId, DateTime createdAt, string details)
+		public FeatureEntryRow(long featureId, string details, DateTime createdAt)
 		{
 			if (details == null) throw new ArgumentNullException(nameof(details));
 

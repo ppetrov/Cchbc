@@ -279,7 +279,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 
 		private static FeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
 		{
-			return new FeatureEntryRow(r.GetInt64(0), r.GetDateTime(1), r.GetString(2));
+			return new FeatureEntryRow(r.GetInt64(0), r.GetString(1), r.GetDateTime(2));
 		}
 
 		private static FeatureExceptionRow DbFeatureExceptionRowCreator(IFieldDataReader r)
