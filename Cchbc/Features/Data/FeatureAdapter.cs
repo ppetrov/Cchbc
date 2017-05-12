@@ -60,10 +60,6 @@ namespace Cchbc.Features.Data
 				new QueryParameter(@"@CONTENTS", string.Empty)
 			});
 
-		/// <summary>
-		/// Create the SQL schema
-		/// </summary>
-		/// <param name="dbContext"></param>
 		public static void CreateSchema(IDbContext dbContext)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
@@ -116,10 +112,6 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 )"));
 		}
 
-		/// <summary>
-		/// Drop the SQL schema
-		/// </summary>
-		/// <param name="dbContext"></param>
 		public static void DropSchema(IDbContext dbContext)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
@@ -137,43 +129,20 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			}
 		}
 
-		/// <summary>
-		/// Get the new Id
-		/// </summary>
-		/// <param name="dbContext"></param>
-		/// <returns></returns>
-		public static long GetNewId(IDbContext dbContext)
-		{
-			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
-
-			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
-		}
-
-		/// <summary>
-		/// Get Contexts
-		/// </summary>
-		/// <param name="dbContext"></param>
-		/// <returns></returns>
 		public static Dictionary<string, FeatureContextRow> GetContexts(IDbContext dbContext)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 
 			var contexts = new Dictionary<string, FeatureContextRow>(StringComparer.OrdinalIgnoreCase);
 
-			dbContext.Fill(contexts, (r, map) =>
+			foreach (var context in dbContext.Execute(GetContextsQuery))
 			{
-				var row = DbContextCreator(r);
-				map.Add(row.Name, row);
-			}, new Query(GetContextsQuery.Statement));
+				contexts.Add(context.Name, context);
+			}
 
 			return contexts;
 		}
 
-		/// <summary>
-		/// Get Features with ContextId as Key
-		/// </summary>
-		/// <param name="dbContext"></param>
-		/// <returns></returns>
 		public static Dictionary<long, List<FeatureRow>> GetFeatures(IDbContext dbContext)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
@@ -199,11 +168,6 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return featuresByContext;
 		}
 
-		/// <summary>
-		/// Get Exceptions
-		/// </summary>
-		/// <param name="dbContext"></param>
-		/// <returns></returns>
 		public static IEnumerable<FeatureExceptionRow> GetExceptions(IDbContext dbContext)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
@@ -211,11 +175,6 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return dbContext.Execute(GetDbFeatureExceptionsRowQuery);
 		}
 
-		/// <summary>
-		/// Get Feature Entries
-		/// </summary>
-		/// <param name="dbContext"></param>
-		/// <returns></returns>
 		public static IEnumerable<FeatureEntryRow> GetFeatureEntries(IDbContext dbContext)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
@@ -223,11 +182,6 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return dbContext.Execute(GetFeatureEntriesQuery);
 		}
 
-		/// <summary>
-		/// Get Feature Exception entries
-		/// </summary>
-		/// <param name="dbContext"></param>
-		/// <returns></returns>
 		public static IEnumerable<FeatureExceptionEntryRow> GetFeatureExceptionEntries(IDbContext dbContext)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
@@ -235,117 +189,54 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return dbContext.Execute(GetFeatureExceptionEntriesQuery);
 		}
 
-		//TODO !!!
-		public static Dictionary<long, Dictionary<string, long>> GetFeaturesByContext(IDbContext dbContext)
+		public static long GetOrCreateException(IDbContext dbContext, string contents)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
-
-			var serverFeaturesByContext = new Dictionary<long, Dictionary<string, long>>();
-
-			foreach (var feature in dbContext.Execute(GetFeaturesQuery))
-			{
-				Dictionary<string, long> byContext;
-
-				var contextId = feature.ContextId;
-				if (!serverFeaturesByContext.TryGetValue(contextId, out byContext))
-				{
-					byContext = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
-					serverFeaturesByContext.Add(contextId, byContext);
-				}
-
-				byContext.Add(feature.Name, feature.Id);
-			}
-
-			return serverFeaturesByContext;
-		}
-
-		/// <summary>
-		/// Get or Create ExceptionId
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="contents"></param>
-		/// <returns></returns>
-		public static long GetOrCreateException(IDbContext context, string contents)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
 			// Set parameters values
 			GetExceptionQuery.Parameters[0].Value = contents;
 
-			foreach (var exceptionId in context.Execute(GetExceptionQuery))
+			foreach (var exceptionId in dbContext.Execute(GetExceptionQuery))
 			{
 				return exceptionId;
 			}
-
-			return InsertException(context, contents);
-		}
-
-		/// <summary>
-		/// Insert Feature Context
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="name"></param>
-		/// <returns></returns>
-		public static long InsertContext(IDbContext context, string name)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (name == null) throw new ArgumentNullException(nameof(name));
-
-			// Set parameters values
-			InsertContextQuery.Parameters[0].Value = name;
-
-			context.Execute(InsertContextQuery);
-
-			return GetNewId(context);
-		}
-
-		/// <summary>
-		/// Insert New Exception
-		/// </summary>
-		/// <param name="dbContext"></param>
-		/// <param name="contents"></param>
-		/// <returns></returns>
-		public static long InsertException(IDbContext dbContext, string contents)
-		{
-			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
-			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
 			// Set parameters values
 			InsertExceptionQuery.Parameters[0].Value = contents;
 
 			dbContext.Execute(InsertExceptionQuery);
 
-			return GetNewId(dbContext);
+			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
 		}
 
-		/// <summary>
-		/// Insert Feature
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="name"></param>
-		/// <param name="contextId"></param>
-		/// <returns></returns>
-		public static long InsertFeature(IDbContext context, string name, long contextId)
+		public static long InsertContext(IDbContext dbContext, string name)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			// Set parameters values
+			InsertContextQuery.Parameters[0].Value = name;
+
+			dbContext.Execute(InsertContextQuery);
+
+			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
+		}
+
+		public static long InsertFeature(IDbContext dbContext, string name, long contextId)
+		{
+			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			// Set parameters values
 			InsertFeatureQuery.Parameters[0].Value = name;
 			InsertFeatureQuery.Parameters[1].Value = contextId;
 
-			context.Execute(InsertFeatureQuery);
+			dbContext.Execute(InsertFeatureQuery);
 
-			return GetNewId(context);
+			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
 		}
 
-		/// <summary>
-		/// Insert Feature Entry
-		/// </summary>
-		/// <param name="dbContext"></param>
-		/// <param name="featureId"></param>
-		/// <param name="details"></param>
 		public static void InsertFeatureEntry(IDbContext dbContext, long featureId, string details)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
@@ -360,21 +251,15 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			dbContext.Execute(InsertClientFeatureEntryQuery);
 		}
 
-		/// <summary>
-		/// Insert Exception entry
-		/// </summary>
-		/// <param name="context"></param>
-		/// <param name="exceptionId"></param>
-		/// <param name="featureId"></param>
-		public static void InsertExceptionEntry(IDbContext context, long exceptionId, long featureId)
+		public static void InsertExceptionEntry(IDbContext dbContext, long exceptionId, long featureId)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 
 			InsertExceptionEntryQuery.Parameters[0].Value = exceptionId;
 			InsertExceptionEntryQuery.Parameters[1].Value = DateTime.Now;
 			InsertExceptionEntryQuery.Parameters[2].Value = featureId;
 
-			context.Execute(InsertExceptionEntryQuery);
+			dbContext.Execute(InsertExceptionEntryQuery);
 		}
 
 		private static FeatureContextRow DbContextCreator(IFieldDataReader r)

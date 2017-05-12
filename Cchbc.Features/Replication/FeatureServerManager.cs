@@ -29,7 +29,7 @@ namespace Cchbc.Features.Replication
 			var users = FeatureServerAdapter.GetUsers(context);
 			var serverContexts = FeatureServerAdapter.GetContexts(context);
 			var serverExceptions = FeatureServerAdapter.GetExceptions(context);
-			var serverFeaturesByContext = FeatureAdapter.GetFeaturesByContext(context);
+			var serverFeaturesByContext = FeatureServerAdapter.GetFeaturesByContext(context);
 
 			return new ServerData(versions, users, serverContexts, serverExceptions, serverFeaturesByContext);
 		}
@@ -113,7 +113,7 @@ namespace Cchbc.Features.Replication
 				long serverExceptionId;
 				if (!serverExceptions.TryGetValue(contents, out serverExceptionId))
 				{
-					serverExceptionId = FeatureAdapter.InsertException(context, contents);
+					serverExceptionId = FeatureServerAdapter.InsertException(context, contents);
 					serverExceptions.Add(contents, serverExceptionId);
 				}
 
