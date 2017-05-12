@@ -156,8 +156,7 @@ namespace Cchbc.Features.Data
 		private int GetBufferSize()
 		{
 			// For the number of elements in every list
-			var totalLists = 5;
-			var size = totalLists * ShortSize;
+			var size = 5 * LongSize;
 
 			//public readonly long Id;
 			//public readonly string Name;
