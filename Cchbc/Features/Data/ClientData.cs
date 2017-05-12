@@ -129,7 +129,8 @@ namespace Cchbc.Features.Data
 
 		private static string ReadString(byte[] buffer, ref int offset, char[] symbolBuffer)
 		{
-			var length = ReadShort(buffer, ref offset);
+			var length = BitConverter.ToInt16(buffer, offset);
+			offset += ShortSize;
 
 			for (var i = 0; i < length; i++)
 			{
@@ -137,13 +138,6 @@ namespace Cchbc.Features.Data
 			}
 
 			return new string(symbolBuffer, 0, length);
-		}
-
-		private static short ReadShort(byte[] buffer, ref int offset)
-		{
-			var value = BitConverter.ToInt16(buffer, offset);
-			offset += ShortSize;
-			return value;
 		}
 
 		private static long ReadLong(byte[] buffer, ref int offset)
