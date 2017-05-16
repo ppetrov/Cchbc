@@ -52,7 +52,7 @@ namespace Cchbc.Features.Data
 		private static readonly Query<FeatureContextRow> GetContextsQuery = new Query<FeatureContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextCreator);
 		private static readonly Query<FeatureExceptionRow> GetDbFeatureExceptionsRowQuery = new Query<FeatureExceptionRow>(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS", DbFeatureExceptionRowCreator);
 		private static readonly Query<FeatureRow> GetFeaturesQuery = new Query<FeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
-		private static readonly Query<FeatureEntryRow> GetFeatureEntriesQuery = new Query<FeatureEntryRow>(@"SELECT FEATURE_ID, DETAILS, CREATED_AT FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
+		private static readonly Query<FeatureEntryRow> GetFeatureEntriesQuery = new Query<FeatureEntryRow>(@"SELECT FEATURE_ID, DETAILS, CREATED_AT, TIMESPENT FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
 		private static readonly Query<FeatureExceptionEntryRow> GetFeatureExceptionEntriesQuery = new Query<FeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
 
 		private static readonly Query<long> GetExceptionQuery =
@@ -184,7 +184,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return dbContext.Execute(GetFeatureEntriesQuery);
 		}
 
-		public static IEnumerable<FeatureExceptionEntryRow> GetFeatureExceptionEntries(IDbContext dbContext)
+		public static IEnumerable<FeatureExceptionEntryRow> GetExceptionEntries(IDbContext dbContext)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 
@@ -282,7 +282,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 
 		private static FeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
 		{
-			return new FeatureEntryRow(r.GetInt64(0), r.GetString(1), r.GetDateTime(2));
+			return new FeatureEntryRow(r.GetInt64(0), r.GetString(1), r.GetDateTime(2), Convert.ToDouble(r.GetDecimal(3)));
 		}
 
 		private static FeatureExceptionRow DbFeatureExceptionRowCreator(IFieldDataReader r)

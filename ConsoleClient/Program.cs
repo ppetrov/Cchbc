@@ -33,113 +33,6 @@ namespace ConsoleClient
 			return $@"Data Source = {path}; Version = 3;";
 		}
 
-		public static void SimulateDay(string serverDbPath, DateTime date)
-		{
-			var s = Stopwatch.StartNew();
-			var replicationPerDay = 3;
-
-			replicationPerDay = 1;
-
-			var commonUsages = 100;
-			var systemUsages = 25;
-
-			var rnd = new Random();
-
-			var versions = new[]
-			{
-				@"8.28.79.127",
-				@"7.74.19.727",
-				@"6.22.29.492",
-				@"5.96.69.792",
-				@"4.11.27.292",
-				@"3.85.19.223",
-			};
-
-			var users = new List<string>();
-			for (var i = 11; i < 1200; i++)
-			{
-				users.Add(@"BG" + (i.ToString()).PadLeft(6, '0'));
-			}
-
-			var replications = new List<Tuple<string, string>>(users.Count * replicationPerDay);
-			foreach (var user in users)
-			{
-				for (var i = 0; i < replicationPerDay; i++)
-				{
-					replications.Add(Tuple.Create(user, versions[rnd.Next(versions.Length)]));
-				}
-			}
-
-			ServerData serverData;
-			using (var client = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
-			{
-				serverData = FeatureServerManager.GetServerData(client);
-				client.Complete();
-			}
-
-			var fromDate = date.AddHours(7);
-			var toDate = date.AddHours(19);
-			var diff = (int)((toDate - fromDate).TotalSeconds);
-
-			//foreach (var replication in replications)
-			//{
-			//	var referenceDate = fromDate.AddSeconds(rnd.Next(diff));
-
-			//	var dbFeatureExceptionRows = new List<DbFeatureExceptionRow>
-			//	{
-			//		new DbFeatureExceptionRow(rnd.Next(1,1024), @"AppSystem.Collections.Generic.KeyNotFoundException: The given key was not present in the dictionary.
-			//at AppSystem.Collections.Generic.Dictionary`2.get_Item(TKey key)
-			//at AppSystem.SQLite.SQLiteDataReader.GetOrdinal(String name)
-			//at SFA.BusinessLogic.DataAccess.OutletManagement.OutletAdapter.OutletSnapCreator(IDataReader r)
-			//at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, IEnumerable`1 parameters, Int32 capacity)
-			//at SFA.BusinessLogic.DataAccess.Helpers.QueryHelper.ExecuteReader[T](String query, Func`2 creator, Int32 capacity)
-			//at SFA.BusinessLogic.DataAccess.OutletManagement.OutletAdapter.GetAll()
-			//at SFA.BusinessLogic.Helpers.DataHelper.Load(OutletAdapter outletAdapter, OutletHierLevelAdapter hierLevelAdapter, TradeChannelsAdapter channelsAdapter, OutletAssignmentAdapter assignmentAdapter, PayerAdapter payerAdapter, OutletAddressAdapter addressAdapter, MarketAttributesAdapter attributesAdapter, List`1 modifiedTables)
-			//at SFA.BusinessLogic.Cache.<>c__DisplayClass62_0.<Load>b__32()
-			//at SFA.BusinessLogic.Cache.Load(Boolean useDependancies)")
-			//	};
-
-			//	var dbFeatureContextRows = new List<DbFeatureContextRow>
-			//	{
-			//		new DbFeatureContextRow(rnd.Next(1,1024), @"Cache"),
-			//		new DbFeatureContextRow(rnd.Next(1024,2024), @"Agenda"),
-			//	};
-			//	var dbFeatureRows = new List<DbFeatureRow>
-			//	{
-			//		new DbFeatureRow(rnd.Next(1, 1024), @"Load", dbFeatureContextRows[0].Id),
-			//		new DbFeatureRow(rnd.Next(1024, 2024), @"Load", dbFeatureContextRows[1].Id),
-
-			//		new DbFeatureRow(rnd.Next(2024, 3024), @"Close Activity", dbFeatureContextRows[1].Id),
-			//		new DbFeatureRow(rnd.Next(3024, 4024), @"Cancel Activity", dbFeatureContextRows[1].Id),
-			//		new DbFeatureRow(rnd.Next(4024, 5024), @"Edit Activity", dbFeatureContextRows[1].Id),
-
-			//		new DbFeatureRow(rnd.Next(5024, 6024), @"Synchronize", dbFeatureContextRows[1].Id),
-			//		new DbFeatureRow(rnd.Next(6024, 7024), @"View Outlet Details", dbFeatureContextRows[1].Id),
-			//	};
-			//	var dbFeatureExceptionEntryRows = new List<DbFeatureExceptionEntryRow>
-			//	{
-			//		new DbFeatureExceptionEntryRow(dbFeatureExceptionRows[0].Id, GetRandomDate(rnd, fromDate, referenceDate), dbFeatureRows[0].Id)
-			//	};
-
-			//	var dbFeatureEntryRows = new List<DbFeatureEntryRow>
-			//	{
-			//		new DbFeatureEntryRow(string.Empty, DateTime.Now, dbFeatureRows[rnd.Next(dbFeatureRows.Count)].Id),
-			//		new DbFeatureEntryRow(string.Empty, DateTime.Now, dbFeatureRows[rnd.Next(dbFeatureRows.Count)].Id)
-			//	};
-
-			//	var clientData = new ClientData(dbFeatureContextRows, dbFeatureExceptionRows, dbFeatureRows, dbFeatureEntryRows, dbFeatureExceptionEntryRows);
-
-			//	using (var ctx = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
-			//	{
-			//		FeatureServerManager.Replicate(replication.Item1, replication.Item2, ctx, clientData, serverData);
-			//		ctx.Complete();
-			//	}
-			//}
-
-			s.Stop();
-			Console.WriteLine(s.ElapsedMilliseconds);
-		}
-
 		private static DateTime GetRandomDate(Random r, DateTime fromDate, DateTime toDate)
 		{
 			return fromDate.Add(TimeSpan.FromSeconds(r.Next((int)(toDate - fromDate).TotalSeconds)));
@@ -261,31 +154,33 @@ namespace ConsoleClient
 
 			try
 			{
-				var cd = new ClientData(new FeatureContextRow[]
-				{
-					new FeatureContextRow(1, @"A"),
-				},
-					new FeatureRow[]
-					{
-						new FeatureRow(2, @"B", 123),
-					},
-					new FeatureEntryRow[]
-					{
-						new FeatureEntryRow(3, @"C", DateTime.Today.AddDays(-1)),
-					},
-					new FeatureExceptionEntryRow[]
-					{
-						new FeatureExceptionEntryRow(4, DateTime.Now.AddDays(1), 789),
-					},
-					new FeatureExceptionRow[]
-					{
-						new FeatureExceptionRow(5, @"D"),
-					});
-				var bytes = cd.Pack();
+				FeatureDataReplicaSimulation.Replicate();
+				
+				//var cd = new ClientData(new FeatureContextRow[]
+				//{
+				//	new FeatureContextRow(1, @"A"),
+				//},
+				//	new FeatureRow[]
+				//	{
+				//		new FeatureRow(2, @"B", 123),
+				//	},
+				//	new FeatureEntryRow[]
+				//	{
+				//		new FeatureEntryRow(3, @"C", DateTime.Today.AddDays(-1)),
+				//	},
+				//	new FeatureExceptionEntryRow[]
+				//	{
+				//		new FeatureExceptionEntryRow(4, DateTime.Now.AddDays(1), 789),
+				//	},
+				//	new FeatureExceptionRow[]
+				//	{
+				//		new FeatureExceptionRow(5, @"D"),
+				//	});
+				//var bytes = cd.Pack();
 
-				Console.WriteLine(bytes.Length);
-				var copy = ClientData.Unpack(bytes);
-				Console.WriteLine(copy);
+				//Console.WriteLine(bytes.Length);
+				//var copy = ClientData.Unpack(bytes);
+				//Console.WriteLine(copy);
 				return;
 
 				var imgAsString = File.ReadAllBytes(@"C:\Users\PetarPetrov\Desktop\signature.jpg");
@@ -394,12 +289,6 @@ namespace ConsoleClient
 				s.Stop();
 				Console.WriteLine(s.ElapsedMilliseconds);
 
-				ServerData serverData;
-				using (var client = new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create())
-				{
-					serverData = FeatureServerManager.GetServerData(client);
-					client.Complete();
-				}
 
 				//while (true)
 				//{
@@ -645,35 +534,6 @@ namespace ConsoleClient
 			//Replicate(serverDb, data, null);
 		}
 
-		private static void Replicate(string serverDb, ClientData data, ServerData serverData)
-		{
-			var versions = new[]
-			{
-				@"8.28.79.127", @"7.74.19.727", @"6.22.29.492", @"5.96.69.792", @"4.11.27.292", @"3.85.19.223",
-			};
-
-			using (var ctx = new TransactionContextCreator(serverDb).Create())
-			{
-				for (var i = 11; i < 120; i++)
-				{
-					var user = @"BG" + (i.ToString()).PadLeft(6, '0');
-
-					if (_r.Next(0, 10) == 0)
-					{
-						continue;
-					}
-
-					//Replicate(serverDb, data, user, versions[_r.Next(versions.Length)], serverData);
-					var version = versions[_r.Next(versions.Length)];
-
-					//Replicate(serverDb, data, user, version, serverData);
-
-					FeatureServerManager.Replicate(user, version, ctx, data, serverData);
-				}
-				ctx.Complete();
-			}
-		}
-
 		private static void GenerateData(string path)
 		{
 			var contextCreator = new TransactionContextCreator(GetSqliteConnectionString(path));
@@ -916,15 +776,6 @@ namespace ConsoleClient
 				serverContext.Complete();
 
 				Console.WriteLine(@"Schema created");
-			}
-		}
-
-		private static void Replicate(string serverDb, ClientData data, string user, string version, ServerData serverData)
-		{
-			using (var server = new TransactionContextCreator(serverDb).Create())
-			{
-				FeatureServerManager.Replicate(user, version, server, data, serverData);
-				server.Complete();
 			}
 		}
 

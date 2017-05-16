@@ -58,6 +58,7 @@
     <Compile Include="DayAnalyzerModule.cs" />
     <Compile Include="DayStatus.cs" />
     <Compile Include="Dispatcher.cs" />
+    <Compile Include="FeatureDataReplicaSimulation.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SqlLiteDelegateDataReader.cs" />

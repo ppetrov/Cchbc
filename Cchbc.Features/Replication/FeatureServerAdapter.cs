@@ -3,16 +3,45 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Cchbc.Data;
-using Cchbc.Features.Data;
+//using Cchbc.Features.Data;
 
 namespace Cchbc.Features.Replication
 {
+	public sealed class ServerFeatureEntryRow
+	{
+		public long FeatureId;
+		public string Details;
+		public DateTime CreatedAt;
+		public double Timespent;
+	}
+
+	public sealed class ServerFeatureExceptionEntryRow
+	{
+		public long ExceptionId;
+		public DateTime CreatedAt;
+		public long FeatureId;
+	}
+
+	public sealed class ServerFeatureRow
+	{
+		public long Id { get; }
+		public string Name { get; }
+		public long ContextId { get; }
+
+		public ServerFeatureRow(long id, string name, long contextId)
+		{
+			this.Id = id;
+			this.Name = name;
+			this.ContextId = contextId;
+		}
+	}
+
 	public static class FeatureServerAdapter
 	{
 		private static readonly string SqliteFullDateTimeFormat = @"yyyy-MM-dd HH:mm:ss.fffffff";
 
 		private static readonly Query<long> GetNewIdQuery = new Query<long>(@"SELECT LAST_INSERT_ROWID()", r => r.GetInt64(0));
-		private static readonly Query<FeatureRow> GetFeaturesQuery = new Query<FeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
+		private static readonly Query<ServerFeatureRow> GetFeaturesQuery = new Query<ServerFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
 
 		public static void CreateSchema(IDbContext context)
 		{
@@ -80,7 +109,8 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 CREATE TABLE FEATURE_ENTRIES (
 	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	Details nvarchar(254) NULL, 
-	Created_At datetime NOT NULL, 
+	Replicated_At datetime NOT NULL, 
+	Timespent numeric NOT NULL,
 	Feature_Id integer NOT NULL, 
 	User_Id integer NOT NULL, 
 	Version_Id integer NOT NULL, 
@@ -124,22 +154,62 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			}
 		}
 
-		public static long InsertVersion(IDbContext dbContext, string version)
+		public static long GetOrInsertVersion(IDbContext dbContext, string version)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 			if (version == null) throw new ArgumentNullException(nameof(version));
 
-			dbContext.Execute(new Query(@"INSERT INTO FEATURE_VERSIONS(NAME) VALUES (@NAME)", new[] { new QueryParameter(@"NAME", version), }));
+			// TODO : Avoid allocation
+			// - of query
+			// - of params
+			var sqlParams = new[] { new QueryParameter(@"NAME", version) };
+
+			var query = new Query<long?>(@"SELECT ID FROM FEATURE_VERSIONS WHERE NAME = @NAME", r =>
+			{
+				if (!r.IsDbNull(0))
+				{
+					return r.GetInt64(0);
+				}
+				return null;
+			}, sqlParams);
+
+			var versionId = dbContext.Execute(query).SingleOrDefault();
+			if (versionId.HasValue)
+			{
+				return versionId.Value;
+			}
+
+			dbContext.Execute(new Query(@"INSERT INTO FEATURE_VERSIONS(NAME) VALUES (@NAME)", sqlParams));
 
 			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
 		}
 
-		public static long InsertUser(IDbContext dbContext, string userName, long versionId)
+		public static long GetOrInsertUser(IDbContext dbContext, string userName, long versionId)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 			if (userName == null) throw new ArgumentNullException(nameof(userName));
 
-			var sqlParams = new[]
+			// TODO : Avoid allocation
+			// - of query
+			// - of params
+			var sqlParams = new[] { new QueryParameter(@"NAME", userName) };
+
+			var query = new Query<long?>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", r =>
+			{
+				if (!r.IsDbNull(0))
+				{
+					return r.GetInt64(0);
+				}
+				return null;
+			}, sqlParams);
+
+			var userId = dbContext.Execute(query).SingleOrDefault();
+			if (userId.HasValue)
+			{
+				return userId.Value;
+			}
+
+			sqlParams = new[]
 			{
 				new QueryParameter(@"NAME", userName),
 				new QueryParameter(@"REPLICATED_AT", DateTime.Now),
@@ -149,6 +219,32 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 
 			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
 		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 		private static readonly Query InsertExceptionQuery =
@@ -184,20 +280,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			context.Execute(new Query(@"UPDATE FEATURE_USERS SET REPLICATED_AT = @REPLICATED_AT, VERSION_ID = @VERSION WHERE ID = @ID", sqlParams));
 		}
 
-		public static Dictionary<string, long> GetUsers(IDbContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_USERS");
-		}
-
-		public static Dictionary<string, long> GetVersions(IDbContext context)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_VERSIONS");
-		}
-
 		public static Dictionary<string, long> GetContexts(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
@@ -219,8 +301,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 
 			var featuresByContext = new Dictionary<long, Dictionary<string, long>>();
 
-			
-
 			foreach (var feature in dbContext.Execute(GetFeaturesQuery))
 			{
 				Dictionary<string, long> byContext;
@@ -238,12 +318,12 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			return featuresByContext;
 		}
 
-		private static FeatureRow DbFeatureRowCreator(IFieldDataReader r)
+		private static ServerFeatureRow DbFeatureRowCreator(IFieldDataReader r)
 		{
-			return new FeatureRow(r.GetInt32(0), r.GetString(1), r.GetInt32(2));
+			return new ServerFeatureRow(r.GetInt32(0), r.GetString(1), r.GetInt32(2));
 		}
 
-		public static void InsertExceptionEntry(IDbContext context, IEnumerable<FeatureExceptionEntryRow> exceptionEntryRows, long userId, long versionId, Dictionary<long, long> exceptionsMap, Dictionary<long, long> featuresMap)
+		public static void InsertExceptionEntry(IDbContext context, ServerFeatureExceptionEntryRow[] exceptionEntryRows, long userId, long versionId, Dictionary<long, long> featuresMap, Dictionary<long, long> exceptionsMap)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (exceptionEntryRows == null) throw new ArgumentNullException(nameof(exceptionEntryRows));
@@ -280,16 +360,15 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			context.Execute(new Query(buffer.ToString()));
 		}
 
-		public static void InsertFeatureEntry(IDbContext context, ArraySegment<FeatureEntryRow> featureEntryRows, long userId, long versionId, Dictionary<long, long> featuresMap)
+		public static void InsertFeatureEntry(IDbContext context, ServerFeatureEntryRow[] rows, long userId, long versionId, Dictionary<long, long> featuresMap)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (featureEntryRows == null) throw new ArgumentNullException(nameof(featureEntryRows));
 			if (featuresMap == null) throw new ArgumentNullException(nameof(featuresMap));
 
-			var buffer = new StringBuilder(@"INSERT INTO FEATURE_ENTRIES(DETAILS, CREATED_AT, FEATURE_ID, USER_ID, VERSION_ID) VALUES ");
+			var buffer = new StringBuilder(@"INSERT INTO FEATURE_ENTRIES(DETAILS, REPLICATED_AT, TIMESPENT, FEATURE_ID, USER_ID, VERSION_ID) VALUES ");
 
 			var addComma = false;
-			foreach (var e in featureEntryRows)
+			foreach (var row in rows)
 			{
 				if (addComma)
 				{
@@ -298,14 +377,16 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 
 				buffer.Append('(');
 				buffer.Append('\'');
-				buffer.Append(e.Details);
+				buffer.Append(row.Details);
 				buffer.Append('\'');
 				buffer.Append(',');
 				buffer.Append('\'');
-				buffer.Append(e.CreatedAt.ToString(SqliteFullDateTimeFormat));
+				buffer.Append(row.CreatedAt.ToString(SqliteFullDateTimeFormat));
 				buffer.Append('\'');
 				buffer.Append(',');
-				buffer.Append(featuresMap[e.FeatureId]);
+				buffer.Append(row.Timespent);
+				buffer.Append(',');
+				buffer.Append(featuresMap[row.FeatureId]);
 				buffer.Append(',');
 				buffer.Append(userId);
 				buffer.Append(',');
@@ -325,6 +406,35 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			context.Fill(result, (r, map) => { map.Add(r.GetString(1), r.GetInt64(0)); }, new Query(statement));
 
 			return result;
+		}
+
+		public static long InsertContext(IDbContext dbContext, string name)
+		{
+			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			var query = new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)",
+			new[]
+			{
+				new QueryParameter(@"@NAME", name)
+			});
+
+			dbContext.Execute(query);
+
+			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
+		}
+
+		public static long InsertFeature(IDbContext dbContext, string name, long contextId)
+		{
+			var query = new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", new[]
+			{
+				new QueryParameter(@"@NAME", name),
+				new QueryParameter(@"@CONTEXT", contextId)
+			});
+
+			dbContext.Execute(query);
+
+			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
 		}
 	}
 }

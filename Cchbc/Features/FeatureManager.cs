@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Cchbc.Data;
 using Cchbc.Features.Data;
 
@@ -83,23 +82,23 @@ namespace Cchbc.Features
 			}
 		}
 
-		public ClientData GetData()
+		public byte[] GetClientDataBytes()
 		{
 			using (var dbContext = this.DbContextCreator())
 			{
 				this.Load(dbContext);
 
-				var contexts = GetFeatureContextRows(this.Contexts);
-				var features = GetFeatureRows(this.Features);
-				var featureEntries = FeatureAdapter.GetFeatureEntries(dbContext).ToArray();
-				var exceptionEntries = FeatureAdapter.GetFeatureExceptionEntries(dbContext).ToArray();
-				var exceptions = FeatureAdapter.GetExceptions(dbContext).ToArray();
+				var data = new ClientData();
 
-				var data = new ClientData(contexts, features, featureEntries, exceptionEntries, exceptions);
+				data.Add(this.Contexts);
+				data.Add(FeatureAdapter.GetExceptions(dbContext));				
+				data.Add(this.Features);
+				data.Add(FeatureAdapter.GetFeatureEntries(dbContext));
+				data.Add(FeatureAdapter.GetExceptionEntries(dbContext));
 
 				dbContext.Complete();
 
-				return data;
+				return data.GetBytes();
 			}
 		}
 
@@ -161,33 +160,6 @@ namespace Cchbc.Features
 			features.Add(feature);
 
 			return feature;
-		}
-
-		private static FeatureRow[] GetFeatureRows(Dictionary<long, List<FeatureRow>> features)
-		{
-			var totalFeatures = 0;
-			var values = features.Values;
-			foreach (var fs in values)
-			{
-				totalFeatures += fs.Count;
-			}
-			var array = new FeatureRow[totalFeatures];
-			var index = 0;
-			foreach (var fs in values)
-			{
-				foreach (var f in fs)
-				{
-					array[index++] = f;
-				}
-			}
-			return array;
-		}
-
-		private static FeatureContextRow[] GetFeatureContextRows(Dictionary<string, FeatureContextRow> contexts)
-		{
-			var array = new FeatureContextRow[contexts.Count];
-			contexts.Values.CopyTo(array, 0);
-			return array;
 		}
 	}
 }
