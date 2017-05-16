@@ -24,12 +24,13 @@ namespace Cchbc.Features.Data
 
 		private static readonly Query InsertClientFeatureEntryQuery =
 			new Query(
-				@"INSERT INTO FEATURE_ENTRIES(DETAILS, CREATED_AT, FEATURE_ID ) VALUES (@DETAILS, @CREATED_AT, @FEATURE)",
+				@"INSERT INTO FEATURE_ENTRIES(DETAILS, CREATED_AT, FEATURE_ID, TIMESPENT) VALUES (@DETAILS, @CREATED_AT, @FEATURE, @TIMESPENT)",
 				new[]
 				{
 					new QueryParameter(@"@DETAILS", string.Empty),
 					new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
-					new QueryParameter(@"@FEATURE", 0L)
+					new QueryParameter(@"@FEATURE", 0L),
+					new QueryParameter(@"@TIMESPENT", 0D),
 				});
 
 		private static readonly Query InsertExceptionQuery =
@@ -92,6 +93,7 @@ CREATE TABLE FEATURE_ENTRIES (
 	Details nvarchar(254) NOT NULL, 
 	Created_At datetime NOT NULL, 
 	Feature_Id integer NOT NULL, 
+	Timespent numeric NOT NULL, 
 	FOREIGN KEY (Feature_Id)
 		REFERENCES FEATURES (Id)
 		ON UPDATE CASCADE ON DELETE CASCADE
@@ -237,7 +239,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
 		}
 
-		public static void InsertFeatureEntry(IDbContext dbContext, long featureId, string details)
+		public static void InsertFeatureEntry(IDbContext dbContext, long featureId, string details, TimeSpan timeSpent)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 			if (details == null) throw new ArgumentNullException(nameof(details));
@@ -246,6 +248,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			InsertClientFeatureEntryQuery.Parameters[0].Value = details;
 			InsertClientFeatureEntryQuery.Parameters[1].Value = DateTime.Now;
 			InsertClientFeatureEntryQuery.Parameters[2].Value = featureId;
+			InsertClientFeatureEntryQuery.Parameters[3].Value = timeSpent.TotalMilliseconds;
 
 			// Insert the record
 			dbContext.Execute(InsertClientFeatureEntryQuery);

@@ -51,13 +51,15 @@ namespace Cchbc.Features
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
+			var timeSpent = feature.TimeSpent;
+
 			using (var dbContext = this.DbContextCreator())
 			{
 				this.Load(dbContext);
 
 				var featureRow = this.SaveFeature(dbContext, this.SaveContext(dbContext, feature.Context), feature.Name);
 
-				FeatureAdapter.InsertFeatureEntry(dbContext, featureRow.Id, details ?? string.Empty);
+				FeatureAdapter.InsertFeatureEntry(dbContext, featureRow.Id, details ?? string.Empty, timeSpent);
 
 				dbContext.Complete();
 			}
