@@ -22,26 +22,31 @@ namespace Cchbc.Features.Replication
 		public long FeatureId;
 	}
 
-	public sealed class ServerFeatureRow
-	{
-		public long Id { get; }
-		public string Name { get; }
-		public long ContextId { get; }
-
-		public ServerFeatureRow(long id, string name, long contextId)
-		{
-			this.Id = id;
-			this.Name = name;
-			this.ContextId = contextId;
-		}
-	}
-
 	public static class FeatureServerAdapter
 	{
+		private sealed class ServerFeatureRow
+		{
+			public readonly long Id;
+			public readonly string Name;
+			public readonly long ContextId;
+
+			public ServerFeatureRow(long id, string name, long contextId)
+			{
+				this.Id = id;
+				this.Name = name;
+				this.ContextId = contextId;
+			}
+		}
+
 		private static readonly string SqliteFullDateTimeFormat = @"yyyy-MM-dd HH:mm:ss.fffffff";
 
 		private static readonly Query<long> GetNewIdQuery = new Query<long>(@"SELECT LAST_INSERT_ROWID()", r => r.GetInt64(0));
 		private static readonly Query<ServerFeatureRow> GetFeaturesQuery = new Query<ServerFeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
+		private static readonly Query InsertExceptionQuery =
+		new Query(@"INSERT INTO FEATURE_EXCEPTIONS(CONTENTS) VALUES (@CONTENTS)", new[]
+		{
+				new QueryParameter(@"@CONTENTS", string.Empty)
+		});
 
 		public static void CreateSchema(IDbContext context)
 		{
@@ -220,39 +225,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
 		}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		private static readonly Query InsertExceptionQuery =
-			new Query(@"INSERT INTO FEATURE_EXCEPTIONS(CONTENTS) VALUES (@CONTENTS)", new[]
-			{
-				new QueryParameter(@"@CONTENTS", string.Empty)
-			});
-
 		public static long InsertException(IDbContext dbContext, string contents)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
@@ -265,8 +237,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 
 			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
 		}
-
-
 
 		public static void UpdateUser(IDbContext context, long userId, long versionId)
 		{
@@ -284,17 +254,31 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return GetDataMapped(context, @"SELECT ID, NAME FROM FEATURE_CONTEXTS");
+			var result = new Dictionary<string, long>();
+
+
+			foreach (var pair in context.Execute(new Query<KeyValuePair<long, string>>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", IdNameCreator)))
+			{
+				result.Add(pair.Value, pair.Key);
+			}
+
+			return result;
 		}
 
 		public static Dictionary<string, long> GetExceptions(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			return GetDataMapped(context, @"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS");
+			var result = new Dictionary<string, long>();
+
+			foreach (var pair in context.Execute(new Query<KeyValuePair<long, string>>(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS", IdNameCreator)))
+			{
+				result.Add(pair.Value, pair.Key);
+			}
+
+			return result;
 		}
 
-		//TODO !!!
 		public static Dictionary<long, Dictionary<string, long>> GetFeaturesByContext(IDbContext dbContext)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
@@ -316,11 +300,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			}
 
 			return featuresByContext;
-		}
-
-		private static ServerFeatureRow DbFeatureRowCreator(IFieldDataReader r)
-		{
-			return new ServerFeatureRow(r.GetInt32(0), r.GetString(1), r.GetInt32(2));
 		}
 
 		public static void InsertExceptionEntry(IDbContext context, ServerFeatureExceptionEntryRow[] exceptionEntryRows, long userId, long versionId, Dictionary<long, long> featuresMap, Dictionary<long, long> exceptionsMap)
@@ -399,25 +378,16 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			context.Execute(new Query(buffer.ToString()));
 		}
 
-		private static Dictionary<string, long> GetDataMapped(IDbContext context, string statement)
-		{
-			var result = new Dictionary<string, long>(32);
-
-			context.Fill(result, (r, map) => { map.Add(r.GetString(1), r.GetInt64(0)); }, new Query(statement));
-
-			return result;
-		}
-
 		public static long InsertContext(IDbContext dbContext, string name)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
 			var query = new Query(@"INSERT INTO FEATURE_CONTEXTS(NAME) VALUES (@NAME)",
-			new[]
-			{
-				new QueryParameter(@"@NAME", name)
-			});
+				new[]
+				{
+					new QueryParameter(@"@NAME", name)
+				});
 
 			dbContext.Execute(query);
 
@@ -435,6 +405,16 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			dbContext.Execute(query);
 
 			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
+		}
+
+		private static KeyValuePair<long, string> IdNameCreator(IFieldDataReader r)
+		{
+			return new KeyValuePair<long, string>(r.GetInt64(0), r.GetString(1));
+		}
+
+		private static ServerFeatureRow DbFeatureRowCreator(IFieldDataReader r)
+		{
+			return new ServerFeatureRow(r.GetInt32(0), r.GetString(1), r.GetInt32(2));
 		}
 	}
 }
