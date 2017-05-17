@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Cchbc.ConsoleClient;
 using Cchbc.Features.Data;
 using Cchbc.Features.Replication;
@@ -42,11 +43,17 @@ namespace ConsoleClient
 
 				//ResetSchema(contextCreator);				
 
+				var s = Stopwatch.StartNew();
 				using (var ctx = contextCreator.Create())
 				{
-					FeatureServerManager.Replicate(@"BG900343", @"1.0.0.0", ctx, clientData.GetBytes());
+					for (var i = 0; i < 1; i++)
+					{
+						FeatureServerManager.Replicate(ctx, @"BG900343", @"1.0.0.0", clientData.GetBytes());
+					}
 					ctx.Complete();
 				}
+				s.Stop();
+				Console.WriteLine(s.ElapsedMilliseconds);
 			}
 			catch (Exception ex)
 			{
