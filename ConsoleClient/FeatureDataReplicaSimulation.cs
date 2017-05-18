@@ -46,9 +46,10 @@ namespace ConsoleClient
 				var s = Stopwatch.StartNew();
 				using (var ctx = contextCreator.Create())
 				{
-					for (var i = 0; i < 1; i++)
+					for (var i = 0; i < 100; i++)
 					{
 						FeatureServerManager.Replicate(ctx, @"BG900343", @"1.0.0.0", clientData.GetBytes());
+						Console.ReadLine();
 					}
 					ctx.Complete();
 				}

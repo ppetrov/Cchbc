@@ -155,32 +155,6 @@ namespace ConsoleClient
 			try
 			{
 				FeatureDataReplicaSimulation.Replicate();
-				
-				//var cd = new ClientData(new FeatureContextRow[]
-				//{
-				//	new FeatureContextRow(1, @"A"),
-				//},
-				//	new FeatureRow[]
-				//	{
-				//		new FeatureRow(2, @"B", 123),
-				//	},
-				//	new FeatureEntryRow[]
-				//	{
-				//		new FeatureEntryRow(3, @"C", DateTime.Today.AddDays(-1)),
-				//	},
-				//	new FeatureExceptionEntryRow[]
-				//	{
-				//		new FeatureExceptionEntryRow(4, DateTime.Now.AddDays(1), 789),
-				//	},
-				//	new FeatureExceptionRow[]
-				//	{
-				//		new FeatureExceptionRow(5, @"D"),
-				//	});
-				//var bytes = cd.Pack();
-
-				//Console.WriteLine(bytes.Length);
-				//var copy = ClientData.Unpack(bytes);
-				//Console.WriteLine(copy);
 				return;
 
 				var imgAsString = File.ReadAllBytes(@"C:\Users\PetarPetrov\Desktop\signature.jpg");

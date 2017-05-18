@@ -9,18 +9,11 @@ namespace Cchbc.Features.Replication
 {
 	public static class FeatureServerManager
 	{
-		private struct ServerFeatureRow
+		private sealed class ServerFeatureRow
 		{
-			public readonly long Id;
-			public readonly string Name;
-			public readonly long ContextId;
-
-			public ServerFeatureRow(long id, string name, long contextId)
-			{
-				this.Id = id;
-				this.Name = name;
-				this.ContextId = contextId;
-			}
+			public long Id;
+			public string Name;
+			public long ContextId;
 		}
 
 		private static readonly string SqliteFullDateTimeFormat = @"yyyy-MM-dd HH:mm:ss.fffffff";
@@ -37,10 +30,10 @@ namespace Cchbc.Features.Replication
 			});
 
 		private static readonly Query<long> GetVersionQuery =
-		new Query<long>(@"SELECT ID FROM FEATURE_VERSIONS WHERE NAME = @NAME", IdCreator, new[]
-		{
+			new Query<long>(@"SELECT ID FROM FEATURE_VERSIONS WHERE NAME = @NAME", IdCreator, new[]
+			{
 				new QueryParameter(@"NAME", string.Empty)
-		});
+			});
 
 		private static readonly Query<long> GetUserQuery =
 			new Query<long>(@"SELECT ID FROM FEATURE_USERS WHERE NAME = @NAME", IdCreator, new[]
@@ -85,7 +78,8 @@ namespace Cchbc.Features.Replication
 					new QueryParameter(@"@NAME", string.Empty)
 				});
 
-		private static readonly Query InsertFeatureQuery = new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", new[]
+		private static readonly Query InsertFeatureQuery =
+			new Query(@"INSERT INTO FEATURES(NAME, CONTEXT_ID) VALUES (@NAME, @CONTEXT)", new[]
 			{
 				new QueryParameter(@"@NAME", string.Empty),
 				new QueryParameter(@"@CONTEXT", 0L)
@@ -223,10 +217,7 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 					ReplicateExceptionEntries(dbContext, r, userId, versionId, featuresClientToServerMap, exceptionsClientToServerMap);
 				}
 			}
-
-			UpdateUser(dbContext, userId, versionId);
 		}
-
 
 		private static long GetOrInsertVersion(IDbContext dbContext, string version)
 		{
@@ -249,6 +240,11 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 
 			foreach (var userId in dbContext.Execute(GetUserQuery))
 			{
+				UpdateUserQuery.Parameters[0].Value = userId;
+				UpdateUserQuery.Parameters[1].Value = DateTime.Now;
+				UpdateUserQuery.Parameters[2].Value = versionId;
+
+				dbContext.Execute(UpdateUserQuery);
 				return userId;
 			}
 
@@ -259,8 +255,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 
 			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
 		}
-
-
 
 		private static Dictionary<long, long> ReplicateContexts(IDbContext dbContext, BinaryReader r)
 		{
@@ -400,6 +394,7 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 					buffer.Append(',');
 					buffer.Append(versionId);
 					buffer.Append(')');
+
 					dbContext.Execute(new Query(buffer.ToString()));
 				}
 			}
@@ -460,10 +455,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			}
 		}
 
-
-
-
-
 		private static long IdCreator(IFieldDataReader r)
 		{
 			return r.GetInt64(0);
@@ -478,18 +469,9 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
 		}
 
-		private static void UpdateUser(IDbContext context, long userId, long versionId)
-		{
-			UpdateUserQuery.Parameters[0].Value = userId;
-			UpdateUserQuery.Parameters[1].Value = DateTime.Now;
-			UpdateUserQuery.Parameters[2].Value = versionId;
-
-			context.Execute(UpdateUserQuery);
-		}
-
 		private static Dictionary<string, long> GetContexts(IDbContext context)
 		{
-			var result = new Dictionary<string, long>();
+			var result = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
 
 			foreach (var pair in context.Execute(ContextsQuery))
 			{
@@ -501,7 +483,7 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 
 		private static Dictionary<string, long> GetExceptions(IDbContext context)
 		{
-			var result = new Dictionary<string, long>();
+			var result = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
 
 			foreach (var pair in context.Execute(ExceptionsQuery))
 			{
@@ -556,9 +538,14 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 			return new KeyValuePair<long, string>(r.GetInt64(0), r.GetString(1));
 		}
 
+		private static readonly ServerFeatureRow StorageFeature = new ServerFeatureRow();
+
 		private static ServerFeatureRow DbFeatureRowCreator(IFieldDataReader r)
 		{
-			return new ServerFeatureRow(r.GetInt32(0), r.GetString(1), r.GetInt32(2));
+			StorageFeature.Id = r.GetInt32(0);
+			StorageFeature.Name = r.GetString(1);
+			StorageFeature.ContextId = r.GetInt32(2);
+			return StorageFeature;
 		}
 	}
 }
