@@ -97,6 +97,8 @@ namespace UIDemo
 			try
 			{
 				this.ViewModel.LoadDay(_args.User, _args.DateTime);
+
+				this.ViewModel.DisplayAddActivityCommand.Execute(this);
 			}
 			catch (Exception ex)
 			{

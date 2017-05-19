@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Cchbc;
 using Cchbc.Common;
+using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Logs;
+using Cchbc.Validation;
 using iFSA.AgendaModule.Objects;
 using iFSA.AgendaModule.ViewModels;
 using iFSA.Common.Objects;
@@ -41,10 +44,17 @@ namespace iFSA.AgendaModule
 			}
 		}
 
+		private AgendaOutletViewModel _selectedOutletViewModel;
+		public AgendaOutletViewModel SelectedOutletViewModel
+		{
+			get { return _selectedOutletViewModel; }
+			set { this.SetProperty(ref _selectedOutletViewModel, value); }
+		}
+
 		public ICommand PreviousDayCommand { get; }
 		public ICommand NextDayCommand { get; }
 		public ICommand DisplayCalendarCommand { get; }
-		public ICommand AddActvityCommand { get; }
+		public ICommand DisplayAddActivityCommand { get; }
 		public ICommand RemoveActivityCommand { get; }
 
 		public ObservableCollection<AgendaOutletViewModel> Outlets { get; } = new ObservableCollection<AgendaOutletViewModel>();
@@ -62,10 +72,39 @@ namespace iFSA.AgendaModule
 			this.PreviousDayCommand = new RelayCommand(this.LoadPreviousDay);
 			this.NextDayCommand = new RelayCommand(this.LoadNextDay);
 			this.DisplayCalendarCommand = new RelayCommand(this.DisplayCalendar);
-			this.AddActvityCommand = new RelayCommand(this.AddActivity);
+			this.DisplayAddActivityCommand = new RelayCommand(this.DisplayAddActivity);
 			this.RemoveActivityCommand = new RelayCommand(this.RemoveActivity);
 
 			this.Agenda.ActivityAdded += this.ActivityAdded;
+			this.Agenda.OutletImageDownloaded += this.OutletImageDownloaded;
+		}
+
+		private void OutletImageDownloaded(object sender, OutletImageEventArgs e)
+		{
+			try
+			{
+				var outletImage = e.OutletImage;
+				var number = outletImage.Outlet;
+				lock (this)
+				{
+					foreach (var viewModel in this.AllOutlets)
+					{
+						if (viewModel.Number == number)
+						{
+							var match = viewModel;
+							this.UIThreadDispatcher.Dispatch(() =>
+							{
+								match.OutletImage = DateTime.Now.ToString(@"G");
+							});
+							break;
+						}
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Log(ex.ToString(), LogLevel.Error);
+			}
 		}
 
 		private void ActivityAdded(object sender, ActivityEventArgs e)
@@ -75,20 +114,30 @@ namespace iFSA.AgendaModule
 
 			var outletViewModel = default(AgendaOutletViewModel);
 
-			foreach (var viewModel in this.Outlets)
+			// Search in all outlets
+			lock (this)
 			{
-				if (outlet == viewModel.Outlet)
+				foreach (var viewModel in this.AllOutlets)
 				{
-					outletViewModel = viewModel;
-					break;
+					if (outlet == viewModel.Outlet)
+					{
+						outletViewModel = viewModel;
+						break;
+					}
 				}
 			}
 
+			// Not found
 			if (outletViewModel == null)
 			{
+				// Create it
 				outletViewModel = new AgendaOutletViewModel(this.MainContext, new AgendaOutlet(outlet, new List<Activity>()));
+
+				// Add it to the list
+				this.AllOutlets.Add(outletViewModel);
 			}
 
+			// Add the new activity
 			outletViewModel.Activities.Add(new ActivityViewModel(outletViewModel, activity));
 
 			// TODO : !!! Sort the collection
@@ -115,6 +164,20 @@ namespace iFSA.AgendaModule
 			{
 				this.MainContext.FeatureManager.Save(feature, dateTime.ToString(@"O"));
 			}
+		}
+
+		public PermissionResult CanCreate(Activity activity)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			return this.Agenda.CanCreate(activity);
+		}
+
+		public Activity CreateActivity(Activity activity)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			return this.Agenda.Create(activity);
 		}
 
 		private void LoadNextDay()
@@ -158,11 +221,14 @@ namespace iFSA.AgendaModule
 			var search = this.Search;
 
 			this.Outlets.Clear();
-			foreach (var viewModel in this.AllOutlets)
+			lock (this)
 			{
-				if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+				foreach (var viewModel in this.AllOutlets)
 				{
-					this.Outlets.Add(viewModel);
+					if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						this.Outlets.Add(viewModel);
+					}
 				}
 			}
 		}
@@ -175,9 +241,9 @@ namespace iFSA.AgendaModule
 			this.AppNavigator.NavigateTo(AppScreen.Calendar, this.CurrentDate);
 		}
 
-		private void AddActivity()
+		private void DisplayAddActivity()
 		{
-			this.AppNavigator.NavigateTo(AppScreen.Outlets, this);
+			this.AppNavigator.NavigateTo(AppScreen.AddActivity, this);
 		}
 
 		private void RemoveActivity()
@@ -197,47 +263,229 @@ namespace iFSA.AgendaModule
 			this.Agenda.LoadDay(this.MainContext, user, dateTime);
 
 			this.Outlets.Clear();
-			this.AllOutlets.Clear();
-			foreach (var outlet in this.Agenda.Outlets)
+			lock (this)
 			{
-				var viewModel = new AgendaOutletViewModel(this.MainContext, outlet);
-				this.Outlets.Add(viewModel);
-				this.AllOutlets.Add(viewModel);
+				this.AllOutlets.Clear();
+				foreach (var outlet in this.Agenda.Outlets)
+				{
+					var viewModel = new AgendaOutletViewModel(this.MainContext, outlet);
+					this.AllOutlets.Add(viewModel);
+					this.Outlets.Add(viewModel);
+				}
 			}
 
-			Task.Run(() =>
-			{
-				try
-				{
-					while (!this.Agenda.ImagesLoadedEvent.IsSet)
-					{
-						OutletImage outletImage;
-						if (this.Agenda.OutletImages.TryDequeue(out outletImage))
-						{
-							var match = default(AgendaOutletViewModel);
-							var number = outletImage.Outlet;
-							foreach (var viewModel in this.AllOutlets)
-							{
-								if (viewModel.Number == number)
-								{
-									match = viewModel;
-									break;
-								}
-							}
+		}
+	}
 
-							if (match != null)
-							{
-								this.UIThreadDispatcher.Dispatch(() => { match.OutletImage = DateTime.Now.ToString(@"G"); });
-							}
-						}
-						Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();
+
+	public sealed class AddActivityScreenViewModel : ViewModel
+	{
+		private AgendaScreenViewModel AgendaScreenViewModel { get; }
+		private MainContext MainContext { get; }
+
+		private List<OutletViewModel> AllOutlets { get; } = new List<OutletViewModel>();
+
+		public ObservableCollection<OutletViewModel> Outlets { get; } = new ObservableCollection<OutletViewModel>();
+		public ObservableCollection<ActivityTypeCategoryViewModel> Categories { get; } = new ObservableCollection<ActivityTypeCategoryViewModel>();
+		public ObservableCollection<ActivityTypeViewModel> Types { get; } = new ObservableCollection<ActivityTypeViewModel>();
+
+		private OutletViewModel _selectedOutlet;
+		public OutletViewModel SelectedOutlet
+		{
+			get { return _selectedOutlet; }
+			set { this.SetProperty(ref _selectedOutlet, value); }
+		}
+
+		private ActivityTypeCategoryViewModel _selectedCategory;
+		public ActivityTypeCategoryViewModel SelectedCategory
+		{
+			get { return _selectedCategory; }
+			set
+			{
+				this.SetProperty(ref _selectedCategory, value);
+				this.Types.Clear();
+				if (value != null)
+				{
+					foreach (var type in value.Types)
+					{
+						this.Types.Add(type);
 					}
 				}
-				catch (Exception ex)
+				this.SelectedType = this.Types.FirstOrDefault();
+			}
+		}
+
+		private ActivityTypeViewModel _selectedType;
+		public ActivityTypeViewModel SelectedType
+		{
+			get { return _selectedType; }
+			set { this.SetProperty(ref _selectedType, value); }
+		}
+
+		private string _search = string.Empty;
+		public string Search
+		{
+			get { return _search; }
+			set
+			{
+				this.SetProperty(ref _search, value);
+				this.ApplyCurrentTextSearch();
+			}
+		}
+
+		public ICommand CreateActivityCommand { get; }
+		public ICommand StartNewActivityCommand { get; }
+
+		public AddActivityScreenViewModel(AgendaScreenViewModel agendaScreenViewModel, MainContext mainContext)
+		{
+			if (agendaScreenViewModel == null) throw new ArgumentNullException(nameof(agendaScreenViewModel));
+			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
+
+			this.AgendaScreenViewModel = agendaScreenViewModel;
+			this.MainContext = mainContext;
+			this.CreateActivityCommand = new RelayCommand(this.CreateActivity);
+			this.StartNewActivityCommand = new RelayCommand(this.StartNewActivity);
+		}
+
+
+		public void Load()
+		{
+			// TODO : !!! Load Outlets
+			var outlets = new Outlet[100];
+
+			// TODO : !!! Load categories
+
+			this.Outlets.Clear();
+			this.AllOutlets.Clear();
+			foreach (var outlet in outlets)
+			{
+				var outletViewModel = new OutletViewModel(outlet);
+
+				this.Outlets.Add(outletViewModel);
+				this.AllOutlets.Add(outletViewModel);
+			}
+
+			if (this.AgendaScreenViewModel.SelectedOutletViewModel != null)
+			{
+				var outlet = this.AgendaScreenViewModel.SelectedOutletViewModel.Outlet;
+
+				foreach (var viewModel in this.AllOutlets)
 				{
-					this.MainContext.Log(ex.ToString(), LogLevel.Error);
+					if (viewModel.Model == outlet)
+					{
+						this.SelectedOutlet = viewModel;
+						break;
+					}
 				}
-			});
+			}
+		}
+
+		private async void CreateActivity()
+		{
+			try
+			{
+				var activity = default(Activity);
+				await CreateActivity(activity);
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Log(ex.ToString(), LogLevel.Error);
+			}
+		}
+
+		private async void StartNewActivity()
+		{
+			var activity = default(Activity);
+			activity = await CreateActivity(activity);
+
+			if (activity != null)
+			{
+				
+				// TODO : !!!
+				var nav = default(IAppNavigator);
+				nav.GoBack();
+				nav.NavigateTo(AppScreen.AddActivity, activity);
+			}
+		}
+
+		private async Task<Activity> CreateActivity(Activity activity)
+		{
+			var createActivity = false;
+			var permissionResult = this.AgendaScreenViewModel.CanCreate(activity);
+			var type = permissionResult.Type;
+			switch (type)
+			{
+				case PermissionType.Allow:
+					createActivity = true;
+					break;
+				case PermissionType.Confirm:
+					var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+					if (confirmation == DialogResult.Accept)
+					{
+						createActivity = true;
+					}
+					break;
+				case PermissionType.Deny:
+					await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+			if (createActivity)
+			{
+				return this.AgendaScreenViewModel.CreateActivity(activity);
+			}
+			return null;
+		}
+
+		private void ApplyCurrentTextSearch()
+		{
+			var search = this.Search;
+
+			this.Outlets.Clear();
+			foreach (var viewModel in this.AllOutlets)
+			{
+				if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+				{
+					this.Outlets.Add(viewModel);
+				}
+			}
+		}
+	}
+
+	public sealed class OutletViewModel : ViewModel<Outlet>
+	{
+		public string Number { get; }
+		public string Name { get; }
+
+		public OutletViewModel(Outlet model) : base(model)
+		{
+			this.Number = model.Id.ToString();
+			this.Name = model.Name;
+		}
+	}
+
+	public sealed class ActivityTypeCategoryViewModel : ViewModel<ActivityTypeCategory>
+	{
+		public string Name { get; }
+		public ObservableCollection<ActivityTypeViewModel> Types { get; } = new ObservableCollection<ActivityTypeViewModel>();
+
+		public ActivityTypeCategoryViewModel(ActivityTypeCategory model) : base(model)
+		{
+			this.Name = model.Name;
+			foreach (var type in model.Types)
+			{
+				this.Types.Add(new ActivityTypeViewModel(type));
+			}
+		}
+	}
+
+	public sealed class ActivityTypeViewModel : ViewModel<ActivityType>
+	{
+		public string Name { get; set; }
+
+		public ActivityTypeViewModel(ActivityType model) : base(model)
+		{
 		}
 	}
 }

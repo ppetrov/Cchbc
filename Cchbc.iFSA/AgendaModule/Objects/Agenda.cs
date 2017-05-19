@@ -1,10 +1,10 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Cchbc;
 using Cchbc.Logs;
+using Cchbc.Validation;
 using iFSA.Common.Objects;
 
 namespace iFSA.AgendaModule.Objects
@@ -20,18 +20,29 @@ namespace iFSA.AgendaModule.Objects
 		}
 	}
 
+	public sealed class OutletImageEventArgs : EventArgs
+	{
+		public OutletImage OutletImage { get; }
+
+		public OutletImageEventArgs(OutletImage outletImage)
+		{
+			if (outletImage == null) throw new ArgumentNullException(nameof(outletImage));
+
+			this.OutletImage = outletImage;
+		}
+	}
+
 	public sealed class Agenda
 	{
+		private AgendaData Data { get; }
 		private CancellationTokenSource _cts = new CancellationTokenSource();
 
 		public List<AgendaOutlet> Outlets { get; } = new List<AgendaOutlet>();
 
-		public ConcurrentQueue<OutletImage> OutletImages { get; } = new ConcurrentQueue<OutletImage>();
-		public ManualResetEventSlim ImagesLoadedEvent { get; } = new ManualResetEventSlim(false);
-
-		private AgendaData Data { get; }
-
-		public EventHandler<ActivityEventArgs> ActivityAdded { get; set; }
+		public event EventHandler<OutletImageEventArgs> OutletImageDownloaded;
+		public EventHandler<ActivityEventArgs> ActivityAdded;
+		public EventHandler<ActivityEventArgs> ActivityDeleted;
+		public EventHandler<ActivityEventArgs> ActivityUpdated;
 
 		public Agenda(AgendaData data)
 		{
@@ -64,8 +75,6 @@ namespace iFSA.AgendaModule.Objects
 			{
 				try
 				{
-					this.ImagesLoadedEvent.Reset();
-
 					var cts = this._cts;
 					foreach (var outlet in outlets)
 					{
@@ -76,7 +85,7 @@ namespace iFSA.AgendaModule.Objects
 						var outletImage = this.Data.GetDefaultOutletImage(mainContext, outlet);
 						if (outletImage != null)
 						{
-							this.OutletImages.Enqueue(outletImage);
+							this.OnOutletImageDownloaded(new OutletImageEventArgs(outletImage));
 						}
 					}
 				}
@@ -84,44 +93,62 @@ namespace iFSA.AgendaModule.Objects
 				{
 					mainContext.Log(ex.ToString(), LogLevel.Error);
 				}
-				finally
-				{
-					this.ImagesLoadedEvent.Set();
-				}
 			}, this._cts.Token);
 		}
 
-		public void Add(Outlet outlet, Activity activity)
+		public PermissionResult CanCreate(Activity activity)
 		{
-			if (outlet == null) throw new ArgumentNullException(nameof(outlet));
-			if (activity == null) throw new ArgumentNullException(nameof(activity));
-
-			var activities = new List<Activity>(1);
-
-			var agendaOutlet = this.FindAgendaOutlet(outlet);
-			if (agendaOutlet != null)
+			// TODO : Perform all the checks
+			if (activity.Details == string.Empty)
 			{
-				activities = agendaOutlet.Activities;
+				return PermissionResult.Confirm(@"Confirm activity without details?");
 			}
-
-			// Insert into db
-
-			// Insert into collection
-			activities.Add(activity);
-
-			this.Outlets.Add(new AgendaOutlet(outlet, activities));
+			if (activity.Outlet == null && activity.Type == null)
+			{
+				return PermissionResult.Confirm(@"Confirm activity type for this outlet?");
+			}
+			return PermissionResult.Allow;
 		}
 
-		private AgendaOutlet FindAgendaOutlet(Outlet outlet)
+		public Activity Create(Activity activity)
 		{
-			foreach (var agendaOutlet in this.Outlets)
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			// Save activity to db
+			this.Data.Save(activity);
+
+			// Find item by outlet
+			var outlet = activity.Outlet;
+			var agendaOutlet = default(AgendaOutlet);
+			foreach (var o in this.Outlets)
 			{
-				if (agendaOutlet.Outlet == outlet)
+				if (o.Outlet == outlet)
 				{
-					return agendaOutlet;
+					agendaOutlet = o;
+					break;
 				}
 			}
-			return null;
+			// We don't have it
+			if (agendaOutlet == null)
+			{
+				// Create it
+				agendaOutlet = new AgendaOutlet(outlet, new List<Activity>());
+
+				// Add to the collection
+				this.Outlets.Add(agendaOutlet);
+			}
+
+			// Insert into the collection
+			agendaOutlet.Activities.Add(activity);
+
+			this.ActivityAdded?.Invoke(this, new ActivityEventArgs(activity));
+
+			return activity;
+		}
+
+		private void OnOutletImageDownloaded(OutletImageEventArgs e)
+		{
+			OutletImageDownloaded?.Invoke(this, e);
 		}
 	}
 }

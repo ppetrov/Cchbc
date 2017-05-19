@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 namespace iFSA.Common.Objects
 {
@@ -7,15 +6,16 @@ namespace iFSA.Common.Objects
 	{
 		public long Id { get; }
 		public string Name { get; }
-		public List<ActivityCloseReason> CloseReasons { get; } = new List<ActivityCloseReason>();
-		public List<ActivityCancelReason> CancelReasons { get; } = new List<ActivityCancelReason>();
+		public string SapCode { get; }
 
-		public ActivityType(long id, string name)
+		public ActivityType(long id, string name, string sapCode)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
+			if (sapCode == null) throw new ArgumentNullException(nameof(sapCode));
 
 			this.Id = id;
 			this.Name = name;
+			this.SapCode = sapCode;
 		}
 	}
 }

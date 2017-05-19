@@ -11,7 +11,6 @@ using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Logs;
 using Cchbc.Validation;
-using iFSA.AgendaModule.Objects;
 using iFSA.AgendaModule.ViewModels;
 using iFSA.Common.Objects;
 
@@ -64,7 +63,8 @@ namespace iFSA
 	{
 		public AgendaOutletViewModel OutletViewModel { get; }
 
-		public DateTime Date { get; }
+		public DateTime FromDate { get; }
+		public DateTime ToDate { get; }
 		public string Type { get; }
 		public string Status { get; }
 		public string Details { get; }
@@ -82,7 +82,8 @@ namespace iFSA
 			if (model == null) throw new ArgumentNullException(nameof(model));
 
 			this.OutletViewModel = outletViewModel;
-			this.Date = model.Date;
+			this.FromDate = model.FromDate;
+			this.ToDate = model.ToDate;
 			this.Type = model.Type.Name;
 			this.Status = model.Status.Name;
 			this.Details = model.Details;
@@ -167,7 +168,7 @@ namespace iFSA
 			if (modalDialog == null) throw new ArgumentNullException(nameof(modalDialog));
 			if (cancelReasonSelector == null) throw new ArgumentNullException(nameof(cancelReasonSelector));
 
-			
+
 			this.ModalDialog = modalDialog;
 			this.CancelReasonSelector = cancelReasonSelector;
 			this.AppNavigator = appNavigator;

@@ -65,7 +65,7 @@ namespace iFSA.Common.Data
 				var name = r.GetString(1);
 				var categoryId = r.GetInt64(2);
 
-				var type = new ActivityType(id, name);
+				var type = new ActivityType(id, name, string.Empty);
 				var category = categories[categoryId];
 
 				// Set Auto Selected ActivityType to the current if it's matching
@@ -77,17 +77,17 @@ namespace iFSA.Common.Data
 				// Add to related category
 				category.Types.Add(type);
 
-				List<ActivityCloseReason> closeReasonsByType;
-				if (byTypeCloseReasons.TryGetValue(id, out closeReasonsByType))
-				{
-					type.CloseReasons.AddRange(closeReasonsByType);
-				}
+				//List<ActivityCloseReason> closeReasonsByType;
+				//if (byTypeCloseReasons.TryGetValue(id, out closeReasonsByType))
+				//{
+				//	type.CloseReasons.AddRange(closeReasonsByType);
+				//}
 
-				List<ActivityCancelReason> cancelReasonsByType;
-				if (byTypeCancelReasons.TryGetValue(id, out cancelReasonsByType))
-				{
-					type.CancelReasons.AddRange(cancelReasonsByType);
-				}
+				//List<ActivityCancelReason> cancelReasonsByType;
+				//if (byTypeCancelReasons.TryGetValue(id, out cancelReasonsByType))
+				//{
+				//	type.CancelReasons.AddRange(cancelReasonsByType);
+				//}
 
 				map.Add(id, type);
 			}, new Query(@"SELECT ID, NAME, ACTIVITY_TYPE_CATEGORY_ID FROM ACTIVITY_TYPES"));
@@ -126,7 +126,7 @@ namespace iFSA.Common.Data
 				var category = new ActivityTypeCategory(id, name);
 				if (!r.IsDbNull(2))
 				{
-					category.AutoSelectedActivityType = new ActivityType(r.GetInt64(2), string.Empty);
+					category.AutoSelectedActivityType = new ActivityType(r.GetInt64(2), string.Empty, string.Empty);
 				}
 
 				map.Add(id, category);

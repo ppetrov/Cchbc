@@ -18,5 +18,12 @@ namespace iFSA.AgendaModule.Objects
 			this.GetAgendaOutlets = getAgendaOutlets;
 			this.GetDefaultOutletImage = getDefaultOutletImage;
 		}
+
+		public void Save(Activity activity)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			throw new NotImplementedException();
+		}
 	}
 }

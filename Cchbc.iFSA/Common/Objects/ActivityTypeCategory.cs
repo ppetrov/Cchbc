@@ -11,8 +11,8 @@ namespace iFSA.Common.Objects
 
 		public ActivityTypeCategory(long id, string name)
 		{
-			Id = id;
-			Name = name;
+			this.Id = id;
+			this.Name = name;
 		}
 	}
 }

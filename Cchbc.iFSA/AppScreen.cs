@@ -5,6 +5,7 @@ namespace iFSA
 		Agenda,
 		Replication,
 		Calendar,
-		Outlets
+		Outlets,
+		AddActivity
 	}
 }

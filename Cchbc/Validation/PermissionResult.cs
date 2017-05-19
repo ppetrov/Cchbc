@@ -9,7 +9,7 @@ namespace Cchbc.Validation
 		public PermissionType Type { get; }
 		public string LocalizationKeyName { get; }
 
-		public PermissionResult(PermissionType type, string localizationKeyName)
+		private PermissionResult(PermissionType type, string localizationKeyName)
 		{
 			this.Type = type;
 			this.LocalizationKeyName = localizationKeyName;

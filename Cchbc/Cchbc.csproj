@@ -75,7 +75,7 @@
     <Compile Include="Sort\SortOption.cs" />
     <Compile Include="Validation\Validator.cs" />
     <Compile Include="Validation\PermissionResult.cs" />
-    <Compile Include="Validation\PermissionStatus.cs" />
+    <Compile Include="Validation\PermissionType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="project.json" />
