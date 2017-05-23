@@ -19,9 +19,13 @@ namespace iFSA.AgendaModule.Objects
 			this.GetDefaultOutletImage = getDefaultOutletImage;
 		}
 
-		public void Save(Activity activity)
+		public Activity Save(Activity activity)
 		{
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			// TODO : How to get the Status ???
+			//var activityStatus = new ActivityStatus(0, string.Empty);
+			//var activity = new Activity(0, outlet, activityType, activityStatus, DateTime.Today, DateTime.Today, string.Empty);
 
 			throw new NotImplementedException();
 		}

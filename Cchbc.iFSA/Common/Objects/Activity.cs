@@ -4,7 +4,7 @@ namespace iFSA.Common.Objects
 {
 	public sealed class Activity
 	{
-		public long Id { get; set; }
+		public long Id { get; }
 		public Outlet Outlet { get; }
 		public ActivityType Type { get; }
 		public ActivityStatus Status { get; }

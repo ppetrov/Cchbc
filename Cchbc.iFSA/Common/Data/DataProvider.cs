@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Cchbc;
 using Cchbc.Data;
 using iFSA.Common.Objects;
@@ -101,6 +102,9 @@ namespace iFSA.Common.Data
 
 		public static Dictionary<long, ActivityStatus> GetActivityStatuses(IDbContext context, DataCache cache)
 		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (cache == null) throw new ArgumentNullException(nameof(cache));
+
 			var statuses = new Dictionary<long, ActivityStatus>();
 
 			context.Fill(statuses, (r, map) =>

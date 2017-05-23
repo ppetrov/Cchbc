@@ -40,9 +40,9 @@ namespace iFSA.AgendaModule.Objects
 		public List<AgendaOutlet> Outlets { get; } = new List<AgendaOutlet>();
 
 		public event EventHandler<OutletImageEventArgs> OutletImageDownloaded;
-		public EventHandler<ActivityEventArgs> ActivityAdded;
-		public EventHandler<ActivityEventArgs> ActivityDeleted;
-		public EventHandler<ActivityEventArgs> ActivityUpdated;
+		public event EventHandler<ActivityEventArgs> ActivityAdded;
+		public event EventHandler<ActivityEventArgs> ActivityDeleted;
+		public event EventHandler<ActivityEventArgs> ActivityUpdated;
 
 		public Agenda(AgendaData data)
 		{
@@ -96,14 +96,17 @@ namespace iFSA.AgendaModule.Objects
 			}, this._cts.Token);
 		}
 
-		public PermissionResult CanCreate(Activity activity)
+		public PermissionResult CanCreateActivity(Outlet outlet, ActivityType activityType)
 		{
-			// TODO : Perform all the checks
-			if (activity.Details == string.Empty)
+			if (outlet == null)
 			{
-				return PermissionResult.Confirm(@"Confirm activity without details?");
+				return PermissionResult.Deny(@"MissingOutlet");
 			}
-			if (activity.Outlet == null && activity.Type == null)
+			if (activityType == null)
+			{
+				return PermissionResult.Deny(@"MissingActivityType");
+			}
+			if (outlet.Id > 0 && activityType.Id > 0)
 			{
 				return PermissionResult.Confirm(@"Confirm activity type for this outlet?");
 			}
@@ -115,10 +118,11 @@ namespace iFSA.AgendaModule.Objects
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 
 			// Save activity to db
-			this.Data.Save(activity);
+			var newActivity = this.Data.Save(activity);
+
+			var outlet = activity.Outlet;
 
 			// Find item by outlet
-			var outlet = activity.Outlet;
 			var agendaOutlet = default(AgendaOutlet);
 			foreach (var o in this.Outlets)
 			{
@@ -139,11 +143,11 @@ namespace iFSA.AgendaModule.Objects
 			}
 
 			// Insert into the collection
-			agendaOutlet.Activities.Add(activity);
+			agendaOutlet.Activities.Add(newActivity);
 
-			this.ActivityAdded?.Invoke(this, new ActivityEventArgs(activity));
+			this.ActivityAdded?.Invoke(this, new ActivityEventArgs(newActivity));
 
-			return activity;
+			return newActivity;
 		}
 
 		private void OnOutletImageDownloaded(OutletImageEventArgs e)

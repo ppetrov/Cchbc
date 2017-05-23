@@ -6,6 +6,7 @@ namespace iFSA
 		Replication,
 		Calendar,
 		Outlets,
-		AddActivity
+		AddActivity,
+		ExecuteActivity
 	}
 }

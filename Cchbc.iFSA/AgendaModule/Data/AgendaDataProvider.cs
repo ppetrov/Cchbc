@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Cchbc;
+using Cchbc.Data;
 using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
 
@@ -47,6 +48,30 @@ namespace iFSA.AgendaModule.Data
 
 			// Query Outlet images for the outlet in get the default one
 			return null;
+		}
+
+		public static Activity CreateActivity(MainContext context, Activity activity)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+
+			using (var dbContext = context.DbContextCreator())
+			{
+				dbContext.Execute(new Query(@"insert into activities values ...."));
+				dbContext.Complete();
+			}
+			return null;
+		}
+
+		public static void UpdateActivity(MainContext context, Activity activity)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			using (var dbContext = context.DbContextCreator())
+			{
+				dbContext.Execute(new Query(@"update activities set details = @details, ..... where id = @id"));
+				dbContext.Complete();
+			}
 		}
 	}
 }

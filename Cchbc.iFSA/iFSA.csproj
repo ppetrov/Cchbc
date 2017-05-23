@@ -39,6 +39,11 @@
     <!-- A reference to the entire .NET Framework is automatically included -->
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddActivityModule\ActivityTypeCategoryViewModel.cs" />
+    <Compile Include="AddActivityModule\AddActivityScreenDataProvider.cs" />
+    <Compile Include="AddActivityModule\AddActivityScreenViewModel.cs" />
+    <Compile Include="AddActivityModule\OutletViewModel.cs" />
+    <Compile Include="AddActivityModule\ActivityTypeViewModel.cs" />
     <Compile Include="AgendaModule\AgendaScreenParam.cs" />
     <Compile Include="AgendaModule\Objects\Agenda.cs" />
     <Compile Include="AgendaModule\Objects\AgendaData.cs" />
@@ -71,7 +76,7 @@
     <Compile Include="LoginModule\Data\LoginScreenData.cs" />
     <Compile Include="LoginModule\LoginScreenViewModel.cs" />
     <Compile Include="LoginModule\Objects\AppSystem.cs" />
-    <Compile Include="MasterDataModule\DataHelper.cs" />
+    <Compile Include="DataHelper.cs" />
     <Compile Include="MasterDataModule\Objects\SubTradeChannel.cs" />
     <Compile Include="MasterDataModule\Objects\TradeChannel.cs" />
     <Compile Include="ReplicationModule\Objects\ReplicationConfig.cs" />
