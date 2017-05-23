@@ -277,11 +277,24 @@ namespace iFSA.AgendaModule
 		}
 	}
 
+	public sealed class AddActivityScreenDataProvider
+	{
+		public IEnumerable<Outlet> GetOutlets()
+		{
+			throw new NotImplementedException();
+		}
+
+		public IEnumerable<ActivityTypeCategory> GetCategories()
+		{
+			throw new NotImplementedException();
+		}
+	}
 
 	public sealed class AddActivityScreenViewModel : ViewModel
 	{
 		private AgendaScreenViewModel AgendaScreenViewModel { get; }
 		private MainContext MainContext { get; }
+		private AddActivityScreenDataProvider DataProvider { get; }
 
 		private List<OutletViewModel> AllOutlets { get; } = new List<OutletViewModel>();
 
@@ -333,28 +346,41 @@ namespace iFSA.AgendaModule
 			}
 		}
 
+		public bool HideSuppressed { get; set; }
+
 		public ICommand CreateActivityCommand { get; }
 		public ICommand StartNewActivityCommand { get; }
+		public ICommand HideSuppressedOutletsCommand { get; }
 
-		public AddActivityScreenViewModel(AgendaScreenViewModel agendaScreenViewModel, MainContext mainContext)
+		public AddActivityScreenViewModel(AgendaScreenViewModel agendaScreenViewModel, MainContext mainContext, AddActivityScreenDataProvider dataProvider)
 		{
 			if (agendaScreenViewModel == null) throw new ArgumentNullException(nameof(agendaScreenViewModel));
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
+			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 
 			this.AgendaScreenViewModel = agendaScreenViewModel;
 			this.MainContext = mainContext;
+			this.DataProvider = dataProvider;
 			this.CreateActivityCommand = new RelayCommand(this.CreateActivity);
 			this.StartNewActivityCommand = new RelayCommand(this.StartNewActivity);
+			this.HideSuppressedOutletsCommand = new RelayCommand(this.HideSuppressedOutlets);
 		}
 
+		private void HideSuppressedOutlets()
+		{
+			this.HideSuppressed = true;
+			this.ApplyCurrentTextSearch();
+		}
 
 		public void Load()
 		{
-			// TODO : !!! Load Outlets
-			var outlets = new Outlet[100];
+			this.Categories.Clear();
+			foreach (var category in this.DataProvider.GetCategories())
+			{
+				this.Categories.Add(new ActivityTypeCategoryViewModel(category));
+			}
 
-			// TODO : !!! Load categories
-
+			var outlets = this.DataProvider.GetOutlets();
 			this.Outlets.Clear();
 			this.AllOutlets.Clear();
 			foreach (var outlet in outlets)
@@ -400,7 +426,7 @@ namespace iFSA.AgendaModule
 
 			if (activity != null)
 			{
-				
+
 				// TODO : !!!
 				var nav = default(IAppNavigator);
 				nav.GoBack();
@@ -445,6 +471,10 @@ namespace iFSA.AgendaModule
 			this.Outlets.Clear();
 			foreach (var viewModel in this.AllOutlets)
 			{
+				if (this.HideSuppressed && viewModel.Model.IsSuppressed)
+				{
+					continue;
+				}
 				if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
 				{
 					this.Outlets.Add(viewModel);
@@ -482,10 +512,11 @@ namespace iFSA.AgendaModule
 
 	public sealed class ActivityTypeViewModel : ViewModel<ActivityType>
 	{
-		public string Name { get; set; }
+		public string Name { get; }
 
 		public ActivityTypeViewModel(ActivityType model) : base(model)
 		{
+			this.Name = model.Name;
 		}
 	}
 }

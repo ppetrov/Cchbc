@@ -8,6 +8,7 @@ namespace iFSA.Common.Objects
 		public long Id { get; }
 		public string Name { get; }
 		public List<OutletAddress> Addresses { get; } = new List<OutletAddress>();
+		public bool IsSuppressed { get; }
 
 		public Outlet(long id, string name)
 		{
@@ -15,6 +16,7 @@ namespace iFSA.Common.Objects
 
 			this.Id = id;
 			this.Name = name;
+			this.IsSuppressed = false;
 		}
 	}
 }
