@@ -9,7 +9,7 @@ namespace iFSA.AgendaModule.ViewModels
 {
 	public sealed class AgendaOutletViewModel : ViewModel<AgendaOutlet>
 	{
-		public MainContext Context { get; }
+		private AgendaScreenViewModel ParentViewModel { get; }
 
 		public Outlet Outlet { get; }
 		public long Number { get; }
@@ -27,11 +27,12 @@ namespace iFSA.AgendaModule.ViewModels
 
 		public ObservableCollection<ActivityViewModel> Activities { get; } = new ObservableCollection<ActivityViewModel>();
 
-		public AgendaOutletViewModel(MainContext context, AgendaOutlet model) : base(model)
+		public AgendaOutletViewModel(AgendaScreenViewModel parentViewModel, AgendaOutlet model) : base(model)
 		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (parentViewModel == null) throw new ArgumentNullException(nameof(parentViewModel));
 
-			this.Context = context;
+			this.ParentViewModel = parentViewModel;
+
 			var outlet = model.Outlet;
 			this.Outlet = outlet;
 			this.Number = outlet.Id;
@@ -50,44 +51,27 @@ namespace iFSA.AgendaModule.ViewModels
 			}
 		}
 
-
-		public async Task CloseAsync(ActivityViewModel activityViewModel)
+		public Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			var hasActiveDayBefore = false;
-			throw new NotImplementedException();
+			return this.ParentViewModel.ChangeStartTimeAsync(activityViewModel);
 		}
 
-		public async Task CancelAsync(ActivityViewModel activityViewModel)
+		public Task CloseAsync(ActivityViewModel activityViewModel)
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			// TODO : !!!
-			var cancelReasonSelector = default(Func<Task<CancelReason>>);
-			var cancelReason = await cancelReasonSelector();
-			if (cancelReason == null)
-			{
-				return;
-			}
+			return this.ParentViewModel.CloseAsync(activityViewModel);
+		}
 
-			// TODO : !!!
-			var cancelOperation = new CalendarCancelOperation(new CalendarDataProvider(this.Context.DbContextCreator));
-			cancelOperation.CancelActivities(new[] { activityViewModel.Model }, cancelReason, a =>
-			{
-				var aid = a.Id;
+		public Task CancelAsync(ActivityViewModel activityViewModel)
+		{
+			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-				var activities = this.Activities;
-				for (var i = 0; i < activities.Count; i++)
-				{
-					var activity = activities[i];
-					if (activity.Model.Id == aid)
-					{
-						activities[i] = new ActivityViewModel(this, a);
-						break;
-					}
-				}
-			});
+			return this.ParentViewModel.CancelAsync(activityViewModel);
+
+			
 		}
 
 		public void Copy(ActivityViewModel activityViewModel)
@@ -117,5 +101,8 @@ namespace iFSA.AgendaModule.ViewModels
 
 			throw new NotImplementedException();
 		}
+
+
+
 	}
 }

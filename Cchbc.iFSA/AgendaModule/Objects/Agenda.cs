@@ -154,5 +154,70 @@ namespace iFSA.AgendaModule.Objects
 		{
 			OutletImageDownloaded?.Invoke(this, e);
 		}
+
+		public PermissionResult CanChangeStartTime(Activity activity, DateTime dateTime)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			if (activity.Details == string.Empty)
+			{
+				return PermissionResult.Deny(@"CannotChangeDateOfServerActivity");
+			}
+			if (activity.Details == @"???")
+			{
+				return PermissionResult.Confirm(@"OutsideOfWorkingHours");
+			}
+			return PermissionResult.Allow;
+		}
+
+		public PermissionResult CanCancel(Activity activity)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			// Check the day
+			// Check the status
+			// Check cancel reason
+			// TODO : !!!
+
+			return PermissionResult.Allow;
+		}
+
+		public void ChangeStartTime(Activity activity, DateTime dateTime)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			activity.FromDate = activity.FromDate.Date.Add(dateTime.TimeOfDay);
+
+			// TODO : Update activity in the database
+
+			this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
+		}
+
+		public void Cancel(Activity activity, ActivityCloseReason cancelReason)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			// TODO : Update activity in the database
+
+			// TODO : !!!
+			//var cancelOperation = new CalendarCancelOperation(new CalendarDataProvider(this.Context.DbContextCreator));
+			//cancelOperation.CancelActivities(new[] { activityViewModel.Model }, cancelReason, a =>
+			//{
+			//	var aid = a.Id;
+
+			//	var activities = this.Activities;
+			//	for (var i = 0; i < activities.Count; i++)
+			//	{
+			//		var activity = activities[i];
+			//		if (activity.Model.Id == aid)
+			//		{
+			//			activities[i] = new ActivityViewModel(this, a);
+			//			break;
+			//		}
+			//	}
+			//});
+
+			this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
+		}
 	}
 }

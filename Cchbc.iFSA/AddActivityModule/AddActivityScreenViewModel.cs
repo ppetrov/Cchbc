@@ -151,7 +151,7 @@ namespace iFSA.AddActivityModule
 		{
 			try
 			{
-				await CreateActivityFromSelectedValues();
+				await this.AgendaScreenViewModel.CreateActivity(this.SelectedOutlet, this.SelectedType);
 			}
 			catch (Exception ex)
 			{
@@ -161,7 +161,7 @@ namespace iFSA.AddActivityModule
 
 		private async void StartNewActivity()
 		{
-			var activity = await CreateActivityFromSelectedValues();
+			var activity = await this.AgendaScreenViewModel.CreateActivity(this.SelectedOutlet, this.SelectedType);
 			if (activity != null)
 			{
 				this.AppNavigator.GoBack();
@@ -173,43 +173,6 @@ namespace iFSA.AddActivityModule
 		{
 			this.HideSuppressed = !this.HideSuppressed;
 			this.ApplyCurrentTextSearch();
-		}
-
-		private async Task<Activity> CreateActivityFromSelectedValues()
-		{
-			var outlet = this.SelectedOutlet.Model;
-			var activityType = this.SelectedType.Model;
-
-			var createActivity = false;
-			var permissionResult = this.AgendaScreenViewModel.CanCreate(outlet, activityType);
-			var type = permissionResult.Type;
-			switch (type)
-			{
-				case PermissionType.Allow:
-					createActivity = true;
-					break;
-				case PermissionType.Confirm:
-					var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
-					if (confirmation == DialogResult.Accept)
-					{
-						createActivity = true;
-					}
-					break;
-				case PermissionType.Deny:
-					await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
-					break;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
-			if (createActivity)
-			{
-				var activityStatus = DataHelper.GetOpenActivityStatus(this.MainContext);
-
-				var date = DateTime.Now;
-				var activity = new Activity(0, outlet, activityType, activityStatus, date, date, string.Empty);
-				return this.AgendaScreenViewModel.CreateActivity(activity);
-			}
-			return null;
 		}
 
 		private void ApplyCurrentTextSearch()

@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Cchbc;
 using Cchbc.Common;
+using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Logs;
 using Cchbc.Validation;
+using iFSA.AddActivityModule;
 using iFSA.AgendaModule.Objects;
 using iFSA.AgendaModule.ViewModels;
 using iFSA.Common.Objects;
@@ -73,6 +76,7 @@ namespace iFSA.AgendaModule
 			this.RemoveActivityCommand = new RelayCommand(this.RemoveActivity);
 
 			this.Agenda.ActivityAdded += this.ActivityAdded;
+			this.Agenda.ActivityUpdated += this.ActivityUpdated;
 			this.Agenda.OutletImageDownloaded += this.OutletImageDownloaded;
 		}
 
@@ -128,7 +132,7 @@ namespace iFSA.AgendaModule
 			if (outletViewModel == null)
 			{
 				// Create it
-				outletViewModel = new AgendaOutletViewModel(this.MainContext, new AgendaOutlet(outlet, new List<Activity>()));
+				outletViewModel = new AgendaOutletViewModel(this, new AgendaOutlet(outlet, new List<Activity>()));
 
 				// Add it to the list
 				this.AllOutlets.Add(outletViewModel);
@@ -139,7 +143,38 @@ namespace iFSA.AgendaModule
 
 			// TODO : !!! Sort the collection
 
-			// TODO : !!! Filter the collection
+			this.ApplyCurrentTextSearch();
+		}
+
+		private void ActivityUpdated(object sender, ActivityEventArgs e)
+		{
+			var activity = e.Activity;
+			var outlet = activity.Outlet;
+			var acitivityId = activity.Id;
+
+			// Search in all outlets
+			lock (this)
+			{
+				foreach (var viewModel in this.AllOutlets)
+				{
+					if (outlet == viewModel.Outlet)
+					{
+						var activities = viewModel.Activities;
+						for (var index = 0; index < activities.Count; index++)
+						{
+							var activityViewModel = activities[index];
+							if (activityViewModel.Model.Id == acitivityId)
+							{
+								activities[index] = new ActivityViewModel(viewModel, activity);
+								break;
+							}
+						}
+						break;
+					}
+				}
+			}
+
+			// TODO : !!! Sort the collection
 			this.ApplyCurrentTextSearch();
 		}
 
@@ -163,16 +198,49 @@ namespace iFSA.AgendaModule
 			}
 		}
 
-		public PermissionResult CanCreate(Outlet outlet, ActivityType activityType)
+		public async Task<Activity> CreateActivity(OutletViewModel outletViewModel, ActivityTypeViewModel activityTypeViewModel)
 		{
-			return this.Agenda.CanCreateActivity(outlet, activityType);
-		}
+			var outlet = default(Outlet);
+			if (outletViewModel != null)
+			{
+				outlet = outletViewModel.Model;
+			}
+			var activityType = default(ActivityType);
+			if (activityTypeViewModel != null)
+			{
+				activityType = activityTypeViewModel.Model;
+			}
 
-		public Activity CreateActivity(Activity activity)
-		{
-			if (activity == null) throw new ArgumentNullException(nameof(activity));
+			var createActivity = false;
+			var permissionResult = this.Agenda.CanCreateActivity(outlet, activityType);
+			var type = permissionResult.Type;
+			switch (type)
+			{
+				case PermissionType.Allow:
+					createActivity = true;
+					break;
+				case PermissionType.Confirm:
+					var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+					if (confirmation == DialogResult.Accept)
+					{
+						createActivity = true;
+					}
+					break;
+				case PermissionType.Deny:
+					await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+			if (createActivity)
+			{
+				var activityStatus = DataHelper.GetOpenActivityStatus(this.MainContext);
 
-			return this.Agenda.Create(activity);
+				var date = DateTime.Now;
+				var activity = new Activity(0, outlet, activityType, activityStatus, date, date, string.Empty);
+				return this.Agenda.Create(activity);
+			}
+			return null;
 		}
 
 		private void LoadNextDay()
@@ -263,12 +331,112 @@ namespace iFSA.AgendaModule
 				this.AllOutlets.Clear();
 				foreach (var outlet in this.Agenda.Outlets)
 				{
-					var viewModel = new AgendaOutletViewModel(this.MainContext, outlet);
+					var viewModel = new AgendaOutletViewModel(this, outlet);
 					this.AllOutlets.Add(viewModel);
 					this.Outlets.Add(viewModel);
 				}
 			}
+		}
 
+		public async Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)
+		{
+			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
+
+			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(ChangeStartTimeAsync));
+			try
+			{
+				// TODO : From constructor
+				var dateTimeSelector = default(IDateTimeSelector);
+				var dateTime = await dateTimeSelector.ShowAsync(feature);
+				if (!dateTime.HasValue)
+				{
+					return;
+				}
+
+				var performOperation = false;
+				var permissionResult = this.Agenda.CanChangeStartTime(activityViewModel.Model, dateTime.Value);
+				var type = permissionResult.Type;
+				switch (type)
+				{
+					case PermissionType.Allow:
+						performOperation = true;
+						break;
+					case PermissionType.Confirm:
+						var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+						if (confirmation == DialogResult.Accept)
+						{
+							performOperation = true;
+						}
+						break;
+					case PermissionType.Deny:
+						await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+				if (performOperation)
+				{
+					this.Agenda.ChangeStartTime(activityViewModel.Model, dateTime.Value);
+				}
+			}
+			finally
+			{
+				this.MainContext.FeatureManager.Save(feature);
+			}
+		}
+
+		public async Task CancelAsync(ActivityViewModel activityViewModel)
+		{
+			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(CancelAsync));
+			try
+			{
+				// TODO : From constructor
+				var cancelReasonSelector = default(IActivityCancelReasonSelector);
+				var cancelReason = await cancelReasonSelector.ShowAsync(feature, activityViewModel.Model.Type);
+				if (cancelReason == null)
+				{
+					return;
+				}
+
+				var performOperation = false;
+				var permissionResult = this.Agenda.CanCancel(activityViewModel.Model);
+				var type = permissionResult.Type;
+				switch (type)
+				{
+					case PermissionType.Allow:
+						performOperation = true;
+						break;
+					case PermissionType.Confirm:
+						var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+						if (confirmation == DialogResult.Accept)
+						{
+							performOperation = true;
+						}
+						break;
+					case PermissionType.Deny:
+						await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+				if (performOperation)
+				{
+					this.Agenda.Cancel(activityViewModel.Model, cancelReason);
+				}
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.FeatureManager.Save(feature, ex);
+			}
+			finally
+			{
+				this.MainContext.FeatureManager.Save(feature);
+			}
+		}
+
+		public async Task CloseAsync(ActivityViewModel activityViewModel)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

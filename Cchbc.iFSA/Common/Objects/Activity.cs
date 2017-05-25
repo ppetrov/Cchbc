@@ -4,13 +4,15 @@ namespace iFSA.Common.Objects
 {
 	public sealed class Activity
 	{
-		public long Id { get; }
-		public Outlet Outlet { get; }
-		public ActivityType Type { get; }
-		public ActivityStatus Status { get; }
-		public DateTime FromDate { get; }
-		public DateTime ToDate { get; }
-		public string Details { get; }
+		public long Id { get; set; }
+		public Outlet Outlet { get; set; }
+		public ActivityType Type { get; set; }
+		public ActivityStatus Status { get; set; }
+		public DateTime FromDate { get; set; }
+		public DateTime ToDate { get; set; }
+		public string Details { get; set; }
+		public ActivityCloseReason CloseReason { get; set; }
+		public ActivityCancelReason CancelReason { get; set; }
 
 		public Activity(long id, Outlet outlet, ActivityType type, ActivityStatus status, DateTime fromDate, DateTime toDate, string details)
 		{
