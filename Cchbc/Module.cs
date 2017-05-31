@@ -25,17 +25,19 @@ namespace Cchbc
 		public Action<ViewModelEventArgs<TViewModel>> ItemUpdated { get; set; }
 		public Action<ViewModelEventArgs<TViewModel>> ItemDeleted { get; set; }
 
-		public Func<IDbContext> DbContextCreator { get; }
+		public MainContext MainContext { get; }
+		private Func<IDbContext> DbContextCreator => this.MainContext.DbContextCreator;
 		public Sorter<TViewModel> Sorter { get; }
 		public Searcher<TViewModel> Searcher { get; }
 		public FilterOption<TViewModel>[] FilterOptions { get; set; }
 
-		protected Module(Func<IDbContext> dbContextCreator, Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
+		protected Module(MainContext mainContext, Sorter<TViewModel> sorter, Searcher<TViewModel> searcher, FilterOption<TViewModel>[] filterOptions = null)
 		{
+			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 			if (sorter == null) throw new ArgumentNullException(nameof(sorter));
 			if (searcher == null) throw new ArgumentNullException(nameof(searcher));
 
-			this.DbContextCreator = dbContextCreator;
+			this.MainContext = mainContext;
 			this.Sorter = sorter;
 			this.Searcher = searcher;
 			this.FilterOptions = filterOptions;
@@ -122,23 +124,10 @@ namespace Cchbc
 					var permissionResult = await checker(viewModel, feature);
 					if (permissionResult != null)
 					{
-						switch (permissionResult.Type)
+						var canContinue = await this.MainContext.CanContinueAsync(permissionResult);
+						if (canContinue)
 						{
-							case PermissionType.Allow:
-								await performer(viewModel, feature);
-								break;
-							case PermissionType.Confirm:
-								var dialogResult = await dialog.ShowAsync(permissionResult, feature);
-								if (dialogResult == DialogResult.Accept)
-								{
-									await performer(viewModel, feature);
-								}
-								break;
-							case PermissionType.Deny:
-								await dialog.ShowAsync(permissionResult, feature);
-								break;
-							default:
-								throw new ArgumentOutOfRangeException();
+							await performer(viewModel, feature);
 						}
 					}
 				}

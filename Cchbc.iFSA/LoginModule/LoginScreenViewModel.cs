@@ -152,7 +152,7 @@ namespace iFSA.LoginModule
 					}
 					else
 					{
-						await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"WrongCredentials"), feature);
+						await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"WrongCredentials"));
 					}
 					return;
 				}
@@ -160,13 +160,13 @@ namespace iFSA.LoginModule
 				var systemViewModel = this.SelectedSystem;
 				if (systemViewModel == null)
 				{
-					await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"NoSystemSelected"), feature);
+					await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"NoSystemSelected"));
 					return;
 				}
 				var countryViewModel = this.SelectedCountry;
 				if (countryViewModel == null)
 				{
-					await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"NoCountrySelected"), feature);
+					await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"NoCountrySelected"));
 					return;
 				}
 

@@ -20,32 +20,32 @@ namespace Cchbc.Features.DashboardUI
 
 		private void ExceptionsScreen_OnLoaded(object sender, RoutedEventArgs e)
 		{
-			var core = AppContextObsolete.MainContext;
-			var feature = new Feature(@"Exceptions", @"Load");
-			try
-			{
-				var s = Stopwatch.StartNew();
+			//var core = AppContextObsolete.MainContext;
+			//var feature = new Feature(@"Exceptions", @"Load");
+			//try
+			//{
+			//	var s = Stopwatch.StartNew();
 
-				try
-				{
-					FeatureManager.CreateSchema(core.DbContextCreator);
-				}
-				catch { }
+			//	try
+			//	{
+			//		FeatureManager.CreateSchema(core.DbContextCreator);
+			//	}
+			//	catch { }
 
-				core.FeatureManager.Save(feature, string.Empty);
-				this.ViewModel.Load(
-					ExceptionsDataProvider.GetTimePeriods,
-					ExceptionsDataProvider.GetVersions,
-					ExceptionsDataProvider.GetExceptions,
-					ExceptionsDataProvider.GetExceptionsCounts);
-				s.Stop();
-				Debug.WriteLine(s.ElapsedMilliseconds);
-			}
-			catch (Exception ex)
-			{
-				core.Log(ex.ToString(), LogLevel.Error);
-				core.FeatureManager.Save(feature, ex);
-			}
+			//	core.FeatureManager.Save(feature, string.Empty);
+			//	this.ViewModel.Load(
+			//		ExceptionsDataProvider.GetTimePeriods,
+			//		ExceptionsDataProvider.GetVersions,
+			//		ExceptionsDataProvider.GetExceptions,
+			//		ExceptionsDataProvider.GetExceptionsCounts);
+			//	s.Stop();
+			//	Debug.WriteLine(s.ElapsedMilliseconds);
+			//}
+			//catch (Exception ex)
+			//{
+			//	core.Log(ex.ToString(), LogLevel.Error);
+			//	core.FeatureManager.Save(feature, ex);
+			//}
 		}
 	}
 }

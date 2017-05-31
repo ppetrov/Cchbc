@@ -193,7 +193,7 @@ namespace iFSA.AgendaModule.Objects
 			this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
 		}
 
-		public void Cancel(Activity activity, ActivityCloseReason cancelReason)
+		public void Cancel(Activity activity, ActivityCancelReason cancelReason)
 		{
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 

@@ -64,7 +64,8 @@ namespace Cchbc.Features.DashboardUI
 					// configuring the new page by passing required information as a navigation
 					// parameter
 					//rootFrame.NavigateTo(typeof(DashboardScreen), e.Arguments);
-					rootFrame.Navigate(typeof(ExceptionsScreen), e.Arguments);
+					//rootFrame.Navigate(typeof(ExceptionsScreen), e.Arguments);
+					rootFrame.Navigate(typeof(DemoUIScreen), e.Arguments);
 				}
 				// Ensure the current window is active
 				Window.Current.Activate();

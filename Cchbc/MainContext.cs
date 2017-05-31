@@ -26,10 +26,10 @@ namespace Cchbc
 
 		public MainContext(Action<string, LogLevel> log, Func<IDbContext> dbContextCreator, IModalDialog modalDialog, IFeatureManager featureManager, ILocalizationManager localizationManager)
 		{
-			if (log == null) throw new ArgumentNullException(nameof(log));
-			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
-			if (modalDialog == null) throw new ArgumentNullException(nameof(modalDialog));
-			if (featureManager == null) throw new ArgumentNullException(nameof(featureManager));
+			//if (log == null) throw new ArgumentNullException(nameof(log));
+			//if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
+			//if (modalDialog == null) throw new ArgumentNullException(nameof(modalDialog));
+			//if (featureManager == null) throw new ArgumentNullException(nameof(featureManager));
 
 			this.Log = log;
 			this.DbContextCreator = dbContextCreator;
@@ -38,7 +38,7 @@ namespace Cchbc
 			this.LocalizationManager = localizationManager;
 		}
 
-		public async Task<bool> Convert(PermissionResult permissionResult)
+		public async Task<bool> CanContinueAsync(PermissionResult permissionResult)
 		{
 			if (permissionResult == null) throw new ArgumentNullException(nameof(permissionResult));
 
@@ -47,14 +47,14 @@ namespace Cchbc
 				case PermissionType.Allow:
 					return true;
 				case PermissionType.Confirm:
-					var confirmation = await this.ModalDialog.ShowAsync(permissionResult, Feature.None);
+					var confirmation = await this.ModalDialog.ShowAsync(permissionResult);
 					if (confirmation == DialogResult.Accept)
 					{
 						return true;
 					}
 					break;
 				case PermissionType.Deny:
-					await this.ModalDialog.ShowAsync(permissionResult, Feature.None);
+					await this.ModalDialog.ShowAsync(permissionResult);
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();

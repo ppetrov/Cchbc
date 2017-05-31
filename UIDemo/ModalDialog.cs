@@ -2,17 +2,15 @@ using System;
 using System.Threading.Tasks;
 using Windows.UI.Popups;
 using Cchbc.Dialog;
-using Cchbc.Features;
 using Cchbc.Validation;
 
 namespace UIDemo
 {
 	public sealed class ModalDialog : IModalDialog
 	{
-		public async Task<DialogResult> ShowAsync(PermissionResult message, Feature feature)
+		public async Task<DialogResult> ShowAsync(PermissionResult message)
 		{
 			if (message == null) throw new ArgumentNullException(nameof(message));
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			var dialog = new MessageDialog(message.LocalizationKeyName);
 

@@ -95,9 +95,11 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="AppContextObsolete.cs" />
     <Compile Include="DashboardScreen.xaml.cs">
       <DependentUpon>DashboardScreen.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DemoUIScreen.xaml.cs">
+      <DependentUpon>DemoUIScreen.xaml</DependentUpon>
     </Compile>
     <Compile Include="ExceptionsScreen.xaml.cs">
       <DependentUpon>ExceptionsScreen.xaml</DependentUpon>
@@ -116,6 +118,9 @@
     <Compile Include="SQLite\SystemDataInterface.cs" />
     <Compile Include="SqlLiteDelegateDataReader.cs" />
     <Compile Include="DbContext.cs" />
+    <Compile Include="DayOfWeekContentDialog.xaml.cs">
+      <DependentUpon>DayOfWeekContentDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="TransactionContextCreator.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -145,7 +150,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="DemoUIScreen.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ExceptionsScreen.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DayOfWeekContentDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

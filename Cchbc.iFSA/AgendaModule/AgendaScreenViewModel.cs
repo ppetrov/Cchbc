@@ -5,10 +5,8 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Cchbc;
 using Cchbc.Common;
-using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Logs;
-using Cchbc.Validation;
 using iFSA.AddActivityModule;
 using iFSA.AgendaModule.Objects;
 using iFSA.AgendaModule.ViewModels;
@@ -210,29 +208,9 @@ namespace iFSA.AgendaModule
 			{
 				activityType = activityTypeViewModel.Model;
 			}
-
-			var createActivity = false;
 			var permissionResult = this.Agenda.CanCreateActivity(outlet, activityType);
-			var type = permissionResult.Type;
-			switch (type)
-			{
-				case PermissionType.Allow:
-					createActivity = true;
-					break;
-				case PermissionType.Confirm:
-					var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult, Feature.None);
-					if (confirmation == DialogResult.Accept)
-					{
-						createActivity = true;
-					}
-					break;
-				case PermissionType.Deny:
-					await this.MainContext.ModalDialog.ShowAsync(permissionResult, Feature.None);
-					break;
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
-			if (createActivity)
+			var canContinue = await this.MainContext.CanContinueAsync(permissionResult);
+			if (canContinue)
 			{
 				var activityStatus = DataHelper.GetOpenActivityStatus(this.MainContext);
 
@@ -338,23 +316,20 @@ namespace iFSA.AgendaModule
 			}
 		}
 
-		public void ChangeStartTime(ActivityViewModel activityViewModel)
+		public async Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(ChangeStartTime));
+			// TODO : From constructor
+			var timeSelector = default(ITimeSelector);
+
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(ChangeStartTimeAsync));
 			try
 			{
-				// TODO : From constructor				
-				var dateTimeSelector = default(ITimeSelector);
-
-				var model = activityViewModel.Model;
-				dateTimeSelector.TimeValidator = date => this.Agenda.CanChangeStartTime(model, date);
-				dateTimeSelector.Callback = date =>
-				{
-					this.Agenda.ChangeStartTime(model, date);
-				};
-				dateTimeSelector.SelectTime(feature);
+				var activity = activityViewModel.Model;
+				await timeSelector.ShowAsync(
+					dateTime => this.Agenda.CanChangeStartTime(activity, dateTime),
+					dateTime => this.Agenda.ChangeStartTime(activity, dateTime));
 			}
 			catch (Exception ex)
 			{
@@ -368,41 +343,16 @@ namespace iFSA.AgendaModule
 
 		public async Task CancelAsync(ActivityViewModel activityViewModel)
 		{
+			// TODO : From constructor
+			var cancelReasonSelector = default(IActivityCancelReasonSelector);
+
 			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(CancelAsync));
 			try
 			{
-				// TODO : From constructor
-				var cancelReasonSelector = default(IActivityCancelReasonSelector);
-				var cancelReason = await cancelReasonSelector.ShowAsync(feature, activityViewModel.Model.Type);
-				if (cancelReason == null)
-				{
-					return;
-				}
-
-				var performOperation = false;
-				var permissionResult = this.Agenda.CanCancel(activityViewModel.Model);
-				switch (permissionResult.Type)
-				{
-					case PermissionType.Allow:
-						performOperation = true;
-						break;
-					case PermissionType.Confirm:
-						var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult, Feature.None);
-						if (confirmation == DialogResult.Accept)
-						{
-							performOperation = true;
-						}
-						break;
-					case PermissionType.Deny:
-						await this.MainContext.ModalDialog.ShowAsync(permissionResult, Feature.None);
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
-				if (performOperation)
-				{
-					this.Agenda.Cancel(activityViewModel.Model, cancelReason);
-				}
+				var activity = activityViewModel.Model;
+				await cancelReasonSelector.ShowAsync(activity,
+					cancelReason => this.Agenda.CanCancel(activity),
+					cancelReason => this.Agenda.Cancel(activity, cancelReason));
 			}
 			catch (Exception ex)
 			{

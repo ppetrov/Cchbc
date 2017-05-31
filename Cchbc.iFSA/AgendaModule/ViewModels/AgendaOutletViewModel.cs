@@ -51,11 +51,11 @@ namespace iFSA.AgendaModule.ViewModels
 			}
 		}
 
-		public void ChangeStartTime(ActivityViewModel activityViewModel)
+		public Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			this.ParentViewModel.ChangeStartTime(activityViewModel);
+			return this.ParentViewModel.ChangeStartTimeAsync(activityViewModel);
 		}
 
 		public Task CloseAsync(ActivityViewModel activityViewModel)
