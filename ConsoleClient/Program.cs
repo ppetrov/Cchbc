@@ -48,17 +48,8 @@ namespace ConsoleClient
 
 			try
 			{
+				FeatureDataReplicaSimulation.Replicate();
 
-				var data = File.ReadAllText(@"C:\temp\image_data");
-				var bytes = new List<byte>((data.Length / 2) * 3);
-				for (var i = 0; i < data.Length; i += 3)
-				{
-					var a1 = data[i];
-					var a2 = data[i + 1];
-					var v = Convert.ToInt32(a1 + "" + a2, 16);
-					bytes.Add((byte)v);
-				}
-				File.WriteAllBytes(@"C:\temp\client_signature.jpg", bytes.ToArray());
 				//Console.WriteLine(data);
 				//foreach (var f in Directory.GetFiles(@"C:\Users\PetarPetrov\Desktop\atp logs"))
 				//{

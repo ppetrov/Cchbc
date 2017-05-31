@@ -24,13 +24,12 @@ namespace Cchbc.Features.Data
 
 		private static readonly Query InsertClientFeatureEntryQuery =
 			new Query(
-				@"INSERT INTO FEATURE_ENTRIES(DETAILS, CREATED_AT, FEATURE_ID, TIMESPENT) VALUES (@DETAILS, @CREATED_AT, @FEATURE, @TIMESPENT)",
+				@"INSERT INTO FEATURE_ENTRIES(DETAILS, CREATED_AT, FEATURE_ID) VALUES (@DETAILS, @CREATED_AT, @FEATURE)",
 				new[]
 				{
 					new QueryParameter(@"@DETAILS", string.Empty),
 					new QueryParameter(@"@CREATED_AT", DateTime.MinValue),
 					new QueryParameter(@"@FEATURE", 0L),
-					new QueryParameter(@"@TIMESPENT", 0D),
 				});
 
 		private static readonly Query InsertExceptionQuery =
@@ -52,7 +51,7 @@ namespace Cchbc.Features.Data
 		private static readonly Query<FeatureContextRow> GetContextsQuery = new Query<FeatureContextRow>(@"SELECT ID, NAME FROM FEATURE_CONTEXTS", DbContextCreator);
 		private static readonly Query<FeatureExceptionRow> GetDbFeatureExceptionsRowQuery = new Query<FeatureExceptionRow>(@"SELECT ID, CONTENTS FROM FEATURE_EXCEPTIONS", DbFeatureExceptionRowCreator);
 		private static readonly Query<FeatureRow> GetFeaturesQuery = new Query<FeatureRow>(@"SELECT ID, NAME, CONTEXT_ID FROM FEATURES", DbFeatureRowCreator);
-		private static readonly Query<FeatureEntryRow> GetFeatureEntriesQuery = new Query<FeatureEntryRow>(@"SELECT FEATURE_ID, DETAILS, CREATED_AT, TIMESPENT FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
+		private static readonly Query<FeatureEntryRow> GetFeatureEntriesQuery = new Query<FeatureEntryRow>(@"SELECT FEATURE_ID, DETAILS, CREATED_AT FROM FEATURE_ENTRIES", DbFeatureEntryRowCreator);
 		private static readonly Query<FeatureExceptionEntryRow> GetFeatureExceptionEntriesQuery = new Query<FeatureExceptionEntryRow>(@"SELECT EXCEPTION_ID, CREATED_AT, FEATURE_ID FROM FEATURE_EXCEPTION_ENTRIES", DbFeatureExceptionEntryRowCreator);
 
 		private static readonly Query<long> GetExceptionQuery =
@@ -93,7 +92,6 @@ CREATE TABLE FEATURE_ENTRIES (
 	Details nvarchar(254) NOT NULL, 
 	Created_At datetime NOT NULL, 
 	Feature_Id integer NOT NULL, 
-	Timespent numeric NOT NULL, 
 	FOREIGN KEY (Feature_Id)
 		REFERENCES FEATURES (Id)
 		ON UPDATE CASCADE ON DELETE CASCADE
@@ -239,7 +237,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			return dbContext.Execute(GetNewIdQuery).SingleOrDefault();
 		}
 
-		public static void InsertFeatureEntry(IDbContext dbContext, long featureId, string details, TimeSpan timeSpent)
+		public static void InsertFeatureEntry(IDbContext dbContext, long featureId, string details)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 			if (details == null) throw new ArgumentNullException(nameof(details));
@@ -248,7 +246,6 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 			InsertClientFeatureEntryQuery.Parameters[0].Value = details;
 			InsertClientFeatureEntryQuery.Parameters[1].Value = DateTime.Now;
 			InsertClientFeatureEntryQuery.Parameters[2].Value = featureId;
-			InsertClientFeatureEntryQuery.Parameters[3].Value = timeSpent.TotalMilliseconds;
 
 			// Insert the record
 			dbContext.Execute(InsertClientFeatureEntryQuery);
@@ -282,7 +279,7 @@ CREATE TABLE FEATURE_EXCEPTION_ENTRIES (
 
 		private static FeatureEntryRow DbFeatureEntryRowCreator(IFieldDataReader r)
 		{
-			return new FeatureEntryRow(r.GetInt64(0), r.GetString(1), r.GetDateTime(2), Convert.ToDouble(r.GetDecimal(3)));
+			return new FeatureEntryRow(r.GetInt64(0), r.GetString(1), r.GetDateTime(2));
 		}
 
 		private static FeatureExceptionRow DbFeatureExceptionRowCreator(IFieldDataReader r)

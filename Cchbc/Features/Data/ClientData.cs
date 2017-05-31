@@ -68,7 +68,6 @@ namespace Cchbc.Features.Data
 				_binaryWriter.Write(entry.FeatureId);
 				_binaryWriter.Write(entry.Details);
 				_binaryWriter.Write(entry.CreatedAt.ToBinary());
-				_binaryWriter.Write(entry.TimeSpent);
 				count++;
 			}
 

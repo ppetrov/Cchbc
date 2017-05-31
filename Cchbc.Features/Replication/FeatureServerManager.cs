@@ -152,7 +152,6 @@ CREATE TABLE FEATURE_ENTRIES (
 	Id integer NOT NULL PRIMARY KEY AUTOINCREMENT, 
 	Details nvarchar(254) NULL, 
 	Replicated_At datetime NOT NULL, 
-	Timespent numeric NOT NULL,
 	Feature_Id integer NOT NULL, 
 	User_Id integer NOT NULL, 
 	Version_Id integer NOT NULL, 
@@ -364,7 +363,7 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 		{
 			for (var i = 0; i < batches; i++)
 			{
-				var buffer = new StringBuilder(@"INSERT INTO FEATURE_ENTRIES(DETAILS, REPLICATED_AT, TIMESPENT, FEATURE_ID, USER_ID, VERSION_ID) VALUES ");
+				var buffer = new StringBuilder(@"INSERT INTO FEATURE_ENTRIES(DETAILS, REPLICATED_AT, FEATURE_ID, USER_ID, VERSION_ID) VALUES ");
 
 				for (var j = 0; j < itemsCount; j++)
 				{
@@ -375,7 +374,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 					var featureId = r.ReadInt64();
 					var details = r.ReadString();
 					var createdAt = DateTime.FromBinary(r.ReadInt64());
-					var timespent = r.ReadDouble();
 
 					buffer.Append('(');
 					buffer.Append('\'');
@@ -385,8 +383,6 @@ CREATE TABLE FEATURE_EXCEPTIONS_EXCLUDED (
 					buffer.Append('\'');
 					buffer.Append(createdAt.ToString(SqliteFullDateTimeFormat));
 					buffer.Append('\'');
-					buffer.Append(',');
-					buffer.Append(timespent);
 					buffer.Append(',');
 					buffer.Append(featuresClientToServerMap[featureId]);
 					buffer.Append(',');

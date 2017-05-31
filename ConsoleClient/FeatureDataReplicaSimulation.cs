@@ -32,8 +32,8 @@ namespace ConsoleClient
 				});
 				clientData.Add(new[]
 				{
-					new FeatureEntryRow(2, "N/A", DateTime.Now, 17.293),
-					new FeatureEntryRow(3, "Sick", DateTime.Now, 23.811)
+					new FeatureEntryRow(2, "N/A", DateTime.Now),
+					new FeatureEntryRow(3, "Sick", DateTime.Now)
 				});
 				clientData.Add(new[]
 				{
@@ -46,11 +46,13 @@ namespace ConsoleClient
 				var s = Stopwatch.StartNew();
 				using (var ctx = contextCreator.Create())
 				{
-					for (var i = 0; i < 100; i++)
+					//FeatureServerManager.CreateSchema(ctx);
+
+					for (var i = 0; i < 1; i++)
 					{
 						FeatureServerManager.Replicate(ctx, @"BG900343", @"1.0.0.0", clientData.GetBytes());
-						Console.ReadLine();
 					}
+
 					ctx.Complete();
 				}
 				s.Stop();

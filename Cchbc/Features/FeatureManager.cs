@@ -50,15 +50,13 @@ namespace Cchbc.Features
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			var timeSpent = feature.TimeSpent;
-
 			using (var dbContext = this.DbContextCreator())
 			{
 				this.Load(dbContext);
 
 				var featureRow = this.SaveFeature(dbContext, this.SaveContext(dbContext, feature.Context), feature.Name);
 
-				FeatureAdapter.InsertFeatureEntry(dbContext, featureRow.Id, details ?? string.Empty, timeSpent);
+				FeatureAdapter.InsertFeatureEntry(dbContext, featureRow.Id, details ?? string.Empty);
 
 				dbContext.Complete();
 			}
@@ -91,7 +89,7 @@ namespace Cchbc.Features
 				var data = new ClientData();
 
 				data.Add(this.Contexts);
-				data.Add(FeatureAdapter.GetExceptions(dbContext));				
+				data.Add(FeatureAdapter.GetExceptions(dbContext));
 				data.Add(this.Features);
 				data.Add(FeatureAdapter.GetFeatureEntries(dbContext));
 				data.Add(FeatureAdapter.GetExceptionEntries(dbContext));

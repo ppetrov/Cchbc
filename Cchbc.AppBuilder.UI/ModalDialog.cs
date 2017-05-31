@@ -21,12 +21,9 @@ namespace Cchbc.AppBuilder.UI
 			dialog.Commands.Add(new UICommand(@"Cancel", empty, DialogResult.Cancel));
 			dialog.Commands.Add(new UICommand(@"Decline", empty, DialogResult.Decline));
 
-			feature.Pause();
-
 			var task = dialog.ShowAsync().AsTask();
 			var result = await task;
 
-			feature.Resume();
 			return (DialogResult)result.Id;
 		}
 	}
