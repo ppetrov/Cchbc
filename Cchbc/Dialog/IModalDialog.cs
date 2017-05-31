@@ -6,6 +6,6 @@ namespace Cchbc.Dialog
 {
 	public interface IModalDialog
 	{
-		Task<DialogResult> ShowAsync(string message, Feature feature, PermissionType? type = null);
+		Task<DialogResult> ShowAsync(PermissionResult message, Feature feature);
 	}
 }

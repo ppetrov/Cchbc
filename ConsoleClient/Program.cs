@@ -1,21 +1,17 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using Cchbc;
 using Cchbc.AppBuilder;
 using Cchbc.AppBuilder.DDL;
 using Cchbc.Archive;
 using Cchbc.ConsoleClient;
 using Cchbc.Data;
-using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Features.Data;
 using Cchbc.Features.ExceptionsModule;
@@ -40,111 +36,9 @@ namespace ConsoleClient
 	}
 
 
-
-
 	public class Program
 	{
 		public static readonly string DbPrefix = @"obppc_db_";
-
-		public static string GetCountryCode(string url)
-		{
-			if (url == null) throw new ArgumentNullException(nameof(url));
-
-			var value = url.Trim();
-			var start = value.LastIndexOf('/');
-			if (start >= 0)
-			{
-				return value.Substring(start + 1);
-			}
-
-			return string.Empty;
-		}
-
-
-		public sealed class Person
-		{
-			public Person(string firstName, string secondName)
-			{
-				if (firstName == null) throw new ArgumentNullException(nameof(firstName));
-				if (secondName == null) throw new ArgumentNullException(nameof(secondName));
-				this.FirstName = firstName;
-				this.SecondName = secondName;
-			}
-
-			public string FirstName { get; }
-			public string SecondName { get; }
-
-			public void Method()
-			{
-				var buffer = new StringBuilder();
-
-				for (int i = 0; i < 100; i++)
-				{
-					buffer.AppendLine(string.Empty);
-				}
-
-				var result = buffer.ToString();
-			}
-		}
-
-		public sealed class MapEntry
-		{
-			public string Name { get; }
-			public int Sequence { get; set; }
-
-			public MapEntry(string name, int sequence)
-			{
-				if (name == null) throw new ArgumentNullException(nameof(name));
-				this.Name = name;
-				this.Sequence = sequence;
-			}
-		}
-
-		public static void Reorder(MapEntry[] items, int sourceIndex, int destinationIndex)
-		{
-			if (items == null) throw new ArgumentNullException(nameof(items));
-			if (sourceIndex == destinationIndex) throw new ArgumentOutOfRangeException();
-
-			var sourceItem = items[sourceIndex];
-			var desctinationItem = items[destinationIndex];
-			var startOffset = 0;
-			var endOffset = 0;
-			Func<int, int> modifier;
-			if (sourceIndex < destinationIndex)
-			{
-				startOffset++;
-				modifier = s => s - 1;
-			}
-			else
-			{
-				endOffset--;
-				modifier = s => s + 1;
-			}
-
-			Action<MapEntry> dbUpdate = e => Console.WriteLine(@"Db Update => " + e.Name + " : " + e.Sequence);
-
-			// Copy the sequence from the destination item
-			sourceItem.Sequence = desctinationItem.Sequence;
-
-			var start = Math.Min(sourceIndex, destinationIndex) + startOffset;
-			var end = Math.Max(sourceIndex, destinationIndex) + endOffset;
-
-			for (var i = start; i <= end; i++)
-			{
-				// Check if we can index in the collection
-				var isValid = 0 <= i && i < items.Length;
-				if (isValid)
-				{
-					var item = items[i];
-
-					item.Sequence = modifier(item.Sequence);
-
-					dbUpdate(item);
-				}
-			}
-
-			dbUpdate(sourceItem);
-		}
 
 		public static void Main(string[] args)
 		{
@@ -154,7 +48,33 @@ namespace ConsoleClient
 
 			try
 			{
-				FeatureDataReplicaSimulation.Replicate();
+
+				var data = File.ReadAllText(@"C:\temp\image_data");
+				var bytes = new List<byte>((data.Length / 2) * 3);
+				for (var i = 0; i < data.Length; i += 3)
+				{
+					var a1 = data[i];
+					var a2 = data[i + 1];
+					var v = Convert.ToInt32(a1 + "" + a2, 16);
+					bytes.Add((byte)v);
+				}
+				File.WriteAllBytes(@"C:\temp\client_signature.jpg", bytes.ToArray());
+				//Console.WriteLine(data);
+				//foreach (var f in Directory.GetFiles(@"C:\Users\PetarPetrov\Desktop\atp logs"))
+				//{
+				//	var contents = File.ReadAllText(f);
+				//	var start = contents.IndexOf(@"(GetMasterData): 2201012121", StringComparison.OrdinalIgnoreCase);
+				//	if (start >= 0)
+				//	{
+				//		Console.WriteLine(f);
+				//		var end = contents.IndexOf(@"Alcohol Licenses", start, StringComparison.OrdinalIgnoreCase);
+				//		if (end >= 0)
+				//		{
+				//			var val = contents.Substring(start, end - start);
+				//		}
+				//	}
+				//}
+				//FeatureDataReplicaSimulation.Replicate();
 				return;
 
 				var imgAsString = File.ReadAllBytes(@"C:\Users\PetarPetrov\Desktop\signature.jpg");
@@ -460,21 +380,6 @@ namespace ConsoleClient
 			}
 
 			return string.Join(Environment.NewLine, lines);
-		}
-
-		private static void Display(MapEntry[] entries)
-		{
-			Array.Sort(entries, (x, y) => x.Sequence.CompareTo(y.Sequence));
-
-			foreach (var e in entries)
-			{
-				if (e.Name.EndsWith(e.Sequence.ToString()))
-				{
-					continue;
-				}
-				Console.WriteLine(e.Name + " : " + e.Sequence);
-			}
-			Console.WriteLine();
 		}
 
 		public static string GetSqliteConnectionString(string path)
@@ -1240,7 +1145,4 @@ using AppSystem.Data;
 			//File.AppendAllText(@"C:\temp\diagnostics.txt", output);
 		}
 	}
-
-
 }
-

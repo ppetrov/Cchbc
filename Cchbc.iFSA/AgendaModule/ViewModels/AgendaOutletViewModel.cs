@@ -51,11 +51,11 @@ namespace iFSA.AgendaModule.ViewModels
 			}
 		}
 
-		public Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)
+		public void ChangeStartTime(ActivityViewModel activityViewModel)
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			return this.ParentViewModel.ChangeStartTimeAsync(activityViewModel);
+			this.ParentViewModel.ChangeStartTime(activityViewModel);
 		}
 
 		public Task CloseAsync(ActivityViewModel activityViewModel)
@@ -69,9 +69,7 @@ namespace iFSA.AgendaModule.ViewModels
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			return this.ParentViewModel.CancelAsync(activityViewModel);
-
-			
+			return this.ParentViewModel.CancelAsync(activityViewModel);			
 		}
 
 		public void Copy(ActivityViewModel activityViewModel)

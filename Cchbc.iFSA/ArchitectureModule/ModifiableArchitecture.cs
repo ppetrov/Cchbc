@@ -370,12 +370,12 @@ namespace iFSA.ArchitectureModule
 				var result = this.CanAddHeader(this.MainContext, header, this.AgendaHeaders.Select(v => v.Model));
 				if (result.Type != PermissionType.Allow)
 				{
-					var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));
-					var confirmation = await this.MainContext.ModalDialog.ShowAsync(message, feature, result.Type);
-					if (confirmation != DialogResult.Accept)
-					{
-						return;
-					}
+					//var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));
+					//var confirmation = await this.MainContext.ModalDialog.ShowAsync(message, feature, result.Type);
+					//if (confirmation != DialogResult.Accept)
+					//{
+					//	return;
+					//}
 				}
 
 				// Create view model
@@ -421,12 +421,12 @@ namespace iFSA.ArchitectureModule
 				var result = this.CanUpdateHeaderDate(this.MainContext, viewModel.Model, this.AgendaHeaders.Select(v => v.Model), this.AgendaHeaderNewDate);
 				if (result.Type != PermissionType.Allow)
 				{
-					var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));
-					var confirmation = await this.MainContext.ModalDialog.ShowAsync(message, feature, result.Type);
-					if (confirmation != DialogResult.Accept)
-					{
-						return;
-					}
+					//var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));
+					//var confirmation = await this.MainContext.ModalDialog.ShowAsync(message, feature, result.Type);
+					//if (confirmation != DialogResult.Accept)
+					//{
+					//	return;
+					//}
 				}
 
 				// Set the new date
@@ -468,12 +468,12 @@ namespace iFSA.ArchitectureModule
 				var result = this.CanUpdateHeaderAddress(this.MainContext, viewModel.Model, this.AgendaHeaders.Select(v => v.Model), this.AgendaHeaderAddress);
 				if (result.Type != PermissionType.Allow)
 				{
-					var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));
-					var confirmation = await this.MainContext.ModalDialog.ShowAsync(message, feature, result.Type);
-					if (confirmation != DialogResult.Accept)
-					{
-						return;
-					}
+					//var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));
+					//var confirmation = await this.MainContext.ModalDialog.ShowAsync(message, feature, result.Type);
+					//if (confirmation != DialogResult.Accept)
+					//{
+					//	return;
+					//}
 				}
 
 				// Set the new date

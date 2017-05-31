@@ -61,9 +61,9 @@ namespace iFSA
 			{
 				this.OutletViewModel.Execute(this);
 			});
-			this.ChangeFromDateCommand = new RelayCommand(async () =>
+			this.ChangeFromDateCommand = new RelayCommand(() =>
 			{
-				await this.OutletViewModel.ChangeStartTimeAsync(this);
+				this.OutletViewModel.ChangeStartTime(this);
 			});
 		}
 	}

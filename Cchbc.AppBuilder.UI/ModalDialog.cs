@@ -9,12 +9,12 @@ namespace Cchbc.AppBuilder.UI
 {
 	public sealed class ModalDialog : IModalDialog
 	{
-		public async Task<DialogResult> ShowAsync(string message, Feature feature, PermissionType? type = null)
+		public async Task<DialogResult> ShowAsync(PermissionResult message, Feature feature)
 		{
 			if (message == null) throw new ArgumentNullException(nameof(message));
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			var dialog = new MessageDialog(message);
+			var dialog = new MessageDialog(message.LocalizationKeyName);
 
 			UICommandInvokedHandler empty = cmd => { };
 			dialog.Commands.Add(new UICommand(@"Accept", empty, DialogResult.Accept));

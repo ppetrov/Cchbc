@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Cchbc.Data;
 using Cchbc.Dialog;
 using Cchbc.Features;
 using Cchbc.Localization;
 using Cchbc.Logs;
+using Cchbc.Validation;
 
 namespace Cchbc
 {
@@ -34,6 +36,30 @@ namespace Cchbc
 			this.ModalDialog = modalDialog;
 			this.FeatureManager = featureManager;
 			this.LocalizationManager = localizationManager;
+		}
+
+		public async Task<bool> Convert(PermissionResult permissionResult)
+		{
+			if (permissionResult == null) throw new ArgumentNullException(nameof(permissionResult));
+
+			switch (permissionResult.Type)
+			{
+				case PermissionType.Allow:
+					return true;
+				case PermissionType.Confirm:
+					var confirmation = await this.ModalDialog.ShowAsync(permissionResult, Feature.None);
+					if (confirmation == DialogResult.Accept)
+					{
+						return true;
+					}
+					break;
+				case PermissionType.Deny:
+					await this.ModalDialog.ShowAsync(permissionResult, Feature.None);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+			return false;
 		}
 	}
 }

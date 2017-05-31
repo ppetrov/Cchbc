@@ -220,14 +220,14 @@ namespace iFSA.AgendaModule
 					createActivity = true;
 					break;
 				case PermissionType.Confirm:
-					var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+					var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult, Feature.None);
 					if (confirmation == DialogResult.Accept)
 					{
 						createActivity = true;
 					}
 					break;
 				case PermissionType.Deny:
-					await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+					await this.MainContext.ModalDialog.ShowAsync(permissionResult, Feature.None);
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();
@@ -338,46 +338,27 @@ namespace iFSA.AgendaModule
 			}
 		}
 
-		public async Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)
+		public void ChangeStartTime(ActivityViewModel activityViewModel)
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(ChangeStartTimeAsync));
+			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(ChangeStartTime));
 			try
 			{
-				// TODO : From constructor
-				var dateTimeSelector = default(IDateTimeSelector);
-				var dateTime = await dateTimeSelector.ShowAsync(feature);
-				if (!dateTime.HasValue)
-				{
-					return;
-				}
+				// TODO : From constructor				
+				var dateTimeSelector = default(ITimeSelector);
 
-				var performOperation = false;
-				var permissionResult = this.Agenda.CanChangeStartTime(activityViewModel.Model, dateTime.Value);
-				var type = permissionResult.Type;
-				switch (type)
+				var model = activityViewModel.Model;
+				dateTimeSelector.TimeValidator = date => this.Agenda.CanChangeStartTime(model, date);
+				dateTimeSelector.Callback = date =>
 				{
-					case PermissionType.Allow:
-						performOperation = true;
-						break;
-					case PermissionType.Confirm:
-						var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
-						if (confirmation == DialogResult.Accept)
-						{
-							performOperation = true;
-						}
-						break;
-					case PermissionType.Deny:
-						await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
-						break;
-					default:
-						throw new ArgumentOutOfRangeException();
-				}
-				if (performOperation)
-				{
-					this.Agenda.ChangeStartTime(activityViewModel.Model, dateTime.Value);
-				}
+					this.Agenda.ChangeStartTime(model, date);
+				};
+				dateTimeSelector.SelectTime(feature);
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.FeatureManager.Save(feature, ex);
 			}
 			finally
 			{
@@ -400,21 +381,20 @@ namespace iFSA.AgendaModule
 
 				var performOperation = false;
 				var permissionResult = this.Agenda.CanCancel(activityViewModel.Model);
-				var type = permissionResult.Type;
-				switch (type)
+				switch (permissionResult.Type)
 				{
 					case PermissionType.Allow:
 						performOperation = true;
 						break;
 					case PermissionType.Confirm:
-						var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+						var confirmation = await this.MainContext.ModalDialog.ShowAsync(permissionResult, Feature.None);
 						if (confirmation == DialogResult.Accept)
 						{
 							performOperation = true;
 						}
 						break;
 					case PermissionType.Deny:
-						await this.MainContext.ModalDialog.ShowAsync(permissionResult.LocalizationKeyName, Feature.None, type);
+						await this.MainContext.ModalDialog.ShowAsync(permissionResult, Feature.None);
 						break;
 					default:
 						throw new ArgumentOutOfRangeException();

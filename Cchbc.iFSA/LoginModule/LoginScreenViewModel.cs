@@ -8,6 +8,7 @@ using Cchbc.Common;
 using Cchbc.Features;
 using Cchbc.Localization;
 using Cchbc.Logs;
+using Cchbc.Validation;
 using iFSA.AgendaModule;
 using iFSA.Common.Objects;
 using iFSA.LoginModule.Data;
@@ -19,9 +20,9 @@ namespace iFSA.LoginModule
 {
 	public sealed class LoginScreenViewModel : ViewModel
 	{
-		private string GetCustomized(string name)
+		private PermissionResult GetCustomized(string name)
 		{
-			return this.MainContext.LocalizationManager.Get(new LocalizationKey(@"LoginScreen", name));
+			return PermissionResult.Deny(this.MainContext.LocalizationManager.Get(new LocalizationKey(@"LoginScreen", name)));
 		}
 
 		private MainContext MainContext { get; }
@@ -83,14 +84,14 @@ namespace iFSA.LoginModule
 			this.MainContext = mainContext;
 			this.AppNavigator = appNavigator;
 
-			this.NameCaption = this.GetCustomized(@"Name");
-			this.PasswordCaption = this.GetCustomized(@"Password");
-			this.LoginCaption = this.GetCustomized(@"Login");
-			this.AdvancedCaption = this.GetCustomized(@"Advanced");
+			//this.NameCaption = this.GetCustomized(@"Name");
+			//this.PasswordCaption = this.GetCustomized(@"Password");
+			//this.LoginCaption = this.GetCustomized(@"Login");
+			//this.AdvancedCaption = this.GetCustomized(@"Advanced");
 
-			this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Production"), SystemSource.Production)));
-			this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Quality"), SystemSource.Quality)));
-			this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Development"), SystemSource.Development)));
+			//this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Production"), SystemSource.Production)));
+			//this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Quality"), SystemSource.Quality)));
+			//this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Development"), SystemSource.Development)));
 
 			foreach (var country in this.Data.GetCountries())
 			{

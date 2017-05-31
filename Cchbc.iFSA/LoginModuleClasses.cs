@@ -139,9 +139,9 @@ namespace iFSA
 		{
 			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
 
-			var confirmationMessage = this.LocalizationManager(@"Calendar", @"ConfirmCancelDay");
-			var isConfirmed = (await this.ModalDialog.ShowAsync(confirmationMessage, Feature.None, PermissionType.Confirm)) == DialogResult.Accept;
-			if (!isConfirmed) return;
+			//var confirmationMessage = this.LocalizationManager(@"Calendar", @"ConfirmCancelDay");
+			//var isConfirmed = (await this.ModalDialog.ShowAsync(confirmationMessage, Feature.None, PermissionType.Confirm)) == DialogResult.Accept;
+			//if (!isConfirmed) return;
 
 			// We don't have any selected days
 			if (viewModels.Count == 0) return;
@@ -159,8 +159,8 @@ namespace iFSA
 				var hasActiveDayBefore = activeDay != null;
 				if (hasActiveDayBefore)
 				{
-					var message = this.LocalizationManager(@"Calendar", @"ActiveDayBefore") + activeDay.Date.ToString(@"D");
-					await this.ModalDialog.ShowAsync(message, Feature.None);
+					//var message = this.LocalizationManager(@"Calendar", @"ActiveDayBefore") + activeDay.Date.ToString(@"D");
+					//await this.ModalDialog.ShowAsync(message, Feature.None);
 					break;
 				}
 
