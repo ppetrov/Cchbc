@@ -361,7 +361,7 @@ namespace iFSA.ArchitectureModule
 		private async void AddHeader()
 		{
 			var context = nameof(AgendaHeaderScreenViewModel);
-			var feature = Feature.StartNew(context, nameof(AddHeader));
+			var feature = new Feature(context, nameof(AddHeader));
 			try
 			{
 				// Create model
@@ -407,7 +407,7 @@ namespace iFSA.ArchitectureModule
 		private async void UpdateHeaderDate()
 		{
 			var context = nameof(AgendaHeaderScreenViewModel);
-			var feature = Feature.StartNew(context, nameof(UpdateHeaderDate));
+			var feature = new Feature(context, nameof(UpdateHeaderDate));
 			try
 			{
 				var viewModel = this.SelectedAgendaHeader;
@@ -454,7 +454,7 @@ namespace iFSA.ArchitectureModule
 		private async void UpdateHeaderAddress()
 		{
 			var context = nameof(AgendaHeaderScreenViewModel);
-			var feature = Feature.StartNew(context, nameof(UpdateHeaderAddress));
+			var feature = new Feature(context, nameof(UpdateHeaderAddress));
 			try
 			{
 				var viewModel = this.SelectedAgendaHeader;

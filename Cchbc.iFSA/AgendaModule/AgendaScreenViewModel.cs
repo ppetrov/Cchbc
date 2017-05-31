@@ -182,7 +182,7 @@ namespace iFSA.AgendaModule
 		{
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
-			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(LoadDay));
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadDay));
 			try
 			{
 				this.LoadData(user, dateTime);
@@ -245,7 +245,7 @@ namespace iFSA.AgendaModule
 
 		private void LoadNextDay()
 		{
-			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(LoadNextDay));
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadNextDay));
 			try
 			{
 				this.LoadData(this.CurrentDate.AddDays(-1));
@@ -263,7 +263,7 @@ namespace iFSA.AgendaModule
 
 		private void LoadPreviousDay()
 		{
-			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(LoadPreviousDay));
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadPreviousDay));
 			try
 			{
 				this.LoadData(this.CurrentDate.AddDays(-1));
@@ -342,7 +342,7 @@ namespace iFSA.AgendaModule
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(ChangeStartTime));
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(ChangeStartTime));
 			try
 			{
 				// TODO : From constructor				
@@ -368,7 +368,7 @@ namespace iFSA.AgendaModule
 
 		public async Task CancelAsync(ActivityViewModel activityViewModel)
 		{
-			var feature = Feature.StartNew(nameof(AgendaScreenViewModel), nameof(CancelAsync));
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(CancelAsync));
 			try
 			{
 				// TODO : From constructor

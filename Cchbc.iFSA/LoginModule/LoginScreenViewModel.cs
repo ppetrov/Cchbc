@@ -116,7 +116,7 @@ namespace iFSA.LoginModule
 
 		private async void Login()
 		{
-			var feature = Feature.StartNew(nameof(LoginScreenViewModel), nameof(Login));
+			var feature = new Feature(nameof(LoginScreenViewModel), nameof(Login));
 			try
 			{
 				var username = (this.Username ?? string.Empty).Trim();
@@ -217,7 +217,7 @@ namespace iFSA.LoginModule
 
 		private void Advanced()
 		{
-			var feature = Feature.StartNew(nameof(LoginScreenViewModel), nameof(Advanced));
+			var feature = new Feature(nameof(LoginScreenViewModel), nameof(Advanced));
 			try
 			{
 				var config = new ReplicationConfig(string.Empty, 0);

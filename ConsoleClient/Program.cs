@@ -435,7 +435,7 @@ namespace ConsoleClient
 			//	//featureManager.Write(data);
 			//}
 
-			var f = Feature.StartNew(@"Images", @"Upload");
+			var f = new Feature(@"Images", @"Upload");
 			try
 			{
 				throw new Exception(@"Unable to display feature");

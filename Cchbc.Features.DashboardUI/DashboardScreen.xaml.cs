@@ -21,7 +21,7 @@ namespace Cchbc.Features.DashboardUI
 		private async void DashboardScreenLoaded(object sender, RoutedEventArgs e)
 		{
 			var core = AppContextObsolete.MainContext;
-			var feature = Feature.StartNew(@"Dashboard", @"Load");
+			var feature = new Feature(@"Dashboard", @"Load");
 
 			try
 			{
