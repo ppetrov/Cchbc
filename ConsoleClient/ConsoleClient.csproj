@@ -71,15 +71,15 @@
   <ItemGroup>
     <ProjectReference Include="..\Atos.AppBuilder\Atos.AppBuilder.csproj">
       <Project>{C925111E-12CE-4D75-93F8-348C5FD44EFD}</Project>
-      <Name>Cchbc.AppBuilder</Name>
+      <Name>Atos.AppBuilder</Name>
     </ProjectReference>
     <ProjectReference Include="..\Atos.Features\Atos.Features.csproj">
       <Project>{7611601A-80E1-43FA-ADE0-4F25245DA724}</Project>
-      <Name>Cchbc.Features</Name>
+      <Name>Atos.Features</Name>
     </ProjectReference>
     <ProjectReference Include="..\Atos\Atos.csproj">
       <Project>{cf3bbbbd-5f7a-47b5-a5a5-71eb0ec6ad84}</Project>
-      <Name>Cchbc</Name>
+      <Name>Atos</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

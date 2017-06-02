@@ -2,7 +2,7 @@
 using Atos.Data;
 using Atos.Features;
 
-namespace Atos.Common
+namespace Atos
 {
 	public sealed class FeatureContext : IDisposable
 	{

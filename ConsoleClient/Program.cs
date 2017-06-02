@@ -195,8 +195,8 @@ namespace ConsoleClient
 
 				for (var i = 0; i < 100; i++)
 				{
-					viewModel.Load(ExceptionsDataProvider.GetTimePeriods, ExceptionsDataProvider.GetVersions,
-						ExceptionsDataProvider.GetExceptions, ExceptionsDataProvider.GetExceptionsCounts);
+					//viewModel.Load(ExceptionsDataProvider.GetTimePeriods, ExceptionsDataProvider.GetVersions,
+					//	ExceptionsDataProvider.GetExceptions, ExceptionsDataProvider.GetExceptionsCounts);
 				}
 
 				w.Stop();

@@ -6,7 +6,6 @@ using Atos;
 using Atos.Logs;
 using Atos.Validation;
 using iFSA.AgendaModule.Data;
-using iFSA.Common.Data;
 using iFSA.Common.Objects;
 
 namespace iFSA.AgendaModule.Objects

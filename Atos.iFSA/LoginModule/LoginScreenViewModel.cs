@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Atos;
 using Atos.Common;
 using Atos.Features;
 using Atos.Localization;
 using Atos.Logs;
 using Atos.Validation;
+using iFSA;
 using iFSA.AgendaModule;
 using iFSA.Common.Objects;
 using iFSA.LoginModule.Data;
@@ -16,7 +16,7 @@ using iFSA.LoginModule.Objects;
 using iFSA.LoginModule.ViewModels;
 using iFSA.ReplicationModule.Objects;
 
-namespace iFSA.LoginModule
+namespace Atos.iFSA.LoginModule
 {
 	public sealed class LoginScreenViewModel : ViewModel
 	{

@@ -38,7 +38,7 @@
     <Compile Include="Archive\ZipArchive.cs" />
     <Compile Include="Archive\ZipData.cs" />
     <Compile Include="Archive\ZipHeader.cs" />
-    <Compile Include="Common\FeatureContext.cs" />
+    <Compile Include="FeatureContext.cs" />
     <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Localization\ILocalizationManager.cs" />
     <Compile Include="Localization\LocalizationKey.cs" />
