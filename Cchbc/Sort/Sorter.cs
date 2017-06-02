@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Cchbc.Sort
+namespace Atos.Sort
 {
 	public sealed class Sorter<T> where T : ViewModel
 	{

@@ -1,8 +1,8 @@
 ﻿using System;
-using Cchbc.Data;
-using Cchbc.Features.ExceptionsModule.Objects;
+using Atos.Data;
+using Atos.Features.ExceptionsModule.Objects;
 
-namespace Cchbc.Features.ExceptionsModule
+namespace Atos.Features.ExceptionsModule
 {
 	public sealed class ExceptionsDataLoadParams
 	{

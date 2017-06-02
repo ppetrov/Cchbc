@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Cchbc.Data;
-using Cchbc.Features.ExceptionsModule.Objects;
-using Cchbc.Features.ExceptionsModule.Rows;
+using Atos.Data;
+using Atos.Features.ExceptionsModule.Objects;
+using Atos.Features.ExceptionsModule.Rows;
 
-namespace Cchbc.Features.ExceptionsModule
+namespace Atos.Features.ExceptionsModule
 {
 
 	public sealed class ExceptionsCountViewModel

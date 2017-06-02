@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Text;
 
-namespace Cchbc.AppBuilder.DDL
+namespace Atos.AppBuilder.DDL
 {
 	public static class DbScript
 	{

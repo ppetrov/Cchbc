@@ -1,4 +1,4 @@
-﻿namespace Cchbc.Validation
+﻿namespace Atos.Validation
 {
 	public enum PermissionType
 	{

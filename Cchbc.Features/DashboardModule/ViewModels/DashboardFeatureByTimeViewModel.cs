@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features.DashboardModule.ViewModels
+namespace Atos.Features.DashboardModule.ViewModels
 {
 	public sealed class DashboardFeatureByTimeViewModel : ViewModel
 	{

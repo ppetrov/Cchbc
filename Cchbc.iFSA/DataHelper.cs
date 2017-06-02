@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cchbc;
-using Cchbc.Data;
+using Atos;
+using Atos.Data;
 using iFSA.Common.Objects;
 using iFSA.MasterDataModule.Objects;
 

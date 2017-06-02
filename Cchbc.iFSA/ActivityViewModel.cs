@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Input;
-using Cchbc;
-using Cchbc.Common;
+using Atos;
+using Atos.Common;
 using iFSA.AgendaModule.ViewModels;
 using iFSA.Common.Objects;
 

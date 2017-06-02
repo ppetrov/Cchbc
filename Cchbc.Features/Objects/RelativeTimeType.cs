@@ -1,4 +1,4 @@
-namespace Cchbc.Features.Objects
+namespace Atos.Features.Objects
 {
 	public enum RelativeTimeType
 	{

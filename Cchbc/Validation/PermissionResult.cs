@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.Validation
+namespace Atos.Validation
 {
 	public sealed class PermissionResult
 	{

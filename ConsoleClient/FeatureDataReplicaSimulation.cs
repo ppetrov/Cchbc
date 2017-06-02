@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Cchbc.ConsoleClient;
-using Cchbc.Features.Data;
-using Cchbc.Features.Replication;
+using Atos.ConsoleClient;
+using Atos.Features.Data;
+using Atos.Features.Replication;
 
 namespace ConsoleClient
 {

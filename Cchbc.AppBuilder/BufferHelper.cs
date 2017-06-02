@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace Cchbc.AppBuilder
+namespace Atos.AppBuilder
 {
 	public static class BufferHelper
 	{

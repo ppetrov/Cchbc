@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace Cchbc.AppBuilder
+namespace Atos.AppBuilder
 {
 	public sealed class ClrProject
 	{
@@ -170,7 +170,7 @@ namespace Cchbc.AppBuilder
 			if (project.IsModifiable(entity.Table))
 			{
 				// For IDbObject interface
-				buffer.AppendLine(@"using Cchbc.Objects;");
+				buffer.AppendLine(@"using Atos.Objects;");
 			}
 			if (entity.InverseTable != null)
 			{
@@ -207,7 +207,7 @@ namespace Cchbc.AppBuilder
 			}
 
 			// For ITransactionContext class
-			buffer.AppendLine(@"using Cchbc.Data;");
+			buffer.AppendLine(@"using Atos.Data;");
 
 			// For the concrete T class
 			buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
@@ -222,7 +222,7 @@ namespace Cchbc.AppBuilder
 			// For the concrete T class
 			buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
 			buffer.AppendLine();
-			buffer.AppendLine(@"using Cchbc.Helpers;");
+			buffer.AppendLine(@"using Atos.Helpers;");
 			buffer.AppendLine();
 		}
 
@@ -235,10 +235,10 @@ namespace Cchbc.AppBuilder
 				buffer.AppendLine();
 				buffer.AppendFormat(@"using {0}.ViewModels;", namespaceName);
 				buffer.AppendLine();
-				buffer.AppendLine(@"using Cchbc;");
-				buffer.AppendLine(@"using Cchbc.Data;");
-				buffer.AppendLine(@"using Cchbc.Search;");
-				buffer.AppendLine(@"using Cchbc.Sort;");
+				buffer.AppendLine(@"using Atos;");
+				buffer.AppendLine(@"using Atos.Data;");
+				buffer.AppendLine(@"using Atos.Search;");
+				buffer.AppendLine(@"using Atos.Sort;");
 			}
 			else
 			{
@@ -246,12 +246,12 @@ namespace Cchbc.AppBuilder
 				buffer.AppendLine(@"using System.Collections.Generic;");
 				buffer.AppendLine(@"using System.Linq;");
 				buffer.AppendLine(@"using System.Threading.Tasks;");
-				buffer.AppendLine(@"using Cchbc;");
-				buffer.AppendLine(@"using Cchbc.Data;");
-				buffer.AppendLine(@"using Cchbc.Features;");
-				buffer.AppendLine(@"using Cchbc.Search;");
-				buffer.AppendLine(@"using Cchbc.Sort;");
-				buffer.AppendLine(@"using Cchbc.Validation;");
+				buffer.AppendLine(@"using Atos;");
+				buffer.AppendLine(@"using Atos.Data;");
+				buffer.AppendLine(@"using Atos.Features;");
+				buffer.AppendLine(@"using Atos.Search;");
+				buffer.AppendLine(@"using Atos.Sort;");
+				buffer.AppendLine(@"using Atos.Validation;");
 				buffer.AppendFormat(@"using {0}.Adapters;", namespaceName);
 				buffer.AppendLine();
 				buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
@@ -268,7 +268,7 @@ namespace Cchbc.AppBuilder
 			// For the concrete T class
 			buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
 			buffer.AppendLine();
-			buffer.AppendLine(@"using Cchbc.Objects;");
+			buffer.AppendLine(@"using Atos.Objects;");
 			buffer.AppendLine();
 		}
 
@@ -278,11 +278,11 @@ namespace Cchbc.AppBuilder
 			{
 				buffer.AppendLine(@"using System;");
 				buffer.AppendLine(@"using System.Collections.ObjectModel;");
-				buffer.AppendLine(@"using Cchbc;");
-				buffer.AppendLine(@"using Cchbc.Features;");
-				buffer.AppendLine(@"using Cchbc.Objects;");
-				buffer.AppendLine(@"using Cchbc.Search;");
-				buffer.AppendLine(@"using Cchbc.Sort;");
+				buffer.AppendLine(@"using Atos;");
+				buffer.AppendLine(@"using Atos.Features;");
+				buffer.AppendLine(@"using Atos.Objects;");
+				buffer.AppendLine(@"using Atos.Search;");
+				buffer.AppendLine(@"using Atos.Sort;");
 				buffer.AppendFormat(@"using {0}.Modules;", namespaceName);
 				buffer.AppendLine();
 				buffer.AppendFormat(@"using {0}.Objects;", namespaceName);
@@ -293,12 +293,12 @@ namespace Cchbc.AppBuilder
 				buffer.AppendLine(@"using System;");
 				buffer.AppendLine(@"using System.Collections.ObjectModel;");
 				buffer.AppendLine(@"using System.Threading.Tasks;");
-				buffer.AppendLine(@"using Cchbc;");
-				buffer.AppendLine(@"using Cchbc.Dialog;");
-				buffer.AppendLine(@"using Cchbc.Features;");
-				buffer.AppendLine(@"using Cchbc.Objects;");
-				buffer.AppendLine(@"using Cchbc.Search;");
-				buffer.AppendLine(@"using Cchbc.Sort;");
+				buffer.AppendLine(@"using Atos;");
+				buffer.AppendLine(@"using Atos.Dialog;");
+				buffer.AppendLine(@"using Atos.Features;");
+				buffer.AppendLine(@"using Atos.Objects;");
+				buffer.AppendLine(@"using Atos.Search;");
+				buffer.AppendLine(@"using Atos.Sort;");
 				buffer.AppendFormat(@"using {0}.Adapters;", namespaceName);
 				buffer.AppendLine();
 				buffer.AppendFormat(@"using {0}.Modules;", namespaceName);

@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Cchbc.Common;
-using Cchbc.Data;
-using Cchbc.Features.DashboardModule.Objects;
-using Cchbc.Features.Data;
-using Cchbc.Logs;
-using Cchbc.Settings;
+using Atos.Common;
+using Atos.Data;
+using Atos.Features.DashboardModule.Objects;
+using Atos.Features.Data;
+using Atos.Logs;
+using Atos.Settings;
 
-namespace Cchbc.Features.DashboardModule.Data
+namespace Atos.Features.DashboardModule.Data
 {
 	public static class DashboardDataProvider
 	{

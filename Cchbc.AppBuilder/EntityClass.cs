@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Cchbc.AppBuilder.Clr;
+using Atos.AppBuilder.Clr;
 
-namespace Cchbc.AppBuilder
+namespace Atos.AppBuilder
 {
 	public static class EntityClass
 	{

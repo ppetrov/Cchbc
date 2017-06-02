@@ -14,7 +14,7 @@
   <mp:PhoneIdentity PhoneProductId="c5f4592c-e808-4210-9c68-d4f581c81bd5" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Cchbc.AppBuilder.UI</DisplayName>
+    <DisplayName>Atos.AppBuilder.UI</DisplayName>
     <PublisherDisplayName>codem</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -30,12 +30,12 @@
   <Applications>
     <Application Id="App"
       Executable="$targetnametoken$.exe"
-      EntryPoint="Cchbc.AppBuilder.UI.App">
+      EntryPoint="Atos.AppBuilder.UI.App">
       <uap:VisualElements
-        DisplayName="Cchbc.AppBuilder.UI"
+        DisplayName="Atos.AppBuilder.UI"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
-        Description="Cchbc.AppBuilder.UI"
+        Description="Atos.AppBuilder.UI"
         BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"/>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />

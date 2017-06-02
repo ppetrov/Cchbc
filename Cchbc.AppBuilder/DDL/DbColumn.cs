@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.AppBuilder.DDL
+namespace Atos.AppBuilder.DDL
 {
 	public sealed class DbColumn
 	{

@@ -1,8 +1,8 @@
 ﻿using System;
-using Cchbc.Data;
-using Cchbc.Features;
+using Atos.Data;
+using Atos.Features;
 
-namespace Cchbc.Common
+namespace Atos.Common
 {
 	public sealed class FeatureContext : IDisposable
 	{

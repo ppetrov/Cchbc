@@ -4,8 +4,8 @@ using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using Cchbc.ConsoleClient;
-using Cchbc.Data;
+using Atos.ConsoleClient;
+using Atos.Data;
 
 namespace ConsoleClient
 {

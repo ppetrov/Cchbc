@@ -1,7 +1,7 @@
 using System;
-using Cchbc.Features.DashboardModule.Objects;
+using Atos.Features.DashboardModule.Objects;
 
-namespace Cchbc.Features.DashboardModule
+namespace Atos.Features.DashboardModule
 {
 	public sealed class DashboardVersion
 	{

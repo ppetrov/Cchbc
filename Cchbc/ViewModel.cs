@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace Cchbc
+namespace Atos
 {
 	public abstract class ViewModel : INotifyPropertyChanged
 	{

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.SQLite;
-using Cchbc.Data;
+using Atos.Data;
 
-namespace Cchbc.AppBuilder.UI
+namespace Atos.AppBuilder.UI
 {
 	public sealed class DbContext : IDbContext
 	{

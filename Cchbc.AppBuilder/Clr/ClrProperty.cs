@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.AppBuilder.Clr
+namespace Atos.AppBuilder.Clr
 {
 	public sealed class ClrProperty
 	{

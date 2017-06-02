@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
-using Cchbc;
-using Cchbc.Common;
-using Cchbc.Data;
-using Cchbc.Dialog;
-using Cchbc.Features;
-using Cchbc.Localization;
-using Cchbc.Logs;
-using Cchbc.Validation;
+using Atos;
+using Atos.Common;
+using Atos.Data;
+using Atos.Dialog;
+using Atos.Features;
+using Atos.Localization;
+using Atos.Logs;
+using Atos.Validation;
 
 namespace iFSA.ArchitectureModule
 {

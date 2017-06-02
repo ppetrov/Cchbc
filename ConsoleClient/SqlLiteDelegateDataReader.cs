@@ -1,8 +1,8 @@
 using System;
 using System.Data;
-using Cchbc.Data;
+using Atos.Data;
 
-namespace Cchbc.ConsoleClient
+namespace Atos.ConsoleClient
 {
 	public sealed class SqlLiteDelegateDataReader : IFieldDataReader
 	{

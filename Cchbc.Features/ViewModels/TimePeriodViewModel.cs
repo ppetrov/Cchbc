@@ -1,7 +1,7 @@
 ﻿using System;
-using Cchbc.Features.Objects;
+using Atos.Features.Objects;
 
-namespace Cchbc.Features.ViewModels
+namespace Atos.Features.ViewModels
 {
     public sealed class TimePeriodViewModel
     {

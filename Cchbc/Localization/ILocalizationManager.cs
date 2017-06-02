@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Cchbc.Localization
+namespace Atos.Localization
 {
 	public interface ILocalizationManager
 	{

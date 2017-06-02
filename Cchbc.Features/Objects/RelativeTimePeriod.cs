@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features.Objects
+namespace Atos.Features.Objects
 {
 	public sealed class RelativeTimePeriod
 	{

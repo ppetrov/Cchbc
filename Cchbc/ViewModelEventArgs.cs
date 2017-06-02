@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc
+namespace Atos
 {
 	public sealed class ViewModelEventArgs<T> : EventArgs
 	{

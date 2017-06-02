@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cchbc.AppBuilder.Clr;
-using Cchbc.AppBuilder.DDL;
+using Atos.AppBuilder.Clr;
+using Atos.AppBuilder.DDL;
 
-namespace Cchbc.AppBuilder
+namespace Atos.AppBuilder
 {
 	public static class DbTableConverter
 	{

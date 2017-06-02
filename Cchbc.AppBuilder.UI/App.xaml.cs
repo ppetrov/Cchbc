@@ -5,7 +5,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 
-namespace Cchbc.AppBuilder.UI
+namespace Atos.AppBuilder.UI
 {
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.

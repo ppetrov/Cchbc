@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Cchbc.Data;
+using Atos.Data;
 
-namespace Cchbc.Features.Replication
+namespace Atos.Features.Replication
 {
 	public static class FeatureServerManager
 	{

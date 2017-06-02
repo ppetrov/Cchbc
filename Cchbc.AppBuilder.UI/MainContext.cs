@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using Windows.Storage;
 
-namespace Cchbc.AppBuilder.UI
+namespace Atos.AppBuilder.UI
 {
 	public sealed class GlobalMainContext
 	{

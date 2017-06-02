@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Cchbc.Search;
-using Cchbc.Sort;
+using Atos.Search;
+using Atos.Sort;
 
-namespace Cchbc
+namespace Atos
 {
 	public class ReadOnlyModule<T, TViewModel> where TViewModel : ViewModel<T>
 	{

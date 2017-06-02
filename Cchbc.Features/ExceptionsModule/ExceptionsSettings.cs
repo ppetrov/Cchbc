@@ -1,4 +1,4 @@
-﻿namespace Cchbc.Features.ExceptionsModule
+﻿namespace Atos.Features.ExceptionsModule
 {
 	public sealed class ExceptionsSettings
 	{

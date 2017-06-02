@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.Data
+namespace Atos.Data
 {
 	public sealed class QueryParameter
 	{

@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features
+namespace Atos.Features
 {
 	public sealed class Feature
 	{

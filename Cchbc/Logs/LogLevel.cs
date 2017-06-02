@@ -1,4 +1,4 @@
-﻿namespace Cchbc.Logs
+﻿namespace Atos.Logs
 {
 	public enum LogLevel
 	{

@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features.DashboardModule
+namespace Atos.Features.DashboardModule
 {
 	public sealed class DashboardFeatureByTime
 	{

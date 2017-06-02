@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Cchbc.AppBuilder.DDL;
+using Atos.AppBuilder.DDL;
 
-namespace Cchbc.AppBuilder.DML
+namespace Atos.AppBuilder.DML
 {
 	public static class QueryBuilder
 	{

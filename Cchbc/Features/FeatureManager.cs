@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Cchbc.Data;
-using Cchbc.Features.Data;
+using Atos.Data;
+using Atos.Features.Data;
 
-namespace Cchbc.Features
+namespace Atos.Features
 {
 	public interface IFeatureManager
 	{

@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Cchbc.AppBuilder.Clr;
-using Cchbc.AppBuilder.DDL;
-using Cchbc.AppBuilder.DML;
+using Atos.AppBuilder.Clr;
+using Atos.AppBuilder.DDL;
+using Atos.AppBuilder.DML;
 
-namespace Cchbc.AppBuilder
+namespace Atos.AppBuilder
 {
     public static class EntityAdapter
     {

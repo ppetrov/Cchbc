@@ -1,7 +1,7 @@
 using System;
-using Cchbc.Logs;
+using Atos.Logs;
 
-namespace Cchbc.Settings
+namespace Atos.Settings
 {
 	public static class ValueParser
 	{

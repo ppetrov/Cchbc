@@ -1,7 +1,7 @@
 using System;
-using Cchbc.Features.Data;
+using Atos.Features.Data;
 
-namespace Cchbc.Features.DashboardModule
+namespace Atos.Features.DashboardModule
 {
 	public sealed class DashboardFeatureByCount
 	{

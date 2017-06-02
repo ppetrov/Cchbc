@@ -1,7 +1,7 @@
 using System;
-using Cchbc.Features.ExceptionsModule.Rows;
+using Atos.Features.ExceptionsModule.Rows;
 
-namespace Cchbc.Features.ExceptionsModule.Objects
+namespace Atos.Features.ExceptionsModule.Objects
 {
 	public sealed class TimePeriod
 	{

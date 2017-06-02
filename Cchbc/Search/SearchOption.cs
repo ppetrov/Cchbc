@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Search
+namespace Atos.Search
 {
 	public sealed class SearchOption<T> : ViewModel
 	{

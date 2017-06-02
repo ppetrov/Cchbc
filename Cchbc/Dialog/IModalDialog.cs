@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using Cchbc.Validation;
+using Atos.Validation;
 
-namespace Cchbc.Dialog
+namespace Atos.Dialog
 {
 	public interface IModalDialog
 	{

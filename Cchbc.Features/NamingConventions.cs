@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace Cchbc.Features
+namespace Atos.Features
 {
     public static class NamingConventions
     {

@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features.ExceptionsModule.Rows
+namespace Atos.Features.ExceptionsModule.Rows
 {
 	public sealed class TimePeriodRow
 	{

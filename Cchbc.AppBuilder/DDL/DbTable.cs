@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Cchbc.AppBuilder.DDL
+namespace Atos.AppBuilder.DDL
 {
 	public sealed class DbTable
 	{

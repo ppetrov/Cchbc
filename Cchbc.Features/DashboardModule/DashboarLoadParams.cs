@@ -1,7 +1,7 @@
 using System;
-using Cchbc.Common;
+using Atos.Common;
 
-namespace Cchbc.Features.DashboardModule
+namespace Atos.Features.DashboardModule
 {
 	public sealed class DashboarLoadParams
 	{

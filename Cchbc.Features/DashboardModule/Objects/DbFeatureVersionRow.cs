@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.Features.DashboardModule.Objects
+namespace Atos.Features.DashboardModule.Objects
 {
 	public sealed class DbFeatureVersionRow
 	{

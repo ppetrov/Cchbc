@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cchbc.Data;
+using Atos.Data;
 
-namespace Cchbc.Features.Data
+namespace Atos.Features.Data
 {
 	public static class FeatureAdapter
 	{

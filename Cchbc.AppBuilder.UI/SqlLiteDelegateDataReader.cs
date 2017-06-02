@@ -1,8 +1,8 @@
 ﻿using System;
 using System.SQLite;
-using Cchbc.Data;
+using Atos.Data;
 
-namespace Cchbc.AppBuilder.UI
+namespace Atos.AppBuilder.UI
 {
 	public sealed class SqlLiteDelegateDataReader : IFieldDataReader
 	{

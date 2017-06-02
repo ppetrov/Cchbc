@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Sort
+namespace Atos.Sort
 {
 	public sealed class SortOption<T> : ViewModel
 	{

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Windows.UI.Popups;
-using Cchbc.Dialog;
-using Cchbc.Validation;
+using Atos.Dialog;
+using Atos.Validation;
 
-namespace Cchbc.AppBuilder.UI
+namespace Atos.AppBuilder.UI
 {
 	public sealed class ModalDialog : IModalDialog
 	{

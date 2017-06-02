@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Cchbc.Data;
-using Cchbc.Dialog;
-using Cchbc.Features;
-using Cchbc.Search;
-using Cchbc.Sort;
-using Cchbc.Validation;
+using Atos.Data;
+using Atos.Dialog;
+using Atos.Features;
+using Atos.Search;
+using Atos.Sort;
+using Atos.Validation;
 
-namespace Cchbc
+namespace Atos
 {
 	public abstract class Module<T, TViewModel>
 		where TViewModel : ViewModel<T>

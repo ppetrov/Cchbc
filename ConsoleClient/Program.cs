@@ -7,16 +7,16 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using Cchbc.AppBuilder;
-using Cchbc.AppBuilder.DDL;
-using Cchbc.Archive;
-using Cchbc.ConsoleClient;
-using Cchbc.Data;
-using Cchbc.Features;
-using Cchbc.Features.Data;
-using Cchbc.Features.ExceptionsModule;
-using Cchbc.Features.Replication;
-using Cchbc.Validation;
+using Atos.AppBuilder;
+using Atos.AppBuilder.DDL;
+using Atos.Archive;
+using Atos.ConsoleClient;
+using Atos.Data;
+using Atos.Features;
+using Atos.Features.Data;
+using Atos.Features.ExceptionsModule;
+using Atos.Features.Replication;
+using Atos.Validation;
 
 namespace ConsoleClient
 {
@@ -463,7 +463,7 @@ namespace ConsoleClient
 
 		private static void SearchSourceCode()
 		{
-			foreach (var f in Directory.GetFiles(@"C:\Cchbc\PhoenixClient\iOS\SFA.iOS7\", @"*.*", SearchOption.AllDirectories))
+			foreach (var f in Directory.GetFiles(@"C:\Atos\PhoenixClient\iOS\SFA.iOS7\", @"*.*", SearchOption.AllDirectories))
 			{
 				var name = Path.GetFileName(f);
 				if (!name.EndsWith(@".cs", StringComparison.OrdinalIgnoreCase))
@@ -481,7 +481,7 @@ namespace ConsoleClient
 
 		private static void SearchDirectory()
 		{
-			var inDir = @"C:\Cchbc\PhoenixClient\iOS\SFA.iOS7";
+			var inDir = @"C:\Atos\PhoenixClient\iOS\SFA.iOS7";
 
 			foreach (var file in Directory.GetFiles(inDir, @"*.*", SearchOption.AllDirectories))
 			{
@@ -1029,7 +1029,7 @@ using AppSystem.Data;
 
 			winrtUsingFlag = @"NETFX_CORE";
 
-			var sourceFiles = Directory.GetFiles(@"C:\Cchbc\PhoenixClient\Phoenix SFA SAP\SFA 5.5\SFA.BusinessLogic", @"*.cs", SearchOption.AllDirectories);
+			var sourceFiles = Directory.GetFiles(@"C:\Atos\PhoenixClient\Phoenix SFA SAP\SFA 5.5\SFA.BusinessLogic", @"*.cs", SearchOption.AllDirectories);
 			foreach (var file in sourceFiles)
 			{
 				var contents = File.ReadAllText(file);
@@ -1049,7 +1049,7 @@ using AppSystem.Data;
 
 			var buffer = new StringBuilder();
 
-			var lines = File.ReadAllLines(@"C:\Cchbc\PhoenixClient\Phoenix SFA SAP\SFA 5.5\SFA.BusinessLogic\SFA.BusinessLogic.csproj");
+			var lines = File.ReadAllLines(@"C:\Atos\PhoenixClient\Phoenix SFA SAP\SFA 5.5\SFA.BusinessLogic\SFA.BusinessLogic.csproj");
 			foreach (var line in lines)
 			{
 				var value = line.Trim();

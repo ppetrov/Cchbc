@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Settings
+namespace Atos.Settings
 {
 	public sealed class Setting
 	{

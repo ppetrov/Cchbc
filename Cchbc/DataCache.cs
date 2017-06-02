@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cchbc.Data;
+using Atos.Data;
 
-namespace Cchbc
+namespace Atos
 {
 	public sealed class DataCache
 	{

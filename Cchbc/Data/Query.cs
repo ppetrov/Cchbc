@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Cchbc.Data
+namespace Atos.Data
 {
 	public sealed class Query
 	{

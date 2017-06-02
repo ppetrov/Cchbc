@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace Cchbc.Common
+namespace Atos.Common
 {
 	public sealed class RelayCommand : ICommand
 	{

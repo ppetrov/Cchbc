@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using Cchbc.Common;
+using Atos.Common;
 
-namespace Cchbc.Features.DashboardModule.ViewModels
+namespace Atos.Features.DashboardModule.ViewModels
 {
 	public sealed class DashboardViewModel : ViewModel
 	{

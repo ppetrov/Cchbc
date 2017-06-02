@@ -1,4 +1,4 @@
-﻿namespace Cchbc.Dialog
+﻿namespace Atos.Dialog
 {
 	public enum DialogResult
 	{

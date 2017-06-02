@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Cchbc.Search
+namespace Atos.Search
 {
 	public sealed class Searcher<T> where T : ViewModel
 	{

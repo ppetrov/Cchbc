@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Localization
+namespace Atos.Localization
 {
 	public sealed class LocalizationKey
 	{

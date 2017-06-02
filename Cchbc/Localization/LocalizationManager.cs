@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Cchbc.Localization
+namespace Atos.Localization
 {
 	public sealed class LocalizationManager : ILocalizationManager
 	{

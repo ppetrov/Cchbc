@@ -5,11 +5,11 @@ using System.Windows.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
-using Cchbc.AppBuilder.DDL;
-using Cchbc.Common;
+using Atos.AppBuilder.DDL;
+using Atos.Common;
 
 
-namespace Cchbc.AppBuilder.UI
+namespace Atos.AppBuilder.UI
 {
 	public sealed partial class MainPage
 	{

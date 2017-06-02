@@ -1,8 +1,8 @@
 using System;
-using Cchbc.Data;
+using Atos.Data;
 using ConsoleClient;
 
-namespace Cchbc.ConsoleClient
+namespace Atos.ConsoleClient
 {
 	public sealed class TransactionContextCreator
 	{

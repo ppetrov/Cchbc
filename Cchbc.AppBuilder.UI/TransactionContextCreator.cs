@@ -1,7 +1,7 @@
 ﻿using System;
-using Cchbc.Data;
+using Atos.Data;
 
-namespace Cchbc.AppBuilder.UI
+namespace Atos.AppBuilder.UI
 {
 	public sealed class TransactionContextCreator
 	{

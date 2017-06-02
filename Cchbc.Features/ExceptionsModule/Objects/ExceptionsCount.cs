@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cchbc.Features.ExceptionsModule.Objects
+namespace Atos.Features.ExceptionsModule.Objects
 {
 	public sealed class ExceptionsCount
 	{

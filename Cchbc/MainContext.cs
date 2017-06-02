@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Cchbc.Data;
-using Cchbc.Dialog;
-using Cchbc.Features;
-using Cchbc.Localization;
-using Cchbc.Logs;
-using Cchbc.Validation;
+using Atos.Data;
+using Atos.Dialog;
+using Atos.Features;
+using Atos.Localization;
+using Atos.Logs;
+using Atos.Validation;
 
-namespace Cchbc
+namespace Atos
 {
 	public sealed class MainContext
 	{

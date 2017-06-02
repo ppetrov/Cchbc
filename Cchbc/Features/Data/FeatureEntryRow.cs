@@ -1,6 +1,6 @@
 using System;
 
-namespace Cchbc.Features.Data
+namespace Atos.Features.Data
 {
 	public sealed class FeatureEntryRow
 	{

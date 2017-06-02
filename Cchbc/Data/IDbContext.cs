@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Cchbc.Data
+namespace Atos.Data
 {
 	public interface IDbContext : IDisposable
 	{
