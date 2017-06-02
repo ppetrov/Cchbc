@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using Atos.Client;
 using Atos.Client.Common;
@@ -9,7 +8,6 @@ using Atos.Client.Features;
 using Atos.Client.Localization;
 using Atos.Client.Logs;
 using Atos.Client.Validation;
-using iFSA;
 using iFSA.AgendaModule;
 using iFSA.Common.Objects;
 using iFSA.LoginModule.Data;
@@ -17,20 +15,14 @@ using iFSA.LoginModule.Objects;
 using iFSA.LoginModule.ViewModels;
 using iFSA.ReplicationModule.Objects;
 
-namespace Atos.iFSA.LoginModule
+namespace iFSA.LoginModule
 {
 	public sealed class LoginScreenViewModel : ViewModel
 	{
-		private PermissionResult GetCustomized(string name)
-		{
-			return PermissionResult.Deny(this.MainContext.LocalizationManager.Get(new LocalizationKey(@"LoginScreen", name)));
-		}
-
 		private MainContext MainContext { get; }
 		private IAppNavigator AppNavigator { get; }
-		private LoginScreenData Data { get; }
-
-		private List<User> Users { get; set; }
+		private LoginScreenDataProvider DataProvider { get; }
+		private List<User> Users { get; } = new List<User>();
 
 		public string NameCaption { get; }
 		public string PasswordCaption { get; }
@@ -48,12 +40,6 @@ namespace Atos.iFSA.LoginModule
 		{
 			get { return _password; }
 			set { this.SetProperty(ref _password, value); }
-		}
-		private string _downloadReplicationConfigProgress = string.Empty;
-		public string DownloadReplicationConfigProgress
-		{
-			get { return _downloadReplicationConfigProgress; }
-			set { this.SetProperty(ref _downloadReplicationConfigProgress, value); }
 		}
 
 		public ICommand AdvancedCommand { get; }
@@ -75,26 +61,26 @@ namespace Atos.iFSA.LoginModule
 		}
 		public ObservableCollection<CountryViewModel> Countries { get; } = new ObservableCollection<CountryViewModel>();
 
-		public LoginScreenViewModel(MainContext mainContext, IAppNavigator appNavigator, LoginScreenData data)
+		public LoginScreenViewModel(MainContext mainContext, IAppNavigator appNavigator, LoginScreenDataProvider dataProvider)
 		{
-			if (data == null) throw new ArgumentNullException(nameof(data));
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 			if (appNavigator == null) throw new ArgumentNullException(nameof(appNavigator));
+			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 
-			this.Data = data;
 			this.MainContext = mainContext;
 			this.AppNavigator = appNavigator;
+			this.DataProvider = dataProvider;
 
-			//this.NameCaption = this.GetCustomized(@"Name");
-			//this.PasswordCaption = this.GetCustomized(@"Password");
-			//this.LoginCaption = this.GetCustomized(@"Login");
-			//this.AdvancedCaption = this.GetCustomized(@"Advanced");
+			this.NameCaption = this.GetLocalizedValue(@"Name");
+			this.PasswordCaption = this.GetLocalizedValue(@"Password");
+			this.LoginCaption = this.GetLocalizedValue(@"Login");
+			this.AdvancedCaption = this.GetLocalizedValue(@"Advanced");
 
-			//this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Production"), SystemSource.Production)));
-			//this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Quality"), SystemSource.Quality)));
-			//this.Systems.Add(new SystemViewModel(new AppSystem(this.GetCustomized(@"Development"), SystemSource.Development)));
+			this.Systems.Add(new SystemViewModel(new AppSystem(this.GetLocalizedValue(@"Production"), SystemSource.Production)));
+			this.Systems.Add(new SystemViewModel(new AppSystem(this.GetLocalizedValue(@"Quality"), SystemSource.Quality)));
+			this.Systems.Add(new SystemViewModel(new AppSystem(this.GetLocalizedValue(@"Development"), SystemSource.Development)));
 
-			foreach (var country in this.Data.GetCountries())
+			foreach (var country in this.DataProvider.GetCountries())
 			{
 				this.Countries.Add(new CountryViewModel(country));
 			}
@@ -103,16 +89,28 @@ namespace Atos.iFSA.LoginModule
 			this.LoginCommand = new RelayCommand(this.Login);
 		}
 
-		public Task LoadDataAsync()
+		public void LoadData()
 		{
-			var userSettings = this.Data.GetUserSettings();
-			if (userSettings != null)
+			var feature = new Feature(nameof(LoginScreenViewModel), nameof(LoadData));
+			try
 			{
-				this.Username = userSettings.User.Name;
-			}
-			this.Users = this.Data.GetUsers(this.MainContext);
+				this.MainContext.FeatureManager.Save(feature);
 
-			return Task.CompletedTask;
+				var userSettings = this.DataProvider.GetUserSettings();
+				if (userSettings != null)
+				{
+					this.Username = userSettings.User.Name;
+				}
+				using (var ctx = new FeatureContext(this.MainContext, feature))
+				{
+					this.Users.Clear();
+					this.Users.AddRange(this.DataProvider.GetUsers(ctx));
+				}
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.FeatureManager.Save(feature, ex);
+			}
 		}
 
 		private async void Login()
@@ -141,11 +139,11 @@ namespace Atos.iFSA.LoginModule
 					if (user != null)
 					{
 						// Save the current username
-						var userSettings = this.Data.GetUserSettings();
+						var userSettings = this.DataProvider.GetUserSettings();
 						if (userSettings != null)
 						{
 							userSettings.User = user;
-							this.Data.SaveUserSettings(userSettings);
+							this.DataProvider.SaveUserSettings(userSettings);
 						}
 
 						// Display agenda
@@ -153,7 +151,7 @@ namespace Atos.iFSA.LoginModule
 					}
 					else
 					{
-						await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"WrongCredentials"));
+						await this.MainContext.ModalDialog.ShowAsync(this.GetLocalizationMessage(@"WrongCredentials"));
 					}
 					return;
 				}
@@ -161,20 +159,20 @@ namespace Atos.iFSA.LoginModule
 				var systemViewModel = this.SelectedSystem;
 				if (systemViewModel == null)
 				{
-					await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"NoSystemSelected"));
+					await this.MainContext.ModalDialog.ShowAsync(this.GetLocalizationMessage(@"NoSystemSelected"));
 					return;
 				}
 				var countryViewModel = this.SelectedCountry;
 				if (countryViewModel == null)
 				{
-					await this.MainContext.ModalDialog.ShowAsync(this.GetCustomized(@"NoCountrySelected"));
+					await this.MainContext.ModalDialog.ShowAsync(this.GetLocalizationMessage(@"NoCountrySelected"));
 					return;
 				}
 
 				var system = systemViewModel.AppSystem;
 				var country = countryViewModel.Country;
 
-				var config = await this.Data.GetReplicationConfig(system, country);
+				var config = await this.DataProvider.GetReplicationConfig(system, country);
 				if (config != null)
 				{
 					var login = new Login(this.Username, this.Password);
@@ -188,14 +186,14 @@ namespace Atos.iFSA.LoginModule
 						try
 						{
 							// Save the current replication config
-							var userSettings = this.Data.GetUserSettings();
+							var userSettings = this.DataProvider.GetUserSettings();
 							if (userSettings != null)
 							{
 								userSettings.ReplicationConfig = config;
-								this.Data.SaveUserSettings(userSettings);
+								this.DataProvider.SaveUserSettings(userSettings);
 							}
 
-							await LoadDataAsync();
+							this.LoadData();
 
 							this.LoginCommand.Execute(null);
 						}
@@ -222,7 +220,7 @@ namespace Atos.iFSA.LoginModule
 			try
 			{
 				var config = new ReplicationConfig(string.Empty, 0);
-				var userSettings = this.Data.GetUserSettings();
+				var userSettings = this.DataProvider.GetUserSettings();
 				if (userSettings != null)
 				{
 					config = userSettings.ReplicationConfig;
@@ -239,6 +237,16 @@ namespace Atos.iFSA.LoginModule
 			{
 				this.MainContext.FeatureManager.Save(feature);
 			}
+		}
+
+		private string GetLocalizedValue(string name)
+		{
+			return this.MainContext.LocalizationManager.Get(new LocalizationKey(nameof(LoginScreenViewModel), name));
+		}
+
+		private PermissionResult GetLocalizationMessage(string name)
+		{
+			return PermissionResult.Deny(this.MainContext.LocalizationManager.Get(new LocalizationKey(nameof(LoginScreenViewModel), name)));
 		}
 	}
 }

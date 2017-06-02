@@ -51,12 +51,10 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AcModul.cs" />
     <Compile Include="AppUsageManager.cs" />
     <Compile Include="CalendarDay.cs" />
     <Compile Include="ContextCreator.cs" />
     <Compile Include="DayAnalyzerModule.cs" />
-    <Compile Include="DayStatus.cs" />
     <Compile Include="Dispatcher.cs" />
     <Compile Include="FeatureDataReplicaSimulation.cs" />
     <Compile Include="Program.cs" />
