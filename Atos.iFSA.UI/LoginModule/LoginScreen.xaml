@@ -1,0 +1,65 @@
+﻿<Page
+    x:Class="Atos.iFSA.UI.LoginModule.LoginScreen"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    DataContext="{x:Bind ViewModel}"
+    Loaded="LoginScreen_OnLoaded"
+    mc:Ignorable="d">
+
+    <!--Extract in general location-->
+    <Page.Resources>
+        <Style x:Name="RegularText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="DarkOrange"></Setter>
+            <Setter Property="Margin" Value="5"></Setter>
+        </Style>
+        <Style x:Name="HeaderText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="DarkOrange"></Setter>
+            <Setter Property="FontSize" Value="20"></Setter>
+            <Setter Property="Margin" Value="5"></Setter>
+        </Style>
+        <Style x:Name="TitleText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="DarkOrange"></Setter>
+            <Setter Property="FontSize" Value="48"></Setter>
+            <Setter Property="Margin" Value="10"></Setter>
+        </Style>
+
+        <Style x:Name="RegularButton" TargetType="Button">
+            <Setter Property="Foreground" Value="DarkOrange"></Setter>
+            <Setter Property="FontSize" Value="16"></Setter>
+            <Setter Property="Margin" Value="10"></Setter>
+        </Style>
+    </Page.Resources>
+
+    <Grid Background="DarkSlateBlue">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="2*"></RowDefinition>
+            <RowDefinition Height="8*"></RowDefinition>
+            <RowDefinition Height="2*"></RowDefinition>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Login" Style="{StaticResource TitleText}"></TextBlock>
+
+        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="10" VerticalAlignment="Center">
+            <TextBox Header="{x:Bind ViewModel.UsernameCaption}" Text="{x:Bind ViewModel.Username, Mode=TwoWay}" Margin="5">
+                <TextBox.HeaderTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <TextBlock Text="{x:Bind }" Style="{StaticResource HeaderText}"></TextBlock>
+                    </DataTemplate>
+                </TextBox.HeaderTemplate>
+            </TextBox>
+            <PasswordBox Header="{x:Bind ViewModel.PasswordCaption}" PasswordChanged="PasswordBox_OnPasswordChanged" Margin="5">
+                <PasswordBox.HeaderTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <TextBlock Text="{x:Bind }" Style="{StaticResource HeaderText}"></TextBlock>
+                    </DataTemplate>
+                </PasswordBox.HeaderTemplate>
+            </PasswordBox>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+                <Button Style="{StaticResource RegularButton}" Content="{x:Bind ViewModel.AdvancedCaption}" Command="{x:Bind ViewModel.AdvancedCommand}"></Button>
+                <Button Style="{StaticResource RegularButton}" Content="{x:Bind ViewModel.LoginCaption}" Command="{x:Bind ViewModel.LoginCommand}"></Button>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Page>

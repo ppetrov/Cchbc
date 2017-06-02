@@ -1,7 +1,7 @@
 ﻿using System;
-using iFSA.LoginModule.Objects;
+using Atos.iFSA.LoginModule.Objects;
 
-namespace iFSA.LoginModule.ViewModels
+namespace Atos.iFSA.LoginModule.ViewModels
 {
 	public sealed class SystemViewModel
 	{

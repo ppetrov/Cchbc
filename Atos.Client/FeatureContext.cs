@@ -22,7 +22,7 @@ namespace Atos.Client
 
 		public void Dispose()
 		{
-			this.DbContext.Complete();
+			this.DbContext.Dispose();
 		}
 	}
 }

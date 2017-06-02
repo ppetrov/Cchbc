@@ -1,4 +1,4 @@
-﻿namespace iFSA.LoginModule.Objects
+﻿namespace Atos.iFSA.LoginModule.Objects
 {
 	public enum SystemSource
 	{

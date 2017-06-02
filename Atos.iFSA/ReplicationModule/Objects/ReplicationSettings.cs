@@ -1,5 +1,5 @@
 using System;
-using iFSA.LoginModule.Objects;
+using Atos.iFSA.LoginModule.Objects;
 
 namespace iFSA.ReplicationModule.Objects
 {
