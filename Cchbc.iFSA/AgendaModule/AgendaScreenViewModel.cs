@@ -172,7 +172,6 @@ namespace iFSA.AgendaModule
 				}
 			}
 
-			// TODO : !!! Sort the collection
 			this.ApplyCurrentTextSearch();
 		}
 
@@ -183,16 +182,13 @@ namespace iFSA.AgendaModule
 			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadDay));
 			try
 			{
+				this.MainContext.FeatureManager.Save(feature, dateTime.ToString(@"O"));
 				this.LoadData(user, dateTime);
 			}
 			catch (Exception ex)
 			{
 				this.MainContext.Log(ex.ToString(), LogLevel.Error);
 				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-			finally
-			{
-				this.MainContext.FeatureManager.Save(feature, dateTime.ToString(@"O"));
 			}
 		}
 
@@ -208,7 +204,7 @@ namespace iFSA.AgendaModule
 			{
 				activityType = activityTypeViewModel.Model;
 			}
-			var permissionResult = this.Agenda.CanCreateActivity(outlet, activityType);
+			var permissionResult = this.Agenda.CanCreate(outlet, activityType);
 			var canContinue = await this.MainContext.CanContinueAsync(permissionResult);
 			if (canContinue)
 			{
@@ -226,16 +222,14 @@ namespace iFSA.AgendaModule
 			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadNextDay));
 			try
 			{
+				this.MainContext.FeatureManager.Save(feature);
+
 				this.LoadData(this.CurrentDate.AddDays(-1));
 			}
 			catch (Exception ex)
 			{
 				this.MainContext.Log(ex.ToString(), LogLevel.Error);
 				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-			finally
-			{
-				this.MainContext.FeatureManager.Save(feature);
 			}
 		}
 
@@ -244,6 +238,8 @@ namespace iFSA.AgendaModule
 			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadPreviousDay));
 			try
 			{
+				this.MainContext.FeatureManager.Save(feature);
+
 				this.LoadData(this.CurrentDate.AddDays(-1));
 			}
 			catch (Exception ex)
@@ -251,14 +247,12 @@ namespace iFSA.AgendaModule
 				this.MainContext.Log(ex.ToString(), LogLevel.Error);
 				this.MainContext.FeatureManager.Save(feature, ex);
 			}
-			finally
-			{
-				this.MainContext.FeatureManager.Save(feature);
-			}
 		}
 
 		private void ApplyCurrentTextSearch()
 		{
+			// TODO : !!! Sort the collection
+
 			var search = this.Search;
 
 			this.Outlets.Clear();
@@ -326,6 +320,8 @@ namespace iFSA.AgendaModule
 			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(ChangeStartTimeAsync));
 			try
 			{
+				this.MainContext.FeatureManager.Save(feature);
+
 				var activity = activityViewModel.Model;
 				await timeSelector.ShowAsync(
 					dateTime => this.Agenda.CanChangeStartTime(activity, dateTime),
@@ -334,10 +330,6 @@ namespace iFSA.AgendaModule
 			catch (Exception ex)
 			{
 				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-			finally
-			{
-				this.MainContext.FeatureManager.Save(feature);
 			}
 		}
 
@@ -349,18 +341,16 @@ namespace iFSA.AgendaModule
 			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(CancelAsync));
 			try
 			{
+				this.MainContext.FeatureManager.Save(feature);
+
 				var activity = activityViewModel.Model;
 				await cancelReasonSelector.ShowAsync(activity,
-					cancelReason => this.Agenda.CanCancel(activity),
+					cancelReason => this.Agenda.CanCancel(activity, cancelReason),
 					cancelReason => this.Agenda.Cancel(activity, cancelReason));
 			}
 			catch (Exception ex)
 			{
 				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-			finally
-			{
-				this.MainContext.FeatureManager.Save(feature);
 			}
 		}
 

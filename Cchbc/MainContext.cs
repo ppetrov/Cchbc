@@ -26,10 +26,10 @@ namespace Cchbc
 
 		public MainContext(Action<string, LogLevel> log, Func<IDbContext> dbContextCreator, IModalDialog modalDialog, IFeatureManager featureManager, ILocalizationManager localizationManager)
 		{
-			//if (log == null) throw new ArgumentNullException(nameof(log));
-			//if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
-			//if (modalDialog == null) throw new ArgumentNullException(nameof(modalDialog));
-			//if (featureManager == null) throw new ArgumentNullException(nameof(featureManager));
+			if (log == null) throw new ArgumentNullException(nameof(log));
+			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
+			if (modalDialog == null) throw new ArgumentNullException(nameof(modalDialog));
+			if (featureManager == null) throw new ArgumentNullException(nameof(featureManager));
 
 			this.Log = log;
 			this.DbContextCreator = dbContextCreator;

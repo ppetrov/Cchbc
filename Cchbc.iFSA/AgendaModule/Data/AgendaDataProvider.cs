@@ -10,7 +10,23 @@ namespace iFSA.AgendaModule.Data
 {
 	public sealed class AgendaDataProvider
 	{
-		public static List<AgendaOutlet> GetAgendaOutlets(MainContext context, User user, DateTime date)
+		public Activity Insert(Activity activity)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void Update(Activity activity)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			// TODO : How to get the Status ???
+			//var activityStatus = new ActivityStatus(0, string.Empty);
+			//var activity = new Activity(0, outlet, activityType, activityStatus, DateTime.Today, DateTime.Today, string.Empty);
+
+			throw new NotImplementedException();
+		}
+
+		public List<AgendaOutlet> GetAgendaOutlets(MainContext context, User user, DateTime date)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (user == null) throw new ArgumentNullException(nameof(user));
@@ -42,7 +58,7 @@ namespace iFSA.AgendaModule.Data
 			return new List<AgendaOutlet>();
 		}
 
-		public static OutletImage GetDefaultOutletImage(MainContext context, Outlet outlet)
+		public OutletImage GetDefaultOutletImage(MainContext context, Outlet outlet)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -50,7 +66,7 @@ namespace iFSA.AgendaModule.Data
 			return null;
 		}
 
-		public static Activity CreateActivity(MainContext context, Activity activity)
+		public Activity Insert(MainContext context, Activity activity)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -62,7 +78,7 @@ namespace iFSA.AgendaModule.Data
 			return null;
 		}
 
-		public static void UpdateActivity(MainContext context, Activity activity)
+		public void Update(MainContext context, Activity activity)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
@@ -72,6 +88,11 @@ namespace iFSA.AgendaModule.Data
 				dbContext.Execute(new Query(@"update activities set details = @details, ..... where id = @id"));
 				dbContext.Complete();
 			}
+		}
+
+		public object GetVisitDay(DateTime dateTime)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

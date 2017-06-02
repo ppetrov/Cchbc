@@ -58,18 +58,18 @@ namespace iFSA.AgendaModule.ViewModels
 			return this.ParentViewModel.ChangeStartTimeAsync(activityViewModel);
 		}
 
+		public Task CancelAsync(ActivityViewModel activityViewModel)
+		{
+			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
+
+			return this.ParentViewModel.CancelAsync(activityViewModel);
+		}
+
 		public Task CloseAsync(ActivityViewModel activityViewModel)
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
 			return this.ParentViewModel.CloseAsync(activityViewModel);
-		}
-
-		public Task CancelAsync(ActivityViewModel activityViewModel)
-		{
-			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
-
-			return this.ParentViewModel.CancelAsync(activityViewModel);			
 		}
 
 		public void Copy(ActivityViewModel activityViewModel)
@@ -99,8 +99,5 @@ namespace iFSA.AgendaModule.ViewModels
 
 			throw new NotImplementedException();
 		}
-
-
-
 	}
 }

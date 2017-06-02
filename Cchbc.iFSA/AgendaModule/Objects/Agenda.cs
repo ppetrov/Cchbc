@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Cchbc;
 using Cchbc.Logs;
 using Cchbc.Validation;
+using iFSA.AgendaModule.Data;
+using iFSA.Common.Data;
 using iFSA.Common.Objects;
 
 namespace iFSA.AgendaModule.Objects
@@ -34,7 +36,7 @@ namespace iFSA.AgendaModule.Objects
 
 	public sealed class Agenda
 	{
-		private AgendaData Data { get; }
+		private AgendaDataProvider DataProvider { get; }
 		private CancellationTokenSource _cts = new CancellationTokenSource();
 
 		public List<AgendaOutlet> Outlets { get; } = new List<AgendaOutlet>();
@@ -44,11 +46,11 @@ namespace iFSA.AgendaModule.Objects
 		public event EventHandler<ActivityEventArgs> ActivityDeleted;
 		public event EventHandler<ActivityEventArgs> ActivityUpdated;
 
-		public Agenda(AgendaData data)
+		public Agenda(AgendaDataProvider dataProvider)
 		{
-			if (data == null) throw new ArgumentNullException(nameof(data));
+			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 
-			this.Data = data;
+			this.DataProvider = dataProvider;
 		}
 
 		public void LoadDay(MainContext mainContext, User user, DateTime dateTime)
@@ -57,7 +59,7 @@ namespace iFSA.AgendaModule.Objects
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
 			this.Outlets.Clear();
-			this.Outlets.AddRange(this.Data.GetAgendaOutlets(mainContext, user, dateTime));
+			this.Outlets.AddRange(this.DataProvider.GetAgendaOutlets(mainContext, user, dateTime));
 
 			var outlets = new Outlet[this.Outlets.Count];
 			for (var index = 0; index < this.Outlets.Count; index++)
@@ -82,10 +84,10 @@ namespace iFSA.AgendaModule.Objects
 						{
 							break;
 						}
-						var outletImage = this.Data.GetDefaultOutletImage(mainContext, outlet);
+						var outletImage = this.DataProvider.GetDefaultOutletImage(mainContext, outlet);
 						if (outletImage != null)
 						{
-							this.OnOutletImageDownloaded(new OutletImageEventArgs(outletImage));
+							this.OutletImageDownloaded?.Invoke(this, new OutletImageEventArgs(outletImage));
 						}
 					}
 				}
@@ -96,7 +98,7 @@ namespace iFSA.AgendaModule.Objects
 			}, this._cts.Token);
 		}
 
-		public PermissionResult CanCreateActivity(Outlet outlet, ActivityType activityType)
+		public PermissionResult CanCreate(Outlet outlet, ActivityType activityType)
 		{
 			if (outlet == null)
 			{
@@ -113,12 +115,61 @@ namespace iFSA.AgendaModule.Objects
 			return PermissionResult.Allow;
 		}
 
+		public PermissionResult CanCancel(Activity activity, ActivityCancelReason cancelReason)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			if (activity.Status == null)
+			{
+				return PermissionResult.Deny(@"CannotCancelInactiveActivity");
+			}
+			// Check the day
+			// TODO : !!!
+			var visitDay = this.DataProvider.GetVisitDay(DateTime.Today);
+
+			return PermissionResult.Allow;
+		}
+
+		public PermissionResult CanCancel(DateTime date)
+		{
+			var visitDay = this.DataProvider.GetVisitDay(DateTime.Today);
+
+			return PermissionResult.Allow;
+		}
+
+		public PermissionResult CanClose(Activity activity)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			// Check the day
+			// Check the status
+			// Check cancel reason
+			// TODO : !!!
+
+			return PermissionResult.Allow;
+		}
+
+		public PermissionResult CanChangeStartTime(Activity activity, DateTime dateTime)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			if (activity.Details == string.Empty)
+			{
+				return PermissionResult.Deny(@"CannotChangeDateOfServerActivity");
+			}
+			if (activity.Details == @"???")
+			{
+				return PermissionResult.Confirm(@"OutsideOfWorkingHours");
+			}
+			return PermissionResult.Allow;
+		}
+
 		public Activity Create(Activity activity)
 		{
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 
 			// Save activity to db
-			var newActivity = this.Data.Save(activity);
+			var newActivity = this.DataProvider.Insert(activity);
 
 			var outlet = activity.Outlet;
 
@@ -150,50 +201,43 @@ namespace iFSA.AgendaModule.Objects
 			return newActivity;
 		}
 
-		private void OnOutletImageDownloaded(OutletImageEventArgs e)
-		{
-			OutletImageDownloaded?.Invoke(this, e);
-		}
-
-		public PermissionResult CanChangeStartTime(Activity activity, DateTime dateTime)
+		public void Cancel(Activity activity, ActivityCancelReason cancelReason)
 		{
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 
-			if (activity.Details == string.Empty)
-			{
-				return PermissionResult.Deny(@"CannotChangeDateOfServerActivity");
-			}
-			if (activity.Details == @"???")
-			{
-				return PermissionResult.Confirm(@"OutsideOfWorkingHours");
-			}
-			return PermissionResult.Allow;
-		}
-
-		public PermissionResult CanCancel(Activity activity)
-		{
-			if (activity == null) throw new ArgumentNullException(nameof(activity));
-
-			// Check the day
-			// Check the status
-			// Check cancel reason
 			// TODO : !!!
-
-			return PermissionResult.Allow;
-		}
-
-		public void ChangeStartTime(Activity activity, DateTime dateTime)
-		{
-			if (activity == null) throw new ArgumentNullException(nameof(activity));
-
-			activity.FromDate = activity.FromDate.Date.Add(dateTime.TimeOfDay);
-
-			// TODO : Update activity in the database
 
 			this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
 		}
 
-		public void Cancel(Activity activity, ActivityCancelReason cancelReason)
+		public void CancelDay(ActivityCancelReason cancelReason)
+		{
+			// TODO : Update activity in the database
+
+			var canCancel = false;
+
+			// TODO : !!!
+			//var cancelOperation = new CalendarCancelOperation(new CalendarDataProvider(this.Context.DbContextCreator));
+			//cancelOperation.CancelActivities(new[] { activityViewModel.Model }, cancelReason, a =>
+			//{
+			//	var aid = a.Id;
+
+			//	var activities = this.Activities;
+			//	for (var i = 0; i < activities.Count; i++)
+			//	{
+			//		var activity = activities[i];
+			//		if (activity.Model.Id == aid)
+			//		{
+			//			activities[i] = new ActivityViewModel(this, a);
+			//			break;
+			//		}
+			//	}
+			//});
+
+			//this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
+		}
+
+		public void Close(Activity activity, ActivityCloseReason closeReason)
 		{
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 
@@ -216,6 +260,17 @@ namespace iFSA.AgendaModule.Objects
 			//		}
 			//	}
 			//});
+
+			this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
+		}
+
+		public void ChangeStartTime(Activity activity, DateTime dateTime)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
+
+			activity.FromDate = activity.FromDate.Date.Add(dateTime.TimeOfDay);
+
+			this.DataProvider.Update(activity);
 
 			this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
 		}

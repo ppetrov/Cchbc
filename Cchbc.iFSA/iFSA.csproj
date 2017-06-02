@@ -47,7 +47,6 @@
     <Compile Include="AddActivityModule\ActivityTypeViewModel.cs" />
     <Compile Include="AgendaModule\AgendaScreenParam.cs" />
     <Compile Include="AgendaModule\Objects\Agenda.cs" />
-    <Compile Include="AgendaModule\Objects\AgendaData.cs" />
     <Compile Include="AgendaModule\Objects\AgendaOutlet.cs" />
     <Compile Include="AgendaModule\Data\AgendaDataProvider.cs" />
     <Compile Include="AgendaModule\Objects\OutletImage.cs" />
