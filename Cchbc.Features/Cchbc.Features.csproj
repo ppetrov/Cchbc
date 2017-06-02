@@ -8,8 +8,8 @@
     <ProjectGuid>{7611601A-80E1-43FA-ADE0-4F25245DA724}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cchbc.Features</RootNamespace>
-    <AssemblyName>Cchbc.Features</AssemblyName>
+    <RootNamespace>Atos.Features</RootNamespace>
+    <AssemblyName>Atos.Features</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>

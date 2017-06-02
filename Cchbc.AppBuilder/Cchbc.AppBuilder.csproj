@@ -8,8 +8,8 @@
     <ProjectGuid>{C925111E-12CE-4D75-93F8-348C5FD44EFD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cchbc.AppBuilder</RootNamespace>
-    <AssemblyName>Cchbc.AppBuilder</AssemblyName>
+    <RootNamespace>Atos.AppBuilder</RootNamespace>
+    <AssemblyName>Atos.AppBuilder</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>

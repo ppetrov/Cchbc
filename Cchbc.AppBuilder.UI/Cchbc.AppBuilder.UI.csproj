@@ -7,8 +7,8 @@
     <ProjectGuid>{D0AA39B4-4E8E-4C1B-8D98-728E7F3E6DA0}</ProjectGuid>
     <OutputType>AppContainerExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Cchbc.AppBuilder.UI</RootNamespace>
-    <AssemblyName>Cchbc.AppBuilder.UI</AssemblyName>
+    <RootNamespace>Atos.AppBuilder.UI</RootNamespace>
+    <AssemblyName>Atos.AppBuilder.UI</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
     <TargetPlatformVersion>10.0.10240.0</TargetPlatformVersion>
