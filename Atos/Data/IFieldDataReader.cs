@@ -1,6 +1,6 @@
 using System;
 
-namespace Atos.Data
+namespace Atos.Client.Data
 {
 	public interface IFieldDataReader
 	{

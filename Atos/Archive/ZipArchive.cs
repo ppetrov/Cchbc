@@ -4,7 +4,7 @@ using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Atos.Archive
+namespace Atos.Client.Archive
 {
 	public sealed class ZipArchive
 	{

@@ -1,8 +1,8 @@
 ﻿using System;
-using Atos.Data;
-using Atos.Features;
+using Atos.Client.Data;
+using Atos.Client.Features;
 
-namespace Atos
+namespace Atos.Client
 {
 	public sealed class FeatureContext : IDisposable
 	{

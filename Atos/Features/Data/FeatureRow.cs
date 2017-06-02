@@ -1,6 +1,6 @@
 using System;
 
-namespace Atos.Features.Data
+namespace Atos.Client.Features.Data
 {
 	public sealed class FeatureRow
 	{

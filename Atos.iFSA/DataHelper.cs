@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Atos;
-using Atos.Data;
+using Atos.Client;
+using Atos.Client.Data;
 using iFSA.Common.Objects;
 using iFSA.MasterDataModule.Objects;
 

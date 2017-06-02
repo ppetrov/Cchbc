@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Atos;
+using Atos.Client;
 using iFSA.Common.Objects;
 using iFSA.LoginModule.Objects;
 

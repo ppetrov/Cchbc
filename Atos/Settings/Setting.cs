@@ -1,6 +1,6 @@
 using System;
 
-namespace Atos.Settings
+namespace Atos.Client.Settings
 {
 	public sealed class Setting
 	{

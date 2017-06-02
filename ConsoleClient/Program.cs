@@ -9,13 +9,13 @@ using System.Text;
 using System.Threading;
 using Atos.AppBuilder;
 using Atos.AppBuilder.DDL;
-using Atos.Archive;
+using Atos.Client.Archive;
+using Atos.Client.Data;
+using Atos.Client.Features;
+using Atos.Client.Features.Data;
+using Atos.Client.Validation;
 using Atos.ConsoleClient;
-using Atos.Data;
-using Atos.Features;
-using Atos.Features.Data;
 using Atos.Server;
-using Atos.Validation;
 
 namespace ConsoleClient
 {

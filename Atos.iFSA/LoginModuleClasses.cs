@@ -5,12 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Atos;
-using Atos.Common;
-using Atos.Data;
-using Atos.Dialog;
-using Atos.Features;
-using Atos.Logs;
-using Atos.Validation;
+using Atos.Client;
+using Atos.Client.Common;
+using Atos.Client.Data;
+using Atos.Client.Dialog;
 using iFSA.Common.Objects;
 
 namespace iFSA

@@ -160,9 +160,9 @@
       <Project>{C925111E-12CE-4D75-93F8-348C5FD44EFD}</Project>
       <Name>Atos.AppBuilder</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Atos\Atos.csproj">
+    <ProjectReference Include="..\Atos\Atos.Client.csproj">
       <Project>{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}</Project>
-      <Name>Atos</Name>
+      <Name>Atos.Client</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

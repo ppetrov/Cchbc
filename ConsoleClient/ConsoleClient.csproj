@@ -77,9 +77,9 @@
       <Project>{7611601A-80E1-43FA-ADE0-4F25245DA724}</Project>
       <Name>Atos.Server</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Atos\Atos.csproj">
+    <ProjectReference Include="..\Atos\Atos.Client.csproj">
       <Project>{cf3bbbbd-5f7a-47b5-a5a5-71eb0ec6ad84}</Project>
-      <Name>Atos</Name>
+      <Name>Atos.Client</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace Atos.Features.Data
+namespace Atos.Client.Features.Data
 {
 	public sealed class ClientData
 	{

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Windows.UI.Popups;
-using Atos.Dialog;
-using Atos.Validation;
+using Atos.Client.Dialog;
+using Atos.Client.Validation;
 
 namespace Atos.AppBuilder.UI
 {

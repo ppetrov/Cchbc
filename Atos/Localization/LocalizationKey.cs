@@ -1,6 +1,6 @@
 using System;
 
-namespace Atos.Localization
+namespace Atos.Client.Localization
 {
 	public sealed class LocalizationKey
 	{

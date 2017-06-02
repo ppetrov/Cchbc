@@ -1,7 +1,8 @@
 using System;
 using System.Windows.Input;
 using Atos;
-using Atos.Common;
+using Atos.Client;
+using Atos.Client.Common;
 using iFSA.AgendaModule.ViewModels;
 using iFSA.Common.Objects;
 

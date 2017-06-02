@@ -1,4 +1,4 @@
-﻿namespace Atos.Logs
+﻿namespace Atos.Client.Logs
 {
 	public enum LogLevel
 	{

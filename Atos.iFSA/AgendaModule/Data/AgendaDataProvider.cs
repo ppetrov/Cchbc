@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Atos;
-using Atos.Data;
+using Atos.Client;
+using Atos.Client.Data;
 using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
 

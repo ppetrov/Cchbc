@@ -1,4 +1,5 @@
 ﻿using Atos;
+using Atos.Client;
 using iFSA.Common.Objects;
 
 namespace iFSA.AddActivityModule

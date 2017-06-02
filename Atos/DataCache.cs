@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Atos.Data;
+using Atos.Client.Data;
 
-namespace Atos
+namespace Atos.Client
 {
 	public sealed class DataCache
 	{

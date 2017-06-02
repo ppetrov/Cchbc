@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Atos.Data;
-using Atos.Dialog;
-using Atos.Features;
-using Atos.Localization;
-using Atos.Logs;
-using Atos.Validation;
+using Atos.Client.Data;
+using Atos.Client.Dialog;
+using Atos.Client.Features;
+using Atos.Client.Localization;
+using Atos.Client.Logs;
+using Atos.Client.Validation;
 
-namespace Atos
+namespace Atos.Client
 {
 	public sealed class MainContext
 	{

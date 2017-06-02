@@ -1,5 +1,6 @@
 using System;
 using Atos;
+using Atos.Client;
 
 namespace iFSA.ArchitectureModule
 {

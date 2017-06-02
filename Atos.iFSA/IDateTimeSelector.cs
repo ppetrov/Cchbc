@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Atos.Validation;
+using Atos.Client.Validation;
 
 namespace iFSA
 {

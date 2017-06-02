@@ -1,7 +1,7 @@
 using System;
-using Atos.Logs;
+using Atos.Client.Logs;
 
-namespace Atos.Settings
+namespace Atos.Client.Settings
 {
 	public static class ValueParser
 	{

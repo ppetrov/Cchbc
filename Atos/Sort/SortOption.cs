@@ -1,6 +1,6 @@
 using System;
 
-namespace Atos.Sort
+namespace Atos.Client.Sort
 {
 	public sealed class SortOption<T> : ViewModel
 	{

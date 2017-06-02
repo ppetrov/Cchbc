@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 
-namespace Atos.Sort
+namespace Atos.Client.Sort
 {
 	public sealed class Sorter<T> where T : ViewModel
 	{
-		public SortOption<T>[] Options { get; private set; }
+		public SortOption<T>[] Options { get; }
 		public SortOption<T> CurrentOption { get; private set; }
 
 		public Sorter(SortOption<T>[] options)

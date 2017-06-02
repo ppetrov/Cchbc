@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Atos.Client.Features.Data;
 using Atos.ConsoleClient;
-using Atos.Features;
-using Atos.Features.Data;
 using Atos.Server;
 
 namespace ConsoleClient

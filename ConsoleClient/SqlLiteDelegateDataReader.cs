@@ -1,6 +1,6 @@
 using System;
 using System.Data;
-using Atos.Data;
+using Atos.Client.Data;
 
 namespace Atos.ConsoleClient
 {

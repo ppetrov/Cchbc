@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.SQLite;
-using Atos.Data;
+using Atos.Client.Data;
 
 namespace Atos.AppBuilder.UI
 {

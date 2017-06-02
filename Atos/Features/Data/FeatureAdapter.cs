@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Atos.Data;
+using Atos.Client.Data;
 
-namespace Atos.Features.Data
+namespace Atos.Client.Features.Data
 {
 	public static class FeatureAdapter
 	{

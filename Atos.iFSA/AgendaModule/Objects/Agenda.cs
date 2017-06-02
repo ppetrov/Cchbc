@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Atos;
-using Atos.Logs;
-using Atos.Validation;
+using Atos.Client;
+using Atos.Client.Logs;
+using Atos.Client.Validation;
 using iFSA.AgendaModule.Data;
 using iFSA.Common.Objects;
 

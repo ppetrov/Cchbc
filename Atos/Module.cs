@@ -3,12 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Atos.Data;
-using Atos.Dialog;
-using Atos.Features;
-using Atos.Search;
-using Atos.Sort;
-using Atos.Validation;
 
 namespace Atos
 {

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Atos.Archive
+namespace Atos.Client.Archive
 {
 	internal sealed class ZipHeader
 	{

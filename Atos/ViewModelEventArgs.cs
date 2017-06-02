@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Atos
+namespace Atos.Client
 {
 	public sealed class ViewModelEventArgs<T> : EventArgs where T : ViewModel
 	{

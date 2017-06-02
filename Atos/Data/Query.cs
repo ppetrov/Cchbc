@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Atos.Data
+namespace Atos.Client.Data
 {
 	public sealed class Query
 	{

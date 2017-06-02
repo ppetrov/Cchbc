@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using Windows.Storage;
+using Atos.Client;
 
 namespace Atos.AppBuilder.UI
 {

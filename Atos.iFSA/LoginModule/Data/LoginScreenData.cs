@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Atos;
+using Atos.Client;
 using iFSA.AgendaModule.Data;
 using iFSA.Common.Objects;
 using iFSA.LoginModule.Objects;

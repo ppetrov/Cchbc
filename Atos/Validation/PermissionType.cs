@@ -1,4 +1,4 @@
-﻿namespace Atos.Validation
+﻿namespace Atos.Client.Validation
 {
 	public enum PermissionType
 	{

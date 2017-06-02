@@ -1,6 +1,6 @@
 using System;
 
-namespace Atos.Features
+namespace Atos.Client.Features
 {
 	public sealed class Feature
 	{

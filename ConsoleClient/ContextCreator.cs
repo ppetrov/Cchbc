@@ -1,5 +1,5 @@
 using System;
-using Atos.Data;
+using Atos.Client.Data;
 using ConsoleClient;
 
 namespace Atos.ConsoleClient

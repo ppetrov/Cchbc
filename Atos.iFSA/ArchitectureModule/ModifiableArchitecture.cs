@@ -4,13 +4,12 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
 using Atos;
-using Atos.Common;
-using Atos.Data;
-using Atos.Dialog;
-using Atos.Features;
-using Atos.Localization;
-using Atos.Logs;
-using Atos.Validation;
+using Atos.Client;
+using Atos.Client.Common;
+using Atos.Client.Data;
+using Atos.Client.Features;
+using Atos.Client.Logs;
+using Atos.Client.Validation;
 
 namespace iFSA.ArchitectureModule
 {

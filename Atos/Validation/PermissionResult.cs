@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Atos.Validation
+namespace Atos.Client.Validation
 {
 	public sealed class PermissionResult
 	{

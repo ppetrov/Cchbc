@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Atos.Data;
-using Atos.Features.Data;
+using Atos.Client.Data;
+using Atos.Client.Features.Data;
 
-namespace Atos.Features
+namespace Atos.Client.Features
 {
 	public interface IFeatureManager
 	{

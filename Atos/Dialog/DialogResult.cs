@@ -1,4 +1,4 @@
-﻿namespace Atos.Dialog
+﻿namespace Atos.Client.Dialog
 {
 	public enum DialogResult
 	{

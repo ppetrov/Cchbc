@@ -2,19 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Input;
-using Atos;
-using Atos.Common;
-using Atos.Dialog;
-using Atos.Features;
-using Atos.Localization;
-using Atos.Logs;
-using Atos.Validation;
+using Atos.Client;
+using Atos.Client.Common;
+using Atos.Client.Localization;
+using Atos.Client.Logs;
+using iFSA;
+using iFSA.AddActivityModule;
 using iFSA.AgendaModule;
-using iFSA.Common.Objects;
 
-namespace iFSA.AddActivityModule
+namespace Atos.iFSA.AddActivityModule
 {
 	public sealed class AddActivityScreenViewModel : ViewModel
 	{

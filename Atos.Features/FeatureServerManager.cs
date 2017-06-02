@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Atos.Data;
+using Atos.Client.Data;
 
 namespace Atos.Server
 {

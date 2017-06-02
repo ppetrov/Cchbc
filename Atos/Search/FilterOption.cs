@@ -1,6 +1,6 @@
 using System;
 
-namespace Atos.Search
+namespace Atos.Client.Search
 {
 	public sealed class FilterOption<T> : ViewModel where T : ViewModel
 	{

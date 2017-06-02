@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Atos;
+using Atos.Client;
 
 namespace iFSA.ArchitectureModule
 {

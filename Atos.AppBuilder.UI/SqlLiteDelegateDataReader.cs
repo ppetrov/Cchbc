@@ -1,6 +1,6 @@
 ﻿using System;
 using System.SQLite;
-using Atos.Data;
+using Atos.Client.Data;
 
 namespace Atos.AppBuilder.UI
 {

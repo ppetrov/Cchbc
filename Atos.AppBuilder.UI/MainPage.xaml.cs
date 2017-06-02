@@ -6,14 +6,14 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
 using Atos.AppBuilder.DDL;
-using Atos.Common;
+using Atos.Client;
+using Atos.Client.Common;
 
 
 namespace Atos.AppBuilder.UI
 {
 	public sealed partial class MainPage
 	{
-		//public AgendaViewModel ViewModel { get; } = new AgendaViewModel();
 		public DesignTableViewModel ViewModel { get; } = new DesignTableViewModel();
 
 		public MainPage()

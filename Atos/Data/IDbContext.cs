@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Atos.Data
+namespace Atos.Client.Data
 {
 	public interface IDbContext : IDisposable
 	{
