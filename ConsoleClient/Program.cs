@@ -14,8 +14,7 @@ using Atos.ConsoleClient;
 using Atos.Data;
 using Atos.Features;
 using Atos.Features.Data;
-using Atos.Features.ExceptionsModule;
-using Atos.Features.Replication;
+using Atos.Server;
 using Atos.Validation;
 
 namespace ConsoleClient
@@ -189,9 +188,9 @@ namespace ConsoleClient
 				return;
 
 
-				var viewModel =
-					new ExceptionsViewModel(new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create,
-						ExceptionsSettings.Default);
+				//var viewModel =
+				//	new ExceptionsViewModel(new TransactionContextCreator(GetSqliteConnectionString(serverDbPath)).Create,
+				//		ExceptionsSettings.Default);
 
 				for (var i = 0; i < 100; i++)
 				{
@@ -199,30 +198,6 @@ namespace ConsoleClient
 					//	ExceptionsDataProvider.GetExceptions, ExceptionsDataProvider.GetExceptionsCounts);
 				}
 
-				w.Stop();
-				Console.WriteLine(w.ElapsedMilliseconds);
-
-				Console.WriteLine(@"Time Periods");
-				foreach (var v in viewModel.TimePeriods)
-				{
-					Console.WriteLine('\t' + string.Empty + v.Name);
-				}
-				Console.WriteLine();
-
-				Console.WriteLine(@"Versions");
-				foreach (var v in viewModel.Versions)
-				{
-					Console.WriteLine('\t' + string.Empty + v.Name);
-				}
-				Console.WriteLine();
-
-				Console.WriteLine(@"Exceptions");
-				foreach (var vm in viewModel.LatestExceptions)
-				{
-					Console.WriteLine('\t' + string.Empty + new string(vm.Message.Take(40).ToArray()) +
-									  $@"... ({vm.CreatedAt.ToString(@"T")}) " + vm.User.Name + $@"({vm.Version.Name})");
-				}
-				Console.WriteLine();
 
 				return;
 				//SearchSourceCode();

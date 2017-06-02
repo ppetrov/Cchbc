@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Atos.ConsoleClient;
+using Atos.Features;
 using Atos.Features.Data;
-using Atos.Features.Replication;
+using Atos.Server;
 
 namespace ConsoleClient
 {

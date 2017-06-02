@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using Atos.Data;
 
-namespace Atos.Features.Replication
+namespace Atos.Server
 {
 	public static class FeatureServerManager
 	{
