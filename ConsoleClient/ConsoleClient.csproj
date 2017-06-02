@@ -73,6 +73,10 @@
       <Project>{C925111E-12CE-4D75-93F8-348C5FD44EFD}</Project>
       <Name>Atos.AppBuilder</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Atos.Client.Data\Atos.Client.Data.csproj">
+      <Project>{9539e041-5ce3-43b1-ae16-f49eb300baf7}</Project>
+      <Name>Atos.Client.Data</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Atos.Server\Atos.Server.csproj">
       <Project>{7611601A-80E1-43FA-ADE0-4F25245DA724}</Project>
       <Name>Atos.Server</Name>

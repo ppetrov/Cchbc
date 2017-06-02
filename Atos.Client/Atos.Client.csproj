@@ -46,10 +46,6 @@
     <Compile Include="Settings\ValueParser.cs" />
     <Compile Include="MainContext.cs" />
     <Compile Include="DataCache.cs" />
-    <Compile Include="Data\IFieldDataReader.cs" />
-    <Compile Include="Data\Query.cs" />
-    <Compile Include="Data\QueryParameter.cs" />
-    <Compile Include="Data\IDbContext.cs" />
     <Compile Include="Dialog\DialogResult.cs" />
     <Compile Include="Dialog\IModalDialog.cs" />
     <Compile Include="Features\Data\FeatureAdapter.cs" />
@@ -79,6 +75,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="project.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Atos.Client.Data\Atos.Client.Data.csproj">
+      <Project>{9539e041-5ce3-43b1-ae16-f49eb300baf7}</Project>
+      <Name>Atos.Client.Data</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
