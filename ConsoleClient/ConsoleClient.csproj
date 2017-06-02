@@ -73,7 +73,7 @@
       <Project>{C925111E-12CE-4D75-93F8-348C5FD44EFD}</Project>
       <Name>Atos.AppBuilder</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Atos.Features\Atos.Server.csproj">
+    <ProjectReference Include="..\Atos.Server\Atos.Server.csproj">
       <Project>{7611601A-80E1-43FA-ADE0-4F25245DA724}</Project>
       <Name>Atos.Server</Name>
     </ProjectReference>
