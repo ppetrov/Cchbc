@@ -96,7 +96,7 @@
     <Compile Include="UserSettingsProvider.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Cchbc\Cchbc.csproj">
+    <ProjectReference Include="..\Atos\Atos.csproj">
       <Project>{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}</Project>
       <Name>Cchbc</Name>
     </ProjectReference>
