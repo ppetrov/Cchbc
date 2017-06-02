@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.AppBuilder", "Atos.App
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.Server", "Atos.Server\Atos.Server.csproj", "{7611601A-80E1-43FA-ADE0-4F25245DA724}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.iFSA", "Atos.iFSA\Atos.iFSA.csproj", "{41397028-0B7B-4EF3-92AB-C6E617CAEC5B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iFSA", "Atos.iFSA\iFSA.csproj", "{41397028-0B7B-4EF3-92AB-C6E617CAEC5B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

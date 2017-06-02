@@ -8,8 +8,8 @@
     <ProjectGuid>{41397028-0B7B-4EF3-92AB-C6E617CAEC5B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Atos.iFSA</RootNamespace>
-    <AssemblyName>Atos.iFSA</AssemblyName>
+    <RootNamespace>iFSA</RootNamespace>
+    <AssemblyName>iFSA</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
