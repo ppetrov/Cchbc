@@ -16,6 +16,7 @@ using Atos.Client.Features.Data;
 using Atos.Client.Validation;
 using Atos.ConsoleClient;
 using Atos.Server;
+using FeatureManager = Atos.Server.FeatureManager;
 
 namespace ConsoleClient
 {
@@ -358,7 +359,7 @@ namespace ConsoleClient
 		private static void ClearData(string path)
 		{
 			File.Delete(path);
-			FeatureManager.CreateSchema(new TransactionContextCreator(GetSqliteConnectionString(path)).Create);
+			Atos.Client.Features.FeatureManager.CreateSchema(new TransactionContextCreator(GetSqliteConnectionString(path)).Create);
 		}
 
 		private static void ReplicateData(string clientDb, string serverDb)
@@ -383,12 +384,12 @@ namespace ConsoleClient
 		{
 			var contextCreator = new TransactionContextCreator(GetSqliteConnectionString(path));
 
-			var featureManager = new FeatureManager(() => contextCreator.Create());
+			var featureManager = new Atos.Client.Features.FeatureManager(() => contextCreator.Create());
 
 			if (!File.Exists(path))
 			{
 				// Create the schema
-				FeatureManager.CreateSchema(contextCreator.Create);
+				Atos.Client.Features.FeatureManager.CreateSchema(contextCreator.Create);
 			}
 
 			// TODO : !!!
@@ -604,7 +605,7 @@ namespace ConsoleClient
 			{
 				using (var serverContext = creator.Create())
 				{
-					FeatureServerManager.DropSchema(serverContext);
+					FeatureManager.DropSchema(serverContext);
 					serverContext.Complete();
 
 					Console.WriteLine(@"Drop schema");
@@ -617,7 +618,7 @@ namespace ConsoleClient
 
 			using (var serverContext = creator.Create())
 			{
-				FeatureServerManager.CreateSchema(serverContext);
+				FeatureManager.CreateSchema(serverContext);
 				serverContext.Complete();
 
 				Console.WriteLine(@"Schema created");

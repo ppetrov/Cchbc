@@ -7,7 +7,7 @@ using Atos.Client.Data;
 
 namespace Atos.Server
 {
-	public static class FeatureServerManager
+	public static class FeatureManager
 	{
 		private sealed class ServerFeatureRow
 		{

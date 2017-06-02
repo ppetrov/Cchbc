@@ -50,7 +50,7 @@ namespace ConsoleClient
 
 					for (var i = 0; i < 1; i++)
 					{
-						FeatureServerManager.Replicate(ctx, @"BG900343", @"1.0.0.0", clientData.GetBytes());
+						FeatureManager.Replicate(ctx, @"BG900343", @"1.0.0.0", clientData.GetBytes());
 					}
 
 					ctx.Complete();
@@ -70,7 +70,7 @@ namespace ConsoleClient
 			{
 				using (var ctx = contextCreator.Create())
 				{
-					FeatureServerManager.DropSchema(ctx);
+					FeatureManager.DropSchema(ctx);
 					ctx.Complete();
 				}
 			}
@@ -81,7 +81,7 @@ namespace ConsoleClient
 			{
 				using (var ctx = contextCreator.Create())
 				{
-					FeatureServerManager.CreateSchema(ctx);
+					FeatureManager.CreateSchema(ctx);
 					ctx.Complete();
 				}
 			}
