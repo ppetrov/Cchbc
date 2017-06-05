@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Windows.Input;
 using Atos.Client;
 using Atos.Client.Common;
@@ -8,7 +7,6 @@ using Atos.Client.Localization;
 using Atos.Client.Logs;
 using Atos.Client.Validation;
 using Atos.iFSA.AgendaModule;
-using Atos.iFSA.Common.Objects;
 using Atos.iFSA.LoginModule.Data;
 using Atos.iFSA.LoginModule.Objects;
 using Atos.iFSA.ReplicationModule.Objects;
@@ -20,7 +18,6 @@ namespace Atos.iFSA.LoginModule
 		private MainContext MainContext { get; }
 		private IAppNavigator AppNavigator { get; }
 		private LoginScreenDataProvider DataProvider { get; }
-		private List<User> Users { get; } = new List<User>();
 
 		public string UsernameCaption { get; }
 		public string PasswordCaption { get; }
@@ -73,13 +70,7 @@ namespace Atos.iFSA.LoginModule
 				var userSettings = this.DataProvider.GetUserSettings();
 				if (userSettings != null)
 				{
-					this.Username = userSettings.User.Name;
-				}
-				// Load all the users
-				using (var ctx = this.MainContext.CreateFeatureContext(feature))
-				{
-					this.Users.Clear();
-					this.Users.AddRange(this.DataProvider.GetUsers(ctx));
+					this.Username = userSettings.Username;
 				}
 			}
 			catch (Exception ex)
@@ -95,24 +86,30 @@ namespace Atos.iFSA.LoginModule
 			{
 				this.MainContext.FeatureManager.Save(feature);
 
-				var user = CheckUser((this.Username ?? string.Empty).Trim(), (this.Password ?? string.Empty).Trim());
-				if (user != null)
+				using (var ctx = this.MainContext.CreateFeatureContext(feature))
 				{
-					// Save the current username
-					var userSettings = this.DataProvider.GetUserSettings();
-					if (userSettings != null)
+					var username = (this.Username ?? string.Empty).Trim().ToUpperInvariant();
+					var password = (this.Password ?? string.Empty);
+					var user = this.DataProvider.GetUser(ctx, username, password);
+					if (user != null)
 					{
-						userSettings.User = user;
-						this.DataProvider.SaveUserSettings(userSettings);
-					}
+						// Save the current username
+						var userSettings = this.DataProvider.GetUserSettings();
+						if (userSettings != null)
+						{
+							userSettings.Username = username;
+							this.DataProvider.SaveUserSettings(userSettings);
+						}
 
-					// Display agenda
-					this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaScreenParam(user, DateTime.Today));
-				}
-				else
-				{
-					var message = PermissionResult.Deny(this.MainContext.LocalizationManager.Get(new LocalizationKey(nameof(LoginScreenViewModel), @"WrongCredentials")));
-					await this.MainContext.ModalDialog.ShowAsync(message);
+						// Display agenda
+						this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaScreenParam(user, DateTime.Today));
+					}
+					else
+					{
+						var message = PermissionResult.Deny(this.MainContext.LocalizationManager.Get(new LocalizationKey(nameof(LoginScreenViewModel), @"WrongCredentials")));
+						await this.MainContext.ModalDialog.ShowAsync(message);
+					}
+					ctx.Complete();
 				}
 			}
 			catch (Exception ex)
@@ -128,14 +125,20 @@ namespace Atos.iFSA.LoginModule
 			{
 				this.MainContext.FeatureManager.Save(feature);
 
-				var config = new ReplicationConfig(string.Empty, 0);
+				var username = string.Empty;
+				var replicaHost = string.Empty;
+				var replicaPort = 0;
+
 				var userSettings = this.DataProvider.GetUserSettings();
 				if (userSettings != null)
 				{
-					config = userSettings.ReplicationConfig;
+					username = userSettings.Username;
+					replicaHost = userSettings.ReplicationHost;
+					replicaPort = userSettings.ReplicationPort;
 				}
-				var login = new Login(this.Username, this.Password);
-				var settings = new ReplicationSettings(config, login);
+
+				var login = new Login(username, string.Empty);
+				var settings = new ReplicationSettings(new ReplicationConfig(replicaHost, replicaPort), login);
 
 				this.AppNavigator.NavigateTo(AppScreen.Replication, settings);
 			}
@@ -148,19 +151,6 @@ namespace Atos.iFSA.LoginModule
 		private string GetLocalizedValue(string name)
 		{
 			return this.MainContext.LocalizationManager.Get(new LocalizationKey(nameof(LoginScreenViewModel), name));
-		}
-
-		private User CheckUser(string username, string password)
-		{
-			foreach (var user in this.Users)
-			{
-				if (username.Equals(user.Name, StringComparison.OrdinalIgnoreCase) &&
-					password.Equals(user.Password))
-				{
-					return user;
-				}
-			}
-			return null;
 		}
 	}
 }

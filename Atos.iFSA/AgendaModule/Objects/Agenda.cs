@@ -35,6 +35,8 @@ namespace iFSA.AgendaModule.Objects
 		}
 	}
 
+
+
 	public sealed class Agenda
 	{
 		private AgendaDataProvider DataProvider { get; }

@@ -20,6 +20,11 @@ namespace Atos.Client
 			this.DbContext = mainContext.DbContextCreator();
 		}
 
+		public void Complete()
+		{
+			this.DbContext.Complete();
+		}
+
 		public void Dispose()
 		{
 			this.DbContext.Dispose();

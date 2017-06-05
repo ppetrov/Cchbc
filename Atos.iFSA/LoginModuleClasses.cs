@@ -4,13 +4,13 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Atos;
 using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Data;
 using Atos.Client.Dialog;
 using Atos.iFSA;
 using Atos.iFSA.Common.Objects;
+using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
 
 namespace iFSA
@@ -76,7 +76,6 @@ namespace iFSA
 	{
 		private DateTime CurrentMonth { get; set; }
 
-		private User User { get; }
 		private IModalDialog ModalDialog { get; }
 		private IAppNavigator AppNavigator { get; }
 		private Func<string, string, string> LocalizationManager { get; }
@@ -329,10 +328,10 @@ namespace iFSA
 
 	public static class CalendarHelper
 	{
-		public static CalendarViewModel GetCalendarViewModel(DataCache cache, User user, DateTime date)
-		{
-			return new CalendarViewModel(null, null, null, null, null, cache);
-		}
+		//public static CalendarViewModel GetCalendarViewModel(DataCache cache, User user, DateTime date)
+		//{
+		//	return new CalendarViewModel(null, null, null, null, null, cache);
+		//}
 	}
 
 	public sealed class CalendarCancelOperation

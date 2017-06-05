@@ -7,7 +7,7 @@ namespace Atos.iFSA.UI.LoginModule
 {
 	public sealed partial class LoginScreen
 	{
-		public LoginScreenViewModel ViewModel { get; } = new LoginScreenViewModel(GlobalApp.Context, GlobalApp.AppNavigator, new LoginScreenDataProvider());
+		public LoginScreenViewModel ViewModel { get; } = new LoginScreenViewModel(GlobalApp.Context, GlobalApp.AppNavigator, new LoginScreenDataProvider(new SettingsProvider()));
 
 		public LoginScreen()
 		{

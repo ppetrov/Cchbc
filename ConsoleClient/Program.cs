@@ -48,24 +48,27 @@ namespace ConsoleClient
 
 			try
 			{
-				
 				//FeatureDataReplicaSimulation.Replicate();
 
 				//Console.WriteLine(data);
-				//foreach (var f in Directory.GetFiles(@"C:\Users\PetarPetrov\Desktop\atp logs"))
-				//{
-				//	var contents = File.ReadAllText(f);
-				//	var start = contents.IndexOf(@"(GetMasterData): 2201012121", StringComparison.OrdinalIgnoreCase);
-				//	if (start >= 0)
-				//	{
-				//		Console.WriteLine(f);
-				//		var end = contents.IndexOf(@"Alcohol Licenses", start, StringComparison.OrdinalIgnoreCase);
-				//		if (end >= 0)
-				//		{
-				//			var val = contents.Substring(start, end - start);
-				//		}
-				//	}
-				//}
+				foreach (var f in Directory.GetFiles(@"C:\Users\PetarPetrov\Desktop\HR_Refresher log"))
+				{
+					if (f.IndexOf(".20170531", StringComparison.OrdinalIgnoreCase) < 0)
+					{
+						continue;
+					}
+					var contents = File.ReadAllText(f);
+					var start = contents.IndexOf(@"Activation(", StringComparison.OrdinalIgnoreCase);
+					if (start >= 0)
+					{
+						Console.WriteLine(f);
+						//var end = contents.IndexOf(@"Alcohol Licenses", start, StringComparison.OrdinalIgnoreCase);
+						//if (end >= 0)
+						//{
+						//	var val = contents.Substring(start, end - start);
+						//}
+					}
+				}
 				//FeatureDataReplicaSimulation.Replicate();
 				return;
 

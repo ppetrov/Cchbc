@@ -1,6 +1,6 @@
 using System;
 
-namespace Atos.iFSA.LoginModule.Objects
+namespace Atos.iFSA.InitialSetupModule.Objects
 {
 	public sealed class Country
 	{

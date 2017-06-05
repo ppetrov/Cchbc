@@ -42,6 +42,7 @@
     <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="Localization\ILocalizationManager.cs" />
     <Compile Include="Localization\LocalizationKey.cs" />
+    <Compile Include="Settings\ISettingsProvider.cs" />
     <Compile Include="Settings\Setting.cs" />
     <Compile Include="Settings\ValueParser.cs" />
     <Compile Include="MainContext.cs" />
