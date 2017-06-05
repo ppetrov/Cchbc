@@ -38,9 +38,9 @@ namespace Atos.iFSA.LoginModule.Data
 			// TODO : !!! 
 			// TODO : !!! 
 			// TODO : !!! 
-			featureContext.MainContext.Log(@"Check the username & password", LogLevel.Info);
+			featureContext.MainContext.Log(@"Check username & password", LogLevel.Info);
 
-			return null;
+			return new User(1, @"bg900343".ToUpperInvariant());
 		}
 	}
 }

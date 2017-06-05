@@ -95,7 +95,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="LoginModule\AppNavigator.cs" />
+    <Compile Include="AppNavigator.cs" />
     <Compile Include="LoginModule\DebugDbContext.cs" />
     <Compile Include="LoginModule\DebugFeatureManager.cs" />
     <Compile Include="LoginModule\DebugLocalizationManager.cs" />
@@ -103,7 +103,7 @@
     <Compile Include="LoginModule\LoginScreen.xaml.cs">
       <DependentUpon>LoginScreen.xaml</DependentUpon>
     </Compile>
-    <Compile Include="LoginModule\ModalDialog.cs" />
+    <Compile Include="ModalDialog.cs" />
     <Compile Include="LoginModule\SettingsProvider.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
