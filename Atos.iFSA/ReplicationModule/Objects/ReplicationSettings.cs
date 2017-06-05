@@ -1,7 +1,7 @@
 using System;
 using Atos.iFSA.LoginModule.Objects;
 
-namespace iFSA.ReplicationModule.Objects
+namespace Atos.iFSA.ReplicationModule.Objects
 {
 	public sealed class ReplicationSettings
 	{

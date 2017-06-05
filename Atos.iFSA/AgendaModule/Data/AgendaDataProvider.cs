@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Atos;
 using Atos.Client;
 using Atos.Client.Data;
+using Atos.iFSA.Common.Objects;
 using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
 

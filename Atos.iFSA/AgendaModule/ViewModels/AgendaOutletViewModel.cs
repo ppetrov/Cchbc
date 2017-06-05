@@ -1,12 +1,12 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using Atos;
 using Atos.Client;
+using iFSA;
 using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
 
-namespace iFSA.AgendaModule.ViewModels
+namespace Atos.iFSA.AgendaModule.ViewModels
 {
 	public sealed class AgendaOutletViewModel : ViewModel<AgendaOutlet>
 	{

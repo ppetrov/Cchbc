@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Atos.Client;
 using Atos.Client.Logs;
+using Atos.iFSA.Common.Objects;
 using Atos.iFSA.LoginModule.Objects;
 using iFSA;
 using iFSA.Common.Objects;
-using iFSA.ReplicationModule.Objects;
 
 namespace Atos.iFSA.LoginModule.Data
 {

@@ -7,12 +7,11 @@ using Atos.Client.Features;
 using Atos.Client.Localization;
 using Atos.Client.Logs;
 using Atos.Client.Validation;
+using Atos.iFSA.AgendaModule;
+using Atos.iFSA.Common.Objects;
 using Atos.iFSA.LoginModule.Data;
 using Atos.iFSA.LoginModule.Objects;
-using iFSA;
-using iFSA.AgendaModule;
-using iFSA.Common.Objects;
-using iFSA.ReplicationModule.Objects;
+using Atos.iFSA.ReplicationModule.Objects;
 
 namespace Atos.iFSA.LoginModule
 {
@@ -77,7 +76,7 @@ namespace Atos.iFSA.LoginModule
 					this.Username = userSettings.User.Name;
 				}
 				// Load all the users
-				using (var ctx = new FeatureContext(this.MainContext, feature))
+				using (var ctx = this.MainContext.CreateFeatureContext(feature))
 				{
 					this.Users.Clear();
 					this.Users.AddRange(this.DataProvider.GetUsers(ctx));
@@ -112,7 +111,8 @@ namespace Atos.iFSA.LoginModule
 				}
 				else
 				{
-					await this.MainContext.ModalDialog.ShowAsync(this.GetLocalizationMessage(@"WrongCredentials"));
+					var message = PermissionResult.Deny(this.MainContext.LocalizationManager.Get(new LocalizationKey(nameof(LoginScreenViewModel), @"WrongCredentials")));
+					await this.MainContext.ModalDialog.ShowAsync(message);
 				}
 			}
 			catch (Exception ex)
@@ -126,6 +126,8 @@ namespace Atos.iFSA.LoginModule
 			var feature = new Feature(nameof(LoginScreenViewModel), nameof(Advanced));
 			try
 			{
+				this.MainContext.FeatureManager.Save(feature);
+
 				var config = new ReplicationConfig(string.Empty, 0);
 				var userSettings = this.DataProvider.GetUserSettings();
 				if (userSettings != null)
@@ -134,26 +136,18 @@ namespace Atos.iFSA.LoginModule
 				}
 				var login = new Login(this.Username, this.Password);
 				var settings = new ReplicationSettings(config, login);
+
 				this.AppNavigator.NavigateTo(AppScreen.Replication, settings);
 			}
 			catch (Exception ex)
 			{
 				this.MainContext.Log(ex.ToString(), LogLevel.Error);
 			}
-			finally
-			{
-				this.MainContext.FeatureManager.Save(feature);
-			}
 		}
 
 		private string GetLocalizedValue(string name)
 		{
 			return this.MainContext.LocalizationManager.Get(new LocalizationKey(nameof(LoginScreenViewModel), name));
-		}
-
-		private PermissionResult GetLocalizationMessage(string name)
-		{
-			return PermissionResult.Deny(this.MainContext.LocalizationManager.Get(new LocalizationKey(nameof(LoginScreenViewModel), name)));
 		}
 
 		private User CheckUser(string username, string password)

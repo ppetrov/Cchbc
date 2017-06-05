@@ -38,6 +38,13 @@ namespace Atos.Client
 			this.LocalizationManager = localizationManager;
 		}
 
+		public FeatureContext CreateFeatureContext(Feature feature)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			return new FeatureContext(this, feature);
+		}
+
 		public async Task<bool> CanContinueAsync(PermissionResult permissionResult)
 		{
 			if (permissionResult == null) throw new ArgumentNullException(nameof(permissionResult));

@@ -1,12 +1,11 @@
 using System;
 using System.Windows.Input;
-using Atos;
 using Atos.Client;
 using Atos.Client.Common;
-using iFSA.AgendaModule.ViewModels;
+using Atos.iFSA.AgendaModule.ViewModels;
 using iFSA.Common.Objects;
 
-namespace iFSA
+namespace Atos.iFSA
 {
 	public sealed class ActivityViewModel : ViewModel<Activity>
 	{

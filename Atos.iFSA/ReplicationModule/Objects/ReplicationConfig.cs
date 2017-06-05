@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace iFSA.ReplicationModule.Objects
+namespace Atos.iFSA.ReplicationModule.Objects
 {
 	public sealed class ReplicationConfig
 	{

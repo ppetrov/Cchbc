@@ -74,6 +74,7 @@
     <Compile Include="IActivityCancelReasonSelector.cs" />
     <Compile Include="IDateTimeSelector.cs" />
     <Compile Include="ITimeSelector.cs" />
+    <Compile Include="IUIThreadDispatcher.cs" />
     <Compile Include="LoginModule\Data\LoginScreenDataProvider.cs" />
     <Compile Include="IAppNavigator.cs" />
     <Compile Include="LoginModule\LoginScreenViewModel.cs" />

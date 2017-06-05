@@ -7,9 +7,9 @@ using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Localization;
 using Atos.Client.Logs;
+using Atos.iFSA.AgendaModule;
 using iFSA;
 using iFSA.AddActivityModule;
-using iFSA.AgendaModule;
 
 namespace Atos.iFSA.AddActivityModule
 {

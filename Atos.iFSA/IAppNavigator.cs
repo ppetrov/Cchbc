@@ -1,15 +1,8 @@
-using System;
-
-namespace iFSA
+namespace Atos.iFSA
 {
 	public interface IAppNavigator
 	{
 		void NavigateTo(AppScreen screen, object args);
 		void GoBack();
-	}
-
-	public interface IUIThreadDispatcher
-	{
-		void Dispatch(Action operation);
 	}
 }

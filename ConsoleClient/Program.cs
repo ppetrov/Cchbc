@@ -48,7 +48,8 @@ namespace ConsoleClient
 
 			try
 			{
-				FeatureDataReplicaSimulation.Replicate();
+				
+				//FeatureDataReplicaSimulation.Replicate();
 
 				//Console.WriteLine(data);
 				//foreach (var f in Directory.GetFiles(@"C:\Users\PetarPetrov\Desktop\atp logs"))

@@ -1,5 +1,6 @@
+using Atos.iFSA.Common.Objects;
+using Atos.iFSA.ReplicationModule.Objects;
 using iFSA.Common.Objects;
-using iFSA.ReplicationModule.Objects;
 
 namespace iFSA
 {

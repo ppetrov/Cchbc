@@ -1,4 +1,4 @@
-namespace iFSA
+namespace Atos.iFSA
 {
 	public enum AppScreen
 	{

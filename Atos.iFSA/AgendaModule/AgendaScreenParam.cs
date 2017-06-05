@@ -1,7 +1,7 @@
 using System;
-using iFSA.Common.Objects;
+using Atos.iFSA.Common.Objects;
 
-namespace iFSA.AgendaModule
+namespace Atos.iFSA.AgendaModule
 {
 	public sealed class AgendaScreenParam
 	{

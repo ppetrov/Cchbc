@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Atos;
 using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Logs;
+using Atos.iFSA.AgendaModule.ViewModels;
+using Atos.iFSA.Common.Objects;
+using iFSA;
 using iFSA.AddActivityModule;
 using iFSA.AgendaModule.Objects;
-using iFSA.AgendaModule.ViewModels;
 using iFSA.Common.Objects;
 
-namespace iFSA.AgendaModule
+namespace Atos.iFSA.AgendaModule
 {
 	public sealed class AgendaScreenViewModel : ViewModel
 	{
