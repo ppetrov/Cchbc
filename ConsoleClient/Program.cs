@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -15,8 +14,6 @@ using Atos.Client.Features;
 using Atos.Client.Features.Data;
 using Atos.Client.Validation;
 using Atos.ConsoleClient;
-using Atos.Server;
-using FeatureManager = Atos.Server.FeatureManager;
 
 namespace ConsoleClient
 {
@@ -40,6 +37,9 @@ namespace ConsoleClient
 	{
 		public static readonly string DbPrefix = @"obppc_db_";
 
+
+
+
 		public static void Main(string[] args)
 		{
 			var freshDbPath = @"C:\Users\PetarPetrov\Desktop\data.sqlite";
@@ -50,25 +50,48 @@ namespace ConsoleClient
 			{
 				//FeatureDataReplicaSimulation.Replicate();
 
+
+
+
+
+
+				//document_type Placement Request
+				//form_name   HU_COOLER PLACEMENT EXPERT
+				//submitted_on    06.06.2017
+				//submitted_by HU006099
+				//outlet_id   1605022931
+				//outlet_name SMR BÜFÉ 1.
+				//gps_location    47.84817, 17.18271
+				//outlet_address SZABADSÁG ÚT 35.
+				//trade_channel   INDUSTRIAL / AGRICULTU
+				//subtrade_channel Other Industrial / Agr
+				//h_pos_name
+
+
+				//Console.WriteLine(ExtractContractField(@"comment"));
+				//Console.WriteLine(ExtractContractField(@"h_t_outlets_name2"));
+				//Console.WriteLine(ExtractContractField(@"h_atp_tax1_no"));
+				//Console.WriteLine(ExtractContractField(@"contact_persons_2"));
+
 				//Console.WriteLine(data);
-				foreach (var f in Directory.GetFiles(@"C:\Users\PetarPetrov\Desktop\HR_Refresher log"))
-				{
-					if (f.IndexOf(".20170531", StringComparison.OrdinalIgnoreCase) < 0)
-					{
-						continue;
-					}
-					var contents = File.ReadAllText(f);
-					var start = contents.IndexOf(@"Activation(", StringComparison.OrdinalIgnoreCase);
-					if (start >= 0)
-					{
-						Console.WriteLine(f);
-						//var end = contents.IndexOf(@"Alcohol Licenses", start, StringComparison.OrdinalIgnoreCase);
-						//if (end >= 0)
-						//{
-						//	var val = contents.Substring(start, end - start);
-						//}
-					}
-				}
+				//foreach (var f in Directory.GetFiles(@"C:\Users\PetarPetrov\Desktop\HR_Refresher log"))
+				//{
+				//	if (f.IndexOf(".20170531", StringComparison.OrdinalIgnoreCase) < 0)
+				//	{
+				//		continue;
+				//	}
+				//	var contents = File.ReadAllText(f);
+				//	var start = contents.IndexOf(@"Activation(", StringComparison.OrdinalIgnoreCase);
+				//	if (start >= 0)
+				//	{
+				//		Console.WriteLine(f);
+				//		//var end = contents.IndexOf(@"Alcohol Licenses", start, StringComparison.OrdinalIgnoreCase);
+				//		//if (end >= 0)
+				//		//{
+				//		//	var val = contents.Substring(start, end - start);
+				//		//}
+				//	}
+				//}
 				//FeatureDataReplicaSimulation.Replicate();
 				return;
 
@@ -76,8 +99,6 @@ namespace ConsoleClient
 				//imgAsString = File.ReadAllBytes(@"C:\Users\PetarPetrov\Desktop\signature.jpg");
 				var b64 = Convert.ToBase64String(imgAsString);
 				Console.WriteLine(b64.Length);
-
-
 
 
 				using (var client = new TransactionContextCreator(GetSqliteConnectionString(@"C:\Users\PetarPetrov\Desktop\BG000956.sqlite")).Create())
@@ -604,29 +625,29 @@ namespace ConsoleClient
 
 		private static void CreateSchema(string connectionString)
 		{
-			var creator = new TransactionContextCreator(connectionString);
-			try
-			{
-				using (var serverContext = creator.Create())
-				{
-					FeatureManager.DropSchema(serverContext);
-					serverContext.Complete();
+			//var creator = new TransactionContextCreator(connectionString);
+			//try
+			//{
+			//	using (var serverContext = creator.Create())
+			//	{
+			//		FeatureManager.DropSchema(serverContext);
+			//		serverContext.Complete();
 
-					Console.WriteLine(@"Drop schema");
-				}
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e);
-			}
+			//		Console.WriteLine(@"Drop schema");
+			//	}
+			//}
+			//catch (Exception e)
+			//{
+			//	Console.WriteLine(e);
+			//}
 
-			using (var serverContext = creator.Create())
-			{
-				FeatureManager.CreateSchema(serverContext);
-				serverContext.Complete();
+			//using (var serverContext = creator.Create())
+			//{
+			//	FeatureManager.CreateSchema(serverContext);
+			//	serverContext.Complete();
 
-				Console.WriteLine(@"Schema created");
-			}
+			//	Console.WriteLine(@"Schema created");
+			//}
 		}
 
 		public static void Unpack(byte[] input)
