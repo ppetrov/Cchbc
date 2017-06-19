@@ -60,7 +60,7 @@
     <Compile Include="ArticlesModule\Objects\Brand.cs" />
     <Compile Include="ArticlesModule\Objects\Article.cs" />
     <Compile Include="ArticlesModule\Objects\Flavor.cs" />
-    <Compile Include="Common\Data\DataProvider.cs" />
+    <Compile Include="Data\DataProvider.cs" />
     <Compile Include="Common\Objects\Activity.cs" />
     <Compile Include="Common\Objects\ActivityCancelReason.cs" />
     <Compile Include="Common\Objects\ActivityCloseReason.cs" />

@@ -97,17 +97,6 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="MainContext.cs" />
-    <Compile Include="SQLite\SQLiteColumnType.cs" />
-    <Compile Include="SQLite\SQLiteCommand.cs" />
-    <Compile Include="SQLite\SQLiteConfigOption.cs" />
-    <Compile Include="SQLite\SQLiteConnection.cs" />
-    <Compile Include="SQLite\SQLiteDataParameterCollection.cs" />
-    <Compile Include="SQLite\SQLiteDataReader.cs" />
-    <Compile Include="SQLite\SQLiteException.cs" />
-    <Compile Include="SQLite\SQLiteNative.cs" />
-    <Compile Include="SQLite\SQLiteParameter.cs" />
-    <Compile Include="SQLite\SQLiteResult.cs" />
-    <Compile Include="SQLite\SystemDataInterface.cs" />
     <Compile Include="SqlLiteDelegateDataReader.cs" />
     <Compile Include="DbContext.cs" />
     <Compile Include="TransactionContextCreator.cs" />

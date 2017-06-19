@@ -3,30 +3,31 @@ using Atos.Client;
 using Atos.Client.Logs;
 using Atos.Client.Settings;
 using Atos.iFSA.Common.Objects;
+using Atos.iFSA.Data;
 
 namespace Atos.iFSA.LoginModule.Data
 {
 	public sealed class LoginScreenDataProvider
 	{
-		public ISettingsProvider SettingsProvider { get; }
+		public IUserSettingsProvider UserSettingsProvider { get; }
 
-		public LoginScreenDataProvider(ISettingsProvider settingsProvider)
+		public LoginScreenDataProvider(IUserSettingsProvider userSettingsProvider)
 		{
-			if (settingsProvider == null) throw new ArgumentNullException(nameof(settingsProvider));
+			if (userSettingsProvider == null) throw new ArgumentNullException(nameof(userSettingsProvider));
 
-			this.SettingsProvider = settingsProvider;
+			this.UserSettingsProvider = userSettingsProvider;
 		}
 
 		public UserSettings GetUserSettings()
 		{
-			return this.SettingsProvider.GetValue(nameof(UserSettings)) as UserSettings;
+			return this.UserSettingsProvider.GetValue(nameof(UserSettings)) as UserSettings;
 		}
 
 		public void SaveUserSettings(UserSettings userSettings)
 		{
 			if (userSettings == null) throw new ArgumentNullException(nameof(userSettings));
 
-			this.SettingsProvider.Save(nameof(UserSettings), userSettings);
+			this.UserSettingsProvider.Save(nameof(UserSettings), userSettings);
 		}
 
 		public User GetUser(FeatureContext featureContext, string username, string password)
@@ -35,12 +36,17 @@ namespace Atos.iFSA.LoginModule.Data
 			if (username == null) throw new ArgumentNullException(nameof(username));
 			if (password == null) throw new ArgumentNullException(nameof(password));
 
-			// TODO : !!! 
-			// TODO : !!! 
-			// TODO : !!! 
-			featureContext.MainContext.Log(@"Check username & password", LogLevel.Info);
+			featureContext.MainContext.Log(nameof(GetUser), LogLevel.Info);
 
-			return new User(1, @"bg900343".ToUpperInvariant());
+			var users = DataProvider.GetUsers(featureContext);
+			foreach (var user in users)
+			{
+				if (user.Name.Equals(username, StringComparison.OrdinalIgnoreCase))
+				{
+					return user;
+				}
+			}
+			return null;
 		}
 	}
 }

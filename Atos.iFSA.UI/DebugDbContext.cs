@@ -1,18 +1,27 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.SQLite;
+using Windows.Storage;
 using Atos.Client.Data;
 
 namespace Atos.iFSA.UI.LoginModule
 {
 	public sealed class DebugDbContext : IDbContext
 	{
-		public void Dispose()
+		private string DbPath { get; }
+
+		public DebugDbContext()
 		{
-			Debug.WriteLine(@"Dispose DbContext");
+			this.DbPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "ifsa.sqlite");
 		}
 
 		public int Execute(Query query)
 		{
+			if (query == null) throw new ArgumentNullException(nameof(query));
+
+			var cn = new SQLiteConnection(DbPath, true);
 			throw new System.NotImplementedException();
 		}
 
@@ -24,6 +33,11 @@ namespace Atos.iFSA.UI.LoginModule
 		public void Complete()
 		{
 			Debug.WriteLine(@"Commit SQL transaction");
+		}
+
+		public void Dispose()
+		{
+			Debug.WriteLine(@"Dispose DbContext");
 		}
 	}
 }

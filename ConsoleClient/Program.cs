@@ -50,24 +50,6 @@ namespace ConsoleClient
 			{
 				//FeatureDataReplicaSimulation.Replicate();
 
-
-
-
-
-
-				//document_type Placement Request
-				//form_name   HU_COOLER PLACEMENT EXPERT
-				//submitted_on    06.06.2017
-				//submitted_by HU006099
-				//outlet_id   1605022931
-				//outlet_name SMR BÜFÉ 1.
-				//gps_location    47.84817, 17.18271
-				//outlet_address SZABADSÁG ÚT 35.
-				//trade_channel   INDUSTRIAL / AGRICULTU
-				//subtrade_channel Other Industrial / Agr
-				//h_pos_name
-
-
 				//Console.WriteLine(ExtractContractField(@"comment"));
 				//Console.WriteLine(ExtractContractField(@"h_t_outlets_name2"));
 				//Console.WriteLine(ExtractContractField(@"h_atp_tax1_no"));
