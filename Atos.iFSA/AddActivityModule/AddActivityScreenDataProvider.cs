@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using iFSA.Common.Objects;
+using Atos.iFSA.Objects;
 
-namespace iFSA.AddActivityModule
+namespace Atos.iFSA.AddActivityModule
 {
 	public sealed class AddActivityScreenDataProvider
 	{

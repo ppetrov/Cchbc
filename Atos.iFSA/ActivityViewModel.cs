@@ -3,7 +3,7 @@ using System.Windows.Input;
 using Atos.Client;
 using Atos.Client.Common;
 using Atos.iFSA.AgendaModule.ViewModels;
-using iFSA.Common.Objects;
+using Atos.iFSA.Objects;
 
 namespace Atos.iFSA
 {

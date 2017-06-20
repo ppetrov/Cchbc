@@ -10,9 +10,9 @@ using Atos.Client.Logs;
 using Atos.Client.Validation;
 using Atos.iFSA.AgendaModule;
 using Atos.iFSA.AgendaModule.Data;
-using Atos.iFSA.Common.Objects;
 using Atos.iFSA.LoginModule.Data;
 using Atos.iFSA.LoginModule.Objects;
+using Atos.iFSA.Objects;
 using Atos.iFSA.ReplicationModule.Objects;
 using iFSA.AgendaModule.Objects;
 

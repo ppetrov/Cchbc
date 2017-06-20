@@ -1,10 +1,9 @@
 using System;
 using System.Diagnostics;
-using Atos;
 using Atos.Client;
-using iFSA.Common.Objects;
+using Atos.iFSA.Objects;
 
-namespace iFSA
+namespace Atos.iFSA
 {
 	public sealed class AppModule
 	{

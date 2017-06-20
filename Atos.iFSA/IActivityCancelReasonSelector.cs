@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Atos.Client.Validation;
-using iFSA.Common.Objects;
+using Atos.iFSA.Objects;
 
 namespace iFSA
 {

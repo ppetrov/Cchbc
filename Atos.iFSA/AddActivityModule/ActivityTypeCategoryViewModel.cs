@@ -1,9 +1,8 @@
 using System.Collections.ObjectModel;
-using Atos;
 using Atos.Client;
-using iFSA.Common.Objects;
+using Atos.iFSA.Objects;
 
-namespace iFSA.AddActivityModule
+namespace Atos.iFSA.AddActivityModule
 {
 	public sealed class ActivityTypeCategoryViewModel : ViewModel<ActivityTypeCategory>
 	{

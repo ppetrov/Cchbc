@@ -7,13 +7,12 @@ using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Logs;
+using Atos.iFSA.AddActivityModule;
 using Atos.iFSA.AgendaModule.Objects;
 using Atos.iFSA.AgendaModule.ViewModels;
-using Atos.iFSA.Common.Objects;
+using Atos.iFSA.Objects;
 using iFSA;
-using iFSA.AddActivityModule;
 using iFSA.AgendaModule.Objects;
-using iFSA.Common.Objects;
 
 namespace Atos.iFSA.AgendaModule
 {

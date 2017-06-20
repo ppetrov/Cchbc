@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using Atos.Client;
 using Atos.Client.Data;
-using Atos.iFSA.Common.Objects;
+using Atos.iFSA.Objects;
 using iFSA.AgendaModule.Objects;
-using iFSA.Common.Objects;
 
 namespace Atos.iFSA.AgendaModule.Data
 {

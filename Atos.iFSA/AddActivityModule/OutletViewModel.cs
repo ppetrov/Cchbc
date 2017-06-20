@@ -1,8 +1,7 @@
-﻿using Atos;
-using Atos.Client;
-using iFSA.Common.Objects;
+﻿using Atos.Client;
+using Atos.iFSA.Objects;
 
-namespace iFSA.AddActivityModule
+namespace Atos.iFSA.AddActivityModule
 {
 	public sealed class OutletViewModel : ViewModel<Outlet>
 	{

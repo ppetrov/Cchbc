@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using Atos;
 using Atos.Client;
 using Atos.Client.Data;
-using iFSA.Common.Objects;
+using Atos.iFSA.Objects;
 using iFSA.MasterDataModule.Objects;
 
-namespace iFSA
+namespace Atos.iFSA
 {
 	public static class DataHelper
 	{

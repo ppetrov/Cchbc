@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Atos.iFSA.Common.Objects;
+using Atos.iFSA.Objects;
 using iFSA.AgendaModule.Objects;
 
 namespace Atos.iFSA.AgendaModule

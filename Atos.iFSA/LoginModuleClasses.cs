@@ -9,9 +9,8 @@ using Atos.Client.Common;
 using Atos.Client.Data;
 using Atos.Client.Dialog;
 using Atos.iFSA;
-using Atos.iFSA.Common.Objects;
+using Atos.iFSA.Objects;
 using iFSA.AgendaModule.Objects;
-using iFSA.Common.Objects;
 
 namespace iFSA
 {

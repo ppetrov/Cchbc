@@ -2,8 +2,8 @@
 using Atos.Client;
 using Atos.Client.Logs;
 using Atos.Client.Settings;
-using Atos.iFSA.Common.Objects;
 using Atos.iFSA.Data;
+using Atos.iFSA.Objects;
 
 namespace Atos.iFSA.LoginModule.Data
 {
@@ -36,7 +36,7 @@ namespace Atos.iFSA.LoginModule.Data
 
 			featureContext.MainContext.Log(nameof(GetUsers), LogLevel.Info);
 
-			return DataProvider.GetUsers(featureContext);
+			return UserDataProvider.GetUsers(featureContext);
 		}
 
 		public User GetUser(FeatureContext featureContext, string username, string password, User[] users)

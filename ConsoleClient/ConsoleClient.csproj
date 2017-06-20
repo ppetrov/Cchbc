@@ -66,10 +66,6 @@
     <None Include="ConsoleClient.ruleset" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Atos.AppBuilder\Atos.AppBuilder.csproj">
-      <Project>{C925111E-12CE-4D75-93F8-348C5FD44EFD}</Project>
-      <Name>Atos.AppBuilder</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Atos.Client.Data\Atos.Client.Data.csproj">
       <Project>{9539e041-5ce3-43b1-ae16-f49eb300baf7}</Project>
       <Name>Atos.Client.Data</Name>
