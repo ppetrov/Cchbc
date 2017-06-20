@@ -5,11 +5,12 @@ using System.Threading.Tasks;
 using Atos.Client;
 using Atos.Client.Logs;
 using Atos.Client.Validation;
+using Atos.iFSA.AgendaModule.Data;
 using Atos.iFSA.Common.Objects;
-using iFSA.AgendaModule.Data;
+using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
 
-namespace iFSA.AgendaModule.Objects
+namespace Atos.iFSA.AgendaModule.Objects
 {
 	public sealed class ActivityEventArgs : EventArgs
 	{

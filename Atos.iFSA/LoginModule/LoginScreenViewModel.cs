@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Atos.Client;
 using Atos.Client.Common;
@@ -7,9 +9,12 @@ using Atos.Client.Localization;
 using Atos.Client.Logs;
 using Atos.Client.Validation;
 using Atos.iFSA.AgendaModule;
+using Atos.iFSA.AgendaModule.Data;
+using Atos.iFSA.Common.Objects;
 using Atos.iFSA.LoginModule.Data;
 using Atos.iFSA.LoginModule.Objects;
 using Atos.iFSA.ReplicationModule.Objects;
+using iFSA.AgendaModule.Objects;
 
 namespace Atos.iFSA.LoginModule
 {
@@ -18,6 +23,10 @@ namespace Atos.iFSA.LoginModule
 		private MainContext MainContext { get; }
 		private IAppNavigator AppNavigator { get; }
 		private LoginScreenDataProvider DataProvider { get; }
+
+		private User[] _users;
+		private User _dataUser;
+		private Task<List<AgendaOutlet>> _dataLoader;
 
 		public string UsernameCaption { get; }
 		public string PasswordCaption { get; }
@@ -66,11 +75,29 @@ namespace Atos.iFSA.LoginModule
 			{
 				this.MainContext.FeatureManager.Save(feature);
 
+				// Load users
+				using (var ctx = this.MainContext.CreateFeatureContext(feature))
+				{
+					_users = this.DataProvider.GetUsers(ctx);
+					ctx.Complete();
+				}
+
 				// Prepopulate with last successfully logged-in user
 				var userSettings = this.DataProvider.GetUserSettings();
 				if (userSettings != null)
 				{
 					this.Username = userSettings.Username;
+
+					// Find the user for which to load the data
+					foreach (var user in _users)
+					{
+						if (user.Name.Equals(this.Username, StringComparison.OrdinalIgnoreCase))
+						{
+							_dataUser = user;
+							_dataLoader = Task.Run(() => new AgendaDataProvider().GetAgendaOutlets(this.MainContext, _dataUser, DateTime.Today));
+							break;
+						}
+					}
 				}
 			}
 			catch (Exception ex)
@@ -90,7 +117,7 @@ namespace Atos.iFSA.LoginModule
 				{
 					var username = (this.Username ?? string.Empty).Trim().ToUpperInvariant();
 					var password = (this.Password ?? string.Empty);
-					var user = this.DataProvider.GetUser(ctx, username, password);
+					var user = this.DataProvider.GetUser(ctx, username, password, _users);
 					if (user != null)
 					{
 						// Save the current username
@@ -102,7 +129,15 @@ namespace Atos.iFSA.LoginModule
 						}
 
 						// Display agenda
-						this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaScreenParam(user, DateTime.Today));
+						var outlets = default(List<AgendaOutlet>);
+						if (_dataLoader != null)
+						{
+							if (user.Id == _dataUser.Id)
+							{
+								outlets = _dataLoader.Result;
+							}
+						}
+						this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaScreenParam(user, DateTime.Today, outlets));
 					}
 					else
 					{

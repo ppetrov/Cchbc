@@ -7,6 +7,7 @@ using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Logs;
+using Atos.iFSA.AgendaModule.Objects;
 using Atos.iFSA.AgendaModule.ViewModels;
 using Atos.iFSA.Common.Objects;
 using iFSA;

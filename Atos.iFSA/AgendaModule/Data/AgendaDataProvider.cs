@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using Atos;
 using Atos.Client;
 using Atos.Client.Data;
 using Atos.iFSA.Common.Objects;
 using iFSA.AgendaModule.Objects;
 using iFSA.Common.Objects;
 
-namespace iFSA.AgendaModule.Data
+namespace Atos.iFSA.AgendaModule.Data
 {
 	public sealed class AgendaDataProvider
 	{

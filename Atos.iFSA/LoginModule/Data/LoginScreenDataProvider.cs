@@ -30,15 +30,24 @@ namespace Atos.iFSA.LoginModule.Data
 			this.UserSettingsProvider.Save(nameof(UserSettings), userSettings);
 		}
 
-		public User GetUser(FeatureContext featureContext, string username, string password)
+		public User[] GetUsers(FeatureContext featureContext)
+		{
+			if (featureContext == null) throw new ArgumentNullException(nameof(featureContext));
+
+			featureContext.MainContext.Log(nameof(GetUsers), LogLevel.Info);
+
+			return DataProvider.GetUsers(featureContext);
+		}
+
+		public User GetUser(FeatureContext featureContext, string username, string password, User[] users)
 		{
 			if (featureContext == null) throw new ArgumentNullException(nameof(featureContext));
 			if (username == null) throw new ArgumentNullException(nameof(username));
 			if (password == null) throw new ArgumentNullException(nameof(password));
+			if (users == null) throw new ArgumentNullException(nameof(users));
 
 			featureContext.MainContext.Log(nameof(GetUser), LogLevel.Info);
 
-			var users = DataProvider.GetUsers(featureContext);
 			foreach (var user in users)
 			{
 				if (user.Name.Equals(username, StringComparison.OrdinalIgnoreCase))
