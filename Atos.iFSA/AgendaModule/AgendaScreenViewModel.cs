@@ -177,7 +177,7 @@ namespace Atos.iFSA.AgendaModule
 			this.ApplyCurrentTextSearch();
 		}
 
-		public void LoadDay(User user, DateTime dateTime)
+		public void LoadDay(User user, DateTime dateTime, List<AgendaOutlet> outlets = null)
 		{
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
@@ -185,7 +185,7 @@ namespace Atos.iFSA.AgendaModule
 			try
 			{
 				this.MainContext.FeatureManager.Save(feature, dateTime.ToString(@"O"));
-				this.LoadData(user, dateTime);
+				this.LoadData(user, dateTime, outlets);
 			}
 			catch (Exception ex)
 			{
@@ -217,6 +217,55 @@ namespace Atos.iFSA.AgendaModule
 				return this.Agenda.Create(activity);
 			}
 			return null;
+		}
+
+		public async Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)
+		{
+			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
+
+			// TODO : From constructor
+			var timeSelector = default(ITimeSelector);
+
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(ChangeStartTimeAsync));
+			try
+			{
+				this.MainContext.FeatureManager.Save(feature);
+
+				var activity = activityViewModel.Model;
+				await timeSelector.ShowAsync(
+					dateTime => this.Agenda.CanChangeStartTime(activity, dateTime),
+					dateTime => this.Agenda.ChangeStartTime(activity, dateTime));
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.FeatureManager.Save(feature, ex);
+			}
+		}
+
+		public async Task CancelAsync(ActivityViewModel activityViewModel)
+		{
+			// TODO : From constructor
+			var cancelReasonSelector = default(IActivityCancelReasonSelector);
+
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(CancelAsync));
+			try
+			{
+				this.MainContext.FeatureManager.Save(feature);
+
+				var activity = activityViewModel.Model;
+				await cancelReasonSelector.ShowAsync(activity,
+					cancelReason => this.Agenda.CanCancel(activity, cancelReason),
+					cancelReason => this.Agenda.Cancel(activity, cancelReason));
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.FeatureManager.Save(feature, ex);
+			}
+		}
+
+		public async Task CloseAsync(ActivityViewModel activityViewModel)
+		{
+			throw new NotImplementedException();
 		}
 
 		private void LoadNextDay()
@@ -293,11 +342,11 @@ namespace Atos.iFSA.AgendaModule
 			this.LoadData(this.User, dateTime);
 		}
 
-		private void LoadData(User user, DateTime dateTime)
+		private void LoadData(User user, DateTime dateTime, List<AgendaOutlet> outlets = null)
 		{
 			this.User = user;
 			this.CurrentDate = dateTime;
-			this.Agenda.LoadDay(this.MainContext, user, dateTime);
+			this.Agenda.LoadDay(this.MainContext, user, dateTime, outlets);
 
 			this.Outlets.Clear();
 			lock (this)
@@ -312,53 +361,8 @@ namespace Atos.iFSA.AgendaModule
 			}
 		}
 
-		public async Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)
-		{
-			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			// TODO : From constructor
-			var timeSelector = default(ITimeSelector);
 
-			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(ChangeStartTimeAsync));
-			try
-			{
-				this.MainContext.FeatureManager.Save(feature);
 
-				var activity = activityViewModel.Model;
-				await timeSelector.ShowAsync(
-					dateTime => this.Agenda.CanChangeStartTime(activity, dateTime),
-					dateTime => this.Agenda.ChangeStartTime(activity, dateTime));
-			}
-			catch (Exception ex)
-			{
-				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-		}
-
-		public async Task CancelAsync(ActivityViewModel activityViewModel)
-		{
-			// TODO : From constructor
-			var cancelReasonSelector = default(IActivityCancelReasonSelector);
-
-			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(CancelAsync));
-			try
-			{
-				this.MainContext.FeatureManager.Save(feature);
-
-				var activity = activityViewModel.Model;
-				await cancelReasonSelector.ShowAsync(activity,
-					cancelReason => this.Agenda.CanCancel(activity, cancelReason),
-					cancelReason => this.Agenda.Cancel(activity, cancelReason));
-			}
-			catch (Exception ex)
-			{
-				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-		}
-
-		public async Task CloseAsync(ActivityViewModel activityViewModel)
-		{
-			throw new NotImplementedException();
-		}
 	}
 }

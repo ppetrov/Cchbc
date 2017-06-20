@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Atos;
 using Atos.Client;
 using Atos.Client.Logs;
 using Atos.Client.Validation;
@@ -35,8 +34,6 @@ namespace iFSA.AgendaModule.Objects
 		}
 	}
 
-
-
 	public sealed class Agenda
 	{
 		private AgendaDataProvider DataProvider { get; }
@@ -56,49 +53,15 @@ namespace iFSA.AgendaModule.Objects
 			this.DataProvider = dataProvider;
 		}
 
-		public void LoadDay(MainContext mainContext, User user, DateTime dateTime)
+		public void LoadDay(MainContext mainContext, User user, DateTime dateTime, List<AgendaOutlet> outlets = null)
 		{
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
 			this.Outlets.Clear();
-			this.Outlets.AddRange(this.DataProvider.GetAgendaOutlets(mainContext, user, dateTime));
+			this.Outlets.AddRange(outlets ?? this.DataProvider.GetAgendaOutlets(mainContext, user, dateTime));
 
-			var outlets = new Outlet[this.Outlets.Count];
-			for (var index = 0; index < this.Outlets.Count; index++)
-			{
-				outlets[index] = this.Outlets[index].Outlet;
-			}
-
-			// Cancel any pending Images Load
-			this._cts.Cancel();
-
-			// Start new Images Load
-			this._cts = new CancellationTokenSource();
-
-			Task.Run(() =>
-			{
-				try
-				{
-					var cts = this._cts;
-					foreach (var outlet in outlets)
-					{
-						if (cts.IsCancellationRequested)
-						{
-							break;
-						}
-						var outletImage = this.DataProvider.GetDefaultOutletImage(mainContext, outlet);
-						if (outletImage != null)
-						{
-							this.OutletImageDownloaded?.Invoke(this, new OutletImageEventArgs(outletImage));
-						}
-					}
-				}
-				catch (Exception ex)
-				{
-					mainContext.Log(ex.ToString(), LogLevel.Error);
-				}
-			}, this._cts.Token);
+			this.LoadDay(mainContext);
 		}
 
 		public PermissionResult CanCreate(Outlet outlet, ActivityType activityType)
@@ -276,6 +239,45 @@ namespace iFSA.AgendaModule.Objects
 			this.DataProvider.Update(activity);
 
 			this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
+		}
+
+		private void LoadDay(MainContext mainContext)
+		{
+			var outlets = new Outlet[this.Outlets.Count];
+			for (var index = 0; index < this.Outlets.Count; index++)
+			{
+				outlets[index] = this.Outlets[index].Outlet;
+			}
+
+			// Cancel any pending Images Load
+			this._cts.Cancel();
+
+			// Start new Images Load
+			this._cts = new CancellationTokenSource();
+
+			Task.Run(() =>
+			{
+				try
+				{
+					var cts = this._cts;
+					foreach (var outlet in outlets)
+					{
+						if (cts.IsCancellationRequested)
+						{
+							break;
+						}
+						var outletImage = this.DataProvider.GetDefaultOutletImage(mainContext, outlet);
+						if (outletImage != null)
+						{
+							this.OutletImageDownloaded?.Invoke(this, new OutletImageEventArgs(outletImage));
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					mainContext.Log(ex.ToString(), LogLevel.Error);
+				}
+			}, this._cts.Token);
 		}
 	}
 }
