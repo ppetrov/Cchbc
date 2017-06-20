@@ -70,6 +70,18 @@
       <Project>{9539e041-5ce3-43b1-ae16-f49eb300baf7}</Project>
       <Name>Atos.Client.Data</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Atos.iFSA.Data\Atos.iFSA.Data.csproj">
+      <Project>{7DC2E5E6-18E5-47D5-B63A-BF21464A411F}</Project>
+      <Name>Atos.iFSA.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Atos.iFSA.Objects\Atos.iFSA.Objects.csproj">
+      <Project>{D1FBED0C-02C9-4344-AE1F-BD4C85FB96C2}</Project>
+      <Name>Atos.iFSA.Objects</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Atos.iFSA\Atos.iFSA.csproj">
+      <Project>{41397028-0B7B-4EF3-92AB-C6E617CAEC5B}</Project>
+      <Name>Atos.iFSA</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Atos.Server\Atos.Server.csproj">
       <Project>{7611601A-80E1-43FA-ADE0-4F25245DA724}</Project>
       <Name>Atos.Server</Name>

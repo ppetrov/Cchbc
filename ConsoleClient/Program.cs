@@ -12,6 +12,9 @@ using Atos.Client.Features;
 using Atos.Client.Features.Data;
 using Atos.Client.Validation;
 using Atos.ConsoleClient;
+using Atos.iFSA.Objects;
+using Atos.iFSA.Data;
+using Atos.iFSA;
 
 namespace ConsoleClient
 {
@@ -46,6 +49,9 @@ namespace ConsoleClient
 
 			try
 			{
+				var dataUser = default(User);
+				var provider = UserDataProvider.GetUsers(null);
+				var h = DataHelper.GetTradeChannel(null, null, null);
 				//FeatureDataReplicaSimulation.Replicate();
 
 				//Console.WriteLine(ExtractContractField(@"comment"));
