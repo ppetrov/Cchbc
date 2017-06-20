@@ -14569,10 +14569,10 @@
   },
   "project": {
     "restore": {
-      "projectUniqueName": "C:\\Sources\\Cchbc\\Cchbc.AppBuilder\\Cchbc.AppBuilder.csproj",
-      "projectName": "Cchbc.AppBuilder",
-      "projectPath": "C:\\Sources\\Cchbc\\Cchbc.AppBuilder\\Cchbc.AppBuilder.csproj",
-      "projectJsonPath": "C:\\Sources\\Cchbc\\Cchbc.AppBuilder\\project.json",
+      "projectUniqueName": "C:\\Sources\\Atos\\Atos.AppBuilder\\Atos.AppBuilder.csproj",
+      "projectName": "Atos.AppBuilder",
+      "projectPath": "C:\\Sources\\Atos\\Atos.AppBuilder\\Atos.AppBuilder.csproj",
+      "projectJsonPath": "C:\\Sources\\Atos\\Atos.AppBuilder\\project.json",
       "projectStyle": "ProjectJson"
     },
     "dependencies": {
