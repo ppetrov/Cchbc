@@ -128,19 +128,19 @@ namespace Atos.iFSA.AddActivityModule
 				this.AllOutlets.Add(outletViewModel);
 			}
 
-			if (this.AgendaScreenViewModel.SelectedOutletViewModel != null)
-			{
-				var outlet = this.AgendaScreenViewModel.SelectedOutletViewModel.Outlet;
+			//if (this.AgendaScreenViewModel.SelectedOutletViewModel != null)
+			//{
+			//	var outlet = this.AgendaScreenViewModel.SelectedOutletViewModel.Outlet;
 
-				foreach (var viewModel in this.AllOutlets)
-				{
-					if (viewModel.Model == outlet)
-					{
-						this.SelectedOutlet = viewModel;
-						break;
-					}
-				}
-			}
+			//	foreach (var viewModel in this.AllOutlets)
+			//	{
+			//		if (viewModel.Model == outlet)
+			//		{
+			//			this.SelectedOutlet = viewModel;
+			//			break;
+			//		}
+			//	}
+			//}
 		}
 
 		private async void CreateActivity()

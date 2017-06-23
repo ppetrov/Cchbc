@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.Client", "Atos.Client\Atos.Client.csproj", "{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}"
 EndProject
@@ -124,6 +124,8 @@ Global
 		{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}.Debug|x86.Build.0 = Debug|x86
 		{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}.Debug|x86.Deploy.0 = Debug|x86
 		{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}.Release|Any CPU.ActiveCfg = Release|x86
+		{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}.Release|Any CPU.Build.0 = Release|x86
+		{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}.Release|Any CPU.Deploy.0 = Release|x86
 		{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}.Release|ARM.ActiveCfg = Release|ARM
 		{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}.Release|ARM.Build.0 = Release|ARM
 		{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}.Release|ARM.Deploy.0 = Release|ARM

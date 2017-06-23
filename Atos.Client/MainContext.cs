@@ -20,7 +20,7 @@ namespace Atos.Client
 		// For the cache of data
 		public DataCache DataCache { get; } = new DataCache();
 		// For feature tracking & timings
-		public IFeatureManager FeatureManager { get; }
+		private IFeatureManager FeatureManager { get; }
 		// For localization
 		public ILocalizationManager LocalizationManager { get; }
 
@@ -36,6 +36,22 @@ namespace Atos.Client
 			this.ModalDialog = modalDialog;
 			this.FeatureManager = featureManager;
 			this.LocalizationManager = localizationManager;
+		}
+
+		public void Save(Feature feature, string details = null)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+
+			this.FeatureManager.Save(feature, details);
+		}
+
+		public void Save(Feature feature, Exception exception)
+		{
+			if (feature == null) throw new ArgumentNullException(nameof(feature));
+			if (exception == null) throw new ArgumentNullException(nameof(exception));
+
+			this.Log(exception.ToString(), LogLevel.Error);
+			this.FeatureManager.Save(feature, exception);
 		}
 
 		public FeatureContext CreateFeatureContext(Feature feature)
@@ -68,5 +84,7 @@ namespace Atos.Client
 			}
 			return false;
 		}
+
+
 	}
 }

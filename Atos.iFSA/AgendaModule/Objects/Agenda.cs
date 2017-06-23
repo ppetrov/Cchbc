@@ -11,29 +11,6 @@ using iFSA.AgendaModule.Objects;
 
 namespace Atos.iFSA.AgendaModule.Objects
 {
-	public sealed class ActivityEventArgs : EventArgs
-	{
-		public Activity Activity { get; }
-
-		public ActivityEventArgs(Activity activity)
-		{
-			if (activity == null) throw new ArgumentNullException(nameof(activity));
-			this.Activity = activity;
-		}
-	}
-
-	public sealed class OutletImageEventArgs : EventArgs
-	{
-		public OutletImage OutletImage { get; }
-
-		public OutletImageEventArgs(OutletImage outletImage)
-		{
-			if (outletImage == null) throw new ArgumentNullException(nameof(outletImage));
-
-			this.OutletImage = outletImage;
-		}
-	}
-
 	public sealed class Agenda
 	{
 		private AgendaDataProvider DataProvider { get; }
@@ -53,15 +30,15 @@ namespace Atos.iFSA.AgendaModule.Objects
 			this.DataProvider = dataProvider;
 		}
 
-		public void LoadDay(MainContext mainContext, User user, DateTime dateTime, List<AgendaOutlet> outlets = null)
+		public void LoadDay(FeatureContext context, User user, DateTime dateTime, List<AgendaOutlet> outlets = null)
 		{
-			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
+			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
 			this.Outlets.Clear();
-			this.Outlets.AddRange(outlets ?? this.DataProvider.GetAgendaOutlets(mainContext, user, dateTime));
+			this.Outlets.AddRange(outlets ?? this.DataProvider.GetAgendaOutlets(context, user, dateTime));
 
-			this.LoadDay(mainContext);
+			this.LoadDay(context);
 		}
 
 		public PermissionResult CanCreate(Outlet outlet, ActivityType activityType)
@@ -241,7 +218,7 @@ namespace Atos.iFSA.AgendaModule.Objects
 			this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
 		}
 
-		private void LoadDay(MainContext mainContext)
+		private void LoadDay(FeatureContext context)
 		{
 			var outlets = new Outlet[this.Outlets.Count];
 			for (var index = 0; index < this.Outlets.Count; index++)
@@ -266,7 +243,7 @@ namespace Atos.iFSA.AgendaModule.Objects
 						{
 							break;
 						}
-						var outletImage = this.DataProvider.GetDefaultOutletImage(mainContext, outlet);
+						var outletImage = this.DataProvider.GetDefaultOutletImage(context.MainContext, outlet);
 						if (outletImage != null)
 						{
 							this.OutletImageDownloaded?.Invoke(this, new OutletImageEventArgs(outletImage));
@@ -275,7 +252,7 @@ namespace Atos.iFSA.AgendaModule.Objects
 				}
 				catch (Exception ex)
 				{
-					mainContext.Log(ex.ToString(), LogLevel.Error);
+					context.MainContext.Log(ex.ToString(), LogLevel.Error);
 				}
 			}, this._cts.Token);
 		}

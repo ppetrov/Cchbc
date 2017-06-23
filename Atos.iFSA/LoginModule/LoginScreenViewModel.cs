@@ -73,7 +73,7 @@ namespace Atos.iFSA.LoginModule
 			var feature = new Feature(nameof(LoginScreenViewModel), nameof(LoadData));
 			try
 			{
-				this.MainContext.FeatureManager.Save(feature);
+				this.MainContext.Save(feature);
 
 				// Load users
 				using (var ctx = this.MainContext.CreateFeatureContext(feature))
@@ -94,7 +94,17 @@ namespace Atos.iFSA.LoginModule
 						if (user.Name.Equals(this.Username, StringComparison.OrdinalIgnoreCase))
 						{
 							_dataUser = user;
-							_dataLoader = Task.Run(() => new AgendaDataProvider().GetAgendaOutlets(this.MainContext, _dataUser, DateTime.Today));
+
+							_dataLoader = Task.Run(() =>
+							{
+								using (var ctx = this.MainContext.CreateFeatureContext(new Feature(nameof(LoginScreenViewModel), @"LoadAgenda")))
+								{
+									var outlets = new AgendaDataProvider().GetAgendaOutlets(ctx, _dataUser, DateTime.Today);
+									ctx.Complete();
+
+									return outlets;
+								}
+							});
 							break;
 						}
 					}
@@ -102,7 +112,7 @@ namespace Atos.iFSA.LoginModule
 			}
 			catch (Exception ex)
 			{
-				this.MainContext.FeatureManager.Save(feature, ex);
+				this.MainContext.Save(feature, ex);
 			}
 		}
 
@@ -111,7 +121,7 @@ namespace Atos.iFSA.LoginModule
 			var feature = new Feature(nameof(LoginScreenViewModel), nameof(Login));
 			try
 			{
-				this.MainContext.FeatureManager.Save(feature);
+				this.MainContext.Save(feature);
 
 				using (var ctx = this.MainContext.CreateFeatureContext(feature))
 				{
@@ -158,7 +168,7 @@ namespace Atos.iFSA.LoginModule
 			var feature = new Feature(nameof(LoginScreenViewModel), nameof(Advanced));
 			try
 			{
-				this.MainContext.FeatureManager.Save(feature);
+				this.MainContext.Save(feature);
 
 				var username = string.Empty;
 				var replicaHost = string.Empty;

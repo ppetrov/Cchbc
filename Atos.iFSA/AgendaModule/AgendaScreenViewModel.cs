@@ -23,6 +23,7 @@ namespace Atos.iFSA.AgendaModule
 		private IUIThreadDispatcher UIThreadDispatcher { get; }
 		private MainContext MainContext { get; }
 		private List<AgendaOutletViewModel> AllOutlets { get; } = new List<AgendaOutletViewModel>();
+		private User User { get; set; }
 
 		private DateTime _currentDate;
 		public DateTime CurrentDate
@@ -31,8 +32,6 @@ namespace Atos.iFSA.AgendaModule
 			set { this.SetProperty(ref _currentDate, value); }
 		}
 
-		private User User { get; set; }
-
 		private string _search = string.Empty;
 		public string Search
 		{
@@ -40,15 +39,8 @@ namespace Atos.iFSA.AgendaModule
 			set
 			{
 				this.SetProperty(ref _search, value);
-				this.ApplyCurrentTextSearch();
+				this.MainContext.Save(new Feature(nameof(AgendaScreenViewModel), nameof(Search)));
 			}
-		}
-
-		private AgendaOutletViewModel _selectedOutletViewModel;
-		public AgendaOutletViewModel SelectedOutletViewModel
-		{
-			get { return _selectedOutletViewModel; }
-			set { this.SetProperty(ref _selectedOutletViewModel, value); }
 		}
 
 		public ICommand PreviousDayCommand { get; }
@@ -78,6 +70,175 @@ namespace Atos.iFSA.AgendaModule
 			this.Agenda.ActivityAdded += this.ActivityAdded;
 			this.Agenda.ActivityUpdated += this.ActivityUpdated;
 			this.Agenda.OutletImageDownloaded += this.OutletImageDownloaded;
+		}
+
+		public void LoadDay(User user, DateTime dateTime, List<AgendaOutlet> outlets = null)
+		{
+			if (user == null) throw new ArgumentNullException(nameof(user));
+
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadDay));
+			try
+			{
+				using (var ctx = this.MainContext.CreateFeatureContext(feature))
+				{
+					this.MainContext.Save(feature, dateTime.ToString(@"O"));
+					this.LoadData(ctx, user, dateTime, outlets);
+					ctx.Complete();
+				}
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Save(feature, ex);
+			}
+		}
+
+		public async Task<Activity> CreateActivity(OutletViewModel outletViewModel, ActivityTypeViewModel activityTypeViewModel)
+		{
+			var outlet = default(Outlet);
+			if (outletViewModel != null)
+			{
+				outlet = outletViewModel.Model;
+			}
+			var activityType = default(ActivityType);
+			if (activityTypeViewModel != null)
+			{
+				activityType = activityTypeViewModel.Model;
+			}
+			var permissionResult = this.Agenda.CanCreate(outlet, activityType);
+			var canContinue = await this.MainContext.CanContinueAsync(permissionResult);
+			if (canContinue)
+			{
+				var activityStatus = DataHelper.GetOpenActivityStatus(this.MainContext);
+
+				var date = DateTime.Now;
+				var activity = new Activity(0, outlet, activityType, activityStatus, date, date, string.Empty);
+				return this.Agenda.Create(activity);
+			}
+			return null;
+		}
+
+		public async Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)
+		{
+			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
+
+			// TODO : From constructor
+			var timeSelector = default(ITimeSelector);
+
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(ChangeStartTimeAsync));
+			try
+			{
+				this.MainContext.Save(feature);
+
+				var activity = activityViewModel.Model;
+				await timeSelector.ShowAsync(
+					dateTime => this.Agenda.CanChangeStartTime(activity, dateTime),
+					dateTime => this.Agenda.ChangeStartTime(activity, dateTime));
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Save(feature, ex);
+			}
+		}
+
+		public async Task CancelAsync(ActivityViewModel activityViewModel)
+		{
+			// TODO : From constructor
+			var cancelReasonSelector = default(IActivityCancelReasonSelector);
+
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(CancelAsync));
+			try
+			{
+				this.MainContext.Save(feature);
+
+				var activity = activityViewModel.Model;
+				await cancelReasonSelector.ShowAsync(activity,
+					cancelReason => this.Agenda.CanCancel(activity, cancelReason),
+					cancelReason => this.Agenda.Cancel(activity, cancelReason));
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Save(feature, ex);
+			}
+		}
+
+		public async Task CloseAsync(ActivityViewModel activityViewModel)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void LoadNextDay()
+		{
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadNextDay));
+			try
+			{
+				this.MainContext.Save(feature);
+
+				using (var ctx = this.MainContext.CreateFeatureContext(feature))
+				{
+					this.LoadData(ctx, this.CurrentDate.AddDays(-1));
+					ctx.Complete();
+				}
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Save(feature, ex);
+			}
+		}
+
+		private void LoadPreviousDay()
+		{
+			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadPreviousDay));
+			try
+			{
+				this.MainContext.Save(feature);
+
+				using (var ctx = this.MainContext.CreateFeatureContext(feature))
+				{
+					this.LoadData(ctx, this.CurrentDate.AddDays(-1));
+					ctx.Complete();
+				}
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Save(feature, ex);
+			}
+		}
+
+		private void ApplyCurrentTextSearch()
+		{
+			// TODO : !!! Sort the collection
+
+			var search = this.Search;
+
+			this.Outlets.Clear();
+			lock (this)
+			{
+				foreach (var viewModel in this.AllOutlets)
+				{
+					if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+					{
+						this.Outlets.Add(viewModel);
+					}
+				}
+			}
+		}
+
+		private void DisplayCalendar()
+		{
+			// TODO : Probably it's better to pass Agenda as reference
+			// Close/Cancel is performed via Agenda ONLY, or maybe not
+			// How to close/cancel multiple days ???
+			this.AppNavigator.NavigateTo(AppScreen.Calendar, this.CurrentDate);
+		}
+
+		private void DisplayAddActivity()
+		{
+			this.AppNavigator.NavigateTo(AppScreen.AddActivity, this);
+		}
+
+		private void RemoveActivity()
+		{
+			// TODO : !!! Add support for Delete
 		}
 
 		private void OutletImageDownloaded(object sender, OutletImageEventArgs e)
@@ -177,176 +338,16 @@ namespace Atos.iFSA.AgendaModule
 			this.ApplyCurrentTextSearch();
 		}
 
-		public void LoadDay(User user, DateTime dateTime, List<AgendaOutlet> outlets = null)
+		private void LoadData(FeatureContext context, DateTime dateTime)
 		{
-			if (user == null) throw new ArgumentNullException(nameof(user));
-
-			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadDay));
-			try
-			{
-				this.MainContext.FeatureManager.Save(feature, dateTime.ToString(@"O"));
-				this.LoadData(user, dateTime, outlets);
-			}
-			catch (Exception ex)
-			{
-				this.MainContext.Log(ex.ToString(), LogLevel.Error);
-				this.MainContext.FeatureManager.Save(feature, ex);
-			}
+			this.LoadData(context, this.User, dateTime);
 		}
 
-		public async Task<Activity> CreateActivity(OutletViewModel outletViewModel, ActivityTypeViewModel activityTypeViewModel)
-		{
-			var outlet = default(Outlet);
-			if (outletViewModel != null)
-			{
-				outlet = outletViewModel.Model;
-			}
-			var activityType = default(ActivityType);
-			if (activityTypeViewModel != null)
-			{
-				activityType = activityTypeViewModel.Model;
-			}
-			var permissionResult = this.Agenda.CanCreate(outlet, activityType);
-			var canContinue = await this.MainContext.CanContinueAsync(permissionResult);
-			if (canContinue)
-			{
-				var activityStatus = DataHelper.GetOpenActivityStatus(this.MainContext);
-
-				var date = DateTime.Now;
-				var activity = new Activity(0, outlet, activityType, activityStatus, date, date, string.Empty);
-				return this.Agenda.Create(activity);
-			}
-			return null;
-		}
-
-		public async Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)
-		{
-			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
-
-			// TODO : From constructor
-			var timeSelector = default(ITimeSelector);
-
-			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(ChangeStartTimeAsync));
-			try
-			{
-				this.MainContext.FeatureManager.Save(feature);
-
-				var activity = activityViewModel.Model;
-				await timeSelector.ShowAsync(
-					dateTime => this.Agenda.CanChangeStartTime(activity, dateTime),
-					dateTime => this.Agenda.ChangeStartTime(activity, dateTime));
-			}
-			catch (Exception ex)
-			{
-				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-		}
-
-		public async Task CancelAsync(ActivityViewModel activityViewModel)
-		{
-			// TODO : From constructor
-			var cancelReasonSelector = default(IActivityCancelReasonSelector);
-
-			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(CancelAsync));
-			try
-			{
-				this.MainContext.FeatureManager.Save(feature);
-
-				var activity = activityViewModel.Model;
-				await cancelReasonSelector.ShowAsync(activity,
-					cancelReason => this.Agenda.CanCancel(activity, cancelReason),
-					cancelReason => this.Agenda.Cancel(activity, cancelReason));
-			}
-			catch (Exception ex)
-			{
-				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-		}
-
-		public async Task CloseAsync(ActivityViewModel activityViewModel)
-		{
-			throw new NotImplementedException();
-		}
-
-		private void LoadNextDay()
-		{
-			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadNextDay));
-			try
-			{
-				this.MainContext.FeatureManager.Save(feature);
-
-				this.LoadData(this.CurrentDate.AddDays(-1));
-			}
-			catch (Exception ex)
-			{
-				this.MainContext.Log(ex.ToString(), LogLevel.Error);
-				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-		}
-
-		private void LoadPreviousDay()
-		{
-			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadPreviousDay));
-			try
-			{
-				this.MainContext.FeatureManager.Save(feature);
-
-				this.LoadData(this.CurrentDate.AddDays(-1));
-			}
-			catch (Exception ex)
-			{
-				this.MainContext.Log(ex.ToString(), LogLevel.Error);
-				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-		}
-
-		private void ApplyCurrentTextSearch()
-		{
-			// TODO : !!! Sort the collection
-
-			var search = this.Search;
-
-			this.Outlets.Clear();
-			lock (this)
-			{
-				foreach (var viewModel in this.AllOutlets)
-				{
-					if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
-					{
-						this.Outlets.Add(viewModel);
-					}
-				}
-			}
-		}
-
-		private void DisplayCalendar()
-		{
-			// TODO : Probably it's better to pass Agenda as reference
-			// Close/Cancel is performed via Agenda ONLY, or maybe not
-			// How to close/cancel multiple days ???
-			this.AppNavigator.NavigateTo(AppScreen.Calendar, this.CurrentDate);
-		}
-
-		private void DisplayAddActivity()
-		{
-			this.AppNavigator.NavigateTo(AppScreen.AddActivity, this);
-		}
-
-		private void RemoveActivity()
-		{
-			// TODO : !!! Add support for Delete
-		}
-
-		private void LoadData(DateTime dateTime)
-		{
-			this.LoadData(this.User, dateTime);
-		}
-
-		private void LoadData(User user, DateTime dateTime, List<AgendaOutlet> outlets = null)
+		private void LoadData(FeatureContext context, User user, DateTime dateTime, List<AgendaOutlet> outlets = null)
 		{
 			this.User = user;
 			this.CurrentDate = dateTime;
-			this.Agenda.LoadDay(this.MainContext, user, dateTime, outlets);
+			this.Agenda.LoadDay(context, user, dateTime, outlets);
 
 			this.Outlets.Clear();
 			lock (this)
@@ -360,9 +361,5 @@ namespace Atos.iFSA.AgendaModule
 				}
 			}
 		}
-
-
-
-
 	}
 }

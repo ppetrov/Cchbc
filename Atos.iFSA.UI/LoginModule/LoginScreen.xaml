@@ -11,28 +11,27 @@
     <!--Extract in general location-->
     <Page.Resources>
         <Style x:Name="RegularText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="DarkOrange"></Setter>
+            <Setter Property="Foreground" Value="#F7EC80"></Setter>
             <Setter Property="Margin" Value="5"></Setter>
         </Style>
         <Style x:Name="HeaderText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="DarkOrange"></Setter>
+            <Setter Property="Foreground" Value="#F7EC80"></Setter>
             <Setter Property="FontSize" Value="20"></Setter>
             <Setter Property="Margin" Value="5"></Setter>
         </Style>
         <Style x:Name="TitleText" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="DarkOrange"></Setter>
+            <Setter Property="Foreground" Value="#F7EC80"></Setter>
             <Setter Property="FontSize" Value="48"></Setter>
             <Setter Property="Margin" Value="10"></Setter>
         </Style>
 
         <Style x:Name="RegularButton" TargetType="Button">
-            <Setter Property="Foreground" Value="DarkOrange"></Setter>
+            <Setter Property="Foreground" Value="#F7EC80"></Setter>
             <Setter Property="FontSize" Value="16"></Setter>
-            <Setter Property="Margin" Value="10"></Setter>
         </Style>
     </Page.Resources>
 
-    <Grid Background="DarkSlateBlue">
+    <Grid Background="#414052">
         <Grid.RowDefinitions>
             <RowDefinition Height="2*"></RowDefinition>
             <RowDefinition Height="8*"></RowDefinition>
@@ -56,10 +55,14 @@
                     </DataTemplate>
                 </PasswordBox.HeaderTemplate>
             </PasswordBox>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
-                <Button Style="{StaticResource RegularButton}" Content="{x:Bind ViewModel.AdvancedCaption}" Command="{x:Bind ViewModel.AdvancedCommand}"></Button>
-                <Button Style="{StaticResource RegularButton}" Content="{x:Bind ViewModel.LoginCaption}" Command="{x:Bind ViewModel.LoginCommand}"></Button>
-            </StackPanel>
+            <Grid Margin="5,25,5,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" HorizontalAlignment="Left" Width="150" Style="{StaticResource RegularButton}" Content="{x:Bind ViewModel.AdvancedCaption}" Command="{x:Bind ViewModel.AdvancedCommand}"></Button>
+                <Button Grid.Column="1" HorizontalAlignment="Right" Width="150" Style="{StaticResource RegularButton}" Content="{x:Bind ViewModel.LoginCaption}" Command="{x:Bind ViewModel.LoginCommand}"></Button>
+            </Grid>
         </StackPanel>
     </Grid>
 </Page>

@@ -9,6 +9,28 @@ namespace Atos.iFSA.AgendaModule.Data
 {
 	public sealed class AgendaDataProvider
 	{
+		public List<AgendaOutlet> GetAgendaOutlets(FeatureContext context, User user, DateTime date)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (user == null) throw new ArgumentNullException(nameof(user));
+
+			// TODO : Sort Outlets
+			// TODO : Sort Activities
+
+			//var outlets = context.DataCache.GetValues<Outlet>(ctx);
+			//this.Outlets.Clear();
+			//foreach (var byOutlet in this.DataProvider.VisitsProvider(mainContext, this.User, this.CurrentDate).GroupBy(v => v.Outlet))
+			//{
+			//	var outlet = byOutlet.Key;
+			//	var activities = byOutlet.SelectMany(v => v.Activities).ToList();
+
+			//	this.Outlets.Add(new AgendaOutlet(outlet, activities));
+			//	numbers.Add(outlet.Id);
+			//}
+
+			return new List<AgendaOutlet>();
+		}
+
 		public Activity Insert(Activity activity)
 		{
 			throw new NotImplementedException();
@@ -23,37 +45,6 @@ namespace Atos.iFSA.AgendaModule.Data
 			//var activity = new Activity(0, outlet, activityType, activityStatus, DateTime.Today, DateTime.Today, string.Empty);
 
 			throw new NotImplementedException();
-		}
-
-		public List<AgendaOutlet> GetAgendaOutlets(MainContext context, User user, DateTime date)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (user == null) throw new ArgumentNullException(nameof(user));
-
-			// TODO : Sort Outlets
-			// TODO : Sort Activities
-
-			//this.Outlets.Clear();
-			//foreach (var byOutlet in this.DataProvider.VisitsProvider(mainContext, this.User, this.CurrentDate).GroupBy(v => v.Outlet))
-			//{
-			//	var outlet = byOutlet.Key;
-			//	var activities = byOutlet.SelectMany(v => v.Activities).ToList();
-
-			//	this.Outlets.Add(new AgendaOutlet(outlet, activities));
-			//	numbers.Add(outlet.Id);
-			//}
-
-			// TODO : Sort outlets
-			// TODO : Sort Activities
-
-			using (var ctx = context.DbContextCreator())
-			{
-				// TODO : !!! Query the database
-				//var outlets = context.DataCache.GetValues<Outlet>(ctx);
-				//ctx.Complete();
-			}
-
-			return new List<AgendaOutlet>();
 		}
 
 		public OutletImage GetDefaultOutletImage(MainContext context, Outlet outlet)

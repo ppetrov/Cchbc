@@ -363,6 +363,8 @@ namespace iFSA.ArchitectureModule
 			var feature = new Feature(context, nameof(AddHeader));
 			try
 			{
+				this.MainContext.Save(feature);
+
 				// Create model
 				var header = new AgendaHeader(0, this.HeaderName) { DateTime = HeaderDateTime };
 
@@ -395,11 +397,7 @@ namespace iFSA.ArchitectureModule
 			}
 			catch (Exception ex)
 			{
-				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-			finally
-			{
-				this.MainContext.FeatureManager.Save(feature);
+				this.MainContext.Save(feature, ex);
 			}
 		}
 
@@ -409,6 +407,8 @@ namespace iFSA.ArchitectureModule
 			var feature = new Feature(context, nameof(UpdateHeaderDate));
 			try
 			{
+				this.MainContext.Save(feature);
+
 				var viewModel = this.SelectedAgendaHeader;
 				if (viewModel == null)
 				{
@@ -442,11 +442,7 @@ namespace iFSA.ArchitectureModule
 			}
 			catch (Exception ex)
 			{
-				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-			finally
-			{
-				this.MainContext.FeatureManager.Save(feature);
+				this.MainContext.Save(feature, ex);
 			}
 		}
 
@@ -456,6 +452,8 @@ namespace iFSA.ArchitectureModule
 			var feature = new Feature(context, nameof(UpdateHeaderAddress));
 			try
 			{
+				this.MainContext.Save(feature);
+
 				var viewModel = this.SelectedAgendaHeader;
 				if (viewModel == null)
 				{
@@ -489,11 +487,7 @@ namespace iFSA.ArchitectureModule
 			}
 			catch (Exception ex)
 			{
-				this.MainContext.FeatureManager.Save(feature, ex);
-			}
-			finally
-			{
-				this.MainContext.FeatureManager.Save(feature);
+				this.MainContext.Save(feature, ex);
 			}
 		}
 

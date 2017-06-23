@@ -46,11 +46,13 @@
     <Compile Include="AddActivityModule\OutletViewModel.cs" />
     <Compile Include="AddActivityModule\ActivityTypeViewModel.cs" />
     <Compile Include="AgendaModule\AgendaScreenParam.cs" />
+    <Compile Include="AgendaModule\Objects\ActivityEventArgs.cs" />
     <Compile Include="AgendaModule\Objects\Agenda.cs" />
     <Compile Include="AgendaModule\Objects\AgendaOutlet.cs" />
     <Compile Include="AgendaModule\Data\AgendaDataProvider.cs" />
     <Compile Include="AgendaModule\Objects\OutletImage.cs" />
     <Compile Include="AgendaModule\AgendaScreenViewModel.cs" />
+    <Compile Include="AgendaModule\Objects\OutletImageEventArgs.cs" />
     <Compile Include="AgendaModule\ViewModels\AgendaOutletViewModel.cs" />
     <Compile Include="AppModule.cs" />
     <Compile Include="AppScreen.cs" />
