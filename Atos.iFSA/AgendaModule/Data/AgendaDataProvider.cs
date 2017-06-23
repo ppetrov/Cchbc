@@ -55,28 +55,21 @@ namespace Atos.iFSA.AgendaModule.Data
 			return null;
 		}
 
-		public Activity Insert(MainContext context, Activity activity)
+		public Activity Insert(FeatureContext context, Activity activity)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
-			using (var dbContext = context.DbContextCreator())
-			{
-				dbContext.Execute(new Query(@"insert into activities values ...."));
-				dbContext.Complete();
-			}
+			context.Execute(new Query("insert into ...."));
+
 			return null;
 		}
 
-		public void Update(MainContext context, Activity activity)
+		public void Update(FeatureContext context, Activity activity)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 
-			using (var dbContext = context.DbContextCreator())
-			{
-				dbContext.Execute(new Query(@"update activities set details = @details, ..... where id = @id"));
-				dbContext.Complete();
-			}
+			context.Execute(new Query(@"update activities set details = @details, ..... where id = @id"));
 		}
 
 		public object GetVisitDay(DateTime dateTime)

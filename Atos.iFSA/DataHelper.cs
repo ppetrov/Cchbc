@@ -43,13 +43,13 @@ namespace Atos.iFSA
 
 		private static ActivityStatus GetActivityStatus(MainContext context, int statusId)
 		{
-			ActivityStatus activityStatus;
+			ActivityStatus activityStatus = null;
 
-			using (var dbContext = context.DbContextCreator())
-			{
-				context.DataCache.GetValues<ActivityStatus>(dbContext).TryGetValue(statusId, out activityStatus);
-				dbContext.Complete();
-			}
+			//using (var dbContext = context.DbContextCreator())
+			//{
+			//	context.DataCache.GetValues<ActivityStatus>(dbContext).TryGetValue(statusId, out activityStatus);
+			//	dbContext.Complete();
+			//}
 
 			return activityStatus;
 		}

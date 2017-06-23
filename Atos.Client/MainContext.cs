@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Atos.Client.Data;
 using Atos.Client.Dialog;
@@ -16,13 +17,13 @@ namespace Atos.Client
 		// For Query the db
 		public Func<IDbContext> DbContextCreator { get; }
 		// For displaying modal dialogs
-		public IModalDialog ModalDialog { get; }
+		private IModalDialog ModalDialog { get; }
 		// For the cache of data
 		public DataCache DataCache { get; } = new DataCache();
 		// For feature tracking & timings
 		private IFeatureManager FeatureManager { get; }
 		// For localization
-		public ILocalizationManager LocalizationManager { get; }
+		private ILocalizationManager LocalizationManager { get; }
 
 		public MainContext(Action<string, LogLevel> log, Func<IDbContext> dbContextCreator, IModalDialog modalDialog, IFeatureManager featureManager, ILocalizationManager localizationManager)
 		{
@@ -36,6 +37,13 @@ namespace Atos.Client
 			this.ModalDialog = modalDialog;
 			this.FeatureManager = featureManager;
 			this.LocalizationManager = localizationManager;
+		}
+
+		public void LoadLocalization(IEnumerable<string> lines)
+		{
+			if (lines == null) throw new ArgumentNullException(nameof(lines));
+
+			this.LocalizationManager.Load(lines);
 		}
 
 		public void Save(Feature feature, string details = null)
@@ -85,6 +93,18 @@ namespace Atos.Client
 			return false;
 		}
 
+		public string GetLocalized(LocalizationKey key)
+		{
+			if (key == null) throw new ArgumentNullException(nameof(key));
 
+			return this.LocalizationManager.Get(key);
+		}
+
+		public Task ShowMessageAsync(LocalizationKey localizationKey)
+		{
+			if (localizationKey == null) throw new ArgumentNullException(nameof(localizationKey));
+
+			return this.ModalDialog.ShowAsync(PermissionResult.Deny(this.GetLocalized(localizationKey)));
+		}
 	}
 }

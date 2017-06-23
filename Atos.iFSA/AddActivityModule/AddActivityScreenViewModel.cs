@@ -8,7 +8,6 @@ using Atos.Client.Common;
 using Atos.Client.Localization;
 using Atos.Client.Logs;
 using Atos.iFSA.AgendaModule;
-using iFSA;
 
 namespace Atos.iFSA.AddActivityModule
 {
@@ -77,7 +76,7 @@ namespace Atos.iFSA.AddActivityModule
 			{
 				this.SetProperty(ref _hideSuppressed, value);
 				var name = value ? @"HideSuppressedOutlets" : @"ShowSuppressedOutlets";
-				this.SwitchSuppressedOutletsCaption = this.MainContext.LocalizationManager.Get(new LocalizationKey(nameof(AddActivityScreenViewModel), name));
+				this.SwitchSuppressedOutletsCaption = this.MainContext.GetLocalized(new LocalizationKey(nameof(AddActivityScreenViewModel), name));
 			}
 		}
 

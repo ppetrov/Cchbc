@@ -7,7 +7,6 @@ using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Localization;
 using Atos.Client.Logs;
-using Atos.Client.Validation;
 using Atos.iFSA.AgendaModule;
 using Atos.iFSA.AgendaModule.Data;
 using Atos.iFSA.LoginModule.Data;
@@ -94,7 +93,6 @@ namespace Atos.iFSA.LoginModule
 						if (user.Name.Equals(this.Username, StringComparison.OrdinalIgnoreCase))
 						{
 							_dataUser = user;
-
 							_dataLoader = Task.Run(() =>
 							{
 								using (var ctx = this.MainContext.CreateFeatureContext(new Feature(nameof(LoginScreenViewModel), @"LoadAgenda")))
@@ -123,39 +121,43 @@ namespace Atos.iFSA.LoginModule
 			{
 				this.MainContext.Save(feature);
 
-				using (var ctx = this.MainContext.CreateFeatureContext(feature))
-				{
-					var username = (this.Username ?? string.Empty).Trim().ToUpperInvariant();
-					var password = (this.Password ?? string.Empty);
-					var user = this.DataProvider.GetUser(ctx, username, password, _users);
-					if (user != null)
-					{
-						// Save the current username
-						var userSettings = this.DataProvider.GetUserSettings();
-						if (userSettings != null)
-						{
-							userSettings.Username = username;
-							this.DataProvider.SaveUserSettings(userSettings);
-						}
+				var username = (this.Username ?? string.Empty).Trim().ToUpperInvariant();
+				var password = (this.Password ?? string.Empty);
+				var user = default(User);
 
-						// Display agenda
-						var outlets = default(List<AgendaOutlet>);
-						if (_dataLoader != null)
-						{
-							if (user.Id == _dataUser.Id)
-							{
-								outlets = _dataLoader.Result;
-							}
-						}
-						this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaScreenParam(user, DateTime.Today, outlets));
-					}
-					else
+				foreach (var u in _users)
+				{
+					if (u.Name.Equals(username, StringComparison.OrdinalIgnoreCase) &&
+						false)
 					{
-						var message = PermissionResult.Deny(this.MainContext.LocalizationManager.Get(new LocalizationKey(nameof(LoginScreenViewModel), @"WrongCredentials")));
-						await this.MainContext.ModalDialog.ShowAsync(message);
+						user = u;
+						break;
 					}
-					ctx.Complete();
 				}
+				if (user == null)
+				{
+					await this.MainContext.ShowMessageAsync(new LocalizationKey(nameof(LoginScreenViewModel), @"WrongCredentials"));
+					return;
+				}
+
+				// Save the current username
+				var userSettings = this.DataProvider.GetUserSettings();
+				if (userSettings != null)
+				{
+					userSettings.Username = username;
+					this.DataProvider.SaveUserSettings(userSettings);
+				}
+
+				// Display agenda
+				var outlets = default(List<AgendaOutlet>);
+				if (_dataLoader != null)
+				{
+					if (user.Id == _dataUser.Id)
+					{
+						outlets = _dataLoader.Result;
+					}
+				}
+				this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaScreenParam(user, DateTime.Today, outlets));
 			}
 			catch (Exception ex)
 			{
@@ -195,7 +197,7 @@ namespace Atos.iFSA.LoginModule
 
 		private string GetLocalizedValue(string name)
 		{
-			return this.MainContext.LocalizationManager.Get(new LocalizationKey(nameof(LoginScreenViewModel), name));
+			return this.MainContext.GetLocalized(new LocalizationKey(nameof(LoginScreenViewModel), name));
 		}
 	}
 }

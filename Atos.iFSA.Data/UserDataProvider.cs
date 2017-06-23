@@ -56,7 +56,7 @@ namespace Atos.iFSA.Data
 
 			var users = new Dictionary<long, User>();
 
-			var rows = context.DbContext.Execute(new Query<UserRow>(@"SELECT U.USER_ID, U.SHORT_NAME, U.ADDRESS, U.E_MAIL, U.FULL_NAME, U.INDUSTRY, U.IS_AUDITTOOL_USER, U.IS_SUPERVISOR, U.PARENT_ID FROM USER_SNAP U",
+			var rows = context.Execute(new Query<UserRow>(@"SELECT U.USER_ID, U.SHORT_NAME, U.ADDRESS, U.E_MAIL, U.FULL_NAME, U.INDUSTRY, U.IS_AUDITTOOL_USER, U.IS_SUPERVISOR, U.PARENT_ID FROM USER_SNAP U",
 				r =>
 				{
 					var id = GetLong(r, 0);

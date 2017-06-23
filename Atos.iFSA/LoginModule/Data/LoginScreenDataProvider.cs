@@ -39,23 +39,23 @@ namespace Atos.iFSA.LoginModule.Data
 			return UserDataProvider.GetUsers(featureContext);
 		}
 
-		public User GetUser(FeatureContext featureContext, string username, string password, User[] users)
-		{
-			if (featureContext == null) throw new ArgumentNullException(nameof(featureContext));
-			if (username == null) throw new ArgumentNullException(nameof(username));
-			if (password == null) throw new ArgumentNullException(nameof(password));
-			if (users == null) throw new ArgumentNullException(nameof(users));
+		//public User GetUser(FeatureContext featureContext, User[] users, string username, string password)
+		//{
+		//	if (featureContext == null) throw new ArgumentNullException(nameof(featureContext));
+		//	if (username == null) throw new ArgumentNullException(nameof(username));
+		//	if (password == null) throw new ArgumentNullException(nameof(password));
+		//	if (users == null) throw new ArgumentNullException(nameof(users));
 
-			featureContext.MainContext.Log(nameof(GetUser), LogLevel.Info);
+		//	featureContext.MainContext.Log(nameof(GetUser), LogLevel.Info);
 
-			foreach (var user in users)
-			{
-				if (user.Name.Equals(username, StringComparison.OrdinalIgnoreCase))
-				{
-					return user;
-				}
-			}
-			return null;
-		}
+		//	foreach (var user in users)
+		//	{
+		//		if (user.Name.Equals(username, StringComparison.OrdinalIgnoreCase))
+		//		{
+		//			return user;
+		//		}
+		//	}
+		//	return null;
+		//}
 	}
 }

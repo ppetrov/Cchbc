@@ -28,27 +28,27 @@ namespace Atos.iFSA
 
 		public void Load()
 		{
-			using (var ctx = this.MainContext.DbContextCreator())
-			{
-				var cache = this.MainContext.DataCache;
+			//using (var ctx = this.MainContext.DbContextCreator())
+			//{
+			//	var cache = this.MainContext.DataCache;
 
-				var s = Stopwatch.StartNew();
-				var types = cache.GetValues<ActivityType>(ctx).Values;
-				s.Stop();
-				//Console.WriteLine(s.ElapsedMilliseconds);
-				foreach (var type in types)
-				{
-					//Console.WriteLine(type.Id + @" " + type.Name);
-					//Console.WriteLine(@"Close reasons  " + type.CloseReasons.Count);
-					//Console.WriteLine(@"Cancel reasons " + type.CancelReasons.Count);
-				}
+			//	var s = Stopwatch.StartNew();
+			//	var types = cache.GetValues<ActivityType>(ctx).Values;
+			//	s.Stop();
+			//	//Console.WriteLine(s.ElapsedMilliseconds);
+			//	foreach (var type in types)
+			//	{
+			//		//Console.WriteLine(type.Id + @" " + type.Name);
+			//		//Console.WriteLine(@"Close reasons  " + type.CloseReasons.Count);
+			//		//Console.WriteLine(@"Cancel reasons " + type.CancelReasons.Count);
+			//	}
 
-				var outlet = new Outlet(1, @"Billa");
+			//	var outlet = new Outlet(1, @"Billa");
 
 
 
-				ctx.Complete();
-			}
+			//	ctx.Complete();
+			//}
 		}
 	}
 }

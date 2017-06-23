@@ -148,13 +148,13 @@ namespace iFSA.ArchitectureModule
 			}
 			var values = GetData(context);
 
-			context.Log(nameof(IsAgendaHeaderExists), LogLevel.Info);
+			//context.Log(nameof(IsAgendaHeaderExists), LogLevel.Info);
 			if (IsAgendaHeaderExists(values, name))
 			{
 				return PermissionResult.Deny(@"HeaderWithTheSameNameAlreadyExists");
 			}
 			var date = header.DateTime.Date;
-			context.Log(nameof(IsDateExists), LogLevel.Info);
+			//context.Log(nameof(IsDateExists), LogLevel.Info);
 			if (IsDateExists(values, date))
 			{
 				return PermissionResult.Deny(@"HeaderWithTheSameDateAlreadyExists");
@@ -210,7 +210,7 @@ namespace iFSA.ArchitectureModule
 		private static List<string> GetData(MainContext context)
 		{
 			// TODO : Query the db
-			context.Log(nameof(GetData), LogLevel.Info);
+			//context.Log(nameof(GetData), LogLevel.Info);
 			return new List<string>();
 		}
 	}
@@ -383,9 +383,9 @@ namespace iFSA.ArchitectureModule
 				var viewModel = new AgendaHeaderViewModel(header);
 
 				// Insert into db
-				using (var ctx = this.MainContext.DbContextCreator())
+				using (var ctx = this.MainContext.CreateFeatureContext(feature))
 				{
-					this.DataProvider.Insert(ctx, viewModel.Model);
+					//this.DataProvider.Insert(ctx, viewModel.Model);
 					ctx.Complete();
 				}
 
@@ -412,7 +412,7 @@ namespace iFSA.ArchitectureModule
 				var viewModel = this.SelectedAgendaHeader;
 				if (viewModel == null)
 				{
-					this.MainContext.Log(nameof(UpdateHeaderDate) + " without selected header", LogLevel.Warn);
+					//this.MainContext.Log(nameof(UpdateHeaderDate) + " without selected header", LogLevel.Warn);
 					return;
 				}
 
@@ -432,10 +432,10 @@ namespace iFSA.ArchitectureModule
 				viewModel.DateTime = this.AgendaHeaderNewDate;
 
 				// Update the model
-				using (var ctx = this.MainContext.DbContextCreator())
-				{
-					this.DataProvider.Update(ctx, viewModel.Model);
-				}
+				//using (var ctx = this.MainContext.DbContextCreator())
+				//{
+				//	this.DataProvider.Update(ctx, viewModel.Model);
+				//}
 
 				// Refresh the screen
 				this.DisplayData();
@@ -457,7 +457,7 @@ namespace iFSA.ArchitectureModule
 				var viewModel = this.SelectedAgendaHeader;
 				if (viewModel == null)
 				{
-					this.MainContext.Log(nameof(UpdateHeaderAddress) + " without selected header", LogLevel.Warn);
+					//this.MainContext.Log(nameof(UpdateHeaderAddress) + " without selected header", LogLevel.Warn);
 					return;
 				}
 
@@ -477,10 +477,10 @@ namespace iFSA.ArchitectureModule
 				viewModel.Address = this.AgendaHeaderAddress;
 
 				// Update the model
-				using (var ctx = this.MainContext.DbContextCreator())
-				{
-					this.DataProvider.Update(ctx, viewModel.Model);
-				}
+				//using (var ctx = this.MainContext.DbContextCreator())
+				//{
+				//	this.DataProvider.Update(ctx, viewModel.Model);
+				//}
 
 				// Refresh the screen
 				this.DisplayData();
@@ -493,16 +493,16 @@ namespace iFSA.ArchitectureModule
 
 		public void Load()
 		{
-			using (var ctx = this.MainContext.DbContextCreator())
-			{
-				this.AgendaHeaders.Clear();
+			//using (var ctx = this.MainContext.DbContextCreator())
+			//{
+			//	this.AgendaHeaders.Clear();
 
-				foreach (var agendaHeader in this.DataProvider.GetAgendaHeaders(ctx))
-				{
-					this.AgendaHeaders.Add(new AgendaHeaderViewModel(agendaHeader));
-				}
-				ctx.Complete();
-			}
+			//	foreach (var agendaHeader in this.DataProvider.GetAgendaHeaders(ctx))
+			//	{
+			//		this.AgendaHeaders.Add(new AgendaHeaderViewModel(agendaHeader));
+			//	}
+			//	ctx.Complete();
+			//}
 
 			this.DisplayData();
 		}
