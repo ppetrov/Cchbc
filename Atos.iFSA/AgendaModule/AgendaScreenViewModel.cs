@@ -7,7 +7,6 @@ using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Logs;
-using Atos.iFSA.AddActivityModule;
 using Atos.iFSA.AgendaModule.Objects;
 using Atos.iFSA.AgendaModule.ViewModels;
 using Atos.iFSA.Objects;
@@ -79,9 +78,10 @@ namespace Atos.iFSA.AgendaModule
 			var feature = new Feature(nameof(AgendaScreenViewModel), nameof(LoadDay));
 			try
 			{
+				this.MainContext.Save(feature, dateTime.ToString(@"O"));
+
 				using (var ctx = this.MainContext.CreateFeatureContext(feature))
 				{
-					this.MainContext.Save(feature, dateTime.ToString(@"O"));
 					this.LoadData(ctx, user, dateTime, outlets);
 					ctx.Complete();
 				}
@@ -90,31 +90,6 @@ namespace Atos.iFSA.AgendaModule
 			{
 				this.MainContext.Save(feature, ex);
 			}
-		}
-
-		public async Task<Activity> CreateActivity(OutletViewModel outletViewModel, ActivityTypeViewModel activityTypeViewModel)
-		{
-			var outlet = default(Outlet);
-			if (outletViewModel != null)
-			{
-				outlet = outletViewModel.Model;
-			}
-			var activityType = default(ActivityType);
-			if (activityTypeViewModel != null)
-			{
-				activityType = activityTypeViewModel.Model;
-			}
-			var permissionResult = this.Agenda.CanCreate(outlet, activityType);
-			var canContinue = await this.MainContext.CanContinueAsync(permissionResult);
-			if (canContinue)
-			{
-				var activityStatus = DataHelper.GetOpenActivityStatus(this.MainContext);
-
-				var date = DateTime.Now;
-				var activity = new Activity(0, outlet, activityType, activityStatus, date, date, string.Empty);
-				return this.Agenda.Create(activity);
-			}
-			return null;
 		}
 
 		public async Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)

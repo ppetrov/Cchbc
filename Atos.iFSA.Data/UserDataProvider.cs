@@ -9,21 +9,6 @@ namespace Atos.iFSA.Data
 {
 	public static class UserDataProvider
 	{
-		private static int GetInt(IFieldDataReader r, int index, int defaultValue = 0)
-		{
-			return r.IsDbNull(index) ? defaultValue : r.GetInt32(index);
-		}
-
-		private static long GetLong(IFieldDataReader r, int index, long defaultValue = 0)
-		{
-			return r.IsDbNull(index) ? defaultValue : r.GetInt64(index);
-		}
-
-		private static string GetString(IFieldDataReader r, int index, string defaultValue = "")
-		{
-			return r.IsDbNull(index) ? defaultValue : r.GetString(index);
-		}
-
 		private struct UserRow
 		{
 			public readonly long Id;
@@ -59,15 +44,15 @@ namespace Atos.iFSA.Data
 			var rows = context.Execute(new Query<UserRow>(@"SELECT U.USER_ID, U.SHORT_NAME, U.ADDRESS, U.E_MAIL, U.FULL_NAME, U.INDUSTRY, U.IS_AUDITTOOL_USER, U.IS_SUPERVISOR, U.PARENT_ID FROM USER_SNAP U",
 				r =>
 				{
-					var id = GetLong(r, 0);
-					var name = GetString(r, 1);
-					var address = GetString(r, 2);
-					var email = GetString(r, 3);
-					var fullName = GetString(r, 4);
-					var industry = GetString(r, 5);
-					var isAuditor = Convert.ToBoolean(GetInt(r, 6));
-					var isTeamLeader = Convert.ToBoolean(GetInt(r, 7));
-					var teamLeaderId = GetLong(r, 8);
+					var id = DbData.GetLong(r, 0);
+					var name = DbData.GetString(r, 1);
+					var address = DbData.GetString(r, 2);
+					var email = DbData.GetString(r, 3);
+					var fullName = DbData.GetString(r, 4);
+					var industry = DbData.GetString(r, 5);
+					var isAuditor = Convert.ToBoolean(DbData.GetInt(r, 6));
+					var isTeamLeader = Convert.ToBoolean(DbData.GetInt(r, 7));
+					var teamLeaderId = DbData.GetLong(r, 8);
 					return new UserRow(id, name, address, email, fullName, industry, isAuditor, isTeamLeader, teamLeaderId);
 				})).ToList();
 			foreach (var row in rows)

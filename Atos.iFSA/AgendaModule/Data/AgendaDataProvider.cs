@@ -14,26 +14,7 @@ namespace Atos.iFSA.AgendaModule.Data
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
-			// TODO : Sort Outlets
-			// TODO : Sort Activities
-
-			//var outlets = context.DataCache.GetValues<Outlet>(ctx);
-			//this.Outlets.Clear();
-			//foreach (var byOutlet in this.DataProvider.VisitsProvider(mainContext, this.User, this.CurrentDate).GroupBy(v => v.Outlet))
-			//{
-			//	var outlet = byOutlet.Key;
-			//	var activities = byOutlet.SelectMany(v => v.Activities).ToList();
-
-			//	this.Outlets.Add(new AgendaOutlet(outlet, activities));
-			//	numbers.Add(outlet.Id);
-			//}
-
 			return new List<AgendaOutlet>();
-		}
-
-		public Activity Insert(Activity activity)
-		{
-			throw new NotImplementedException();
 		}
 
 		public void Update(Activity activity)

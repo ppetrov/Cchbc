@@ -2,22 +2,23 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Atos.Client;
 using Atos.Client.Common;
+using Atos.Client.Features;
 using Atos.Client.Localization;
 using Atos.Client.Logs;
 using Atos.iFSA.AgendaModule;
+using Atos.iFSA.Objects;
 
 namespace Atos.iFSA.AddActivityModule
 {
 	public sealed class AddActivityScreenViewModel : ViewModel
 	{
-		private AgendaScreenViewModel AgendaScreenViewModel { get; }
 		private MainContext MainContext { get; }
 		private AddActivityScreenDataProvider DataProvider { get; }
 		private IAppNavigator AppNavigator { get; }
-
 		private List<OutletViewModel> AllOutlets { get; } = new List<OutletViewModel>();
 
 		public ObservableCollection<OutletViewModel> Outlets { get; } = new ObservableCollection<OutletViewModel>();
@@ -91,14 +92,12 @@ namespace Atos.iFSA.AddActivityModule
 		public ICommand StartNewActivityCommand { get; }
 		public ICommand SwitchSuppressedOutletsCommand { get; }
 
-		public AddActivityScreenViewModel(AgendaScreenViewModel agendaScreenViewModel, MainContext mainContext, AddActivityScreenDataProvider dataProvider, IAppNavigator appNavigator)
+		public AddActivityScreenViewModel(MainContext mainContext, AddActivityScreenDataProvider dataProvider, IAppNavigator appNavigator)
 		{
-			if (agendaScreenViewModel == null) throw new ArgumentNullException(nameof(agendaScreenViewModel));
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 			if (appNavigator == null) throw new ArgumentNullException(nameof(appNavigator));
 
-			this.AgendaScreenViewModel = agendaScreenViewModel;
 			this.MainContext = mainContext;
 			this.DataProvider = dataProvider;
 			this.AppNavigator = appNavigator;
@@ -108,45 +107,57 @@ namespace Atos.iFSA.AddActivityModule
 			this.HideSuppressed = false;
 		}
 
-		public void Load()
+		public void LoadData()
 		{
-			this.Categories.Clear();
-			foreach (var category in this.DataProvider.GetCategories())
+			var feature = new Feature(nameof(AddActivityScreenViewModel), nameof(LoadData));
+
+			try
 			{
-				this.Categories.Add(new ActivityTypeCategoryViewModel(category));
-			}
+				using (var ctx = this.MainContext.CreateFeatureContext(feature))
+				{
+					this.Categories.Clear();
+					foreach (var category in this.DataProvider.GetCategories(ctx))
+					{
+						this.Categories.Add(new ActivityTypeCategoryViewModel(category));
+					}
 
-			var outlets = this.DataProvider.GetOutlets();
-			this.Outlets.Clear();
-			this.AllOutlets.Clear();
-			foreach (var outlet in outlets)
+					this.Outlets.Clear();
+					foreach (var outlet in this.DataProvider.GetOutlets(ctx))
+					{
+						this.Outlets.Add(new OutletViewModel(outlet));
+					}
+
+					this.AllOutlets.Clear();
+					this.AllOutlets.AddRange(this.Outlets);
+
+					ctx.Complete();
+				}
+
+				//if (this.AgendaScreenViewModel.SelectedOutletViewModel != null)
+				//{
+				//	var outlet = this.AgendaScreenViewModel.SelectedOutletViewModel.Outlet;
+
+				//	foreach (var viewModel in this.AllOutlets)
+				//	{
+				//		if (viewModel.Model == outlet)
+				//		{
+				//			this.SelectedOutlet = viewModel;
+				//			break;
+				//		}
+				//	}
+				//}
+			}
+			catch (Exception ex)
 			{
-				var outletViewModel = new OutletViewModel(outlet);
-
-				this.Outlets.Add(outletViewModel);
-				this.AllOutlets.Add(outletViewModel);
+				this.MainContext.Save(feature, ex);
 			}
-
-			//if (this.AgendaScreenViewModel.SelectedOutletViewModel != null)
-			//{
-			//	var outlet = this.AgendaScreenViewModel.SelectedOutletViewModel.Outlet;
-
-			//	foreach (var viewModel in this.AllOutlets)
-			//	{
-			//		if (viewModel.Model == outlet)
-			//		{
-			//			this.SelectedOutlet = viewModel;
-			//			break;
-			//		}
-			//	}
-			//}
 		}
 
 		private async void CreateActivity()
 		{
 			try
 			{
-				await this.AgendaScreenViewModel.CreateActivity(this.SelectedOutlet, this.SelectedType);
+				await this.CreateActivity(this.SelectedOutlet, this.SelectedType);
 			}
 			catch (Exception ex)
 			{
@@ -156,11 +167,11 @@ namespace Atos.iFSA.AddActivityModule
 
 		private async void StartNewActivity()
 		{
-			var activity = await this.AgendaScreenViewModel.CreateActivity(this.SelectedOutlet, this.SelectedType);
+			var activity = await this.CreateActivity(this.SelectedOutlet, this.SelectedType);
 			if (activity != null)
 			{
 				this.AppNavigator.GoBack();
-				this.AppNavigator.NavigateTo(AppScreen.ExecuteActivity, new object[] { this.AgendaScreenViewModel, activity });
+				this.AppNavigator.NavigateTo(AppScreen.ExecuteActivity, new object[] { @"Agenda", activity });
 			}
 		}
 
@@ -186,6 +197,35 @@ namespace Atos.iFSA.AddActivityModule
 					this.Outlets.Add(viewModel);
 				}
 			}
+		}
+
+		private async Task<Activity> CreateActivity(OutletViewModel outletViewModel, ActivityTypeViewModel activityTypeViewModel)
+		{
+			var outlet = default(Outlet);
+			if (outletViewModel != null)
+			{
+				outlet = outletViewModel.Model;
+			}
+			var activityType = default(ActivityType);
+			if (activityTypeViewModel != null)
+			{
+				activityType = activityTypeViewModel.Model;
+			}
+
+			// TODO : Can Create from where to take the reference???
+			//var permissionResult = this.Agenda.CanCreate(outlet, activityType);
+			//var canContinue = await this.MainContext.CanContinueAsync(permissionResult);
+			//if (canContinue)
+			//{
+			//	using (var ctx = this.MainContext.CreateFeatureContext(null))
+			//	{
+			//		var activity = this.Agenda.Create(null, outlet, null, null, DateTime.Now);
+			//		ctx.Complete();
+			//		return activity;
+			//	}
+			//}
+
+			return null;
 		}
 	}
 }

@@ -58,6 +58,46 @@ namespace Atos.iFSA.AgendaModule.Objects
 			return PermissionResult.Allow;
 		}
 
+		public Activity Create(FeatureContext context, Outlet outlet, ActivityType type, ActivityStatus status, DateTime date)
+		{
+			if (context == null) throw new ArgumentNullException(nameof(context));
+			if (type == null) throw new ArgumentNullException(nameof(type));
+			if (status == null) throw new ArgumentNullException(nameof(status));
+			if (outlet == null) throw new ArgumentNullException(nameof(outlet));
+
+			var activity = new Activity(0, outlet, type, status, date, date, string.Empty);
+
+			// Save activity to db
+			var newActivity = this.DataProvider.Insert(context, activity);
+
+			// Find item by outlet
+			var agendaOutlet = default(AgendaOutlet);
+			foreach (var o in this.Outlets)
+			{
+				if (o.Outlet == outlet)
+				{
+					agendaOutlet = o;
+					break;
+				}
+			}
+			// We don't have it
+			if (agendaOutlet == null)
+			{
+				// Create it
+				agendaOutlet = new AgendaOutlet(outlet, new List<Activity>());
+
+				// Add to the collection
+				this.Outlets.Add(agendaOutlet);
+			}
+
+			// Insert into the collection
+			agendaOutlet.Activities.Add(newActivity);
+
+			this.ActivityAdded?.Invoke(this, new ActivityEventArgs(newActivity));
+
+			return newActivity;
+		}
+
 		public PermissionResult CanCancel(Activity activity, ActivityCancelReason cancelReason)
 		{
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
@@ -105,43 +145,6 @@ namespace Atos.iFSA.AgendaModule.Objects
 				return PermissionResult.Confirm(@"OutsideOfWorkingHours");
 			}
 			return PermissionResult.Allow;
-		}
-
-		public Activity Create(Activity activity)
-		{
-			if (activity == null) throw new ArgumentNullException(nameof(activity));
-
-			// Save activity to db
-			var newActivity = this.DataProvider.Insert(activity);
-
-			var outlet = activity.Outlet;
-
-			// Find item by outlet
-			var agendaOutlet = default(AgendaOutlet);
-			foreach (var o in this.Outlets)
-			{
-				if (o.Outlet == outlet)
-				{
-					agendaOutlet = o;
-					break;
-				}
-			}
-			// We don't have it
-			if (agendaOutlet == null)
-			{
-				// Create it
-				agendaOutlet = new AgendaOutlet(outlet, new List<Activity>());
-
-				// Add to the collection
-				this.Outlets.Add(agendaOutlet);
-			}
-
-			// Insert into the collection
-			agendaOutlet.Activities.Add(newActivity);
-
-			this.ActivityAdded?.Invoke(this, new ActivityEventArgs(newActivity));
-
-			return newActivity;
 		}
 
 		public void Cancel(Activity activity, ActivityCancelReason cancelReason)

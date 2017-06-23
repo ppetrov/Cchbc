@@ -71,7 +71,6 @@
     <Compile Include="IAppNavigator.cs" />
     <Compile Include="LoginModule\LoginScreenViewModel.cs" />
     <Compile Include="InitialSetupModule\Objects\AppSystem.cs" />
-    <Compile Include="DataHelper.cs" />
     <Compile Include="MasterDataModule\Objects\SubTradeChannel.cs" />
     <Compile Include="MasterDataModule\Objects\TradeChannel.cs" />
     <Compile Include="ReplicationModule\Objects\ReplicationConfig.cs" />
