@@ -2,8 +2,8 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Atos.Client;
+using Atos.iFSA.AgendaModule.Objects;
 using Atos.iFSA.Objects;
-using iFSA.AgendaModule.Objects;
 
 namespace Atos.iFSA.AgendaModule.ViewModels
 {
@@ -51,11 +51,11 @@ namespace Atos.iFSA.AgendaModule.ViewModels
 			}
 		}
 
-		public Task ChangeStartTimeAsync(ActivityViewModel activityViewModel)
+		public void ChangeStartTime(ActivityViewModel activityViewModel)
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			return this.ParentViewModel.ChangeStartTimeAsync(activityViewModel);
+			this.ParentViewModel.ChangeStartTime(activityViewModel);
 		}
 
 		public Task CancelAsync(ActivityViewModel activityViewModel)

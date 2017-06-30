@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Atos.Client;
 using Atos.Client.Data;
+using Atos.iFSA.AgendaModule.Objects;
 using Atos.iFSA.Objects;
 using iFSA.AgendaModule.Objects;
 

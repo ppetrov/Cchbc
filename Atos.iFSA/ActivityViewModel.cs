@@ -25,17 +25,17 @@ namespace Atos.iFSA
 		public ICommand ExecuteCommand { get; }
 		public ICommand ChangeFromDateCommand { get; }
 
-		public ActivityViewModel(AgendaOutletViewModel outletViewModel, Activity model) : base(model)
+		public ActivityViewModel(AgendaOutletViewModel outletViewModel, Activity activity) : base(activity)
 		{
 			if (outletViewModel == null) throw new ArgumentNullException(nameof(outletViewModel));
-			if (model == null) throw new ArgumentNullException(nameof(model));
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
 
 			this.OutletViewModel = outletViewModel;
-			this.FromDate = model.FromDate;
-			this.ToDate = model.ToDate;
-			this.Type = model.Type.Name;
-			this.Status = model.Status.Name;
-			this.Details = model.Details;
+			this.FromDate = activity.FromDate;
+			this.ToDate = activity.ToDate;
+			this.Type = activity.Type.Name;
+			this.Status = activity.Status.Name;
+			this.Details = activity.Details;
 
 			this.CloseCommand = new RelayCommand(() =>
 			{
@@ -61,16 +61,9 @@ namespace Atos.iFSA
 			{
 				this.OutletViewModel.Execute(this);
 			});
-			this.ChangeFromDateCommand = new RelayCommand(async () =>
+			this.ChangeFromDateCommand = new RelayCommand(() =>
 			{
-				try
-				{
-					await this.OutletViewModel.ChangeStartTimeAsync(this);
-				}
-				catch (Exception ex)
-				{
-					// TODO : Log exception
-				}
+				this.OutletViewModel.ChangeStartTime(this);
 			});
 		}
 	}

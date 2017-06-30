@@ -9,6 +9,7 @@ using Atos.Client.Localization;
 using Atos.Client.Logs;
 using Atos.iFSA.AgendaModule;
 using Atos.iFSA.AgendaModule.Data;
+using Atos.iFSA.AgendaModule.Objects;
 using Atos.iFSA.LoginModule.Data;
 using Atos.iFSA.LoginModule.Objects;
 using Atos.iFSA.Objects;
@@ -157,7 +158,7 @@ namespace Atos.iFSA.LoginModule
 						outlets = _dataLoader.Result;
 					}
 				}
-				this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaScreenParam(user, DateTime.Today, outlets));
+				this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaDay(user, DateTime.Today, outlets));
 			}
 			catch (Exception ex)
 			{

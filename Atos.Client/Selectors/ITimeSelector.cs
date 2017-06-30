@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Atos.Client.Validation;
 
-namespace iFSA
+namespace Atos.Client.Selectors
 {
 	public interface ITimeSelector
 	{

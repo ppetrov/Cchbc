@@ -14,6 +14,8 @@ namespace Atos.Client.Localization
 			this.ByContextValues.Clear();
 
 			//Context.Name:Message
+			//TODO : Add support for messages without context
+			//Name:Message
 			var previousContext = default(string);
 
 			foreach (var line in lines)

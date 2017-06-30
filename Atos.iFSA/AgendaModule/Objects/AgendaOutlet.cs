@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Atos.iFSA.Objects;
 
-namespace iFSA.AgendaModule.Objects
+namespace Atos.iFSA.AgendaModule.Objects
 {
 	public sealed class AgendaOutlet
 	{

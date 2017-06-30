@@ -104,6 +104,7 @@
       <DependentUpon>LoginScreen.xaml</DependentUpon>
     </Compile>
     <Compile Include="ModalDialog.cs" />
+    <Compile Include="TimeSelector.cs" />
     <Compile Include="UserSettingsProvider.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
