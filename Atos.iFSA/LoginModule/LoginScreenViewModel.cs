@@ -7,14 +7,12 @@ using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Localization;
 using Atos.Client.Logs;
-using Atos.iFSA.AgendaModule;
 using Atos.iFSA.AgendaModule.Data;
 using Atos.iFSA.AgendaModule.Objects;
 using Atos.iFSA.LoginModule.Data;
 using Atos.iFSA.LoginModule.Objects;
 using Atos.iFSA.Objects;
 using Atos.iFSA.ReplicationModule.Objects;
-using iFSA.AgendaModule.Objects;
 
 namespace Atos.iFSA.LoginModule
 {
@@ -28,6 +26,7 @@ namespace Atos.iFSA.LoginModule
 		private User _dataUser;
 		private Task<List<AgendaOutlet>> _dataLoader;
 
+		public string Title { get; }
 		public string UsernameCaption { get; }
 		public string PasswordCaption { get; }
 		public string LoginCaption { get; }
@@ -59,6 +58,7 @@ namespace Atos.iFSA.LoginModule
 			this.AppNavigator = appNavigator;
 			this.DataProvider = dataProvider;
 
+			this.Title = this.GetLocalizedValue(@"Title");
 			this.UsernameCaption = this.GetLocalizedValue(@"Name");
 			this.PasswordCaption = this.GetLocalizedValue(@"Password");
 			this.LoginCaption = this.GetLocalizedValue(@"Login");

@@ -38,7 +38,7 @@
             <RowDefinition Height="2*"></RowDefinition>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Login" Style="{StaticResource TitleText}"></TextBlock>
+        <TextBlock Text="{Binding Title}" Style="{StaticResource TitleText}"></TextBlock>
 
         <StackPanel Grid.Row="1" Orientation="Vertical" Margin="10" VerticalAlignment="Center">
             <TextBox Header="{x:Bind ViewModel.UsernameCaption}" Text="{x:Bind ViewModel.Username, Mode=TwoWay}" Margin="5">
