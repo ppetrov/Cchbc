@@ -56,6 +56,14 @@
     <Compile Include="DayAnalyzerModule.cs" />
     <Compile Include="Dispatcher.cs" />
     <Compile Include="DispatcherModule.cs" />
+    <Compile Include="DocumentBrowserModule\Models\Document.cs" />
+    <Compile Include="DocumentBrowserModule\Models\DocumentFilter.cs" />
+    <Compile Include="DocumentBrowserModule\Models\DocumentFilterEntry.cs" />
+    <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterEntryViewModel.cs" />
+    <Compile Include="DocumentBrowserModule\Models\DocumentProperty.cs" />
+    <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterViewModel.cs" />
+    <Compile Include="DocumentBrowserModule\ViewModels\DocumentBrowserViewModel.cs" />
+    <Compile Include="DocumentBrowserModule\ViewModels\DocumentViewModel.cs" />
     <Compile Include="FeatureDataReplicaSimulation.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
