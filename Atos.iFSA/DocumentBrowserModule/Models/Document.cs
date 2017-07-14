@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 
-namespace ConsoleClient
+namespace Atos.iFSA.DocumentBrowserModule.Models
 {
 	public sealed class Document
 	{
 		public long Id { get; }
 		public string Name { get; }
-		private HashSet<string> TradeChannels { get; } = new HashSet<string>();
+		public HashSet<string> TradeChannels { get; } = new HashSet<string>();
+		public HashSet<string> SubTradeChannels { get; } = new HashSet<string>();
 
 		public Document(long id, string name)
 		{
@@ -39,6 +40,9 @@ namespace ConsoleClient
 			{
 				case DocumentProperty.TradeChannel:
 					codes = this.TradeChannels;
+					break;
+				case DocumentProperty.SubTradeChannel:
+					codes = this.SubTradeChannels;
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();

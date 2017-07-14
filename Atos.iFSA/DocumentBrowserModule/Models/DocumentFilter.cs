@@ -1,7 +1,6 @@
 using System;
-using System.Collections.Generic;
 
-namespace ConsoleClient
+namespace Atos.iFSA.DocumentBrowserModule.Models
 {
 	public sealed class DocumentFilter
 	{

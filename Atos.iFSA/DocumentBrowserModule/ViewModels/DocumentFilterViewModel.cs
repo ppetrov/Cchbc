@@ -1,8 +1,9 @@
 using System;
 using System.Collections.ObjectModel;
 using Atos.Client;
+using Atos.iFSA.DocumentBrowserModule.Models;
 
-namespace ConsoleClient
+namespace Atos.iFSA.DocumentBrowserModule.ViewModels
 {
 	public sealed class DocumentFilterViewModel : ViewModel
 	{
@@ -25,6 +26,15 @@ namespace ConsoleClient
 			{
 				this.Entries[i] = new DocumentFilterEntryViewModel(filter.Property, filterEntries[i], documentBrowserViewModel);
 			}
+		}
+
+		public void Clear()
+		{
+			foreach (var entry in this.Entries)
+			{
+				entry.IsSelected = false;
+			}
+			this.SelectedEntries.Clear();
 		}
 	}
 }

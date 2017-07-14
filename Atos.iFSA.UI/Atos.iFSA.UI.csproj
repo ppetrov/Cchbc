@@ -99,6 +99,9 @@
     <Compile Include="DebugDbContext.cs" />
     <Compile Include="DebugFeatureManager.cs" />
     <Compile Include="DebugLocalizationManager.cs" />
+    <Compile Include="DocumentBrowserView.xaml.cs">
+      <DependentUpon>DocumentBrowserView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="GlobalApp.cs" />
     <Compile Include="LoginModule\LoginScreen.xaml.cs">
       <DependentUpon>LoginScreen.xaml</DependentUpon>
@@ -132,6 +135,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="DocumentBrowserView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="LoginModule\LoginScreen.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

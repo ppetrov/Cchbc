@@ -61,6 +61,14 @@
     <Compile Include="ArticlesModule\Objects\Brand.cs" />
     <Compile Include="ArticlesModule\Objects\Article.cs" />
     <Compile Include="ArticlesModule\Objects\Flavor.cs" />
+    <Compile Include="DocumentBrowserModule\Models\Document.cs" />
+    <Compile Include="DocumentBrowserModule\Models\DocumentFilter.cs" />
+    <Compile Include="DocumentBrowserModule\Models\DocumentFilterEntry.cs" />
+    <Compile Include="DocumentBrowserModule\Models\DocumentProperty.cs" />
+    <Compile Include="DocumentBrowserModule\ViewModels\DocumentBrowserViewModel.cs" />
+    <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterEntryViewModel.cs" />
+    <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterViewModel.cs" />
+    <Compile Include="DocumentBrowserModule\ViewModels\DocumentViewModel.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IActivityCancelReasonSelector.cs" />
     <Compile Include="IUIThreadDispatcher.cs" />

@@ -1,6 +1,6 @@
 using System;
 
-namespace ConsoleClient
+namespace Atos.iFSA.DocumentBrowserModule.Models
 {
 	public sealed class DocumentFilterEntry
 	{

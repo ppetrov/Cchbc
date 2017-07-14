@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Atos.Client;
 using Atos.Client.Common;
+using Atos.iFSA.DocumentBrowserModule.Models;
 
-namespace ConsoleClient
+namespace Atos.iFSA.DocumentBrowserModule.ViewModels
 {
 	public sealed class DocumentBrowserViewModel : ViewModel
 	{
@@ -18,11 +19,7 @@ namespace ConsoleClient
 		public string SearchText
 		{
 			get { return _searchText; }
-			set
-			{
-				this.SetProperty(ref _searchText, value);
-				this.ApplyCurrentFilters();
-			}
+			set { this.SetProperty(ref _searchText, value); }
 		}
 
 		private string _resultsCaption;
@@ -32,14 +29,23 @@ namespace ConsoleClient
 			set { this.SetProperty(ref _resultsCaption, value); }
 		}
 
+		private DocumentFilterViewModel _selectedFilter;
+		public DocumentFilterViewModel SelectedFilter
+		{
+			get { return _selectedFilter; }
+			set { this.SetProperty(ref _selectedFilter, value); }
+		}
+
 		public ObservableCollection<DocumentFilterViewModel> Filters { get; } = new ObservableCollection<DocumentFilterViewModel>();
 		public ObservableCollection<DocumentViewModel> Documents { get; } = new ObservableCollection<DocumentViewModel>();
 
 		public ICommand ClearCommand { get; }
+		public ICommand SearchCommand { get; }
 
 		public DocumentBrowserViewModel()
 		{
 			this.ClearCommand = new RelayCommand(this.Clear);
+			this.SearchCommand = new RelayCommand(this.Search);
 		}
 
 		public async Task LoadAsync(Func<Task<IEnumerable<DocumentFilter>>> filtersProvider, Func<Task<IEnumerable<Document>>> documentsProvider)
@@ -80,8 +86,13 @@ namespace ConsoleClient
 		{
 			foreach (var filterViewModel in this.Filters)
 			{
-				filterViewModel.SelectedEntries.Clear();
+				filterViewModel.Clear();
 			}
+			this.ApplyCurrentFilters();
+		}
+
+		private void Search()
+		{
 			this.ApplyCurrentFilters();
 		}
 

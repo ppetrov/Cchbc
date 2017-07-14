@@ -1,8 +1,9 @@
 using System;
 using System.Collections.ObjectModel;
 using Atos.Client;
+using Atos.iFSA.DocumentBrowserModule.Models;
 
-namespace ConsoleClient
+namespace Atos.iFSA.DocumentBrowserModule.ViewModels
 {
 	public sealed class DocumentViewModel : ViewModel
 	{

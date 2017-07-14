@@ -1,0 +1,83 @@
+﻿<Page
+    x:Class="Atos.iFSA.UI.DocumentBrowserView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Atos.iFSA.UI"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Loaded="DocumentBrowserView_OnLoaded"
+    mc:Ignorable="d">
+
+    <Grid Background="#414052">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Orientation="Vertical" Margin="20">
+            <!--Search-->
+            <StackPanel Orientation="Horizontal" Margin="5">
+                <TextBox PlaceholderText="Search" Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"></TextBox>
+                <AppBarButton Foreground="OrangeRed" VerticalAlignment="Center" Command="{Binding SearchCommand}">
+                    <AppBarButton.Icon>
+                        <SymbolIcon Symbol="Find"></SymbolIcon>
+                    </AppBarButton.Icon>
+                </AppBarButton>
+            </StackPanel>
+
+            <ListView Margin="5" ItemsSource="{Binding Filters}" SelectedItem="{Binding SelectedFilter, Mode=TwoWay}" SelectionMode="Single">
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical"></StackPanel>
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="{Binding Name}" Margin="5"></TextBlock>
+                            <ListView Margin="5" ItemsSource="{Binding SelectedEntries}">
+                                <ListView.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapGrid></WrapGrid>
+                                    </ItemsPanelTemplate>
+                                </ListView.ItemsPanel>
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Margin="5" Text="{Binding Name}" Width="200"></TextBlock>
+                                            <AppBarButton Margin="5" Command="{Binding RemoveCommand}">
+                                                <AppBarButton.Icon>
+                                                    <SymbolIcon Symbol="Remove" Foreground="OrangeRed"></SymbolIcon>
+                                                </AppBarButton.Icon>
+                                            </AppBarButton>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
+            <ListView Margin="5" ItemsSource="{Binding SelectedFilter.Entries}">
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical"></StackPanel>
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="5" Text="{Binding Name}" Width="200"></TextBlock>
+                            <AppBarButton Margin="5" Command="{Binding AddCommand}" IsEnabled="{Binding CanAdd}">
+                                <AppBarButton.Icon>
+                                    <SymbolIcon Symbol="Add" Foreground="OrangeRed"></SymbolIcon>
+                                </AppBarButton.Icon>
+                            </AppBarButton>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </StackPanel>
+    </Grid>
+</Page>

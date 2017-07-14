@@ -2,8 +2,9 @@ using System;
 using System.Windows.Input;
 using Atos.Client;
 using Atos.Client.Common;
+using Atos.iFSA.DocumentBrowserModule.Models;
 
-namespace ConsoleClient
+namespace Atos.iFSA.DocumentBrowserModule.ViewModels
 {
 	public sealed class DocumentFilterEntryViewModel : ViewModel
 	{
@@ -13,6 +14,24 @@ namespace ConsoleClient
 		public DocumentProperty Property { get; }
 		public string Name => this.Entry.Name;
 		public string Code => this.Entry.Code;
+
+		private bool _isSelected;
+		public bool IsSelected
+		{
+			get { return _isSelected; }
+			set
+			{
+				this.SetProperty(ref _isSelected, value);
+				this.CanAdd = !this.IsSelected;
+			}
+		}
+
+		private bool _canAdd = true;
+		public bool CanAdd
+		{
+			get { return _canAdd; }
+			private set { this.SetProperty(ref _canAdd, value); }
+		}
 
 		public ICommand AddCommand { get; }
 		public ICommand RemoveCommand { get; }
@@ -27,10 +46,12 @@ namespace ConsoleClient
 			this.DocumentBrowserViewModel = documentBrowserViewModel;
 			this.AddCommand = new RelayCommand(() =>
 			{
+				this.IsSelected = true;
 				this.DocumentBrowserViewModel.Add(this);
 			});
 			this.RemoveCommand = new RelayCommand(() =>
 			{
+				this.IsSelected = false;
 				this.DocumentBrowserViewModel.Remove(this);
 			});
 		}
