@@ -41,7 +41,6 @@ namespace Atos.Client
 	public abstract class ScreenViewModel : ViewModel
 	{
 		public MainContext MainContext { get; }
-		//public INavigationService NavigationService => this.MainContext.GetService<INavigationService>();
 
 		private bool _isBusy;
 		public bool IsBusy

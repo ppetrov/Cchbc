@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
@@ -23,7 +24,7 @@ namespace Atos.iFSA.AgendaModule
 		private CancellationTokenSource _cts = new CancellationTokenSource();
 
 		private ActivityManager ActivityManager { get; }
-		private List<AgendaOutletViewModel> AllOutlets { get; } = new List<AgendaOutletViewModel>();
+		private ConcurrentDictionary<long, AgendaOutletViewModel> AllOutlets { get; } = new ConcurrentDictionary<long, AgendaOutletViewModel>();
 
 		private string _search = string.Empty;
 		public string Search
@@ -128,14 +129,11 @@ namespace Atos.iFSA.AgendaModule
 			var search = this.Search;
 
 			this.Outlets.Clear();
-			lock (this)
+			foreach (var viewModel in this.AllOutlets.Values)
 			{
-				foreach (var viewModel in this.AllOutlets)
+				if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
 				{
-					if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
-					{
-						this.Outlets.Add(viewModel);
-					}
+					this.Outlets.Add(viewModel);
 				}
 			}
 		}
@@ -157,71 +155,18 @@ namespace Atos.iFSA.AgendaModule
 
 		private void LoadData(FeatureContext context, User user, DateTime dateTime, List<AgendaOutlet> agendaOutlets = null)
 		{
-			this.AgendaDay = this.GetAgendaDay(context, user, dateTime, agendaOutlets);
+			this.AgendaDay = new AgendaDay(user, dateTime, agendaOutlets ?? this.MainContext.GetService<IAgendaDataProvider>().GetAgendaOutlets(context, user, dateTime));
 
 			this.Outlets.Clear();
+			this.AllOutlets.Clear();
 			foreach (var outlet in this.AgendaDay.Outlets)
 			{
-				this.Outlets.Add(new AgendaOutletViewModel(this, outlet));
+				var viewModel = new AgendaOutletViewModel(this, outlet);
+				this.Outlets.Add(viewModel);
+				this.AllOutlets.TryAdd(outlet.Id, viewModel);
 			}
 
-			lock (this)
-			{
-				this.AllOutlets.Clear();
-				this.AllOutlets.AddRange(this.Outlets);
-			}
-		}
-
-		private AgendaDay GetAgendaDay(FeatureContext context, User user, DateTime dateTime, List<AgendaOutlet> agendaOutlets = null)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (user == null) throw new ArgumentNullException(nameof(user));
-
-			agendaOutlets = agendaOutlets ?? this.MainContext.GetService<IAgendaDataProvider>().GetAgendaOutlets(context, user, dateTime);
-			var outlets = new Outlet[agendaOutlets.Count];
-			for (var index = 0; index < agendaOutlets.Count; index++)
-			{
-				outlets[index] = agendaOutlets[index].Outlet;
-			}
-
-			// Cancel any pending Images Load
-			this._cts.Cancel();
-
-			// Start new Images Load
-			this._cts = new CancellationTokenSource();
-
-			Task.Run(() =>
-			{
-				var dispatcher = this.MainContext.GetService<IUIThreadDispatcher>();
-				try
-				{
-					var cts = this._cts;
-					foreach (var outlet in outlets)
-					{
-						if (cts.IsCancellationRequested)
-						{
-							break;
-						}
-						var outletImage = this.MainContext.GetService<IOutletImageDataProvider>().GetDefaultOutletImage(context.MainContext, outlet);
-						if (outletImage == null) continue;
-
-						var match = FindOutletViewModel(outletImage.Outlet);
-						if (match != null)
-						{
-							dispatcher.Dispatch(() =>
-							{
-								match.OutletImage = DateTime.Now.ToString(@"G");
-							});
-						}
-					}
-				}
-				catch (Exception ex)
-				{
-					context.MainContext.Log(ex.ToString(), LogLevel.Error);
-				}
-			}, this._cts.Token);
-
-			return new AgendaDay(user, dateTime, agendaOutlets);
+			this.LoadOutletImages(context, this.AgendaDay.Outlets);
 		}
 
 		public async void ChangeStartTime(ActivityViewModel activityViewModel)
@@ -276,6 +221,46 @@ namespace Atos.iFSA.AgendaModule
 			throw new NotImplementedException();
 		}
 
+		private void LoadOutletImages(FeatureContext context, List<AgendaOutlet> outlets)
+		{
+			// Cancel any pending Images Load
+			this._cts.Cancel();
+
+			// Start new Images Load
+			this._cts = new CancellationTokenSource();
+
+			Task.Run(() =>
+			{
+				var dispatcher = this.MainContext.GetService<IUIThreadDispatcher>();
+				try
+				{
+					var cts = this._cts;
+					foreach (var agendaOutlet in outlets)
+					{
+						if (cts.IsCancellationRequested)
+						{
+							break;
+						}
+						var outletImage = this.MainContext.GetService<IOutletImageDataProvider>().GetDefaultOutletImage(context.MainContext, agendaOutlet.Outlet);
+						if (outletImage == null) continue;
+
+						var match = FindOutletViewModel(outletImage.Outlet);
+						if (match != null)
+						{
+							dispatcher.Dispatch(() =>
+							{
+								match.OutletImage = DateTime.Now.ToString(@"G");
+							});
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					context.MainContext.Log(ex.ToString(), LogLevel.Error);
+				}
+			}, this._cts.Token);
+		}
+
 		private void ActivityInserted(object sender, ActivityEventArgs e)
 		{
 			var activity = e.Activity;
@@ -288,10 +273,7 @@ namespace Atos.iFSA.AgendaModule
 				outletViewModel = new AgendaOutletViewModel(this, new AgendaOutlet(outlet, new List<Activity>()));
 
 				// Add it to the list
-				lock (this)
-				{
-					this.AllOutlets.Add(outletViewModel);
-				}
+				this.AllOutlets.TryAdd(outlet.Id, outletViewModel);
 			}
 
 			// Add the new activity
@@ -339,14 +321,11 @@ namespace Atos.iFSA.AgendaModule
 		private AgendaOutletViewModel FindOutletViewModel(long outletNumber)
 		{
 			// Search in all outlets
-			lock (this)
+			foreach (var viewModel in this.AllOutlets.Values)
 			{
-				foreach (var viewModel in this.AllOutlets)
+				if (viewModel.Outlet.Id == outletNumber)
 				{
-					if (viewModel.Outlet.Id == outletNumber)
-					{
-						return viewModel;
-					}
+					return viewModel;
 				}
 			}
 

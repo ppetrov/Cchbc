@@ -5,6 +5,7 @@ namespace Atos.iFSA.Objects
 {
 	public sealed class AgendaOutlet
 	{
+		public long Id => this.Outlet.Id;
 		public Outlet Outlet { get; }
 		public List<Activity> Activities { get; }
 
