@@ -95,7 +95,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="AppNavigator.cs" />
+    <Compile Include="NavigationService.cs" />
     <Compile Include="DebugDbContext.cs" />
     <Compile Include="DebugFeatureManager.cs" />
     <Compile Include="DebugLocalizationManager.cs" />

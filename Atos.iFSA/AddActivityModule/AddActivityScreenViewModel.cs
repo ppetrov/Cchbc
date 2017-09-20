@@ -18,7 +18,7 @@ namespace Atos.iFSA.AddActivityModule
 	{
 		private MainContext MainContext { get; }
 		private AddActivityScreenDataProvider DataProvider { get; }
-		private IAppNavigator AppNavigator { get; }
+		private INavigationService NavigationService { get; }
 		private List<OutletViewModel> AllOutlets { get; } = new List<OutletViewModel>();
 
 		public ObservableCollection<OutletViewModel> Outlets { get; } = new ObservableCollection<OutletViewModel>();
@@ -92,15 +92,15 @@ namespace Atos.iFSA.AddActivityModule
 		public ICommand StartNewActivityCommand { get; }
 		public ICommand SwitchSuppressedOutletsCommand { get; }
 
-		public AddActivityScreenViewModel(MainContext mainContext, AddActivityScreenDataProvider dataProvider, IAppNavigator appNavigator)
+		public AddActivityScreenViewModel(MainContext mainContext, AddActivityScreenDataProvider dataProvider, INavigationService navigationService)
 		{
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
-			if (appNavigator == null) throw new ArgumentNullException(nameof(appNavigator));
+			if (navigationService == null) throw new ArgumentNullException(nameof(navigationService));
 
 			this.MainContext = mainContext;
 			this.DataProvider = dataProvider;
-			this.AppNavigator = appNavigator;
+			this.NavigationService = navigationService;
 			this.CreateActivityCommand = new RelayCommand(this.CreateActivity);
 			this.StartNewActivityCommand = new RelayCommand(this.StartNewActivity);
 			this.SwitchSuppressedOutletsCommand = new RelayCommand(this.SwitchSuppressedOutlets);
@@ -113,7 +113,7 @@ namespace Atos.iFSA.AddActivityModule
 
 			try
 			{
-				using (var ctx = this.MainContext.CreateFeatureContext(feature))
+				using (var ctx = this.MainContext.CreateFeatureContext())
 				{
 					this.Categories.Clear();
 					foreach (var category in this.DataProvider.GetCategories(ctx))
@@ -170,8 +170,8 @@ namespace Atos.iFSA.AddActivityModule
 			var activity = await this.CreateActivity(this.SelectedOutlet, this.SelectedType);
 			if (activity != null)
 			{
-				this.AppNavigator.GoBack();
-				this.AppNavigator.NavigateTo(AppScreen.ExecuteActivity, new object[] { @"Agenda", activity });
+				this.NavigationService.GoBack();
+				//this.NavigationService.NavigateTo(AppScreen.ExecuteActivity, new object[] { @"Agenda", activity });
 			}
 		}
 

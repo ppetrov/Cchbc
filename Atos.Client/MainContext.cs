@@ -25,6 +25,8 @@ namespace Atos.Client
 		// For localization
 		private ILocalizationManager LocalizationManager { get; }
 
+		public IServiceLocator ServiceLocator { get; }
+
 		public MainContext(Action<string, LogLevel> log, Func<IDbContext> dbContextCreator, IModalDialog modalDialog, IFeatureManager featureManager, ILocalizationManager localizationManager)
 		{
 			if (log == null) throw new ArgumentNullException(nameof(log));
@@ -62,11 +64,9 @@ namespace Atos.Client
 			this.FeatureManager.Save(feature, exception);
 		}
 
-		public FeatureContext CreateFeatureContext(Feature feature)
+		public FeatureContext CreateFeatureContext()
 		{
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
-
-			return new FeatureContext(this, feature);
+			return new FeatureContext(this);
 		}
 
 		public async Task<bool> CanContinueAsync(PermissionResult permissionResult)
@@ -105,6 +105,11 @@ namespace Atos.Client
 			if (localizationKey == null) throw new ArgumentNullException(nameof(localizationKey));
 
 			return this.ModalDialog.ShowAsync(PermissionResult.Deny(this.GetLocalized(localizationKey)));
+		}
+
+		public T GetService<T>()
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

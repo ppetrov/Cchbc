@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -34,11 +35,43 @@ namespace ConsoleClient
 	}
 
 
+	public sealed class DbVersion
+	{
+		public static readonly DbVersion Outlet = new DbVersion(@"OUTLET_PICTURES", 1);
+		public static readonly DbVersion Activity = new DbVersion(@"COOLER_PLACEMENT_PICTURES", 1);
+		public static readonly DbVersion Activation = new DbVersion(@"ACTIVATION_PICTURES", 1);
+
+		public string Name { get; }
+		public int Value { get; }
+
+		public DbVersion(string name, int value)
+		{
+			if (name == null) throw new ArgumentNullException(nameof(name));
+
+			this.Name = name;
+			this.Value = value;
+		}
+
+		public bool IsUpgradeNeeded()
+		{
+			foreach (var version in new[] { Outlet, Activity, Activation })
+			{
+				if (this.Name.Equals(version.Name, StringComparison.OrdinalIgnoreCase))
+				{
+					if (this.Value < version.Value)
+					{
+						return true;
+					}
+					break;
+				}
+			}
+			return false;
+		}
+	}
+
 	public class Program
 	{
 		public static readonly string DbPrefix = @"obppc_db_";
-
-
 
 
 		public static void Main(string[] args)
@@ -49,6 +82,7 @@ namespace ConsoleClient
 
 			try
 			{
+
 				return;
 
 				//var dataUser = default(User);
@@ -351,6 +385,52 @@ namespace ConsoleClient
 			//{
 			//	Console.WriteLine(e);
 			//}
+		}
+
+		public static TResult[] Process<TItem, TResult>(List<TItem> items, Func<TItem, TResult> selector)
+		{
+			if (items == null) throw new ArgumentNullException(nameof(items));
+			if (selector == null) throw new ArgumentNullException(nameof(selector));
+
+			var sharedResults = new ConcurrentQueue<TResult>();
+			var sharedItems = new ConcurrentQueue<TItem>(items);
+
+			using (var syncEvent = new CountdownEvent(Math.Min(items.Count, 8)))
+			{
+				var parameters = new object[] { syncEvent, sharedItems, sharedResults, selector };
+
+				for (var i = 0; i < syncEvent.InitialCount; i++)
+				{
+					ThreadPool.QueueUserWorkItem(_ =>
+					{
+						var args = _ as object[];
+						var e = args[0] as CountdownEvent;
+						var localItems = args[1] as ConcurrentQueue<TItem>;
+						var localResults = args[2] as ConcurrentQueue<TResult>;
+						var localSelector = args[3] as Func<TItem, TResult>;
+						try
+						{
+							TItem item;
+							while (localItems.TryDequeue(out item))
+							{
+								localResults.Enqueue(localSelector(item));
+							}
+						}
+						finally
+						{
+							e.Signal();
+						}
+					}, parameters);
+				}
+				syncEvent.Wait();
+			}
+
+			return sharedResults.ToArray();
+		}
+
+		private static DbVersion[] GetVersions()
+		{
+			throw new NotImplementedException();
 		}
 
 		private static string GetFormatted()

@@ -45,8 +45,10 @@
     <Compile Include="ActivityStatus.cs" />
     <Compile Include="ActivityType.cs" />
     <Compile Include="ActivityTypeCategory.cs" />
+    <Compile Include="AgendaOutlet.cs" />
     <Compile Include="Outlet.cs" />
     <Compile Include="OutletAddress.cs" />
+    <Compile Include="OutletImage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="User.cs" />
     <Compile Include="Visit.cs" />

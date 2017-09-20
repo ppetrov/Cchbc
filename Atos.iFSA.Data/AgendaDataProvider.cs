@@ -2,23 +2,35 @@ using System;
 using System.Collections.Generic;
 using Atos.Client;
 using Atos.Client.Data;
-using Atos.iFSA.AgendaModule.Objects;
 using Atos.iFSA.Objects;
-using iFSA.AgendaModule.Objects;
 
-namespace Atos.iFSA.AgendaModule.Data
+namespace Atos.iFSA.Data
 {
-	public sealed class AgendaDataProvider
+	public interface IAgendaDataProvider
 	{
-		public List<AgendaOutlet> GetAgendaOutlets(FeatureContext context, User user, DateTime date)
+		List<AgendaOutlet> GetAgendaOutlets(FeatureContext context, User user, DateTime date);
+	}
+
+	public interface IOutletImageDataProvider
+	{
+		OutletImage GetDefaultOutletImage(MainContext context, Outlet outlet);
+	}
+
+	public static class AgendaDataProvider
+	{
+		public static List<AgendaOutlet> GetAgendaOutlets(FeatureContext context, User user, DateTime date)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (user == null) throw new ArgumentNullException(nameof(user));
 
+			var outlets = context.MainContext.DataCache.GetValues<Outlet>(context.DbContext);
+
+			//context.Execute(new Query<Outlet>("", null));
+
 			return new List<AgendaOutlet>();
 		}
 
-		public void Update(Activity activity)
+		public static void Update(Activity activity)
 		{
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 
@@ -29,7 +41,7 @@ namespace Atos.iFSA.AgendaModule.Data
 			throw new NotImplementedException();
 		}
 
-		public OutletImage GetDefaultOutletImage(MainContext context, Outlet outlet)
+		public static OutletImage GetDefaultOutletImage(MainContext context, Outlet outlet)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -37,7 +49,7 @@ namespace Atos.iFSA.AgendaModule.Data
 			return null;
 		}
 
-		public Activity Insert(FeatureContext context, Activity activity)
+		public static Activity Insert(FeatureContext context, Activity activity)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -46,7 +58,7 @@ namespace Atos.iFSA.AgendaModule.Data
 			return null;
 		}
 
-		public void Update(FeatureContext context, Activity activity)
+		public static void Update(FeatureContext context, Activity activity)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
@@ -54,7 +66,7 @@ namespace Atos.iFSA.AgendaModule.Data
 			context.Execute(new Query(@"update activities set details = @details, ..... where id = @id"));
 		}
 
-		public object GetVisitDay(DateTime dateTime)
+		public static object GetVisitDay(DateTime dateTime)
 		{
 			throw new NotImplementedException();
 		}

@@ -5,7 +5,7 @@ namespace Atos.iFSA.InitialSetupModule.ViewModels
 {
 	public sealed class CountryViewModel
 	{
-		public Country Country { get; }
+		private Country Country { get; }
 		public string Name => this.Country.Name;
 		public string Code => this.Country.Code;
 

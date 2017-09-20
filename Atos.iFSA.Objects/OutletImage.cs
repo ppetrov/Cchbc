@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace iFSA.AgendaModule.Objects
+namespace Atos.iFSA.Objects
 {
 	public sealed class OutletImage
 	{

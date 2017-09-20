@@ -2,7 +2,7 @@ using System;
 using Windows.Storage;
 using Atos.Client.Settings;
 
-namespace Atos.iFSA.UI.LoginModule
+namespace Atos.iFSA.UI
 {
 	public sealed class UserSettingsProvider : IUserSettingsProvider
 	{

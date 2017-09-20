@@ -10,13 +10,12 @@ using Atos.Client.Data;
 using Atos.Client.Dialog;
 using Atos.iFSA;
 using Atos.iFSA.Objects;
-using iFSA.AgendaModule.Objects;
 
 namespace iFSA
 {
 	//public sealed class LoginScreen
 	//{
-	//	public LoginScreenViewModel ViewModel { get; } = new LoginScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.AppNavigator, null);
+	//	public LoginScreenViewModel ViewModel { get; } = new LoginScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.NavigationService, null);
 
 	//	public async void LoadData()
 	//	{
@@ -33,7 +32,7 @@ namespace iFSA
 
 	//public sealed class AgendaScreen
 	//{
-	//	public AgendaScreenViewModel ViewModel { get; } = new AgendaScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.Agenda, GlobalAppContext.AppNavigator, GlobalAppContext.UIThreadDispatcher);
+	//	public AgendaScreenViewModel ViewModel { get; } = new AgendaScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.Agenda, GlobalAppContext.NavigationService, GlobalAppContext.UIThreadDispatcher);
 
 	//	public void LoadData()
 	//	{
@@ -76,7 +75,7 @@ namespace iFSA
 		private DateTime CurrentMonth { get; set; }
 
 		private IModalDialog ModalDialog { get; }
-		private IAppNavigator AppNavigator { get; }
+		private INavigationService NavigationService { get; }
 		private Func<string, string, string> LocalizationManager { get; }
 		private ICalendarDataProvider DataProvider { get; }
 		private Func<Task<CancelReason>> CancelReasonSelector { get; }
@@ -90,7 +89,7 @@ namespace iFSA
 		public ICommand NextDayCommand { get; }
 		public ICommand PreviousDayCommand { get; }
 
-		public CalendarViewModel(IModalDialog modalDialog, Func<Task<CancelReason>> cancelReasonSelector, IAppNavigator appNavigator, ICalendarDataProvider dataProvider, Func<string, string, string> localizationManager, DataCache dataCache)
+		public CalendarViewModel(IModalDialog modalDialog, Func<Task<CancelReason>> cancelReasonSelector, INavigationService navigationService, ICalendarDataProvider dataProvider, Func<string, string, string> localizationManager, DataCache dataCache)
 		{
 			if (modalDialog == null) throw new ArgumentNullException(nameof(modalDialog));
 			if (cancelReasonSelector == null) throw new ArgumentNullException(nameof(cancelReasonSelector));
@@ -98,7 +97,7 @@ namespace iFSA
 
 			this.ModalDialog = modalDialog;
 			this.CancelReasonSelector = cancelReasonSelector;
-			this.AppNavigator = appNavigator;
+			this.NavigationService = navigationService;
 			this.DataProvider = dataProvider;
 			this.LocalizationManager = localizationManager;
 			this.DataCache = dataCache;
@@ -130,7 +129,7 @@ namespace iFSA
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
 			// TODO : How to navigate to a different screen
-			//this.AppNavigator.NavigateTo(null, viewModel.Date);
+			//this.NavigationService.NavigateTo(null, viewModel.Date);
 		}
 
 		public async void CancelDays(ICollection<CalendarDayViewModel> viewModels)

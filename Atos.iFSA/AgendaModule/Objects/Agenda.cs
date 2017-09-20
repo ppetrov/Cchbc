@@ -5,74 +5,11 @@ using System.Threading.Tasks;
 using Atos.Client;
 using Atos.Client.Logs;
 using Atos.Client.Validation;
-using Atos.iFSA.AgendaModule.Data;
+using Atos.iFSA.Data;
 using Atos.iFSA.Objects;
-using iFSA.AgendaModule.Objects;
 
 namespace Atos.iFSA.AgendaModule.Objects
 {
-	public sealed class Agenda
-	{
-		private AgendaDataProvider DataProvider { get; }
-		private CancellationTokenSource _cts = new CancellationTokenSource();
-
-		private Action<OutletImage> OutletImageDownloaded { get; }
-
-		public Agenda(AgendaDataProvider dataProvider, Action<OutletImage> outletImageDownloaded)
-		{
-			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
-			if (outletImageDownloaded == null) throw new ArgumentNullException(nameof(outletImageDownloaded));
-
-			this.DataProvider = dataProvider;
-			this.OutletImageDownloaded = outletImageDownloaded;
-		}
-
-		public AgendaDay GetAgendaDay(FeatureContext context, User user, DateTime dateTime, List<AgendaOutlet> agendaOutlets = null)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-			if (user == null) throw new ArgumentNullException(nameof(user));
-
-			agendaOutlets = agendaOutlets ?? this.DataProvider.GetAgendaOutlets(context, user, dateTime);
-			var outlets = new Outlet[agendaOutlets.Count];
-			for (var index = 0; index < agendaOutlets.Count; index++)
-			{
-				outlets[index] = agendaOutlets[index].Outlet;
-			}
-
-			// Cancel any pending Images Load
-			this._cts.Cancel();
-
-			// Start new Images Load
-			this._cts = new CancellationTokenSource();
-
-			Task.Run(() =>
-			{
-				try
-				{
-					var cts = this._cts;
-					foreach (var outlet in outlets)
-					{
-						if (cts.IsCancellationRequested)
-						{
-							break;
-						}
-						var outletImage = this.DataProvider.GetDefaultOutletImage(context.MainContext, outlet);
-						if (outletImage != null)
-						{
-							this.OutletImageDownloaded(outletImage);
-						}
-					}
-				}
-				catch (Exception ex)
-				{
-					context.MainContext.Log(ex.ToString(), LogLevel.Error);
-				}
-			}, this._cts.Token);
-
-			return new AgendaDay(user, dateTime, agendaOutlets);
-		}
-	}
-
 	public sealed class ActivityManager
 	{
 		public MainContext MainContext { get; }

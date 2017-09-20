@@ -7,24 +7,24 @@ using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Localization;
 using Atos.Client.Logs;
-using Atos.iFSA.AgendaModule.Data;
+using Atos.Client.Settings;
+using Atos.iFSA.AgendaModule;
 using Atos.iFSA.AgendaModule.Objects;
-using Atos.iFSA.LoginModule.Data;
-using Atos.iFSA.LoginModule.Objects;
+using Atos.iFSA.Data;
 using Atos.iFSA.Objects;
-using Atos.iFSA.ReplicationModule.Objects;
+using Atos.iFSA.ReplicationModule;
 
 namespace Atos.iFSA.LoginModule
 {
-	public sealed class LoginScreenViewModel : ViewModel
+	public sealed class LoginScreenViewModel : ScreenViewModel
 	{
-		private MainContext MainContext { get; }
-		private IAppNavigator AppNavigator { get; }
-		private LoginScreenDataProvider DataProvider { get; }
+		private readonly DateTime _dataDate = DateTime.Today;
 
 		private User[] _users;
 		private User _dataUser;
 		private Task<List<AgendaOutlet>> _dataLoader;
+
+		public INavigationService NavigationService => this.MainContext.GetService<INavigationService>();
 
 		public string Title { get; }
 		public string UsernameCaption { get; }
@@ -48,42 +48,33 @@ namespace Atos.iFSA.LoginModule
 		public ICommand AdvancedCommand { get; }
 		public ICommand LoginCommand { get; }
 
-		public LoginScreenViewModel(MainContext mainContext, IAppNavigator appNavigator, LoginScreenDataProvider dataProvider)
+		public LoginScreenViewModel(MainContext mainContext) : base(mainContext)
 		{
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
-			if (appNavigator == null) throw new ArgumentNullException(nameof(appNavigator));
-			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
 
-			this.MainContext = mainContext;
-			this.AppNavigator = appNavigator;
-			this.DataProvider = dataProvider;
-
-			this.Title = this.GetLocalizedValue(@"Title");
-			this.UsernameCaption = this.GetLocalizedValue(@"Name");
-			this.PasswordCaption = this.GetLocalizedValue(@"Password");
-			this.LoginCaption = this.GetLocalizedValue(@"Login");
-			this.AdvancedCaption = this.GetLocalizedValue(@"Advanced");
+			this.Title = this.GetLocalized(@"Title");
+			this.UsernameCaption = this.GetLocalized(@"Name");
+			this.PasswordCaption = this.GetLocalized(@"Password");
+			this.LoginCaption = this.GetLocalized(@"Login");
+			this.AdvancedCaption = this.GetLocalized(@"Advanced");
 
 			this.AdvancedCommand = new RelayCommand(this.Advanced);
 			this.LoginCommand = new RelayCommand(this.Login);
 		}
 
-		public void LoadData()
+		public override Task InitializeAsync(object parameter)
 		{
-			var feature = new Feature(nameof(LoginScreenViewModel), nameof(LoadData));
 			try
 			{
-				this.MainContext.Save(feature);
-
-				// Load users
-				using (var ctx = this.MainContext.CreateFeatureContext(feature))
+				// Load all users
+				using (var ctx = this.MainContext.DbContextCreator())
 				{
-					_users = this.DataProvider.GetUsers(ctx);
+					_users = this.MainContext.GetService<IUserDataProvider>().GetUsers(ctx);
 					ctx.Complete();
 				}
 
 				// Prepopulate with last successfully logged-in user
-				var userSettings = this.DataProvider.GetUserSettings();
+				var userSettings = this.GetUserSettings();
 				if (userSettings != null)
 				{
 					this.Username = userSettings.Username;
@@ -94,25 +85,35 @@ namespace Atos.iFSA.LoginModule
 						if (user.Name.Equals(this.Username, StringComparison.OrdinalIgnoreCase))
 						{
 							_dataUser = user;
-							_dataLoader = Task.Run(() =>
-							{
-								using (var ctx = this.MainContext.CreateFeatureContext(new Feature(nameof(LoginScreenViewModel), @"LoadAgenda")))
-								{
-									var outlets = new AgendaDataProvider().GetAgendaOutlets(ctx, _dataUser, DateTime.Today);
-									ctx.Complete();
-
-									return outlets;
-								}
-							});
 							break;
 						}
 					}
 				}
+
+				// Load data(agenda) in background while the user is typing the password
+				if (_dataUser != null)
+				{
+					_dataLoader = Task.Run(() =>
+					{
+						List<AgendaOutlet> outlets;
+
+						using (var ctx = this.MainContext.CreateFeatureContext())
+						{
+							var dataProvider = this.MainContext.GetService<IAgendaDataProvider>();
+							outlets = dataProvider.GetAgendaOutlets(ctx, _dataUser, _dataDate);
+							ctx.Complete();
+						}
+
+						return outlets;
+					});
+				}
 			}
 			catch (Exception ex)
 			{
-				this.MainContext.Save(feature, ex);
+				this.MainContext.Log(ex.ToString(), LogLevel.Error);
 			}
+
+			return base.InitializeAsync(parameter);
 		}
 
 		private async void Login()
@@ -122,43 +123,39 @@ namespace Atos.iFSA.LoginModule
 			{
 				this.MainContext.Save(feature);
 
-				var username = (this.Username ?? string.Empty).Trim().ToUpperInvariant();
+				var username = this.GetCurrentUsername();
 				var password = (this.Password ?? string.Empty);
 				var user = default(User);
 
 				foreach (var u in _users)
 				{
 					if (u.Name.Equals(username, StringComparison.OrdinalIgnoreCase) &&
-						false)
+						u.Password.Equals(password))
 					{
 						user = u;
 						break;
 					}
 				}
+
 				if (user == null)
 				{
 					await this.MainContext.ShowMessageAsync(new LocalizationKey(nameof(LoginScreenViewModel), @"WrongCredentials"));
 					return;
 				}
 
-				// Save the current username
-				var userSettings = this.DataProvider.GetUserSettings();
-				if (userSettings != null)
-				{
-					userSettings.Username = username;
-					this.DataProvider.SaveUserSettings(userSettings);
-				}
+				this.SaveLoginSuccess(username);
 
-				// Display agenda
 				var outlets = default(List<AgendaOutlet>);
 				if (_dataLoader != null)
 				{
+					// Check if the logged user is the same as the user the data is loaded in
 					if (user.Id == _dataUser.Id)
 					{
-						outlets = _dataLoader.Result;
+						// wait while the data is loaded
+						outlets = await _dataLoader;
 					}
 				}
-				this.AppNavigator.NavigateTo(AppScreen.Agenda, new AgendaDay(user, DateTime.Today, outlets));
+				await this.NavigationService.NavigateToAsync<AgendaScreenViewModel>(new AgendaDay(user, _dataDate, outlets));
 			}
 			catch (Exception ex)
 			{
@@ -166,29 +163,24 @@ namespace Atos.iFSA.LoginModule
 			}
 		}
 
-		private void Advanced()
+		private async void Advanced()
 		{
 			var feature = new Feature(nameof(LoginScreenViewModel), nameof(Advanced));
 			try
 			{
 				this.MainContext.Save(feature);
 
-				var username = string.Empty;
-				var replicaHost = string.Empty;
-				var replicaPort = 0;
-
-				var userSettings = this.DataProvider.GetUserSettings();
-				if (userSettings != null)
+				var username = GetCurrentUsername();
+				if (username == string.Empty)
 				{
-					username = userSettings.Username;
-					replicaHost = userSettings.ReplicationHost;
-					replicaPort = userSettings.ReplicationPort;
+					var userSettings = this.GetUserSettings();
+					if (userSettings != null)
+					{
+						username = userSettings.Username;
+					}
 				}
 
-				var login = new Login(username, string.Empty);
-				var settings = new ReplicationSettings(new ReplicationConfig(replicaHost, replicaPort), login);
-
-				this.AppNavigator.NavigateTo(AppScreen.Replication, settings);
+				await this.NavigationService.NavigateToAsync<ReplicationScreenViewModel>(username);
 			}
 			catch (Exception ex)
 			{
@@ -196,9 +188,28 @@ namespace Atos.iFSA.LoginModule
 			}
 		}
 
-		private string GetLocalizedValue(string name)
+		private string GetLocalized(string name)
 		{
 			return this.MainContext.GetLocalized(new LocalizationKey(nameof(LoginScreenViewModel), name));
+		}
+
+		private string GetCurrentUsername()
+		{
+			return (this.Username ?? string.Empty).Trim().ToUpperInvariant();
+		}
+
+		private UserSettings GetUserSettings()
+		{
+			return this.MainContext.GetService<IUserSettingsProvider>().GetValue(nameof(UserSettings)) as UserSettings;
+		}
+
+		private void SaveLoginSuccess(string username)
+		{
+			//Save the current username as the last successfully logged-in user
+			var settingsProvider = this.MainContext.GetService<IUserSettingsProvider>();
+			var userSettings = this.GetUserSettings() ?? new UserSettings();
+			userSettings.Username = username;
+			settingsProvider.Save(nameof(UserSettings), userSettings);
 		}
 	}
 }

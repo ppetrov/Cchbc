@@ -2,7 +2,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Atos.Client;
-using Atos.iFSA.AgendaModule.Objects;
 using Atos.iFSA.Objects;
 
 namespace Atos.iFSA.AgendaModule.ViewModels

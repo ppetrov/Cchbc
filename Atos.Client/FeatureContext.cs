@@ -1,23 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using Atos.Client.Data;
-using Atos.Client.Features;
 
 namespace Atos.Client
 {
 	public sealed class FeatureContext : IDisposable
 	{
 		public MainContext MainContext { get; }
-		private Feature Feature { get; }
-		private IDbContext DbContext { get; }
+		public IDbContext DbContext { get; }
 
-		public FeatureContext(MainContext mainContext, Feature feature)
+		public FeatureContext(MainContext mainContext)
 		{
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
-			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
 			this.MainContext = mainContext;
-			this.Feature = feature;
 			this.DbContext = mainContext.DbContextCreator();
 		}
 
