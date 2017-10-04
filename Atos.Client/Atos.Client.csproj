@@ -39,11 +39,12 @@
     <Compile Include="Archive\ZipData.cs" />
     <Compile Include="Archive\ZipHeader.cs" />
     <Compile Include="INavigationService.cs" />
-    <Compile Include="FeatureContext.cs" />
+    <Compile Include="DataQueryContext.cs" />
     <Compile Include="Common\RelayCommand.cs" />
     <Compile Include="IServiceLocator.cs" />
     <Compile Include="Localization\ILocalizationManager.cs" />
     <Compile Include="Localization\LocalizationKey.cs" />
+    <Compile Include="Logs\ILogger.cs" />
     <Compile Include="Selectors\IDateTimeSelector.cs" />
     <Compile Include="Selectors\ITimeSelector.cs" />
     <Compile Include="ServiceLocator.cs" />

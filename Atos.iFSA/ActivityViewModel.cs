@@ -9,7 +9,7 @@ namespace Atos.iFSA
 {
 	public sealed class ActivityViewModel : ViewModel<Activity>
 	{
-		public AgendaOutletViewModel OutletViewModel { get; }
+		private AgendaOutletViewModel OutletViewModel { get; }
 
 		public DateTime FromDate { get; }
 		public DateTime ToDate { get; }
@@ -41,9 +41,9 @@ namespace Atos.iFSA
 			{
 				this.OutletViewModel.CloseAsync(this);
 			});
-			this.CancelCommand = new RelayCommand(async () =>
+			this.CancelCommand = new RelayCommand(() =>
 			{
-				await this.OutletViewModel.CancelAsync(this);
+				this.OutletViewModel.CancelAsync(this);
 			});
 			this.MoveCommand = new RelayCommand(() =>
 			{

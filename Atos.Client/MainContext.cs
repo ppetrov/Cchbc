@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Atos.Client.Data;
 using Atos.Client.Dialog;
 using Atos.Client.Features;
 using Atos.Client.Localization;
@@ -12,47 +10,45 @@ namespace Atos.Client
 {
 	public sealed class MainContext
 	{
-		// For logging
-		public Action<string, LogLevel> Log { get; }
-		// For Query the db
-		public Func<IDbContext> DbContextCreator { get; }
-		// For displaying modal dialogs
-		private IModalDialog ModalDialog { get; }
-		// For the cache of data
 		public DataCache DataCache { get; } = new DataCache();
-		// For feature tracking & timings
-		private IFeatureManager FeatureManager { get; }
-		// For localization
-		private ILocalizationManager LocalizationManager { get; }
+		public ServiceLocator ServiceLocator { get; } = new ServiceLocator();
 
-		public IServiceLocator ServiceLocator { get; }
-
-		public MainContext(Action<string, LogLevel> log, Func<IDbContext> dbContextCreator, IModalDialog modalDialog, IFeatureManager featureManager, ILocalizationManager localizationManager)
+		public T GetService<T>()
 		{
-			if (log == null) throw new ArgumentNullException(nameof(log));
-			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
-			if (modalDialog == null) throw new ArgumentNullException(nameof(modalDialog));
-			if (featureManager == null) throw new ArgumentNullException(nameof(featureManager));
-
-			this.Log = log;
-			this.DbContextCreator = dbContextCreator;
-			this.ModalDialog = modalDialog;
-			this.FeatureManager = featureManager;
-			this.LocalizationManager = localizationManager;
+			return this.ServiceLocator.GetService<T>();
 		}
 
-		public void LoadLocalization(IEnumerable<string> lines)
+		public DataQueryContext CreateDataQueryContext()
 		{
-			if (lines == null) throw new ArgumentNullException(nameof(lines));
+			return new DataQueryContext(this);
+		}
 
-			this.LocalizationManager.Load(lines);
+		public string GetLocalized(LocalizationKey key)
+		{
+			if (key == null) throw new ArgumentNullException(nameof(key));
+
+			return this.GetService<ILocalizationManager>().Get(key);
+		}
+
+		public void Log(Exception ex)
+		{
+			if (ex == null) throw new ArgumentNullException(nameof(ex));
+
+			this.Log(ex.ToString(), LogLevel.Error);
+		}
+
+		public void Log(string message, LogLevel logLevel)
+		{
+			if (message == null) throw new ArgumentNullException(nameof(message));
+
+			this.GetService<ILogger>().Log(message, logLevel);
 		}
 
 		public void Save(Feature feature, string details = null)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			this.FeatureManager.Save(feature, details);
+			this.GetService<IFeatureManager>().Save(feature, details);
 		}
 
 		public void Save(Feature feature, Exception exception)
@@ -60,32 +56,37 @@ namespace Atos.Client
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			this.Log(exception.ToString(), LogLevel.Error);
-			this.FeatureManager.Save(feature, exception);
+			this.Log(feature.Context + @"->" + feature.Name + Environment.NewLine + exception, LogLevel.Error);
+			this.GetService<IFeatureManager>().Save(feature, exception);
 		}
 
-		public FeatureContext CreateFeatureContext()
-		{
-			return new FeatureContext(this);
-		}
+
+
+
+
+
+		//
+		// TODO : Review these methods
+		//
 
 		public async Task<bool> CanContinueAsync(PermissionResult permissionResult)
 		{
 			if (permissionResult == null) throw new ArgumentNullException(nameof(permissionResult));
 
+			var modalDialog = this.GetService<IModalDialog>();
 			switch (permissionResult.Type)
 			{
 				case PermissionType.Allow:
 					return true;
 				case PermissionType.Confirm:
-					var confirmation = await this.ModalDialog.ShowAsync(permissionResult);
+					var confirmation = await modalDialog.ShowAsync(permissionResult);
 					if (confirmation == DialogResult.Accept)
 					{
 						return true;
 					}
 					break;
 				case PermissionType.Deny:
-					await this.ModalDialog.ShowAsync(permissionResult);
+					await modalDialog.ShowAsync(permissionResult);
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();
@@ -93,23 +94,11 @@ namespace Atos.Client
 			return false;
 		}
 
-		public string GetLocalized(LocalizationKey key)
-		{
-			if (key == null) throw new ArgumentNullException(nameof(key));
-
-			return this.LocalizationManager.Get(key);
-		}
-
 		public Task ShowMessageAsync(LocalizationKey localizationKey)
 		{
 			if (localizationKey == null) throw new ArgumentNullException(nameof(localizationKey));
 
-			return this.ModalDialog.ShowAsync(PermissionResult.Deny(this.GetLocalized(localizationKey)));
-		}
-
-		public T GetService<T>()
-		{
-			throw new NotImplementedException();
+			return this.GetService<IModalDialog>().ShowAsync(PermissionResult.Deny(this.GetLocalized(localizationKey)));
 		}
 	}
 }

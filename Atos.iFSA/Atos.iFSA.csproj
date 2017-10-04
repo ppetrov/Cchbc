@@ -68,7 +68,6 @@
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentViewModel.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IActivityCancelReasonSelector.cs" />
-    <Compile Include="IUIThreadDispatcher.cs" />
     <Compile Include="LoginModule\LoginScreenViewModel.cs" />
     <Compile Include="InitialSetupModule\Objects\AppSystem.cs" />
     <Compile Include="ReplicationModule\ReplicationScreenViewModel.cs" />

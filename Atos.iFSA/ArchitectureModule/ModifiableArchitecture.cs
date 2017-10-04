@@ -383,7 +383,7 @@ namespace iFSA.ArchitectureModule
 				var viewModel = new AgendaHeaderViewModel(header);
 
 				// Insert into db
-				using (var ctx = this.MainContext.CreateFeatureContext())
+				using (var ctx = this.MainContext.CreateDataQueryContext())
 				{
 					//this.DataProvider.Insert(ctx, viewModel.Model);
 					ctx.Complete();

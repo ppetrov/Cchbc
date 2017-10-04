@@ -5,11 +5,11 @@
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{9539E041-5CE3-43B1-AE16-F49EB300BAF7}</ProjectGuid>
+    <ProjectGuid>{0C64949F-B5F7-4D5C-B520-8066562855E8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Atos.Client.Data</RootNamespace>
-    <AssemblyName>Atos.Client.Data</AssemblyName>
+    <RootNamespace>Atos.Client.PlanningTool</RootNamespace>
+    <AssemblyName>Atos.Client.PlanningTool</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -35,16 +35,36 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <!-- A reference to the entire .NET Framework is automatically included -->
     <None Include="project.json" />
+    <!-- A reference to the entire .NET Framework is automatically included -->
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IDbContext.cs" />
-    <Compile Include="IDbContextCreator.cs" />
-    <Compile Include="IFieldDataReader.cs" />
+    <Compile Include="Class1.cs" />
+    <Compile Include="Models\PlanScenario.cs" />
+    <Compile Include="Models\PlanType.cs" />
+    <Compile Include="PlanByOutletViewModel.cs" />
+    <Compile Include="PlanningToolModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Query.cs" />
-    <Compile Include="QueryParameter.cs" />
+    <Compile Include="ViewModels\PlanScenarioViewModel.cs" />
+    <Compile Include="ScreenViewModels\SelectPlanScenarioViewModel.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Atos.Client.Data\Atos.Client.Data.csproj">
+      <Project>{9539e041-5ce3-43b1-ae16-f49eb300baf7}</Project>
+      <Name>Atos.Client.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Atos.Client\Atos.Client.csproj">
+      <Project>{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}</Project>
+      <Name>Atos.Client</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Atos.iFSA.Objects\Atos.iFSA.Objects.csproj">
+      <Project>{D1FBED0C-02C9-4344-AE1F-BD4C85FB96C2}</Project>
+      <Name>Atos.iFSA.Objects</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Atos.iFSA\Atos.iFSA.csproj">
+      <Project>{41397028-0B7B-4EF3-92AB-C6E617CAEC5B}</Project>
+      <Name>Atos.iFSA</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

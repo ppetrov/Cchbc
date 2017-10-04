@@ -4,17 +4,17 @@ using Atos.Client.Data;
 
 namespace Atos.Client
 {
-	public sealed class FeatureContext : IDisposable
+	public sealed class DataQueryContext : IDisposable
 	{
 		public MainContext MainContext { get; }
 		public IDbContext DbContext { get; }
 
-		public FeatureContext(MainContext mainContext)
+		public DataQueryContext(MainContext mainContext)
 		{
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 
 			this.MainContext = mainContext;
-			this.DbContext = mainContext.DbContextCreator();
+			this.DbContext = mainContext.GetService<IDbContextCreator>().Create();
 		}
 
 		public int Execute(Query query)

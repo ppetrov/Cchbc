@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.Client", "Atos.Client\Atos.Client.csproj", "{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.iFSA.Objects", "Atos.iFSA.Objects\Atos.iFSA.Objects.csproj", "{D1FBED0C-02C9-4344-AE1F-BD4C85FB96C2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.iFSA.Data", "Atos.iFSA.Data\Atos.iFSA.Data.csproj", "{7DC2E5E6-18E5-47D5-B63A-BF21464A411F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.Client.PlanningTool", "Atos.Client.PlanningTool\Atos.Client.PlanningTool.csproj", "{0C64949F-B5F7-4D5C-B520-8066562855E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -167,6 +169,22 @@ Global
 		{7DC2E5E6-18E5-47D5-B63A-BF21464A411F}.Release|x64.Build.0 = Release|Any CPU
 		{7DC2E5E6-18E5-47D5-B63A-BF21464A411F}.Release|x86.ActiveCfg = Release|Any CPU
 		{7DC2E5E6-18E5-47D5-B63A-BF21464A411F}.Release|x86.Build.0 = Release|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Debug|ARM.Build.0 = Debug|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Debug|x64.Build.0 = Debug|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Debug|x86.Build.0 = Debug|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Release|ARM.ActiveCfg = Release|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Release|ARM.Build.0 = Release|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Release|x64.ActiveCfg = Release|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Release|x64.Build.0 = Release|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Release|x86.ActiveCfg = Release|Any CPU
+		{0C64949F-B5F7-4D5C-B520-8066562855E8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

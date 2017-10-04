@@ -113,7 +113,7 @@ namespace Atos.iFSA.AddActivityModule
 
 			try
 			{
-				using (var ctx = this.MainContext.CreateFeatureContext())
+				using (var ctx = this.MainContext.CreateDataQueryContext())
 				{
 					this.Categories.Clear();
 					foreach (var category in this.DataProvider.GetCategories(ctx))
@@ -155,13 +155,16 @@ namespace Atos.iFSA.AddActivityModule
 
 		private async void CreateActivity()
 		{
+			var feature = new Feature(nameof(AddActivityScreenViewModel), nameof(CreateActivity));
 			try
 			{
+				this.MainContext.Save(feature);
+
 				await this.CreateActivity(this.SelectedOutlet, this.SelectedType);
 			}
 			catch (Exception ex)
 			{
-				this.MainContext.Log(ex.ToString(), LogLevel.Error);
+				this.MainContext.Save(feature, ex);
 			}
 		}
 
@@ -217,7 +220,7 @@ namespace Atos.iFSA.AddActivityModule
 			//var canContinue = await this.MainContext.CanContinueAsync(permissionResult);
 			//if (canContinue)
 			//{
-			//	using (var ctx = this.MainContext.CreateFeatureContext(null))
+			//	using (var ctx = this.MainContext.CreateDataQueryContext(null))
 			//	{
 			//		var activity = this.Agenda.Create(null, outlet, null, null, DateTime.Now);
 			//		ctx.Complete();

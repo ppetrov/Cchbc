@@ -57,6 +57,7 @@
     <Compile Include="Dispatcher.cs" />
     <Compile Include="DispatcherModule.cs" />
     <Compile Include="FeatureDataReplicaSimulation.cs" />
+    <Compile Include="InterviewScenario.cs" />
     <Compile Include="OrderModule\Models\Article.cs" />
     <Compile Include="OrderModule\Data\IOrderDataProvider.cs" />
     <Compile Include="OrderModule\Models\Order.cs" />

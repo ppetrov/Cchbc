@@ -2,16 +2,9 @@
 
 namespace Atos.Client
 {
-	public sealed class ServiceLocator : IServiceLocator
+	public sealed class ServiceLocator
 	{
-		public static ServiceLocator Current { get; } = new ServiceLocator();
-
 		private Dictionary<string, object> RegisteredServices { get; } = new Dictionary<string, object>();
-
-		public T GetService<T>()
-		{
-			return (T)this.RegisteredServices[typeof(T).FullName];
-		}
 
 		public void RegisterService<T>(T service)
 		{
@@ -20,6 +13,11 @@ namespace Atos.Client
 			{
 				this.RegisteredServices.Add(key, service);
 			}
+		}
+
+		public T GetService<T>()
+		{
+			return (T)this.RegisteredServices[typeof(T).FullName];
 		}
 	}
 }

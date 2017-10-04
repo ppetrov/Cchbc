@@ -17,13 +17,6 @@ namespace Atos.iFSA.AgendaModule.ViewModels
 		public string StreetNumber { get; }
 		public string City { get; }
 
-		private string _outletImage;
-		public string OutletImage
-		{
-			get { return _outletImage; }
-			set { this.SetProperty(ref _outletImage, value); }
-		}
-
 		public ObservableCollection<ActivityViewModel> Activities { get; } = new ObservableCollection<ActivityViewModel>();
 
 		public AgendaOutletViewModel(AgendaScreenViewModel parentViewModel, AgendaOutlet model) : base(model)
@@ -57,18 +50,18 @@ namespace Atos.iFSA.AgendaModule.ViewModels
 			this.ParentViewModel.ChangeStartTime(activityViewModel);
 		}
 
-		public Task CancelAsync(ActivityViewModel activityViewModel)
+		public void CancelAsync(ActivityViewModel activityViewModel)
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			return this.ParentViewModel.CancelAsync(activityViewModel);
+			this.ParentViewModel.CancelAsync(activityViewModel);
 		}
 
-		public Task CloseAsync(ActivityViewModel activityViewModel)
+		public void CloseAsync(ActivityViewModel activityViewModel)
 		{
 			if (activityViewModel == null) throw new ArgumentNullException(nameof(activityViewModel));
 
-			return this.ParentViewModel.CloseAsync(activityViewModel);
+			this.ParentViewModel.CloseAsync(activityViewModel);
 		}
 
 		public void Copy(ActivityViewModel activityViewModel)

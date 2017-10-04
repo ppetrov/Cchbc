@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Atos.Client.Validation;
 using Atos.iFSA.Objects;
 
-namespace iFSA
+namespace Atos.iFSA
 {
 	public interface IActivityCancelReasonSelector
 	{

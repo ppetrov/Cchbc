@@ -10,15 +10,15 @@ using Atos.iFSA.Objects;
 
 namespace Atos.iFSA.AgendaModule.Objects
 {
-	public sealed class ActivityManager
+	public sealed class Agenda
 	{
-		public MainContext MainContext { get; }
+		private MainContext MainContext { get; }
 
 		public event EventHandler<ActivityEventArgs> ActivityInserted;
 		public event EventHandler<ActivityEventArgs> ActivityUpdated;
 		public event EventHandler<ActivityEventArgs> ActivityDeleted;
 
-		public ActivityManager(MainContext mainContext)
+		public Agenda(MainContext mainContext)
 		{
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 
@@ -68,7 +68,7 @@ namespace Atos.iFSA.AgendaModule.Objects
 		//	return PermissionResult.Allow;
 		//}
 
-		//public Activity Create(FeatureContext context, Outlet outlet, ActivityType type, ActivityStatus status, DateTime date)
+		//public Activity Create(DataQueryContext context, Outlet outlet, ActivityType type, ActivityStatus status, DateTime date)
 		//{
 		//	if (context == null) throw new ArgumentNullException(nameof(context));
 		//	if (type == null) throw new ArgumentNullException(nameof(type));
@@ -108,20 +108,20 @@ namespace Atos.iFSA.AgendaModule.Objects
 		//	return newActivity;
 		//}
 
-		//public PermissionResult CanCancel(Activity activity, ActivityCancelReason cancelReason)
-		//{
-		//	if (activity == null) throw new ArgumentNullException(nameof(activity));
+		public PermissionResult CanCancel(Activity activity, ActivityCancelReason cancelReason)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
 
-		//	if (activity.Status == null)
-		//	{
-		//		return PermissionResult.Deny(@"CannotCancelInactiveActivity");
-		//	}
-		//	// Check the day
-		//	// TODO : !!!
-		//	var visitDay = this.DataProvider.GetVisitDay(DateTime.Today);
+			if (activity.Status == null)
+			{
+				return PermissionResult.Deny(@"CannotCancelInactiveActivity");
+			}
+			// Check the day
+			// TODO : !!!
+			//var visitDay = this.DataProvider.GetVisitDay(DateTime.Today);
 
-		//	return PermissionResult.Allow;
-		//}
+			return PermissionResult.Allow;
+		}
 
 		//public PermissionResult CanCancel(DateTime date)
 		//{
@@ -142,16 +142,14 @@ namespace Atos.iFSA.AgendaModule.Objects
 		//	return PermissionResult.Allow;
 		//}
 
+		public void Cancel(Activity activity, ActivityCancelReason cancelReason)
+		{
+			if (activity == null) throw new ArgumentNullException(nameof(activity));
 
+			// TODO : !!!
 
-		//public void Cancel(Activity activity, ActivityCancelReason cancelReason)
-		//{
-		//	if (activity == null) throw new ArgumentNullException(nameof(activity));
-
-		//	// TODO : !!!
-
-		//	this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
-		//}
+			this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
+		}
 
 		//public void CancelDay(ActivityCancelReason cancelReason)
 		//{
@@ -207,7 +205,7 @@ namespace Atos.iFSA.AgendaModule.Objects
 		//	this.ActivityUpdated?.Invoke(this, new ActivityEventArgs(activity));
 		//}
 
-		//public void ChangeStartTime(Activity activity, DateTime dateTime)
+		//public void ChangeStartTimeAsync(Activity activity, DateTime dateTime)
 		//{
 		//	if (activity == null) throw new ArgumentNullException(nameof(activity));
 

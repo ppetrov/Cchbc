@@ -12,12 +12,7 @@ namespace Atos.iFSA.UI
 	{
 		private SQLiteConnection _cn;
 
-		private string DbPath { get; }
-
-		public DebugDbContext()
-		{
-			this.DbPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "ifsa.sqlite");
-		}
+		private string DbPath => Path.Combine(ApplicationData.Current.LocalFolder.Path, "ifsa.sqlite");
 
 		public int Execute(Query query)
 		{
@@ -56,10 +51,10 @@ namespace Atos.iFSA.UI
 				}
 
 				using (var r = cmd.ExecuteReader())
-				{ 
+				{
 					while (r.Read())
 					{
-						
+
 					}
 				}
 			}

@@ -8,17 +8,13 @@ namespace Atos.iFSA.Data
 {
 	public interface IAgendaDataProvider
 	{
-		List<AgendaOutlet> GetAgendaOutlets(FeatureContext context, User user, DateTime date);
+		List<AgendaOutlet> GetAgendaOutlets(DataQueryContext context, User user, DateTime date);
 	}
 
-	public interface IOutletImageDataProvider
-	{
-		OutletImage GetDefaultOutletImage(MainContext context, Outlet outlet);
-	}
 
 	public static class AgendaDataProvider
 	{
-		public static List<AgendaOutlet> GetAgendaOutlets(FeatureContext context, User user, DateTime date)
+		public static List<AgendaOutlet> GetAgendaOutlets(DataQueryContext context, User user, DateTime date)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (user == null) throw new ArgumentNullException(nameof(user));
@@ -41,15 +37,7 @@ namespace Atos.iFSA.Data
 			throw new NotImplementedException();
 		}
 
-		public static OutletImage GetDefaultOutletImage(MainContext context, Outlet outlet)
-		{
-			if (context == null) throw new ArgumentNullException(nameof(context));
-
-			// Query Outlet images for the outlet in get the default one
-			return null;
-		}
-
-		public static Activity Insert(FeatureContext context, Activity activity)
+		public static Activity Insert(DataQueryContext context, Activity activity)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 
@@ -58,7 +46,7 @@ namespace Atos.iFSA.Data
 			return null;
 		}
 
-		public static void Update(FeatureContext context, Activity activity)
+		public static void Update(DataQueryContext context, Activity activity)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));
 			if (activity == null) throw new ArgumentNullException(nameof(activity));

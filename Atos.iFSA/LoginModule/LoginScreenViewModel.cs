@@ -6,7 +6,6 @@ using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Localization;
-using Atos.Client.Logs;
 using Atos.Client.Settings;
 using Atos.iFSA.AgendaModule;
 using Atos.iFSA.AgendaModule.Objects;
@@ -20,8 +19,8 @@ namespace Atos.iFSA.LoginModule
 	{
 		private readonly DateTime _dataDate = DateTime.Today;
 
-		private User[] _users;
 		private User _dataUser;
+		private User[] _users;
 		private Task<List<AgendaOutlet>> _dataLoader;
 
 		public INavigationService NavigationService => this.MainContext.GetService<INavigationService>();
@@ -67,7 +66,7 @@ namespace Atos.iFSA.LoginModule
 			try
 			{
 				// Load all users
-				using (var ctx = this.MainContext.DbContextCreator())
+				using (var ctx = this.MainContext.CreateDataQueryContext())
 				{
 					_users = this.MainContext.GetService<IUserDataProvider>().GetUsers(ctx);
 					ctx.Complete();
@@ -78,42 +77,55 @@ namespace Atos.iFSA.LoginModule
 				if (userSettings != null)
 				{
 					this.Username = userSettings.Username;
-
-					// Find the user for which to load the data
-					foreach (var user in _users)
-					{
-						if (user.Name.Equals(this.Username, StringComparison.OrdinalIgnoreCase))
-						{
-							_dataUser = user;
-							break;
-						}
-					}
 				}
 
-				// Load data(agenda) in background while the user is typing the password
+				// Find the user for which to load the data
+				_dataUser = this.FindCurrentUser();
 				if (_dataUser != null)
 				{
-					_dataLoader = Task.Run(() =>
-					{
-						List<AgendaOutlet> outlets;
-
-						using (var ctx = this.MainContext.CreateFeatureContext())
-						{
-							var dataProvider = this.MainContext.GetService<IAgendaDataProvider>();
-							outlets = dataProvider.GetAgendaOutlets(ctx, _dataUser, _dataDate);
-							ctx.Complete();
-						}
-
-						return outlets;
-					});
+					// Load agenda in background while the user is typing the password
+					_dataLoader = Task.Run(() => GetAgendaOutlets(_dataUser, _dataDate));
 				}
 			}
 			catch (Exception ex)
 			{
-				this.MainContext.Log(ex.ToString(), LogLevel.Error);
+				this.MainContext.Log(ex);
 			}
 
 			return base.InitializeAsync(parameter);
+		}
+
+		private User FindCurrentUser()
+		{
+			foreach (var user in _users)
+			{
+				if (user.Name.Equals(this.Username, StringComparison.OrdinalIgnoreCase))
+				{
+					return user;
+				}
+			}
+			return null;
+		}
+
+		private List<AgendaOutlet> GetAgendaOutlets(User user, DateTime dataDate)
+		{
+			List<AgendaOutlet> outlets = null;
+
+			try
+			{
+				using (var ctx = this.MainContext.CreateDataQueryContext())
+				{
+					var dataProvider = this.MainContext.GetService<IAgendaDataProvider>();
+					outlets = dataProvider.GetAgendaOutlets(ctx, user, dataDate);
+					ctx.Complete();
+				}
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Log(ex);
+			}
+
+			return outlets ?? new List<AgendaOutlet>(0);
 		}
 
 		private async void Login()
@@ -125,41 +137,35 @@ namespace Atos.iFSA.LoginModule
 
 				var username = this.GetCurrentUsername();
 				var password = (this.Password ?? string.Empty);
-				var user = default(User);
 
-				foreach (var u in _users)
+				var user = FindCurrentUser();
+				if (user != null && !user.Password.Equals(password))
 				{
-					if (u.Name.Equals(username, StringComparison.OrdinalIgnoreCase) &&
-						u.Password.Equals(password))
-					{
-						user = u;
-						break;
-					}
+					user = null;
 				}
-
 				if (user == null)
 				{
-					await this.MainContext.ShowMessageAsync(new LocalizationKey(nameof(LoginScreenViewModel), @"WrongCredentials"));
+					await this.MainContext.ShowMessageAsync(GetLocalizationKey(@"WrongCredentials"));
 					return;
 				}
 
 				this.SaveLoginSuccess(username);
 
 				var outlets = default(List<AgendaOutlet>);
-				if (_dataLoader != null)
+
+				// Check if the logged user is the same as the user the data is loaded in
+				if (_dataLoader != null && user.Id == _dataUser.Id)
 				{
-					// Check if the logged user is the same as the user the data is loaded in
-					if (user.Id == _dataUser.Id)
-					{
-						// wait while the data is loaded
-						outlets = await _dataLoader;
-					}
+					// wait while the data is loaded				
+					outlets = await _dataLoader;
 				}
+				outlets = outlets ?? GetAgendaOutlets(user, _dataDate);
+
 				await this.NavigationService.NavigateToAsync<AgendaScreenViewModel>(new AgendaDay(user, _dataDate, outlets));
 			}
 			catch (Exception ex)
 			{
-				this.MainContext.Log(ex.ToString(), LogLevel.Error);
+				this.MainContext.Save(feature, ex);
 			}
 		}
 
@@ -184,13 +190,18 @@ namespace Atos.iFSA.LoginModule
 			}
 			catch (Exception ex)
 			{
-				this.MainContext.Log(ex.ToString(), LogLevel.Error);
+				this.MainContext.Save(feature, ex);
 			}
 		}
 
 		private string GetLocalized(string name)
 		{
-			return this.MainContext.GetLocalized(new LocalizationKey(nameof(LoginScreenViewModel), name));
+			return this.MainContext.GetLocalized(GetLocalizationKey(name));
+		}
+
+		private static LocalizationKey GetLocalizationKey(string name)
+		{
+			return new LocalizationKey(nameof(LoginScreenViewModel), name);
 		}
 
 		private string GetCurrentUsername()

@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using Atos.Client;
 using Atos.Client.Data;
 using Atos.iFSA.Objects;
 
@@ -8,7 +7,7 @@ namespace Atos.iFSA.Data
 {
 	public interface IUserDataProvider
 	{
-		User[] GetUsers(IDbContext context);
+		User[] GetUsers(DataQueryContext context);
 	}
 
 	public static class UserDataProvider

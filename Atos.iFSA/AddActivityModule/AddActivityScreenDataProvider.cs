@@ -7,12 +7,12 @@ namespace Atos.iFSA.AddActivityModule
 {
 	public sealed class AddActivityScreenDataProvider
 	{
-		public IEnumerable<Outlet> GetOutlets(FeatureContext context)
+		public IEnumerable<Outlet> GetOutlets(DataQueryContext context)
 		{
 			throw new NotImplementedException();
 		}
 
-		public IEnumerable<ActivityTypeCategory> GetCategories(FeatureContext context)
+		public IEnumerable<ActivityTypeCategory> GetCategories(DataQueryContext context)
 		{
 			throw new NotImplementedException();
 		}

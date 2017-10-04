@@ -40,7 +40,7 @@ namespace Atos.Client
 
 		public void RemoveValues<T>()
 		{
-			_values.Remove(typeof(T).Name);
+			_values.Remove(typeof(T).FullName);
 		}
 
 		public void Clear()
