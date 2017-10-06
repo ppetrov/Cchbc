@@ -1,7 +1,7 @@
 ﻿using System;
-using Atos.iFSA.InitialSetupModule.Objects;
+using Atos.iFSA.LoginModule.Objects;
 
-namespace Atos.iFSA.InitialSetupModule.ViewModels
+namespace Atos.iFSA.LoginModule.ViewModels
 {
 	public sealed class CountryViewModel
 	{

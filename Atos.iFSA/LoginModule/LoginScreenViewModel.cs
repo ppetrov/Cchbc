@@ -9,7 +9,6 @@ using Atos.Client.Localization;
 using Atos.Client.Settings;
 using Atos.iFSA.AgendaModule;
 using Atos.iFSA.AgendaModule.Objects;
-using Atos.iFSA.Data;
 using Atos.iFSA.Objects;
 using Atos.iFSA.ReplicationModule;
 

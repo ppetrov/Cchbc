@@ -1,11 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Atos.Client;
-using Atos.Client.Logs;
 using Atos.Client.Validation;
-using Atos.iFSA.Data;
 using Atos.iFSA.Objects;
 
 namespace Atos.iFSA.AgendaModule.Objects

@@ -14,7 +14,6 @@ using Atos.Client.Features.Data;
 using Atos.Client.Validation;
 using Atos.ConsoleClient;
 using Atos.iFSA.Objects;
-using Atos.iFSA.Data;
 using Atos.iFSA;
 
 namespace ConsoleClient

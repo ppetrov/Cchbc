@@ -58,9 +58,8 @@
     <Compile Include="ArticlesModule\Objects\Brand.cs" />
     <Compile Include="ArticlesModule\Objects\Article.cs" />
     <Compile Include="ArticlesModule\Objects\Flavor.cs" />
-    <Compile Include="Data\AgendaDataProvider.cs" />
-    <Compile Include="Data\DbData.cs" />
-    <Compile Include="Data\UserDataProvider.cs" />
+    <Compile Include="AgendaModule\AgendaDataProvider.cs" />
+    <Compile Include="LoginModule\UserDataProvider.cs" />
     <Compile Include="DocumentBrowserModule\Models\Document.cs" />
     <Compile Include="DocumentBrowserModule\Models\DocumentFilter.cs" />
     <Compile Include="DocumentBrowserModule\Models\DocumentFilterEntry.cs" />
@@ -72,7 +71,7 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IActivityCancelReasonSelector.cs" />
     <Compile Include="LoginModule\LoginScreenViewModel.cs" />
-    <Compile Include="InitialSetupModule\Objects\AppSystem.cs" />
+    <Compile Include="LoginModule\Objects\AppSystem.cs" />
     <Compile Include="Objects\Activity.cs" />
     <Compile Include="Objects\ActivityCancelReason.cs" />
     <Compile Include="Objects\ActivityCloseReason.cs" />
@@ -96,13 +95,13 @@
     <Compile Include="MasterDataModule\Objects\SubTradeChannel.cs" />
     <Compile Include="MasterDataModule\Objects\TradeChannel.cs" />
     <Compile Include="ReplicationModule\Objects\ReplicationConfig.cs" />
-    <Compile Include="InitialSetupModule\Objects\SystemSource.cs" />
-    <Compile Include="InitialSetupModule\Objects\Country.cs" />
+    <Compile Include="LoginModule\Objects\SystemSource.cs" />
+    <Compile Include="LoginModule\Objects\Country.cs" />
     <Compile Include="LoginModuleClasses.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserSettings.cs" />
-    <Compile Include="InitialSetupModule\ViewModels\SystemViewModel.cs" />
-    <Compile Include="InitialSetupModule\ViewModels\CountryViewModel.cs" />
+    <Compile Include="LoginModule\ViewModels\SystemViewModel.cs" />
+    <Compile Include="LoginModule\ViewModels\CountryViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Atos.Client\Atos.Client.csproj">
