@@ -58,6 +58,9 @@
     <Compile Include="ArticlesModule\Objects\Brand.cs" />
     <Compile Include="ArticlesModule\Objects\Article.cs" />
     <Compile Include="ArticlesModule\Objects\Flavor.cs" />
+    <Compile Include="Data\AgendaDataProvider.cs" />
+    <Compile Include="Data\DbData.cs" />
+    <Compile Include="Data\UserDataProvider.cs" />
     <Compile Include="DocumentBrowserModule\Models\Document.cs" />
     <Compile Include="DocumentBrowserModule\Models\DocumentFilter.cs" />
     <Compile Include="DocumentBrowserModule\Models\DocumentFilterEntry.cs" />
@@ -70,6 +73,25 @@
     <Compile Include="IActivityCancelReasonSelector.cs" />
     <Compile Include="LoginModule\LoginScreenViewModel.cs" />
     <Compile Include="InitialSetupModule\Objects\AppSystem.cs" />
+    <Compile Include="Objects\Activity.cs" />
+    <Compile Include="Objects\ActivityCancelReason.cs" />
+    <Compile Include="Objects\ActivityCloseReason.cs" />
+    <Compile Include="Objects\ActivityStatus.cs" />
+    <Compile Include="Objects\ActivityType.cs" />
+    <Compile Include="Objects\ActivityTypeCategory.cs" />
+    <Compile Include="Objects\AgendaOutlet.cs" />
+    <Compile Include="Objects\Outlet.cs" />
+    <Compile Include="Objects\OutletAddress.cs" />
+    <Compile Include="Objects\OutletImage.cs" />
+    <Compile Include="Objects\User.cs" />
+    <Compile Include="Objects\Visit.cs" />
+    <Compile Include="PlanningTool\Class1.cs" />
+    <Compile Include="PlanningTool\Models\PlanScenario.cs" />
+    <Compile Include="PlanningTool\Models\PlanType.cs" />
+    <Compile Include="PlanningTool\PlanByOutletViewModel.cs" />
+    <Compile Include="PlanningTool\PlanningToolModule.cs" />
+    <Compile Include="PlanningTool\ScreenViewModels\SelectPlanScenarioViewModel.cs" />
+    <Compile Include="PlanningTool\ViewModels\PlanScenarioViewModel.cs" />
     <Compile Include="ReplicationModule\ReplicationScreenViewModel.cs" />
     <Compile Include="MasterDataModule\Objects\SubTradeChannel.cs" />
     <Compile Include="MasterDataModule\Objects\TradeChannel.cs" />
@@ -86,14 +108,6 @@
     <ProjectReference Include="..\Atos.Client\Atos.Client.csproj">
       <Project>{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}</Project>
       <Name>Atos.Client</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Atos.iFSA.Data\Atos.iFSA.Data.csproj">
-      <Project>{7DC2E5E6-18E5-47D5-B63A-BF21464A411F}</Project>
-      <Name>Atos.iFSA.Data</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Atos.iFSA.Objects\Atos.iFSA.Objects.csproj">
-      <Project>{D1FBED0C-02C9-4344-AE1F-BD4C85FB96C2}</Project>
-      <Name>Atos.iFSA.Objects</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

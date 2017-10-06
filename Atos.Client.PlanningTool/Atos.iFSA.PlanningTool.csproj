@@ -53,10 +53,6 @@
       <Project>{CF3BBBBD-5F7A-47B5-A5A5-71EB0EC6AD84}</Project>
       <Name>Atos.Client</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Atos.iFSA.Objects\Atos.iFSA.Objects.csproj">
-      <Project>{D1FBED0C-02C9-4344-AE1F-BD4C85FB96C2}</Project>
-      <Name>Atos.iFSA.Objects</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Atos.iFSA\Atos.iFSA.csproj">
       <Project>{41397028-0B7B-4EF3-92AB-C6E617CAEC5B}</Project>
       <Name>Atos.iFSA</Name>
