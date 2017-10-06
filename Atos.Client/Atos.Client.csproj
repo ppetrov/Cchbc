@@ -39,7 +39,6 @@
     <Compile Include="Archive\ZipData.cs" />
     <Compile Include="Archive\ZipHeader.cs" />
     <Compile Include="Data\IDbContext.cs" />
-    <Compile Include="Data\IDbContextCreator.cs" />
     <Compile Include="Data\IFieldDataReader.cs" />
     <Compile Include="Data\Query.cs" />
     <Compile Include="Data\QueryParameter.cs" />

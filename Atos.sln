@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.iFSA", "Atos.iFSA\Atos
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.iFSA.UI", "Atos.iFSA.UI\Atos.iFSA.UI.csproj", "{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.Architecture", "Atos.Architecture\Atos.Architecture.csproj", "{4735DB31-2FAB-4601-815B-B54DEA591365}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -113,6 +115,22 @@ Global
 		{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}.Release|x86.ActiveCfg = Release|x86
 		{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}.Release|x86.Build.0 = Release|x86
 		{1571C115-6CB5-4DAF-A0E2-16E0EC3B66EA}.Release|x86.Deploy.0 = Release|x86
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Debug|ARM.Build.0 = Debug|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Debug|x64.Build.0 = Debug|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Debug|x86.Build.0 = Debug|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Release|ARM.ActiveCfg = Release|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Release|ARM.Build.0 = Release|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Release|x64.ActiveCfg = Release|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Release|x64.Build.0 = Release|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Release|x86.ActiveCfg = Release|Any CPU
+		{4735DB31-2FAB-4601-815B-B54DEA591365}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

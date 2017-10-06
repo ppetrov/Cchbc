@@ -13,16 +13,23 @@ namespace Atos.Client
 		public DataCache DataCache { get; } = new DataCache();
 		public ServiceLocator ServiceLocator { get; } = new ServiceLocator();
 
-		public T GetService<T>()
+		public T GetService<T>() where T : class
 		{
 			return this.ServiceLocator.GetService<T>();
 		}
 
-		public void RegisterService<T>(T service)
+		public void RegisterService<T>(T service) where T : class
 		{
 			if (service == null) throw new ArgumentNullException(nameof(service));
 
 			this.ServiceLocator.RegisterService(service);
+		}
+
+		public void RegisterServiceCreator<T>(Func<T> serviceCreator) where T : class
+		{
+			if (serviceCreator == null) throw new ArgumentNullException(nameof(serviceCreator));
+
+			this.ServiceLocator.RegisterServiceCreator(serviceCreator);
 		}
 
 		public DataQueryContext CreateDataQueryContext()

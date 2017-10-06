@@ -14,7 +14,7 @@ namespace Atos.Client
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 
 			this.MainContext = mainContext;
-			this.DbContext = mainContext.GetService<IDbContextCreator>().Create();
+			this.DbContext = mainContext.GetService<IDbContext>();
 		}
 
 		public int Execute(Query query)

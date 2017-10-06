@@ -1,4 +1,5 @@
 ﻿using Atos.Client;
+using Atos.Client.Data;
 using Atos.Client.Localization;
 using Atos.Client.Logs;
 
@@ -12,6 +13,7 @@ namespace Atos.iFSA.UI
 		{
 			Context.RegisterService<ILogger>(new Logger());
 			Context.RegisterService(new LocalizationManager());
+			Context.RegisterServiceCreator<IDbContext>(() => new DebugDbContext());
 		}
 
 		public static void Load()
