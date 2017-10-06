@@ -6,6 +6,7 @@ using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Localization;
+using Atos.Client.Navigation;
 using Atos.Client.Settings;
 using Atos.iFSA.AgendaModule;
 using Atos.iFSA.AgendaModule.Objects;

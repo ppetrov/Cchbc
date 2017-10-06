@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Atos.Client.Common;
 using Atos.Client.Data;
+using Atos.Client.Navigation;
 using Atos.Client.PlanningTool.ScreenViewModels;
 using Atos.iFSA.Objects;
 

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Atos.Client.Common;
+using Atos.Client.Navigation;
 using Atos.Client.PlanningTool.Models;
 using Atos.Client.PlanningTool.ViewModels;
 

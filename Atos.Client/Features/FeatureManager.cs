@@ -5,15 +5,9 @@ using Atos.Client.Features.Data;
 
 namespace Atos.Client.Features
 {
-	public interface IFeatureManager
-	{
-		void Save(Feature feature, string details = null);
-		void Save(Feature feature, Exception exception);
-	}
-
 	public sealed class FeatureManager : IFeatureManager
 	{
-		private Func<IDbContext> DbContextCreator { get; }
+		private Func<IDbContext> ContextCreator { get; }
 		private Dictionary<string, FeatureContextRow> Contexts { get; set; }
 		private Dictionary<long, List<FeatureRow>> Features { get; set; }
 
@@ -39,18 +33,18 @@ namespace Atos.Client.Features
 			}
 		}
 
-		public FeatureManager(Func<IDbContext> dbContextCreator)
+		public FeatureManager(Func<IDbContext> contextCreator)
 		{
-			if (dbContextCreator == null) throw new ArgumentNullException(nameof(dbContextCreator));
+			if (contextCreator == null) throw new ArgumentNullException(nameof(contextCreator));
 
-			this.DbContextCreator = dbContextCreator;
+			this.ContextCreator = contextCreator;
 		}
 
 		public void Save(Feature feature, string details = null)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 
-			using (var dbContext = this.DbContextCreator())
+			using (var dbContext = this.ContextCreator())
 			{
 				this.Load(dbContext);
 
@@ -67,7 +61,7 @@ namespace Atos.Client.Features
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			using (var dbContext = this.DbContextCreator())
+			using (var dbContext = this.ContextCreator())
 			{
 				this.Load(dbContext);
 
@@ -82,7 +76,7 @@ namespace Atos.Client.Features
 
 		public byte[] GetClientDataBytes()
 		{
-			using (var dbContext = this.DbContextCreator())
+			using (var dbContext = this.ContextCreator())
 			{
 				this.Load(dbContext);
 

@@ -8,6 +8,7 @@ using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Data;
 using Atos.Client.Dialog;
+using Atos.Client.Navigation;
 using Atos.iFSA;
 using Atos.iFSA.Objects;
 

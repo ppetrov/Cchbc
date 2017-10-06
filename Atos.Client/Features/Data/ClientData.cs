@@ -38,6 +38,7 @@ namespace Atos.Client.Features.Data
 			if (features == null) throw new ArgumentNullException(nameof(features));
 
 			var initialPosition = (int)_memoryStream.Position;
+			// Writes unknown count
 			_binaryWriter.Write(-1);
 
 			var count = 0;
@@ -60,6 +61,7 @@ namespace Atos.Client.Features.Data
 			if (featureEntries == null) throw new ArgumentNullException(nameof(featureEntries));
 
 			var initialPosition = (int)_memoryStream.Position;
+			// Writes unknown count
 			_binaryWriter.Write(-1);
 
 			var count = 0;
@@ -79,6 +81,7 @@ namespace Atos.Client.Features.Data
 			if (featureExceptionEntries == null) throw new ArgumentNullException(nameof(featureExceptionEntries));
 
 			var initialPosition = (int)_memoryStream.Position;
+			// Writes unknown count
 			_binaryWriter.Write(-1);
 
 			var count = 0;

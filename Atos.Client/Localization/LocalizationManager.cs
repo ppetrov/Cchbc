@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Atos.Client.Localization
 {
-	public sealed class LocalizationManager
+	public sealed class LocalizationManager : ILocalizationManager
 	{
 		private Dictionary<string, Dictionary<string, string>> ByContextValues { get; } = new Dictionary<string, Dictionary<string, string>>();
 
@@ -13,9 +13,6 @@ namespace Atos.Client.Localization
 
 			this.ByContextValues.Clear();
 
-			//Context.Name:Message
-			//TODO : Add support for messages without context
-			//Name:Message
 			var previousContext = default(string);
 
 			foreach (var line in lines)
@@ -42,13 +39,7 @@ namespace Atos.Client.Localization
 						values = new Dictionary<string, string>();
 						this.ByContextValues.Add(context, values);
 					}
-
-					// Guard against duplicated entries
-					string current;
-					if (!values.TryGetValue(key, out current))
-					{
-						values.Add(key, message);
-					}
+					values[key] = message;
 				}
 			}
 		}
@@ -57,7 +48,6 @@ namespace Atos.Client.Localization
 		{
 			if (key == null) throw new ArgumentNullException(nameof(key));
 
-			var defaultValue = key.Name;
 			var message = default(string);
 
 			Dictionary<string, string> messages;
@@ -66,7 +56,7 @@ namespace Atos.Client.Localization
 				messages.TryGetValue(key.Name, out message);
 			}
 
-			return message ?? defaultValue;
+			return message ?? key.Name;
 		}
 
 		private static bool IsContextChanged(string line, int index, string previousContext)

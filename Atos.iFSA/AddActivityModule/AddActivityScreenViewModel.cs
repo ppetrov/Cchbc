@@ -9,6 +9,7 @@ using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Localization;
 using Atos.Client.Logs;
+using Atos.Client.Navigation;
 using Atos.Client.Validation;
 using Atos.iFSA.AgendaModule;
 using Atos.iFSA.Objects;

@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Atos.Client
+namespace Atos.Client.Navigation
 {
 	public interface INavigationService
 	{
