@@ -34,7 +34,7 @@ namespace Atos.Client
 		{
 			if (key == null) throw new ArgumentNullException(nameof(key));
 
-			return this.GetService<ILocalizationManager>().Get(key);
+			return this.GetService<LocalizationManager>().Get(key);
 		}
 
 		public void Log(Exception ex)

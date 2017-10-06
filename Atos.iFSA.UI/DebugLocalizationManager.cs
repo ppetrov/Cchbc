@@ -4,7 +4,7 @@ using Atos.Client.Localization;
 
 namespace Atos.iFSA.UI.LoginModule
 {
-	public sealed class DebugLocalizationManager : ILocalizationManager
+	public sealed class DebugLocalizationManager
 	{
 		public void Load(IEnumerable<string> lines)
 		{
