@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.iFSA.Objects", "Atos.i
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.iFSA.Data", "Atos.iFSA.Data\Atos.iFSA.Data.csproj", "{7DC2E5E6-18E5-47D5-B63A-BF21464A411F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.Client.PlanningTool", "Atos.Client.PlanningTool\Atos.Client.PlanningTool.csproj", "{0C64949F-B5F7-4D5C-B520-8066562855E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atos.iFSA.PlanningTool", "Atos.Client.PlanningTool\Atos.iFSA.PlanningTool.csproj", "{0C64949F-B5F7-4D5C-B520-8066562855E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

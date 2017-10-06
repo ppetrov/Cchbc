@@ -8,8 +8,8 @@
     <ProjectGuid>{0C64949F-B5F7-4D5C-B520-8066562855E8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Atos.Client.PlanningTool</RootNamespace>
-    <AssemblyName>Atos.Client.PlanningTool</AssemblyName>
+    <RootNamespace>Atos.iFSA.PlanningTool</RootNamespace>
+    <AssemblyName>Atos.iFSA.PlanningTool</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
