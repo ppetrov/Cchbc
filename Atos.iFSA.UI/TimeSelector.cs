@@ -11,8 +11,8 @@ namespace Atos.iFSA.UI
 	{
 		public MainContext MainContext { get; }
 
-		private Func<DateTime, PermissionResult> _validator;
-		private Action<DateTime> _operation;
+		private Func<DateTime, PermissionResult> Validator { get; set; }
+		private Action<DateTime> Operation { get; set; }
 
 		public TimeSelector(MainContext mainContext)
 		{
@@ -26,8 +26,8 @@ namespace Atos.iFSA.UI
 			if (validator == null) throw new ArgumentNullException(nameof(validator));
 			if (operation == null) throw new ArgumentNullException(nameof(operation));
 
-			_validator = validator;
-			_operation = operation;
+			this.Validator = validator;
+			this.Operation = operation;
 
 			//TODO : Display UI Control
 			throw new NotImplementedException();
@@ -37,10 +37,10 @@ namespace Atos.iFSA.UI
 		{
 			var selectedDate = DateTime.Today;
 
-			var permissionResult = _validator(selectedDate);
+			var permissionResult = this.Validator(selectedDate);
 			if (permissionResult == PermissionResult.Allow)
 			{
-				_operation(selectedDate);
+				this.Operation(selectedDate);
 				this.Cancel();
 			}
 			else

@@ -9,6 +9,7 @@ using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Localization;
 using Atos.Client.Logs;
+using Atos.Client.Validation;
 using Atos.iFSA.AgendaModule;
 using Atos.iFSA.Objects;
 
@@ -216,17 +217,17 @@ namespace Atos.iFSA.AddActivityModule
 			}
 
 			// TODO : Can Create from where to take the reference???
-			//var permissionResult = this.Agenda.CanCreate(outlet, activityType);
-			//var canContinue = await this.MainContext.CanContinueAsync(permissionResult);
-			//if (canContinue)
-			//{
-			//	using (var ctx = this.MainContext.CreateDataQueryContext(null))
-			//	{
-			//		var activity = this.Agenda.Create(null, outlet, null, null, DateTime.Now);
-			//		ctx.Complete();
-			//		return activity;
-			//	}
-			//}
+			var permissionResult = default(PermissionResult);
+			var canContinue = await this.MainContext.CanContinueAsync(permissionResult);
+			if (canContinue)
+			{
+				using (var ctx = this.MainContext.CreateDataQueryContext())
+				{
+					//var activity = this..Create(null, outlet, null, null, DateTime.Now);
+					ctx.Complete();
+					return new Activity(0, null, null, null, DateTime.Today, DateTime.Today, string.Empty);
+				}
+			}
 
 			return null;
 		}

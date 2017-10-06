@@ -1,15 +1,23 @@
-﻿using System.Diagnostics;
-using Atos.Client;
+﻿using Atos.Client;
+using Atos.Client.Localization;
+using Atos.Client.Logs;
 
-namespace Atos.iFSA.UI.LoginModule
+namespace Atos.iFSA.UI
 {
 	public static class GlobalApp
 	{
 		public static MainContext Context { get; } = new MainContext();
 
-		//	(msg, l) =>
-		//{
-		//	Debug.WriteLine(l + @":" + msg);
-		//}, () => new DebugDbContext(), new ModalDialog(), new DebugFeatureManager(), new DebugLocalizationManager()
+		public static void Initialize()
+		{
+			Context.RegisterService<ILogger>(new Logger());
+			Context.RegisterService(new LocalizationManager());
+		}
+
+		public static void Load()
+		{
+			var lines = new string[0];
+			Context.GetService<LocalizationManager>().Load(lines);
+		}
 	}
 }

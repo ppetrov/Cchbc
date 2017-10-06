@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Atos.Client.Localization
 {
-	public sealed class LocalizationManager : ILocalizationManager
+	public sealed class LocalizationManager
 	{
 		private Dictionary<string, Dictionary<string, string>> ByContextValues { get; } = new Dictionary<string, Dictionary<string, string>>();
 

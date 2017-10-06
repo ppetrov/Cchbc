@@ -18,6 +18,13 @@ namespace Atos.Client
 			return this.ServiceLocator.GetService<T>();
 		}
 
+		public void RegisterService<T>(T service)
+		{
+			if (service == null) throw new ArgumentNullException(nameof(service));
+
+			this.ServiceLocator.RegisterService(service);
+		}
+
 		public DataQueryContext CreateDataQueryContext()
 		{
 			return new DataQueryContext(this);
