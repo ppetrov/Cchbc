@@ -22,14 +22,14 @@ namespace Atos.Client
 		{
 			if (service == null) throw new ArgumentNullException(nameof(service));
 
-			this.ServiceLocator.RegisterService(service);
+			this.ServiceLocator.Register(service);
 		}
 
 		public void RegisterServiceCreator<T>(Func<T> serviceCreator) where T : class
 		{
 			if (serviceCreator == null) throw new ArgumentNullException(nameof(serviceCreator));
 
-			this.ServiceLocator.RegisterServiceCreator(serviceCreator);
+			this.ServiceLocator.RegisterCreator(serviceCreator);
 		}
 
 		public DataQueryContext CreateDataQueryContext()

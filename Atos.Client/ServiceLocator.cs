@@ -8,12 +8,12 @@ namespace Atos.Client
 		private Dictionary<string, object> Services { get; } = new Dictionary<string, object>();
 		private HashSet<string> Creators { get; } = new HashSet<string>();
 
-		public void RegisterService<T>(T service) where T : class
+		public void Register<T>(T service) where T : class
 		{
 			this.Services.Add(typeof(T).FullName, service);
 		}
 
-		public void RegisterServiceCreator<T>(Func<T> serviceCreator) where T : class
+		public void RegisterCreator<T>(Func<T> serviceCreator) where T : class
 		{
 			var key = typeof(T).FullName;
 			this.Services.Add(key, serviceCreator);

@@ -51,7 +51,6 @@
     <Compile Include="AgendaModule\AgendaScreenViewModel.cs" />
     <Compile Include="AgendaModule\Objects\AgendaDayStatus.cs" />
     <Compile Include="AgendaModule\ViewModels\AgendaOutletViewModel.cs" />
-    <Compile Include="AppModule.cs" />
     <Compile Include="ArchitectureModule\ModifiableArchitecture.cs" />
     <Compile Include="ArchitectureModule\ReadOnlyArchitecture.cs" />
     <Compile Include="ArchitectureModule\SortOption.cs" />
@@ -68,7 +67,6 @@
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterEntryViewModel.cs" />
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterViewModel.cs" />
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentViewModel.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IActivityCancelReasonSelector.cs" />
     <Compile Include="LoginModule\LoginScreenViewModel.cs" />
     <Compile Include="LoginModule\Objects\AppSystem.cs" />
@@ -84,12 +82,15 @@
     <Compile Include="Objects\OutletImage.cs" />
     <Compile Include="Objects\User.cs" />
     <Compile Include="Objects\Visit.cs" />
-    <Compile Include="PlanningTool\Class1.cs" />
+    <Compile Include="PlanningTool\CategorySearchOption.cs" />
+    <Compile Include="PlanningTool\OutletViewModel.cs" />
+    <Compile Include="PlanningTool\IOutletsWithVisitDataProvider.cs" />
     <Compile Include="PlanningTool\Models\PlanScenario.cs" />
     <Compile Include="PlanningTool\Models\PlanType.cs" />
     <Compile Include="PlanningTool\PlanByOutletViewModel.cs" />
     <Compile Include="PlanningTool\PlanningToolModule.cs" />
     <Compile Include="PlanningTool\ScreenViewModels\SelectPlanScenarioViewModel.cs" />
+    <Compile Include="PlanningTool\SelectOutletViewModel.cs" />
     <Compile Include="PlanningTool\ViewModels\PlanScenarioViewModel.cs" />
     <Compile Include="ReplicationModule\ReplicationScreenViewModel.cs" />
     <Compile Include="MasterDataModule\Objects\SubTradeChannel.cs" />
@@ -109,9 +110,7 @@
       <Name>Atos.Client</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="MasterDataModule\Data\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading;
 using Atos.Client.Archive;
@@ -15,6 +16,7 @@ using Atos.Client.Validation;
 using Atos.ConsoleClient;
 using Atos.iFSA.Objects;
 using Atos.iFSA;
+using Atos.Architecture;
 
 namespace ConsoleClient
 {
@@ -81,6 +83,77 @@ namespace ConsoleClient
 
 			try
 			{
+				var projectFile = @"C:\Sources\Atos\Atos.iFSA\Atos.iFSA.csproj";
+				var projectPath = Path.GetDirectoryName(projectFile);
+
+				var rules = new[]
+				{
+					new SourceCodeRule(@"Class must be sealed or abstract", cts =>
+					{
+						return cts.IndexOf(@"public class", 0, StringComparison.OrdinalIgnoreCase) >= 0;
+					}),
+
+					new SourceCodeRule(@"Interface must start with an 'I'", cts =>
+					{
+						var flag = @"public interface ";
+						var index = cts.IndexOf(flag, StringComparison.OrdinalIgnoreCase);
+						if (index >= 0)
+						{
+							var name = cts.Substring(index + flag.Length);
+							return !name.StartsWith(@"I", StringComparison.OrdinalIgnoreCase);
+						}
+						return false;
+					}),
+
+					new SourceCodeRule(@"Only one class/enum/interface per file", cts =>
+					{
+						var definitions = 0;
+
+						foreach (var flag in new[]
+						{
+							@"public sealed class ",
+							@"public interface ",
+							@"public enum ",
+						})
+						{
+							definitions += Count(cts, flag);
+							if (definitions > 1)
+							{
+								return true;
+							}
+						}
+
+						return definitions > 1;
+					}),
+				};
+
+				foreach (var line in File.ReadAllLines(projectFile))
+				{
+					var value = line.Trim();
+					if (value.StartsWith(@"<Compile Include=", StringComparison.OrdinalIgnoreCase))
+					{
+						var start = value.IndexOf('"') + 1;
+						var end = value.LastIndexOf('"');
+						var filename = value.Substring(start, end - start);
+						var file = Path.Combine(projectPath, filename);
+
+						var contents = File.ReadAllText(file);
+						foreach (var rule in rules)
+						{
+							rule.Apply(filename, contents);
+						}
+					}
+				}
+
+				foreach (var rule in rules)
+				{
+					Console.WriteLine(rule.Name);
+					foreach (var violation in rule.Violations)
+					{
+						Console.WriteLine("\t- " + violation);
+					}
+					Console.WriteLine();
+				}
 
 				return;
 
@@ -384,6 +457,35 @@ namespace ConsoleClient
 			//{
 			//	Console.WriteLine(e);
 			//}
+		}
+
+		private static int Count(string cts, string flag)
+		{
+			var classes = 0;
+
+			var index = 0;
+			while (index >= 0)
+			{
+				index = cts.IndexOf(flag, index, StringComparison.OrdinalIgnoreCase);
+				if (index < 0) break;
+				index++;
+				classes++;
+			}
+
+			return classes;
+		}
+
+		private static void ApplyRules(string filename, string[] lines)
+		{
+			//All classes must be sealed or abstract
+			foreach (var line in lines)
+			{
+				var value = line.Trim();
+				if (value.StartsWith(@"public class"))
+				{
+					Console.WriteLine(@"ERROR:" + filename);
+				}
+			}
 		}
 
 		public static TResult[] Process<TItem, TResult>(List<TItem> items, Func<TItem, TResult> selector)

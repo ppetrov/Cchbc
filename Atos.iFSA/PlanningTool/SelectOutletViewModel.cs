@@ -3,35 +3,15 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Atos.Client;
 using Atos.Client.Common;
-using Atos.Client.Data;
 using Atos.Client.Navigation;
-using Atos.Client.PlanningTool.ScreenViewModels;
+using Atos.Client.PlanningTool;
 using Atos.iFSA.Objects;
+using Atos.iFSA.PlanningTool.ScreenViewModels;
 
-namespace Atos.Client.PlanningTool
+namespace Atos.iFSA.PlanningTool
 {
-	public sealed class CategorySearchOption : ViewModel
-	{
-		public SelectOutletViewModel ViewModel { get; }
-		public string Name { get; }
-		public Func<OutletViewModel, bool> Search { get; }
-
-		public ICommand ApplySearchCommand { get; }
-
-		public CategorySearchOption(SelectOutletViewModel viewModel, string name, Func<OutletViewModel, bool> search)
-		{
-			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
-			if (name == null) throw new ArgumentNullException(nameof(name));
-			if (search == null) throw new ArgumentNullException(nameof(search));
-
-			this.ViewModel = viewModel;
-			this.ApplySearchCommand = new RelayCommand(() => this.ViewModel.ApplySearch(this));
-			this.Name = name;
-			this.Search = search;
-		}
-	}
-
 	public sealed class SelectOutletViewModel : ScreenViewModel
 	{
 		private List<OutletViewModel> AllOutlets { get; } = new List<OutletViewModel>();
@@ -117,29 +97,9 @@ namespace Atos.Client.PlanningTool
 			foreach (var outletViewModel in this.AllOutlets)
 			{
 				if (outletViewModel.Name.IndexOf(this.Search, StringComparison.OrdinalIgnoreCase) > 0 &&
-					this.SelectedSearchOption.Search(outletViewModel))
+				    this.SelectedSearchOption.Search(outletViewModel))
 					this.Outlets.Add(outletViewModel);
 			}
-		}
-	}
-
-	public interface IOutletsWithVisitDataProvider
-	{
-		HashSet<long> GetOutletsWithVisit(IDbContext context, DateTime date);
-	}
-
-	public sealed class OutletViewModel : ViewModel
-	{
-		public Outlet Outlet { get; }
-		public bool HasVisitForToday { get; }
-		public string Name => this.Outlet.Name;
-
-		public OutletViewModel(Outlet outlet, bool hasVisitForToday)
-		{
-			if (outlet == null) throw new ArgumentNullException(nameof(outlet));
-
-			this.Outlet = outlet;
-			this.HasVisitForToday = hasVisitForToday;
 		}
 	}
 }

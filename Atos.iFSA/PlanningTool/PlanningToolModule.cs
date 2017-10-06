@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using Atos.Client;
 
-namespace Atos.Client.PlanningTool
+namespace Atos.iFSA.PlanningTool
 {
 	public sealed class PlanByIndicatorViewModel : ViewModel
 	{

@@ -1,12 +1,13 @@
 ﻿using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Navigation;
 using Atos.Client.PlanningTool.Models;
 using Atos.Client.PlanningTool.ViewModels;
 
-namespace Atos.Client.PlanningTool.ScreenViewModels
+namespace Atos.iFSA.PlanningTool.ScreenViewModels
 {
 	public sealed class SelectPlanScenarioViewModel : ScreenViewModel
 	{

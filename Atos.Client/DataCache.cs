@@ -16,11 +16,6 @@ namespace Atos.Client
 			_dataProviders.Add(typeof(T).FullName, dataProvider);
 		}
 
-		public void Unregister<T>()
-		{
-			_dataProviders.Remove(typeof(T).FullName);
-		}
-
 		public Dictionary<long, T> GetValues<T>(IDbContext context)
 		{
 			if (context == null) throw new ArgumentNullException(nameof(context));

@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Atos.iFSA.AddActivityModule;
-using Atos.iFSA.Objects;
+using Atos.Client;
 
-namespace Atos.Client.PlanningTool
+namespace Atos.iFSA.PlanningTool
 {
 	public sealed class PlanByOutletViewModel : ViewModel
 	{

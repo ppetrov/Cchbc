@@ -76,6 +76,10 @@
     <None Include="ConsoleClient.ruleset" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Atos.Architecture\Atos.Architecture.csproj">
+      <Project>{4735DB31-2FAB-4601-815B-B54DEA591365}</Project>
+      <Name>Atos.Architecture</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Atos.iFSA\Atos.iFSA.csproj">
       <Project>{41397028-0B7B-4EF3-92AB-C6E617CAEC5B}</Project>
       <Name>Atos.iFSA</Name>

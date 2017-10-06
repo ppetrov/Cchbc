@@ -9,48 +9,10 @@ using Atos.Client.Common;
 using Atos.Client.Data;
 using Atos.Client.Dialog;
 using Atos.Client.Navigation;
-using Atos.iFSA;
 using Atos.iFSA.Objects;
 
 namespace iFSA
 {
-	//public sealed class LoginScreen
-	//{
-	//	public LoginScreenViewModel ViewModel { get; } = new LoginScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.NavigationService, null);
-
-	//	public async void LoadData()
-	//	{
-	//		try
-	//		{
-	//			await this.ViewModel.LoadDataAsync();
-	//		}
-	//		catch (Exception ex)
-	//		{
-	//			GlobalAppContext.MainContext.Log(ex.ToString(), LogLevel.Error);
-	//		}
-	//	}
-	//}
-
-	//public sealed class AgendaScreen
-	//{
-	//	public AgendaScreenViewModel ViewModel { get; } = new AgendaScreenViewModel(GlobalAppContext.MainContext, GlobalAppContext.Agenda, GlobalAppContext.NavigationService, GlobalAppContext.UIThreadDispatcher);
-
-	//	public void LoadData()
-	//	{
-	//		try
-	//		{
-	//			// Get from parameter
-	//			var outlets = default(List<AgendaOutlet>);
-	//			this.ViewModel.LoadData(outlets);
-	//		}
-	//		catch (Exception ex)
-	//		{
-	//			GlobalAppContext.MainContext.Log(ex.ToString(), LogLevel.Error);
-	//		}
-	//	}
-	//}
-
-
 	public sealed class Calendar
 	{
 
@@ -503,13 +465,4 @@ namespace iFSA
 			throw new NotImplementedException();
 		}
 	}
-
-
-
-
-
-
-
-
-
 }
