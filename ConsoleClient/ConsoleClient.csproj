@@ -76,10 +76,6 @@
     <None Include="ConsoleClient.ruleset" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Atos.Client.Data\Atos.Client.Data.csproj">
-      <Project>{9539e041-5ce3-43b1-ae16-f49eb300baf7}</Project>
-      <Name>Atos.Client.Data</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Atos.iFSA.Data\Atos.iFSA.Data.csproj">
       <Project>{7DC2E5E6-18E5-47D5-B63A-BF21464A411F}</Project>
       <Name>Atos.iFSA.Data</Name>

@@ -38,6 +38,11 @@
     <Compile Include="Archive\ZipArchive.cs" />
     <Compile Include="Archive\ZipData.cs" />
     <Compile Include="Archive\ZipHeader.cs" />
+    <Compile Include="Data\IDbContext.cs" />
+    <Compile Include="Data\IDbContextCreator.cs" />
+    <Compile Include="Data\IFieldDataReader.cs" />
+    <Compile Include="Data\Query.cs" />
+    <Compile Include="Data\QueryParameter.cs" />
     <Compile Include="INavigationService.cs" />
     <Compile Include="DataQueryContext.cs" />
     <Compile Include="Common\RelayCommand.cs" />
@@ -92,12 +97,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="project.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Atos.Client.Data\Atos.Client.Data.csproj">
-      <Project>{9539e041-5ce3-43b1-ae16-f49eb300baf7}</Project>
-      <Name>Atos.Client.Data</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
