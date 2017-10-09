@@ -1,17 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Atos.Architecture
 {
 	public static class SourceCodeParser
 	{
-		public static ClassDefinition ParseClass(string filePath, string[] lines)
+		private static readonly string ClassFlag = @" class ";
+		private static readonly string InterfaceFlag = @" interface ";
+		private static readonly string EnumFlag = @" enum ";
+
+		public static ClassDefinition ParseClass(string filePath, string contents)
 		{
 			if (filePath == null) throw new ArgumentNullException(nameof(filePath));
-			if (lines == null) throw new ArgumentNullException(nameof(lines));
+			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
-			var definition = Extract(filePath, lines, @" class ");
+			var definition = Extract(filePath, contents, ClassFlag);
 			if (definition == null)
 			{
 				return null;
@@ -25,108 +27,79 @@ namespace Atos.Architecture
 			{
 				var selfName = name.Substring(0, index).Trim();
 				var parentName = name.Substring(index + 1).Trim();
-				parent = new ClassDefinition(new Definition(string.Empty, parentName, AccessModifier.Public), null);
+				parent = new ClassDefinition(new Definition(string.Empty, parentName, AccessModifier.Public, string.Empty), null);
 
-				definition = new Definition(filePath, selfName, definition.AccessModifier);
+				definition = new Definition(filePath, selfName, definition.AccessModifier, definition.Body);
 			}
 			return new ClassDefinition(definition, parent);
 		}
 
-		public static InterfaceDefinition ParseInterface(string filePath, string[] lines)
+		public static InterfaceDefinition ParseInterface(string filePath, string contents)
 		{
 			if (filePath == null) throw new ArgumentNullException(nameof(filePath));
-			if (lines == null) throw new ArgumentNullException(nameof(lines));
+			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
-			var definition = Extract(filePath, lines, @" interface ");
+			var definition = Extract(filePath, contents, InterfaceFlag);
 			return definition != null ? new InterfaceDefinition(definition) : null;
 		}
 
-		public static EnumDefinition ParseEnum(string filePath, string[] lines)
+		public static EnumDefinition ParseEnum(string filePath, string contents)
 		{
 			if (filePath == null) throw new ArgumentNullException(nameof(filePath));
-			if (lines == null) throw new ArgumentNullException(nameof(lines));
+			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
-			var definition = Extract(filePath, lines, @" enum ");
+			var definition = Extract(filePath, contents, EnumFlag);
 			return definition != null ? new EnumDefinition(definition) : null;
 		}
 
-		private static Definition Extract(string filePath, string[] lines, string flag)
+		private static Definition Extract(string filePath, string contents, string flag)
 		{
-			var definitionLine = FindDefinitionLine(lines, flag);
-			if (definitionLine != null)
-			{
-				var value = definitionLine.Value;
-				var lineIndex = value.Key;
-				var rawLine = lines[lineIndex];
-				var index = value.Value;
+			var matchIndex = contents.IndexOf(flag, StringComparison.OrdinalIgnoreCase);
+			if (matchIndex <= 0) return null;
 
-				var name = rawLine.Substring(index + flag.Length).Trim();
-				var accessModifier = ExtractAccessModifier(rawLine);
+			var index = matchIndex + flag.Length;
 
-				var contents = GetContents(lines, lineIndex);
+			var start = FindStart(contents, matchIndex);
+			var end = contents.IndexOf(Environment.NewLine, index, StringComparison.OrdinalIgnoreCase);
 
-				return new Definition(filePath, name, accessModifier);
-			}
-			return null;
+			var rawLine = contents.Substring(start, end - start);
+			var name = contents.Substring(index, end - index).Trim();
+			var accessModifier = ExtractAccessModifier(rawLine);
+
+			var body = ExtractBody(contents, start);
+
+			return new Definition(filePath, name, accessModifier, body);
 		}
 
-		private static string GetContents(string[] lines, int index)
+		private static string ExtractBody(string contents, int index)
 		{
-			var buffer = new StringBuilder();
-
-			var start = default(int?);
+			var bodyStart = default(int?);
 			var braces = 0;
 
-			for (var i = index; i < lines.Length; i++)
+			for (var i = index; i < contents.Length; i++)
 			{
-				var line = lines[i];
-				if (IsSymbol(line, '{'))
+				var symbol = contents[i];
+				if (symbol == '{')
 				{
-					if (!start.HasValue)
+					if (!bodyStart.HasValue)
 					{
-						start = i;
+						bodyStart = i;
 					}
 					braces++;
 				}
-				if (IsSymbol(line, '}'))
+				if (symbol == '}')
 				{
 					braces--;
 					if (braces == 0)
 					{
-						for (var j = start.Value; j <= i; j++)
-						{
-							buffer.AppendLine(lines[j]);
-						}
-						break;
+						var startIndex = bodyStart ?? 0;
+						var endIndex = i + 1 - startIndex;
+						return contents.Substring(startIndex, endIndex);
 					}
 				}
 			}
 
-			return buffer.ToString();
-		}
-
-		private static bool IsSymbol(string value, char symbol)
-		{
-			for (var i = 0; i < value.Length; i++)
-			{
-				var v = value[i];
-				if (!char.IsWhiteSpace(v))
-				{
-					if (v == symbol)
-					{
-						for (var j = i + 1; j < value.Length; j++)
-						{
-							if (!char.IsWhiteSpace(value[j]))
-							{
-								return false;
-							}
-						}
-						return true;
-					}
-					break;
-				}
-			}
-			return false;
+			throw new Exception(@"Unable to extract the body");
 		}
 
 		private static AccessModifier ExtractAccessModifier(string input)
@@ -158,17 +131,18 @@ namespace Atos.Architecture
 			return AccessModifier.Public;
 		}
 
-		private static KeyValuePair<int, int>? FindDefinitionLine(string[] lines, string flag)
+		private static int FindStart(string contents, int index)
 		{
-			for (var index = 0; index < lines.Length; index++)
+			var newLine = Environment.NewLine.ToCharArray();
+
+			for (var i = index - 1; i >= 0; i--)
 			{
-				var start = lines[index].IndexOf(flag, StringComparison.OrdinalIgnoreCase);
-				if (start >= 0)
+				if (contents[i] == newLine[1] && contents[i - 1] == newLine[0])
 				{
-					return new KeyValuePair<int, int>(index, start);
+					return i + 1;
 				}
 			}
-			return null;
+			throw new Exception(@"Unable to find the NewLine");
 		}
 	}
 }

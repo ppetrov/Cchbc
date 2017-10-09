@@ -6,6 +6,7 @@ namespace Atos.Architecture
 	{
 		public Definition Definition { get; }
 		public string Name => this.Definition.Name;
+		public string Body => this.Definition.Body;
 
 		public InterfaceDefinition(Definition definition)
 		{

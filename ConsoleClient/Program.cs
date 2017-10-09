@@ -134,6 +134,8 @@ namespace ConsoleClient
 				//	}),
 				//};
 
+				var rules = SourceCodeRules.General;
+
 				foreach (var line in File.ReadAllLines(projectFile))
 				{
 					var value = line.Trim();
@@ -147,41 +149,43 @@ namespace ConsoleClient
 						var contents = File.ReadAllText(file);
 						if (contents.IndexOf(@"class ActivityTypeCategoryViewModel", StringComparison.OrdinalIgnoreCase) < 0)
 						{
-							continue;
+							//continue;
 						}
-						var lines = File.ReadAllLines(file);
-						var c = SourceCodeParser.ParseClass(file, lines);
-						if (c != null)
-						{
-							Console.WriteLine(@"CLASS : " + c.Name);
-						}
-						var inf = SourceCodeParser.ParseInterface(file, lines);
-						if (inf != null)
-						{
-							Console.WriteLine(@"INTERFACE : " + inf.Name);
-						}
-						var en = SourceCodeParser.ParseEnum(file, lines);
-						if (en != null)
-						{
-							Console.WriteLine(@"ENUM : " + en.Name);
-						}
-
-						//foreach (var rule in rules)
+						//var lines = File.ReadAllLines(file);
+						//var c = SourceCodeParser.ParseClass(file, contents);
+						//if (c != null)
 						//{
-						//	rule.Apply(filename, contents);
+						//	Console.WriteLine(@"CLASS : " + c.Name);
 						//}
+						//var inf = SourceCodeParser.ParseInterface(file, contents);
+						//if (inf != null)
+						//{
+						//	Console.WriteLine(@"INTERFACE : " + inf.Name);
+						//	Console.WriteLine(inf.Body.Trim());
+						//}
+						//var en = SourceCodeParser.ParseEnum(file, contents);
+						//if (en != null)
+						//{
+						//	Console.WriteLine(@"ENUM : " + en.Name);
+						//}
+
+						var sourceFile = new SourceCodeFile(filename, contents);
+						foreach (var rule in rules)
+						{
+							rule.Apply(sourceFile);
+						}
 					}
 				}
 
-				//foreach (var rule in rules)
-				//{
-				//	Console.WriteLine(rule.Name);
-				//	foreach (var violation in rule.Violations)
-				//	{
-				//		Console.WriteLine("\t- " + violation);
-				//	}
-				//	Console.WriteLine();
-				//}
+				foreach (var rule in rules)
+				{
+					Console.WriteLine(rule.Name);
+					foreach (var violation in rule.Violations)
+					{
+						Console.WriteLine("\t- " + violation.Filename);
+					}
+					Console.WriteLine();
+				}
 
 				return;
 
