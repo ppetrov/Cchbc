@@ -4,9 +4,9 @@ namespace Atos.Architecture
 {
 	public static class SourceCodeParser
 	{
-		private static readonly string ClassFlag = @" class ";
-		private static readonly string InterfaceFlag = @" interface ";
-		private static readonly string EnumFlag = @" enum ";
+		public static readonly string ClassFlag = @" class ";
+		public static readonly string InterfaceFlag = @" interface ";
+		public static readonly string EnumFlag = @" enum ";
 
 		public static ClassDefinition ParseClass(string filePath, string contents)
 		{

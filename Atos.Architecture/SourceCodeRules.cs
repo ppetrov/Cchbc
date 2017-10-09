@@ -1,4 +1,6 @@
-﻿namespace Atos.Architecture
+﻿using System;
+
+namespace Atos.Architecture
 {
 	public static class SourceCodeRules
 	{
@@ -22,6 +24,24 @@
 					}
 				}
 				return false;
+			}),
+			new SourceCodeRule(@"Multiple deinitions class/interface/enum are denied", file =>
+			{
+				var definitions = 0;
+
+				var flags = new[] {SourceCodeParser.ClassFlag, SourceCodeParser.InterfaceFlag, SourceCodeParser.EnumFlag};
+				foreach (var line in file.Lines)
+				{
+					foreach (var flag in flags)
+					{
+						definitions += Convert.ToInt32(Convert.ToBoolean(line.IndexOf(flag, StringComparison.OrdinalIgnoreCase) >= 0));
+						if (definitions > 1)
+						{
+							return true;
+						}
+					}
+				}
+				return definitions > 1;
 			}),
 		};
 	}
