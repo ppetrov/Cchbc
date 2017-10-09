@@ -2,7 +2,6 @@
 using System.Windows.Input;
 using Atos.Client;
 using Atos.Client.Common;
-using Atos.Client.PlanningTool;
 
 namespace Atos.iFSA.PlanningTool
 {

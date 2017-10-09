@@ -4,17 +4,20 @@ namespace Atos.Architecture
 {
 	public sealed class SourceCodeFile
 	{
-		public string Filename { get; }
+		public string ProjectPath { get; }
+		public string FilePath { get; }
 		public string Contents { get; }
 		private string[] _lines;
 		public string[] Lines => _lines ?? (_lines = this.Contents.Split(new[] { Environment.NewLine }, StringSplitOptions.None));
 
-		public SourceCodeFile(string filename, string contents)
+		public SourceCodeFile(string projectPath, string filePath, string contents)
 		{
-			if (filename == null) throw new ArgumentNullException(nameof(filename));
+			if (projectPath == null) throw new ArgumentNullException(nameof(projectPath));
+			if (filePath == null) throw new ArgumentNullException(nameof(filePath));
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
-			this.Filename = filename;
+			this.ProjectPath = projectPath;
+			this.FilePath = filePath;
 			this.Contents = contents;
 		}
 	}

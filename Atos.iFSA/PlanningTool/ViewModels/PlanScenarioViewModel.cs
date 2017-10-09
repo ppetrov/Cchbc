@@ -1,7 +1,8 @@
 ﻿using System;
-using Atos.Client.PlanningTool.Models;
+using Atos.Client;
+using Atos.iFSA.PlanningTool.Models;
 
-namespace Atos.Client.PlanningTool.ViewModels
+namespace Atos.iFSA.PlanningTool.ViewModels
 {
 	public sealed class PlanScenarioViewModel : ViewModel
 	{

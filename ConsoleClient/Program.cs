@@ -85,8 +85,8 @@ namespace ConsoleClient
 
 			try
 			{
-				var projectFile = @"C:\Sources\Atos\Atos.iFSA\Atos.iFSA.csproj";
-				var projectPath = Path.GetDirectoryName(projectFile);
+				
+				
 
 				//var rules = new[]
 				//{
@@ -136,6 +136,8 @@ namespace ConsoleClient
 
 				var rules = SourceCodeRules.General;
 
+				var projectFile = @"C:\Sources\Atos\Atos.iFSA\Atos.iFSA.csproj";
+				var projectPath = Path.GetDirectoryName(projectFile);
 				foreach (var line in File.ReadAllLines(projectFile))
 				{
 					var value = line.Trim();
@@ -169,7 +171,7 @@ namespace ConsoleClient
 						//	Console.WriteLine(@"ENUM : " + en.Name);
 						//}
 
-						var sourceFile = new SourceCodeFile(filename, contents);
+						var sourceFile = new SourceCodeFile(projectPath, file, contents);
 						foreach (var rule in rules)
 						{
 							rule.Apply(sourceFile);
@@ -182,7 +184,7 @@ namespace ConsoleClient
 					Console.WriteLine(rule.Name);
 					foreach (var violation in rule.Violations)
 					{
-						Console.WriteLine("\t- " + violation.Filename);
+						Console.WriteLine("\t- " + violation.FilePath);
 					}
 					Console.WriteLine();
 				}

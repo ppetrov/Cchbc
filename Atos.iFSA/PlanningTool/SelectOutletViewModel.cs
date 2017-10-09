@@ -6,7 +6,6 @@ using System.Windows.Input;
 using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Navigation;
-using Atos.Client.PlanningTool;
 using Atos.iFSA.Objects;
 using Atos.iFSA.PlanningTool.ScreenViewModels;
 

@@ -103,6 +103,7 @@
     <Compile Include="UserSettings.cs" />
     <Compile Include="LoginModule\ViewModels\SystemViewModel.cs" />
     <Compile Include="LoginModule\ViewModels\CountryViewModel.cs" />
+    <Compile Include="WrongNameSpaceClass.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Atos.Client\Atos.Client.csproj">

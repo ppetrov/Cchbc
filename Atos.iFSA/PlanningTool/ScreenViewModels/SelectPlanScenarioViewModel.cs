@@ -4,8 +4,8 @@ using System.Windows.Input;
 using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Navigation;
-using Atos.Client.PlanningTool.Models;
-using Atos.Client.PlanningTool.ViewModels;
+using Atos.iFSA.PlanningTool.Models;
+using Atos.iFSA.PlanningTool.ViewModels;
 
 namespace Atos.iFSA.PlanningTool.ScreenViewModels
 {

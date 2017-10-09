@@ -1,4 +1,4 @@
-﻿namespace Atos.Client.PlanningTool.Models
+﻿namespace Atos.iFSA.PlanningTool.Models
 {
 	public enum PlanType
 	{

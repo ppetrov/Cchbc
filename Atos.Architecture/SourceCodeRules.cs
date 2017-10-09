@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Atos.Architecture
 {
@@ -43,6 +44,30 @@ namespace Atos.Architecture
 				}
 				return definitions > 1;
 			}),
+			new SourceCodeRule(@"File Path/Namespace mismatch", file =>
+			{
+				var flag = @"namespace ";
+				var filePathNamespace = Path.GetDirectoryName(file.FilePath).Replace(Path.DirectorySeparatorChar, '.');
+
+				foreach (var line in file.Lines)
+				{
+					foreach (var symbol in line)
+					{
+						if (!char.IsWhiteSpace(symbol))
+						{
+							var startIndex = line.IndexOf(flag, StringComparison.OrdinalIgnoreCase);
+							if (startIndex >= 0)
+							{
+								var currentNamespace = line.Substring(startIndex + flag.Length);
+								var hasMismatch = !filePathNamespace.EndsWith(currentNamespace, StringComparison.OrdinalIgnoreCase);
+								return hasMismatch;
+							}
+						}
+					}
+				}
+				return false;
+			}),
+
 		};
 	}
 }

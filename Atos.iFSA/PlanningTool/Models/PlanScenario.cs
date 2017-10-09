@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Atos.Client.PlanningTool.Models
+namespace Atos.iFSA.PlanningTool.Models
 {
 	public sealed class PlanScenario
 	{
