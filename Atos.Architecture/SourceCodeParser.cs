@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Atos.Architecture
 {
-	public static class SourceFileHelper
+	public static class SourceCodeParser
 	{
-		public static ClassDefinition ExtractClass(string filePath, string[] lines)
+		public static ClassDefinition ParseClass(string filePath, string[] lines)
 		{
 			if (filePath == null) throw new ArgumentNullException(nameof(filePath));
 			if (lines == null) throw new ArgumentNullException(nameof(lines));
@@ -19,7 +20,8 @@ namespace Atos.Architecture
 
 			var name = definition.Name;
 			var index = name.IndexOf(':');
-			if (index >= 0)
+			var hasParent = index >= 0;
+			if (hasParent)
 			{
 				var selfName = name.Substring(0, index).Trim();
 				var parentName = name.Substring(index + 1).Trim();
@@ -30,7 +32,7 @@ namespace Atos.Architecture
 			return new ClassDefinition(definition, parent);
 		}
 
-		public static InterfaceDefinition ExtractInterface(string filePath, string[] lines)
+		public static InterfaceDefinition ParseInterface(string filePath, string[] lines)
 		{
 			if (filePath == null) throw new ArgumentNullException(nameof(filePath));
 			if (lines == null) throw new ArgumentNullException(nameof(lines));
@@ -39,7 +41,7 @@ namespace Atos.Architecture
 			return definition != null ? new InterfaceDefinition(definition) : null;
 		}
 
-		public static EnumDefinition ExtractEnum(string filePath, string[] lines)
+		public static EnumDefinition ParseEnum(string filePath, string[] lines)
 		{
 			if (filePath == null) throw new ArgumentNullException(nameof(filePath));
 			if (lines == null) throw new ArgumentNullException(nameof(lines));
@@ -54,15 +56,77 @@ namespace Atos.Architecture
 			if (definitionLine != null)
 			{
 				var value = definitionLine.Value;
-				var rawLine = value.Key;
+				var lineIndex = value.Key;
+				var rawLine = lines[lineIndex];
 				var index = value.Value;
 
 				var name = rawLine.Substring(index + flag.Length).Trim();
 				var accessModifier = ExtractAccessModifier(rawLine);
 
+				var contents = GetContents(lines, lineIndex);
+
 				return new Definition(filePath, name, accessModifier);
 			}
 			return null;
+		}
+
+		private static string GetContents(string[] lines, int index)
+		{
+			var buffer = new StringBuilder();
+
+			var start = default(int?);
+			var braces = 0;
+
+			for (var i = index; i < lines.Length; i++)
+			{
+				var line = lines[i];
+				if (IsSymbol(line, '{'))
+				{
+					if (!start.HasValue)
+					{
+						start = i;
+					}
+					braces++;
+				}
+				if (IsSymbol(line, '}'))
+				{
+					braces--;
+					if (braces == 0)
+					{
+						for (var j = start.Value; j <= i; j++)
+						{
+							buffer.AppendLine(lines[j]);
+						}
+						break;
+					}
+				}
+			}
+
+			return buffer.ToString();
+		}
+
+		private static bool IsSymbol(string value, char symbol)
+		{
+			for (var i = 0; i < value.Length; i++)
+			{
+				var v = value[i];
+				if (!char.IsWhiteSpace(v))
+				{
+					if (v == symbol)
+					{
+						for (var j = i + 1; j < value.Length; j++)
+						{
+							if (!char.IsWhiteSpace(value[j]))
+							{
+								return false;
+							}
+						}
+						return true;
+					}
+					break;
+				}
+			}
+			return false;
 		}
 
 		private static AccessModifier ExtractAccessModifier(string input)
@@ -94,14 +158,14 @@ namespace Atos.Architecture
 			return AccessModifier.Public;
 		}
 
-		private static KeyValuePair<string, int>? FindDefinitionLine(string[] lines, string flag)
+		private static KeyValuePair<int, int>? FindDefinitionLine(string[] lines, string flag)
 		{
-			foreach (var line in lines)
+			for (var index = 0; index < lines.Length; index++)
 			{
-				var start = line.IndexOf(flag, StringComparison.OrdinalIgnoreCase);
+				var start = lines[index].IndexOf(flag, StringComparison.OrdinalIgnoreCase);
 				if (start >= 0)
 				{
-					return new KeyValuePair<string, int>(line, start);
+					return new KeyValuePair<int, int>(index, start);
 				}
 			}
 			return null;

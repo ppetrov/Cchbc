@@ -74,7 +74,7 @@ namespace ConsoleClient
 	{
 		public static readonly string DbPrefix = @"obppc_db_";
 
-		
+
 
 
 		public static void Main(string[] args)
@@ -145,18 +145,22 @@ namespace ConsoleClient
 						var file = Path.Combine(projectPath, filename);
 
 						var contents = File.ReadAllText(file);
+						if (contents.IndexOf(@"class ActivityTypeCategoryViewModel", StringComparison.OrdinalIgnoreCase) < 0)
+						{
+							continue;
+						}
 						var lines = File.ReadAllLines(file);
-						var c = SourceFileHelper.ExtractClass(file, lines);
+						var c = SourceCodeParser.ParseClass(file, lines);
 						if (c != null)
 						{
 							Console.WriteLine(@"CLASS : " + c.Name);
 						}
-						var inf = SourceFileHelper.ExtractInterface(file, lines);
+						var inf = SourceCodeParser.ParseInterface(file, lines);
 						if (inf != null)
 						{
 							Console.WriteLine(@"INTERFACE : " + inf.Name);
 						}
-						var en = SourceFileHelper.ExtractEnum(file, lines);
+						var en = SourceCodeParser.ParseEnum(file, lines);
 						if (en != null)
 						{
 							Console.WriteLine(@"ENUM : " + en.Name);
