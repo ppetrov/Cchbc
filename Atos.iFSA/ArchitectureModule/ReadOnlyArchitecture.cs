@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Atos;
 using Atos.Client;
 
 namespace iFSA.ArchitectureModule
@@ -20,28 +19,36 @@ namespace iFSA.ArchitectureModule
 		public string Name { get; }
 	}
 
-	public sealed class OrderHeaderViewModel : ViewModel<OrderHeader>
+	public sealed class OrderHeaderViewModel : ViewModel
 	{
-		public string Name => this.Model.Name;
-		public string CreatedAt => this.Model.CreatedAt.ToString(@"O");
+		public OrderHeader OrderHeader { get; }
+		public string Name => this.OrderHeader.Name;
+		public string CreatedAt => this.OrderHeader.CreatedAt.ToString(@"O");
 		public OrderDetailViewModel[] Details { get; }
 
-		public OrderHeaderViewModel(OrderHeader model) : base(model)
+		public OrderHeaderViewModel(OrderHeader orderHeader)
 		{
-			this.Details = new OrderDetailViewModel[model.OrderDetails.Length];
-			for (var i = 0; i < model.OrderDetails.Length; i++)
+			if (orderHeader == null) throw new ArgumentNullException(nameof(orderHeader));
+			OrderHeader = orderHeader;
+
+			this.Details = new OrderDetailViewModel[orderHeader.OrderDetails.Length];
+			for (var i = 0; i < orderHeader.OrderDetails.Length; i++)
 			{
-				this.Details[i] = new OrderDetailViewModel(model.OrderDetails[i]);
+				this.Details[i] = new OrderDetailViewModel(orderHeader.OrderDetails[i]);
 			}
 		}
 	}
 
-	public sealed class OrderDetailViewModel : ViewModel<OrderDetail>
+	public sealed class OrderDetailViewModel : ViewModel
 	{
-		public string Name => this.Model.Name;
+		public OrderDetail OrderDetail { get; }
+		public string Name => this.OrderDetail.Name;
 
-		public OrderDetailViewModel(OrderDetail model) : base(model)
+		public OrderDetailViewModel(OrderDetail orderDetail)
 		{
+			if (orderDetail == null) throw new ArgumentNullException(nameof(orderDetail));
+
+			this.OrderDetail = orderDetail;
 		}
 	}
 
@@ -97,16 +104,16 @@ namespace iFSA.ArchitectureModule
 				var cmp = string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
 				if (cmp == 0)
 				{
-					cmp = x.Model.Id.CompareTo(y.Model.Id);
+					cmp = x.OrderHeader.Id.CompareTo(y.OrderHeader.Id);
 				}
 				return cmp;
 			}));
 			this.SortOptions.Add(new SortOption<OrderHeaderViewModel>(@"Created At", (x, y) =>
 			{
-				var cmp = x.Model.CreatedAt.CompareTo(y.Model.CreatedAt);
+				var cmp = x.OrderHeader.CreatedAt.CompareTo(y.OrderHeader.CreatedAt);
 				if (cmp == 0)
 				{
-					cmp = x.Model.Id.CompareTo(y.Model.Id);
+					cmp = x.OrderHeader.Id.CompareTo(y.OrderHeader.Id);
 				}
 				return cmp;
 			}));
@@ -203,16 +210,16 @@ namespace iFSA.ArchitectureModule
 				var cmp = string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
 				if (cmp == 0)
 				{
-					cmp = x.Model.Id.CompareTo(y.Model.Id);
+					cmp = x.OrderHeader.Id.CompareTo(y.OrderHeader.Id);
 				}
 				return cmp;
 			}));
 			this.SortOptions.Add(new SortOption<OrderHeaderViewModel>(@"Created At", (x, y) =>
 			{
-				var cmp = x.Model.CreatedAt.CompareTo(y.Model.CreatedAt);
+				var cmp = x.OrderHeader.CreatedAt.CompareTo(y.OrderHeader.CreatedAt);
 				if (cmp == 0)
 				{
-					cmp = x.Model.Id.CompareTo(y.Model.Id);
+					cmp = x.OrderHeader.Id.CompareTo(y.OrderHeader.Id);
 				}
 				return cmp;
 			}));
@@ -238,7 +245,7 @@ namespace iFSA.ArchitectureModule
 
 			this.OrderHeaders.Add(viewModel);
 
-			this.DataProvider.Insert(viewModel.Model);
+			this.DataProvider.Insert(viewModel.OrderHeader);
 
 			this.DisplayData();
 		}
@@ -249,7 +256,7 @@ namespace iFSA.ArchitectureModule
 
 			this.OrderHeaders.Remove(viewModel);
 
-			this.DataProvider.Delete(viewModel.Model);
+			this.DataProvider.Delete(viewModel.OrderHeader);
 
 			this.DisplayData();
 		}
@@ -287,5 +294,5 @@ namespace iFSA.ArchitectureModule
 		void Delete(OrderHeader model);
 	}
 
-	
+
 }

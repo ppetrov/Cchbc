@@ -1,14 +1,19 @@
-﻿using Atos.Client.PlanningTool.Models;
+﻿using System;
+using Atos.Client.PlanningTool.Models;
 
 namespace Atos.Client.PlanningTool.ViewModels
 {
-	public sealed class PlanScenarioViewModel : ViewModel<PlanScenario>
+	public sealed class PlanScenarioViewModel : ViewModel
 	{
-		public PlanType Type => this.Model.PlanType;
-		public string Description => this.Model.Description;
+		public PlanScenario PlanScenario { get; }
+		public PlanType Type => this.PlanScenario.PlanType;
+		public string Description => this.PlanScenario.Description;
 
-		public PlanScenarioViewModel(PlanScenario model) : base(model)
+		public PlanScenarioViewModel(PlanScenario planScenario)
 		{
+			if (planScenario == null) throw new ArgumentNullException(nameof(planScenario));
+
+			this.PlanScenario = planScenario;
 		}
 	}
 }

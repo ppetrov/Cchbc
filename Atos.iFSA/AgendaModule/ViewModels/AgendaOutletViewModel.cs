@@ -1,12 +1,11 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using Atos.Client;
 using Atos.iFSA.Objects;
 
 namespace Atos.iFSA.AgendaModule.ViewModels
 {
-	public sealed class AgendaOutletViewModel : ViewModel<AgendaOutlet>
+	public sealed class AgendaOutletViewModel : ViewModel
 	{
 		private AgendaScreenViewModel ParentViewModel { get; }
 
@@ -19,7 +18,7 @@ namespace Atos.iFSA.AgendaModule.ViewModels
 
 		public ObservableCollection<ActivityViewModel> Activities { get; } = new ObservableCollection<ActivityViewModel>();
 
-		public AgendaOutletViewModel(AgendaScreenViewModel parentViewModel, AgendaOutlet model) : base(model)
+		public AgendaOutletViewModel(AgendaScreenViewModel parentViewModel, AgendaOutlet model)
 		{
 			if (parentViewModel == null) throw new ArgumentNullException(nameof(parentViewModel));
 

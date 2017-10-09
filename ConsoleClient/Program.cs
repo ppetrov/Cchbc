@@ -74,6 +74,8 @@ namespace ConsoleClient
 	{
 		public static readonly string DbPrefix = @"obppc_db_";
 
+		
+
 
 		public static void Main(string[] args)
 		{
@@ -86,46 +88,51 @@ namespace ConsoleClient
 				var projectFile = @"C:\Sources\Atos\Atos.iFSA\Atos.iFSA.csproj";
 				var projectPath = Path.GetDirectoryName(projectFile);
 
-				var rules = new[]
-				{
-					new SourceCodeRule(@"Class must be sealed or abstract", cts =>
-					{
-						return cts.IndexOf(@"public class", 0, StringComparison.OrdinalIgnoreCase) >= 0;
-					}),
+				//var rules = new[]
+				//{
+				//	new SourceCodeRule(@"Class must be sealed or abstract", cts =>
+				//	{
+				//		return cts.IndexOf(@"public class", 0, StringComparison.OrdinalIgnoreCase) >= 0;
+				//	}),
 
-					new SourceCodeRule(@"Interface must start with an 'I'", cts =>
-					{
-						var flag = @"public interface ";
-						var index = cts.IndexOf(flag, StringComparison.OrdinalIgnoreCase);
-						if (index >= 0)
-						{
-							var name = cts.Substring(index + flag.Length);
-							return !name.StartsWith(@"I", StringComparison.OrdinalIgnoreCase);
-						}
-						return false;
-					}),
+				//	new SourceCodeRule(@"No structs", cts =>
+				//	{
+				//		return cts.IndexOf(@" struct ", 0, StringComparison.OrdinalIgnoreCase) >= 0;
+				//	}),
 
-					new SourceCodeRule(@"Only one class/enum/interface per file", cts =>
-					{
-						var definitions = 0;
+				//	new SourceCodeRule(@"Interface must start with an 'I'", cts =>
+				//	{
+				//		var flag = @"public interface ";
+				//		var index = cts.IndexOf(flag, StringComparison.OrdinalIgnoreCase);
+				//		if (index >= 0)
+				//		{
+				//			var name = cts.Substring(index + flag.Length);
+				//			return !name.StartsWith(@"I", StringComparison.OrdinalIgnoreCase);
+				//		}
+				//		return false;
+				//	}),
 
-						foreach (var flag in new[]
-						{
-							@"public sealed class ",
-							@"public interface ",
-							@"public enum ",
-						})
-						{
-							definitions += Count(cts, flag);
-							if (definitions > 1)
-							{
-								return true;
-							}
-						}
+				//	new SourceCodeRule(@"Only one class/enum/interface per file", cts =>
+				//	{
+				//		var definitions = 0;
 
-						return definitions > 1;
-					}),
-				};
+				//		foreach (var flag in new[]
+				//		{
+				//			@"public sealed class ",
+				//			@"public interface ",
+				//			@"public enum ",
+				//		})
+				//		{
+				//			definitions += Count(cts, flag);
+				//			if (definitions > 1)
+				//			{
+				//				return true;
+				//			}
+				//		}
+
+				//		return definitions > 1;
+				//	}),
+				//};
 
 				foreach (var line in File.ReadAllLines(projectFile))
 				{
@@ -138,22 +145,39 @@ namespace ConsoleClient
 						var file = Path.Combine(projectPath, filename);
 
 						var contents = File.ReadAllText(file);
-						foreach (var rule in rules)
+						var lines = File.ReadAllLines(file);
+						var c = SourceFileHelper.ExtractClass(file, lines);
+						if (c != null)
 						{
-							rule.Apply(filename, contents);
+							Console.WriteLine(@"CLASS : " + c.Name);
 						}
+						var inf = SourceFileHelper.ExtractInterface(file, lines);
+						if (inf != null)
+						{
+							Console.WriteLine(@"INTERFACE : " + inf.Name);
+						}
+						var en = SourceFileHelper.ExtractEnum(file, lines);
+						if (en != null)
+						{
+							Console.WriteLine(@"ENUM : " + en.Name);
+						}
+
+						//foreach (var rule in rules)
+						//{
+						//	rule.Apply(filename, contents);
+						//}
 					}
 				}
 
-				foreach (var rule in rules)
-				{
-					Console.WriteLine(rule.Name);
-					foreach (var violation in rule.Violations)
-					{
-						Console.WriteLine("\t- " + violation);
-					}
-					Console.WriteLine();
-				}
+				//foreach (var rule in rules)
+				//{
+				//	Console.WriteLine(rule.Name);
+				//	foreach (var violation in rule.Violations)
+				//	{
+				//		Console.WriteLine("\t- " + violation);
+				//	}
+				//	Console.WriteLine();
+				//}
 
 				return;
 

@@ -158,7 +158,7 @@ namespace iFSA
 		{
 			for (var i = days.Count - 1; i >= 0; i--)
 			{
-				yield return days[i].Model;
+				yield return days[i].CalendarDay;
 			}
 		}
 
@@ -177,7 +177,7 @@ namespace iFSA
 			for (var i = 0; i < this.Days.Count; i++)
 			{
 				var viewModel = this.Days[i];
-				if (viewModel.Model.Date == day.Date)
+				if (viewModel.CalendarDay.Date == day.Date)
 				{
 					this.Days[i] = new CalendarDayViewModel(new CalendarDay(day.Date, day.Status), this);
 					break;
@@ -192,7 +192,7 @@ namespace iFSA
 			var index = 0;
 			foreach (var viewModel in viewModels)
 			{
-				days[index++] = viewModel.Model;
+				days[index++] = viewModel.CalendarDay;
 			}
 
 			Array.Sort(days, (x, y) => x.Date.CompareTo(y.Date));
@@ -355,8 +355,9 @@ namespace iFSA
 		}
 	}
 
-	public sealed class CalendarDayViewModel : ViewModel<CalendarDay>
+	public sealed class CalendarDayViewModel : ViewModel
 	{
+		public CalendarDay CalendarDay { get; }
 		private CalendarViewModel ViewModel { get; }
 		public DateTime Date { get; }
 		public DayStatus Status { get; }
@@ -365,13 +366,15 @@ namespace iFSA
 		public ICommand CancelDayCommand { get; }
 		public ICommand ViewAgendaCommand { get; }
 
-		public CalendarDayViewModel(CalendarDay model, CalendarViewModel viewModel) : base(model)
+		public CalendarDayViewModel(CalendarDay calendarDay, CalendarViewModel viewModel)
 		{
+			if (calendarDay == null) throw new ArgumentNullException(nameof(calendarDay));
 			if (viewModel == null) throw new ArgumentNullException(nameof(viewModel));
 
+			this.CalendarDay = calendarDay;
 			this.ViewModel = viewModel;
-			this.Date = model.Date;
-			this.Status = model.Status;
+			this.Date = calendarDay.Date;
+			this.Status = calendarDay.Status;
 			this.CloseDayCommand = new RelayCommand(() =>
 			{
 				throw new NotImplementedException();

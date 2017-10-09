@@ -11,9 +11,9 @@ namespace ConsoleClient
 		public string Name { get; set; } = string.Empty;
 	}
 
-	public sealed class UserViewModel : ViewModel<User>
+	public sealed class UserViewModel : ViewModel
 	{
-		public UserViewModel(User model) : base(model)
+		public UserViewModel(User model)
 		{
 		}
 	}
@@ -218,9 +218,9 @@ namespace ConsoleClient
 		public string Name { get; set; } = string.Empty;
 	}
 
-	public sealed class ProductViewModel : ViewModel<Product>
+	public sealed class ProductViewModel : ViewModel
 	{
-		public ProductViewModel(Product model) : base(model)
+		public ProductViewModel(Product model)
 		{
 		}
 	}

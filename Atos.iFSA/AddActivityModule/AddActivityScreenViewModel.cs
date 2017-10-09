@@ -8,10 +8,8 @@ using Atos.Client;
 using Atos.Client.Common;
 using Atos.Client.Features;
 using Atos.Client.Localization;
-using Atos.Client.Logs;
 using Atos.Client.Navigation;
 using Atos.Client.Validation;
-using Atos.iFSA.AgendaModule;
 using Atos.iFSA.Objects;
 
 namespace Atos.iFSA.AddActivityModule
@@ -193,7 +191,7 @@ namespace Atos.iFSA.AddActivityModule
 			this.Outlets.Clear();
 			foreach (var viewModel in this.AllOutlets)
 			{
-				if (this.HideSuppressed && viewModel.Model.IsSuppressed)
+				if (this.HideSuppressed && viewModel.IsSuppressed)
 				{
 					continue;
 				}
@@ -209,12 +207,12 @@ namespace Atos.iFSA.AddActivityModule
 			var outlet = default(Outlet);
 			if (outletViewModel != null)
 			{
-				outlet = outletViewModel.Model;
+				outlet = outletViewModel.Outlet;
 			}
 			var activityType = default(ActivityType);
 			if (activityTypeViewModel != null)
 			{
-				activityType = activityTypeViewModel.Model;
+				activityType = activityTypeViewModel.ActivityType;
 			}
 
 			// TODO : Can Create from where to take the reference???

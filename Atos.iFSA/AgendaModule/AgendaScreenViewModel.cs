@@ -70,7 +70,7 @@ namespace Atos.iFSA.AgendaModule
 			{
 				this.MainContext.Save(feature);
 
-				var activity = activityViewModel.Model;
+				var activity = activityViewModel.Activity;
 				var timeSelector = this.MainContext.GetService<ITimeSelector>();
 				await timeSelector.ShowAsync(
 					dateTime => this.Agenda.CanChangeStartTime(activity, dateTime),
@@ -93,7 +93,7 @@ namespace Atos.iFSA.AgendaModule
 
 				var cancelReasonSelector = this.MainContext.GetService<IActivityCancelReasonSelector>();
 
-				var activity = activityViewModel.Model;
+				var activity = activityViewModel.Activity;
 				await cancelReasonSelector.ShowAsync(activity,
 					cancelReason => this.Agenda.CanCancel(activity, cancelReason),
 					cancelReason => this.Agenda.Cancel(activity, cancelReason));
@@ -235,7 +235,7 @@ namespace Atos.iFSA.AgendaModule
 				for (var index = 0; index < activityViewModels.Count; index++)
 				{
 					var activityViewModel = activityViewModels[index];
-					if (activityViewModel.Model.Id == acitivityId)
+					if (activityViewModel.Activity.Id == acitivityId)
 					{
 						activityViewModels[index] = new ActivityViewModel(outletViewModel, activity);
 						break;

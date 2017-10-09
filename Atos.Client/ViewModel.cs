@@ -26,18 +26,6 @@ namespace Atos.Client
 		}
 	}
 
-	public class ViewModel<T> : ViewModel
-	{
-		public T Model { get; }
-
-		public ViewModel(T model)
-		{
-			if (model == null) throw new ArgumentNullException(nameof(model));
-
-			this.Model = model;
-		}
-	}
-
 	public abstract class ScreenViewModel : ViewModel
 	{
 		public MainContext MainContext { get; }

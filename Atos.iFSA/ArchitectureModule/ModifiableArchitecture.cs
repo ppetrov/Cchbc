@@ -44,9 +44,10 @@ namespace iFSA.ArchitectureModule
 		}
 	}
 
-	public sealed class AgendaHeaderViewModel : ViewModel<AgendaHeader>
+	public sealed class AgendaHeaderViewModel : ViewModel
 	{
-		public string Name => this.Model.Name;
+		public AgendaHeader AgendaHeader { get; }
+		public string Name => this.AgendaHeader.Name;
 
 		private string _address;
 		public string Address
@@ -55,7 +56,7 @@ namespace iFSA.ArchitectureModule
 			set
 			{
 				this.SetProperty(ref _address, value);
-				this.Model.Address = value;
+				this.AgendaHeader.Address = value;
 			}
 		}
 
@@ -66,30 +67,34 @@ namespace iFSA.ArchitectureModule
 			set
 			{
 				this.SetProperty(ref _dateTime, value);
-				this.Model.DateTime = value;
+				this.AgendaHeader.DateTime = value;
 			}
 		}
 
 		public ObservableCollection<AgendaDetailViewModel> Details { get; } = new ObservableCollection<AgendaDetailViewModel>();
 
-		public AgendaHeaderViewModel(AgendaHeader model) : base(model)
+		public AgendaHeaderViewModel(AgendaHeader agendaHeader)
 		{
-			foreach (var detail in model.Details)
+			if (agendaHeader == null) throw new ArgumentNullException(nameof(agendaHeader));
+
+			this.AgendaHeader = agendaHeader;
+			foreach (var detail in agendaHeader.Details)
 			{
 				this.Details.Add(new AgendaDetailViewModel(detail));
 			}
 
 			this.Details.CollectionChanged += (sender, args) =>
 			{
-				this.Model.Details.Clear();
-				this.Model.Details.AddRange(this.Details.Select(v => v.Model));
+				agendaHeader.Details.Clear();
+				agendaHeader.Details.AddRange(this.Details.Select(v => v.AgendaDetail));
 			};
 		}
 	}
 
-	public sealed class AgendaDetailViewModel : ViewModel<AgendaDetail>
+	public sealed class AgendaDetailViewModel : ViewModel
 	{
-		public string Name => this.Model.Name;
+		public AgendaDetail AgendaDetail { get; }
+		public string Name => this.AgendaDetail.Name;
 
 		private string _status;
 		public string Status
@@ -98,7 +103,7 @@ namespace iFSA.ArchitectureModule
 			set
 			{
 				this.SetProperty(ref _status, value);
-				this.Model.Status = value;
+				this.AgendaDetail.Status = value;
 			}
 		}
 
@@ -109,14 +114,17 @@ namespace iFSA.ArchitectureModule
 			set
 			{
 				this.SetProperty(ref _details, value);
-				this.Model.Details = value;
+				this.AgendaDetail.Details = value;
 			}
 		}
 
-		public AgendaDetailViewModel(AgendaDetail model) : base(model)
+		public AgendaDetailViewModel(AgendaDetail agendaDetail)
 		{
-			this.Status = model.Status;
-			this.Details = model.Details;
+			if (agendaDetail == null) throw new ArgumentNullException(nameof(agendaDetail));
+
+			this.AgendaDetail = agendaDetail;
+			this.Status = agendaDetail.Status;
+			this.Details = agendaDetail.Details;
 		}
 	}
 
@@ -321,7 +329,7 @@ namespace iFSA.ArchitectureModule
 				var cmp = string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
 				if (cmp == 0)
 				{
-					cmp = x.Model.Id.CompareTo(y.Model.Id);
+					cmp = x.AgendaHeader.Id.CompareTo(y.AgendaHeader.Id);
 				}
 				return cmp;
 			}));
@@ -368,7 +376,7 @@ namespace iFSA.ArchitectureModule
 				// Create model
 				var header = new AgendaHeader(0, this.HeaderName) { DateTime = HeaderDateTime };
 
-				var result = this.CanAddHeader(this.MainContext, header, this.AgendaHeaders.Select(v => v.Model));
+				var result = this.CanAddHeader(this.MainContext, header, this.AgendaHeaders.Select(v => v.AgendaHeader));
 				if (result.Type != PermissionType.Allow)
 				{
 					//var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));
@@ -417,7 +425,7 @@ namespace iFSA.ArchitectureModule
 				}
 
 				// Check newDate and other logic
-				var result = this.CanUpdateHeaderDate(this.MainContext, viewModel.Model, this.AgendaHeaders.Select(v => v.Model), this.AgendaHeaderNewDate);
+				var result = this.CanUpdateHeaderDate(this.MainContext, viewModel.AgendaHeader, this.AgendaHeaders.Select(v => v.AgendaHeader), this.AgendaHeaderNewDate);
 				if (result.Type != PermissionType.Allow)
 				{
 					//var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));
@@ -462,7 +470,7 @@ namespace iFSA.ArchitectureModule
 				}
 
 				// Check newDate and other logic
-				var result = this.CanUpdateHeaderAddress(this.MainContext, viewModel.Model, this.AgendaHeaders.Select(v => v.Model), this.AgendaHeaderAddress);
+				var result = this.CanUpdateHeaderAddress(this.MainContext, viewModel.AgendaHeader, this.AgendaHeaders.Select(v => v.AgendaHeader), this.AgendaHeaderAddress);
 				if (result.Type != PermissionType.Allow)
 				{
 					//var message = this.MainContext.LocalizationManager.Get(new LocalizationKey(context, result.LocalizationKeyName));

@@ -7,7 +7,7 @@ using Atos.iFSA.Objects;
 
 namespace Atos.iFSA
 {
-	public sealed class ActivityViewModel : ViewModel<Activity>
+	public sealed class ActivityViewModel : ViewModel
 	{
 		private AgendaOutletViewModel OutletViewModel { get; }
 
@@ -24,13 +24,15 @@ namespace Atos.iFSA
 		public ICommand DeleteCommand { get; }
 		public ICommand ExecuteCommand { get; }
 		public ICommand ChangeFromDateCommand { get; }
+		public Activity Activity { get; }
 
-		public ActivityViewModel(AgendaOutletViewModel outletViewModel, Activity activity) : base(activity)
+		public ActivityViewModel(AgendaOutletViewModel outletViewModel, Activity activity)
 		{
 			if (outletViewModel == null) throw new ArgumentNullException(nameof(outletViewModel));
 			if (activity == null) throw new ArgumentNullException(nameof(activity));
 
 			this.OutletViewModel = outletViewModel;
+			this.Activity = activity;
 			this.FromDate = activity.FromDate;
 			this.ToDate = activity.ToDate;
 			this.Type = activity.Type.Name;

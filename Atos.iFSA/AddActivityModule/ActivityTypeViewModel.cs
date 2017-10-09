@@ -1,15 +1,20 @@
-﻿using Atos.Client;
+﻿using System;
+using Atos.Client;
 using Atos.iFSA.Objects;
 
 namespace Atos.iFSA.AddActivityModule
 {
-	public sealed class ActivityTypeViewModel : ViewModel<ActivityType>
+	public sealed class ActivityTypeViewModel : ViewModel
 	{
+		public ActivityType ActivityType { get; }
 		public string Name { get; }
 
-		public ActivityTypeViewModel(ActivityType model) : base(model)
+		public ActivityTypeViewModel(ActivityType activityType)
 		{
-			this.Name = model.Name;
+			if (activityType == null) throw new ArgumentNullException(nameof(activityType));
+
+			this.ActivityType = activityType;
+			this.Name = activityType.Name;
 		}
 	}
 }
