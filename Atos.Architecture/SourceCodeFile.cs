@@ -1,24 +1,33 @@
 ﻿using System;
+using System.IO;
 
 namespace Atos.Architecture
 {
 	public sealed class SourceCodeFile
 	{
-		public string ProjectPath { get; }
-		public string FilePath { get; }
+		public string RootNamespace { get; }
+		public string Filename { get; }
 		public string Contents { get; }
 		private string[] _lines;
 		public string[] Lines => _lines ?? (_lines = this.Contents.Split(new[] { Environment.NewLine }, StringSplitOptions.None));
+		public string Namespace { get; }
 
-		public SourceCodeFile(string projectPath, string filePath, string contents)
+		public SourceCodeFile(string rootNamespace, string filename, string contents)
 		{
-			if (projectPath == null) throw new ArgumentNullException(nameof(projectPath));
-			if (filePath == null) throw new ArgumentNullException(nameof(filePath));
+			if (rootNamespace == null) throw new ArgumentNullException(nameof(rootNamespace));
+			if (filename == null) throw new ArgumentNullException(nameof(filename));
 			if (contents == null) throw new ArgumentNullException(nameof(contents));
 
-			this.ProjectPath = projectPath;
-			this.FilePath = filePath;
+			this.RootNamespace = rootNamespace;
+			this.Filename = filename;
 			this.Contents = contents;
+
+			this.Namespace = rootNamespace;
+			var directoryName = Path.GetDirectoryName(filename);
+			if (directoryName != string.Empty)
+			{
+				this.Namespace += @"." + directoryName.Replace(Path.DirectorySeparatorChar, '.');
+			}
 		}
 	}
 }

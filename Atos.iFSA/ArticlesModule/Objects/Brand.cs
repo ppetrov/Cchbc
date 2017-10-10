@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace iFSA.ArticlesModule.Objects
+namespace Atos.iFSA.ArticlesModule.Objects
 {
 	public sealed class Brand
 	{

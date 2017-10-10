@@ -1,4 +1,4 @@
-﻿namespace iFSA.ArticlesModule.Objects
+﻿namespace Atos.iFSA.ArticlesModule.Objects
 {
 	public sealed class Article
 	{

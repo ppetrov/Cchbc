@@ -2,10 +2,8 @@
 
 namespace Atos.iFSA.ArchitectureModule
 {
-	public interface IOrderScreenModifiableDataProvider
+	public interface IOrderScreenDataProvider
 	{
 		IEnumerable<OrderHeader> GetOrderHeaders();
-		void Insert(OrderHeader model);
-		void Delete(OrderHeader model);
 	}
 }

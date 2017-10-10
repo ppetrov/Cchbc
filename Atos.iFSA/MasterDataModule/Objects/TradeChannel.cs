@@ -1,4 +1,4 @@
-namespace iFSA.MasterDataModule.Objects
+namespace Atos.iFSA.MasterDataModule.Objects
 {
 	public sealed class TradeChannel
 	{

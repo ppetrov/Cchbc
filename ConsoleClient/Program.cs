@@ -85,8 +85,8 @@ namespace ConsoleClient
 
 			try
 			{
-				
-				
+
+
 
 				//var rules = new[]
 				//{
@@ -136,23 +136,34 @@ namespace ConsoleClient
 
 				var rules = SourceCodeRules.General;
 
+				var sw = Stopwatch.StartNew();
+				var rootNamespace = string.Empty;
 				var projectFile = @"C:\Sources\Atos\Atos.iFSA\Atos.iFSA.csproj";
 				var projectPath = Path.GetDirectoryName(projectFile);
 				foreach (var line in File.ReadAllLines(projectFile))
 				{
 					var value = line.Trim();
+					var flag = @"<RootNamespace>";
+					var index = value.IndexOf(flag, StringComparison.OrdinalIgnoreCase);
+					if (index >= 0)
+					{
+						var start = index + flag.Length;
+						var end = value.IndexOf(@"<", start + 1, StringComparison.OrdinalIgnoreCase);
+						rootNamespace = value.Substring(start, end - start);
+					}
 					if (value.StartsWith(@"<Compile Include=", StringComparison.OrdinalIgnoreCase))
 					{
 						var start = value.IndexOf('"') + 1;
 						var end = value.LastIndexOf('"');
 						var filename = value.Substring(start, end - start);
-						var file = Path.Combine(projectPath, filename);
+						var filePath = Path.Combine(projectPath, filename);
 
-						var contents = File.ReadAllText(file);
-						if (contents.IndexOf(@"class ActivityTypeCategoryViewModel", StringComparison.OrdinalIgnoreCase) < 0)
-						{
-							//continue;
-						}
+						var contents = File.ReadAllText(filePath);
+
+						//if (contents.IndexOf(@"class ActivityTypeCategoryViewModel", StringComparison.OrdinalIgnoreCase) < 0)
+						//{
+						//	//continue;
+						//}
 						//var lines = File.ReadAllLines(file);
 						//var c = SourceCodeParser.ParseClass(file, contents);
 						//if (c != null)
@@ -171,7 +182,7 @@ namespace ConsoleClient
 						//	Console.WriteLine(@"ENUM : " + en.Name);
 						//}
 
-						var sourceFile = new SourceCodeFile(projectPath, file, contents);
+						var sourceFile = new SourceCodeFile(rootNamespace, filename, contents);
 						foreach (var rule in rules)
 						{
 							rule.Apply(sourceFile);
@@ -179,12 +190,15 @@ namespace ConsoleClient
 					}
 				}
 
+				sw.Stop();
+				Console.WriteLine(sw.ElapsedMilliseconds);
+
 				foreach (var rule in rules)
 				{
 					Console.WriteLine(rule.Name);
 					foreach (var violation in rule.Violations)
 					{
-						Console.WriteLine("\t- " + violation.FilePath);
+						Console.WriteLine("\t- " + violation.Filename);
 					}
 					Console.WriteLine();
 				}
