@@ -2,7 +2,7 @@ using System;
 
 namespace Atos.Client.Search
 {
-	public sealed class FilterOption<T> : ViewModel where T : ViewModel
+	public sealed class FilterOption<T> : ViewModel
 	{
 		public string Name { get; }
 		public Func<T, bool> IsMatch { get; }

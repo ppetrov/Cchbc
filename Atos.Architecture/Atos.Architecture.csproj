@@ -45,6 +45,7 @@
     <Compile Include="EnumDefinition.cs" />
     <Compile Include="InterfaceDefinition.cs" />
     <Compile Include="SourceCodeFile.cs" />
+    <Compile Include="SourceCodeProject.cs" />
     <Compile Include="SourceCodeRule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceCodeRules.cs" />

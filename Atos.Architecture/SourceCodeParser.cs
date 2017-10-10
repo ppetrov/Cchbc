@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Atos.Architecture
 {
@@ -50,6 +51,25 @@ namespace Atos.Architecture
 
 			var definition = Extract(filePath, contents, EnumFlag);
 			return definition != null ? new EnumDefinition(definition) : null;
+		}
+
+		public static string ExtractClassName(string definition)
+		{
+			if (definition == null) throw new ArgumentNullException(nameof(definition));
+
+			var index = definition.IndexOf(ClassFlag, StringComparison.OrdinalIgnoreCase);
+			if (index >= 0)
+			{
+				index += ClassFlag.Length;
+
+				var parentIndex = definition.IndexOf(@":", index + 1, StringComparison.OrdinalIgnoreCase);
+				if (parentIndex < 0)
+				{
+					return definition.Substring(index);
+				}
+				return definition.Substring(index, parentIndex + 1 - index).Trim();
+			}
+			return null;
 		}
 
 		private static Definition Extract(string filePath, string contents, string flag)

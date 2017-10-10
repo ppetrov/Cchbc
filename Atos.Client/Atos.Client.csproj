@@ -49,6 +49,7 @@
     <Compile Include="Localization\ILocalizationManager.cs" />
     <Compile Include="Localization\LocalizationKey.cs" />
     <Compile Include="Logs\ILogger.cs" />
+    <Compile Include="ScreenViewModel.cs" />
     <Compile Include="Selectors\IDateTimeSelector.cs" />
     <Compile Include="Selectors\ITimeSelector.cs" />
     <Compile Include="ServiceLocator.cs" />
@@ -68,11 +69,14 @@
     <Compile Include="Features\FeatureManager.cs" />
     <Compile Include="Localization\LocalizationManager.cs" />
     <Compile Include="Logs\LogLevel.cs" />
-    <Compile Include="ReadOnlyModule.cs" />
     <Compile Include="Search\FilterOption.cs" />
     <Compile Include="Search\Searcher.cs" />
     <Compile Include="Search\SearchOption.cs" />
-    <Compile Include="Module.cs" />
+    <Compile Include="SQLite\IDataParameterCollection.cs" />
+    <Compile Include="SQLite\IDataReader.cs" />
+    <Compile Include="SQLite\IDbCommand.cs" />
+    <Compile Include="SQLite\IDbConnection.cs" />
+    <Compile Include="SQLite\IDbDataParameter.cs" />
     <Compile Include="SQLite\SQLiteColumnType.cs" />
     <Compile Include="SQLite\SQLiteCommand.cs" />
     <Compile Include="SQLite\SQLiteConfigOption.cs" />
@@ -83,7 +87,7 @@
     <Compile Include="SQLite\SQLiteNative.cs" />
     <Compile Include="SQLite\SQLiteParameter.cs" />
     <Compile Include="SQLite\SQLiteResult.cs" />
-    <Compile Include="SQLite\SystemDataInterface.cs" />
+    <Compile Include="SQLite\CommandType.cs" />
     <Compile Include="ViewModelEventArgs.cs" />
     <Compile Include="ViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

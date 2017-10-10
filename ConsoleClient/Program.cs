@@ -137,56 +137,16 @@ namespace ConsoleClient
 				var rules = SourceCodeRules.General;
 
 				var sw = Stopwatch.StartNew();
-				var rootNamespace = string.Empty;
+
 				var projectFile = @"C:\Sources\Atos\Atos.iFSA\Atos.iFSA.csproj";
-				var projectPath = Path.GetDirectoryName(projectFile);
-				foreach (var line in File.ReadAllLines(projectFile))
+				projectFile = @"C:\Sources\Atos\Atos.Client\Atos.Client.csproj";
+
+				var sourceProject = GetSourceProject(projectFile);
+				foreach (var file in sourceProject.Files)
 				{
-					var value = line.Trim();
-					var flag = @"<RootNamespace>";
-					var index = value.IndexOf(flag, StringComparison.OrdinalIgnoreCase);
-					if (index >= 0)
+					foreach (var rule in rules)
 					{
-						var start = index + flag.Length;
-						var end = value.IndexOf(@"<", start + 1, StringComparison.OrdinalIgnoreCase);
-						rootNamespace = value.Substring(start, end - start);
-					}
-					if (value.StartsWith(@"<Compile Include=", StringComparison.OrdinalIgnoreCase))
-					{
-						var start = value.IndexOf('"') + 1;
-						var end = value.LastIndexOf('"');
-						var filename = value.Substring(start, end - start);
-						var filePath = Path.Combine(projectPath, filename);
-
-						var contents = File.ReadAllText(filePath);
-
-						//if (contents.IndexOf(@"class ActivityTypeCategoryViewModel", StringComparison.OrdinalIgnoreCase) < 0)
-						//{
-						//	//continue;
-						//}
-						//var lines = File.ReadAllLines(file);
-						//var c = SourceCodeParser.ParseClass(file, contents);
-						//if (c != null)
-						//{
-						//	Console.WriteLine(@"CLASS : " + c.Name);
-						//}
-						//var inf = SourceCodeParser.ParseInterface(file, contents);
-						//if (inf != null)
-						//{
-						//	Console.WriteLine(@"INTERFACE : " + inf.Name);
-						//	Console.WriteLine(inf.Body.Trim());
-						//}
-						//var en = SourceCodeParser.ParseEnum(file, contents);
-						//if (en != null)
-						//{
-						//	Console.WriteLine(@"ENUM : " + en.Name);
-						//}
-
-						var sourceFile = new SourceCodeFile(rootNamespace, filename, contents);
-						foreach (var rule in rules)
-						{
-							rule.Apply(sourceFile);
-						}
+						rule.Apply(file);
 					}
 				}
 
@@ -505,6 +465,39 @@ namespace ConsoleClient
 			//{
 			//	Console.WriteLine(e);
 			//}
+		}
+
+		private static SourceCodeProject GetSourceProject(string projectFilePath)
+		{
+			var files = new List<SourceCodeFile>();
+
+			var rootNamespace = string.Empty;
+			var projectDirectory = Path.GetDirectoryName(projectFilePath);
+
+			foreach (var line in File.ReadAllLines(projectFilePath))
+			{
+				var value = line.Trim();
+				var flag = @"<RootNamespace>";
+				var index = value.IndexOf(flag, StringComparison.OrdinalIgnoreCase);
+				if (index >= 0)
+				{
+					var start = index + flag.Length;
+					var end = value.IndexOf(@"<", start + 1, StringComparison.OrdinalIgnoreCase);
+					rootNamespace = value.Substring(start, end - start);
+				}
+				if (value.StartsWith(@"<Compile Include=", StringComparison.OrdinalIgnoreCase))
+				{
+					var startIndex = value.IndexOf('"') + 1;
+					var endIndex = value.LastIndexOf('"');
+					var filename = value.Substring(startIndex, endIndex - startIndex);
+					var filePath = Path.Combine(projectDirectory, filename);
+					var contents = File.ReadAllText(filePath);
+
+					files.Add(new SourceCodeFile(rootNamespace, filename, contents));
+				}
+			}
+
+			return new SourceCodeProject(projectFilePath, rootNamespace, files);
 		}
 
 		private static int Count(string cts, string flag)

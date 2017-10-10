@@ -2,7 +2,7 @@
 
 namespace Atos.Client
 {
-	public sealed class ViewModelEventArgs<T> : EventArgs where T : ViewModel
+	public sealed class ViewModelEventArgs<T> : EventArgs
 	{
 		public T ViewModel { get; }
 

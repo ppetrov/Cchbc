@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace Atos.Client
 {
@@ -23,30 +21,6 @@ namespace Atos.Client
 				field = value;
 				this.OnPropertyChanged(propertyName);
 			}
-		}
-	}
-
-	public abstract class ScreenViewModel : ViewModel
-	{
-		public MainContext MainContext { get; }
-
-		private bool _isBusy;
-		public bool IsBusy
-		{
-			get { return _isBusy; }
-			set { this.SetProperty(ref _isBusy, value); }
-		}
-
-		protected ScreenViewModel(MainContext mainContext)
-		{
-			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
-
-			this.MainContext = mainContext;
-		}
-
-		public virtual Task InitializeAsync(object parameter)
-		{
-			return Task.FromResult(true);
 		}
 	}
 }

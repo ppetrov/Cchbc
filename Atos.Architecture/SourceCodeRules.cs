@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Atos.Architecture
@@ -28,21 +29,34 @@ namespace Atos.Architecture
 			}),
 			new SourceCodeRule(@"Multiple deinitions class/interface/enum are denied", file =>
 			{
-				var definitions = 0;
+				var classes = new HashSet<string>();
+				var other = 0;
 
-				var flags = new[] {SourceCodeParser.ClassFlag, SourceCodeParser.InterfaceFlag, SourceCodeParser.EnumFlag};
+				var flags = new[] { SourceCodeParser.InterfaceFlag, SourceCodeParser.EnumFlag};
 				foreach (var line in file.Lines)
 				{
+					// Enum & interfaces
 					foreach (var flag in flags)
 					{
-						definitions += Convert.ToInt32(Convert.ToBoolean(line.IndexOf(flag, StringComparison.OrdinalIgnoreCase) >= 0));
-						if (definitions > 1)
+						other += Convert.ToInt32(Convert.ToBoolean(line.IndexOf(flag, StringComparison.OrdinalIgnoreCase) >= 0));
+						if (other > 1)
 						{
 							return true;
 						}
 					}
+					var index = line.IndexOf(SourceCodeParser.ClassFlag, StringComparison.OrdinalIgnoreCase);
+					if (index >= 0 )
+					{
+						var name = SourceCodeParser.ExtractClassName(line);
+						var genericIndex = name.IndexOf('<');
+						if (genericIndex>=0)
+						{
+							name = name.Substring(0, genericIndex);
+						}
+						classes.Add(name);
+					}
 				}
-				return definitions > 1;
+				return (other + classes.Count) > 1;
 			}),
 			new SourceCodeRule(@"File Path/Namespace mismatch", file =>
 			{
