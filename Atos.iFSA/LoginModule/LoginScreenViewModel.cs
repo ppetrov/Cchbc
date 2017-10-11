@@ -10,6 +10,7 @@ using Atos.Client.Navigation;
 using Atos.Client.Settings;
 using Atos.iFSA.AgendaModule;
 using Atos.iFSA.AgendaModule.Objects;
+using Atos.iFSA.LoginModule.Objects;
 using Atos.iFSA.Objects;
 using Atos.iFSA.ReplicationModule;
 
@@ -211,13 +212,13 @@ namespace Atos.iFSA.LoginModule
 
 		private UserSettings GetUserSettings()
 		{
-			return this.MainContext.GetService<IUserSettingsProvider>().GetValue(nameof(UserSettings)) as UserSettings;
+			return this.MainContext.GetService<ISettingsProvider>().GetValue(nameof(UserSettings)) as UserSettings;
 		}
 
 		private void SaveLoginSuccess(string username)
 		{
 			//Save the current username as the last successfully logged-in user
-			var settingsProvider = this.MainContext.GetService<IUserSettingsProvider>();
+			var settingsProvider = this.MainContext.GetService<ISettingsProvider>();
 			var userSettings = this.GetUserSettings() ?? new UserSettings();
 			userSettings.Username = username;
 			settingsProvider.Save(nameof(UserSettings), userSettings);

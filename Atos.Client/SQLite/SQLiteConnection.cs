@@ -1,11 +1,11 @@
 #if SQLITE
 namespace System.SQLite
 {
-	public class SQLiteConnection : IDbConnection, IDisposable
+	public sealed class SQLiteConnection : IDbConnection, IDisposable
 	{
 		public IntPtr Handle { get; private set; }
-		public string DatabasePath { get; private set; }
-		public bool DateTimeAsTicks { get; private set; }
+		public string DatabasePath { get; }
+		public bool DateTimeAsTicks { get; }
 
 		public SQLiteConnection(string databasePath)
 			: this(databasePath, false)
@@ -14,7 +14,7 @@ namespace System.SQLite
 
 		public SQLiteConnection(string databasePath, bool storeDateTimeAsTicks)
 		{
-			if (databasePath == null) throw new ArgumentNullException("databasePath");
+			if (databasePath == null) throw new ArgumentNullException(nameof(databasePath));
 
 			this.DatabasePath = databasePath;
 			this.DateTimeAsTicks = storeDateTimeAsTicks;

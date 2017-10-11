@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace Atos.Architecture
 {
@@ -58,6 +57,18 @@ namespace Atos.Architecture
 				}
 				return (other + classes.Count) > 1;
 			}),
+			new SourceCodeRule(@"Class must be sealed or abstract", file =>
+			{
+				foreach (var line in file.Lines)
+				{
+					var index = line.IndexOf(@"public class ", StringComparison.OrdinalIgnoreCase);
+					if (index >= 0 )
+					{
+						return true;
+					}
+				}
+				return false;
+			}),
 			new SourceCodeRule(@"File Path/Namespace mismatch", file =>
 			{
 				var flag = @"namespace ";
@@ -72,6 +83,10 @@ namespace Atos.Architecture
 							if (startIndex >= 0)
 							{
 								var currentNamespace = line.Substring(startIndex + flag.Length);
+								if (currentNamespace.Equals(@"System.SQLite", StringComparison.OrdinalIgnoreCase))
+								{
+									return false;
+								}
 								var hasMismatch = !file.Namespace.Equals(currentNamespace, StringComparison.OrdinalIgnoreCase);
 								return hasMismatch;
 							}

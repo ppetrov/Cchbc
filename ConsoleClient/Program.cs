@@ -85,9 +85,6 @@ namespace ConsoleClient
 
 			try
 			{
-
-
-
 				//var rules = new[]
 				//{
 				//	new SourceCodeRule(@"Class must be sealed or abstract", cts =>
@@ -134,28 +131,25 @@ namespace ConsoleClient
 				//	}),
 				//};
 
-				var rules = SourceCodeRules.General;
 
 				var sw = Stopwatch.StartNew();
 
 				var projectFile = @"C:\Sources\Atos\Atos.iFSA\Atos.iFSA.csproj";
 				projectFile = @"C:\Sources\Atos\Atos.Client\Atos.Client.csproj";
+				//projectFile = @"C:\Cchbc\PhoenixClient\Metro\iFSA Metro 8.1\iFSA Metro\iFSA.csproj";
 
+				var rules = SourceCodeRules.General;
 				var sourceProject = GetSourceProject(projectFile);
-				foreach (var file in sourceProject.Files)
-				{
-					foreach (var rule in rules)
-					{
-						rule.Apply(file);
-					}
-				}
+
+				sourceProject.Apply(rules);
+
 
 				sw.Stop();
 				Console.WriteLine(sw.ElapsedMilliseconds);
 
 				foreach (var rule in rules)
 				{
-					Console.WriteLine(rule.Name);
+					Console.WriteLine(@" - " + rule.Name);
 					foreach (var violation in rule.Violations)
 					{
 						Console.WriteLine("\t- " + violation.Filename);

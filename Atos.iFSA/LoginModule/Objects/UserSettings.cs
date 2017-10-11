@@ -1,4 +1,4 @@
-namespace Atos.iFSA
+namespace Atos.iFSA.LoginModule.Objects
 {
 	public sealed class UserSettings
 	{

@@ -1,20 +1,20 @@
 #if SQLITE
 namespace System.SQLite
 {
-	public class SQLiteCommand : IDbCommand
+	public sealed class SQLiteCommand : IDbCommand
 	{
 		private static readonly IntPtr NegativePointer = new IntPtr(-1);
 
 		public string CommandText { get; set; }
 		public CommandType CommandType { get; set; }
-		public IDataParameterCollection Parameters { get; private set; }
+		public IDataParameterCollection Parameters { get; }
 
 		private readonly SQLiteConnection _connection;
 		private IntPtr _stmt = IntPtr.Zero;
 
 		public SQLiteCommand(SQLiteConnection connection)
 		{
-			if (connection == null) throw new ArgumentNullException("connection");
+			if (connection == null) throw new ArgumentNullException(nameof(connection));
 
 			_connection = connection;
 

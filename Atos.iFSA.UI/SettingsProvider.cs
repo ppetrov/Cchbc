@@ -4,7 +4,7 @@ using Atos.Client.Settings;
 
 namespace Atos.iFSA.UI
 {
-	public sealed class UserSettingsProvider : IUserSettingsProvider
+	public sealed class SettingsProvider : ISettingsProvider
 	{
 		public object GetValue(string name)
 		{

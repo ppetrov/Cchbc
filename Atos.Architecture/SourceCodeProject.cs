@@ -19,5 +19,18 @@ namespace Atos.Architecture
 			this.RootNamespace = rootNamespace;
 			this.Files = files;
 		}
+
+		public void Apply(SourceCodeRule[] rules)
+		{
+			if (rules == null) throw new ArgumentNullException(nameof(rules));
+
+			foreach (var file in this.Files)
+			{
+				foreach (var rule in rules)
+				{
+					rule.Apply(file);
+				}
+			}
+		}
 	}
 }

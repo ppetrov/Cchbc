@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace System.SQLite
 {
-	public class SQLiteDataReader : IDataReader
+	public sealed class SQLiteDataReader : IDataReader
 	{
 		private readonly IntPtr _stmt;
 		private readonly bool _useTicks;

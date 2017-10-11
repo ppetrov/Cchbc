@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace System.SQLite
 {
-	public class SQLiteDataParameterCollection : IDataParameterCollection
+	public sealed class SQLiteDataParameterCollection : IDataParameterCollection
 	{
 		private readonly List<IDbDataParameter> _parameters = new List<IDbDataParameter>();
 
@@ -18,8 +18,8 @@ namespace System.SQLite
 			return this.GetEnumerator();
 		}
 
-		public int Count { get { return _parameters.Count; } }
-		public bool IsReadOnly { get { return false; } }
+		public int Count => _parameters.Count;
+		public bool IsReadOnly => false;
 
 		public IDbDataParameter this[int index]
 		{
@@ -29,28 +29,28 @@ namespace System.SQLite
 
 		public void Add(IDbDataParameter item)
 		{
-			if (item == null) throw new ArgumentNullException("item");
+			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			_parameters.Add(item);
 		}
 
 		public void Insert(int index, IDbDataParameter item)
 		{
-			if (item == null) throw new ArgumentNullException("item");
+			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			_parameters.Insert(index, item);
 		}
 
 		public bool Contains(IDbDataParameter item)
 		{
-			if (item == null) throw new ArgumentNullException("item");
+			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			return _parameters.Contains(item);
 		}
 
 		public int IndexOf(IDbDataParameter item)
 		{
-			if (item == null) throw new ArgumentNullException("item");
+			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			return _parameters.IndexOf(item);
 		}
@@ -62,7 +62,7 @@ namespace System.SQLite
 
 		public bool Remove(IDbDataParameter item)
 		{
-			if (item == null) throw new ArgumentNullException("item");
+			if (item == null) throw new ArgumentNullException(nameof(item));
 
 			return _parameters.Remove(item);
 		}

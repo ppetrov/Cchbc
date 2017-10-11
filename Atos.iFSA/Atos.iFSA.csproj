@@ -39,7 +39,7 @@
     <!-- A reference to the entire .NET Framework is automatically included -->
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ActivityViewModel.cs" />
+    <Compile Include="AgendaModule\ViewModels\ActivityViewModel.cs" />
     <Compile Include="AddActivityModule\ActivityTypeCategoryViewModel.cs" />
     <Compile Include="AddActivityModule\AddActivityScreenDataProvider.cs" />
     <Compile Include="AddActivityModule\AddActivityScreenViewModel.cs" />
@@ -92,7 +92,7 @@
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterEntryViewModel.cs" />
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterViewModel.cs" />
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentViewModel.cs" />
-    <Compile Include="IActivityCancelReasonSelector.cs" />
+    <Compile Include="AgendaModule\IActivityCancelReasonSelector.cs" />
     <Compile Include="LoginModule\LoginScreenViewModel.cs" />
     <Compile Include="LoginModule\Objects\AppSystem.cs" />
     <Compile Include="Objects\Activity.cs" />
@@ -129,7 +129,7 @@
     <Compile Include="LoginModule\Objects\Country.cs" />
     <Compile Include="LoginModule2\CalendarDataProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UserSettings.cs" />
+    <Compile Include="LoginModule\Objects\UserSettings.cs" />
     <Compile Include="LoginModule\ViewModels\SystemViewModel.cs" />
     <Compile Include="LoginModule\ViewModels\CountryViewModel.cs" />
   </ItemGroup>
