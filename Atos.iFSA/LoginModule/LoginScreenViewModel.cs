@@ -8,8 +8,6 @@ using Atos.Client.Features;
 using Atos.Client.Localization;
 using Atos.Client.Navigation;
 using Atos.Client.Settings;
-using Atos.iFSA.AgendaModule;
-using Atos.iFSA.AgendaModule.Objects;
 using Atos.iFSA.LoginModule.Objects;
 using Atos.iFSA.Objects;
 using Atos.iFSA.ReplicationModule;
@@ -58,8 +56,8 @@ namespace Atos.iFSA.LoginModule
 			this.LoginCaption = this.GetLocalized(@"Login");
 			this.AdvancedCaption = this.GetLocalized(@"Advanced");
 
-			this.AdvancedCommand = new RelayCommand(this.Advanced);
-			this.LoginCommand = new RelayCommand(this.Login);
+			this.AdvancedCommand = new ActionCommand(this.Advanced);
+			this.LoginCommand = new ActionCommand(this.Login);
 		}
 
 		public override Task InitializeAsync(object parameter)
@@ -116,8 +114,8 @@ namespace Atos.iFSA.LoginModule
 			{
 				using (var ctx = this.MainContext.CreateDataQueryContext())
 				{
-					var dataProvider = this.MainContext.GetService<IAgendaDataProvider>();
-					outlets = dataProvider.GetAgendaOutlets(ctx, user, dataDate);
+					//var dataProvider = this.MainContext.GetService<IAgendaDataProvider>();
+					//outlets = dataProvider.GetAgendaOutlets(ctx, user, dataDate);
 					ctx.Complete();
 				}
 			}
@@ -162,7 +160,7 @@ namespace Atos.iFSA.LoginModule
 				}
 				outlets = outlets ?? GetAgendaOutlets(user, _dataDate);
 
-				await this.NavigationService.NavigateToAsync<AgendaScreenViewModel>(new AgendaDay(user, _dataDate, outlets));
+				//await this.NavigationService.NavigateToAsync<AgendaScreenViewModel>(new AgendaDay(user, _dataDate, outlets));
 			}
 			catch (Exception ex)
 			{

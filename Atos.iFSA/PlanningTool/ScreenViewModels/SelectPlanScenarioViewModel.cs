@@ -25,7 +25,7 @@ namespace Atos.iFSA.PlanningTool.ScreenViewModels
 
 		public SelectPlanScenarioViewModel(MainContext mainContext) : base(mainContext)
 		{
-			this.NextCommand = new RelayCommand(this.Next);
+			this.NextCommand = new ActionCommand(this.Next);
 		}
 
 		private void Next()

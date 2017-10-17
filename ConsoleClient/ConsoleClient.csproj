@@ -58,6 +58,13 @@
     <Compile Include="DispatcherModule.cs" />
     <Compile Include="FeatureDataReplicaSimulation.cs" />
     <Compile Include="InterviewScenario.cs" />
+    <Compile Include="NewDesign\AgendaHomeScreenViewModel.cs" />
+    <Compile Include="NewDesign\AgendaMapScreenViewModel.cs" />
+    <Compile Include="NewDesign\AgendaScreenViewModel.cs" />
+    <Compile Include="NewDesign\AgendaTab.cs" />
+    <Compile Include="NewDesign\AgendaTabCategory.cs" />
+    <Compile Include="NewDesign\AgendaTabViewModel.cs" />
+    <Compile Include="NewDesign\DesignModule.cs" />
     <Compile Include="OrderModule\Models\Article.cs" />
     <Compile Include="OrderModule\Data\IOrderDataProvider.cs" />
     <Compile Include="OrderModule\Models\Order.cs" />

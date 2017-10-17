@@ -39,18 +39,11 @@
     <!-- A reference to the entire .NET Framework is automatically included -->
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AgendaModule\ViewModels\ActivityViewModel.cs" />
     <Compile Include="AddActivityModule\ActivityTypeCategoryViewModel.cs" />
     <Compile Include="AddActivityModule\AddActivityScreenDataProvider.cs" />
     <Compile Include="AddActivityModule\AddActivityScreenViewModel.cs" />
     <Compile Include="AddActivityModule\OutletViewModel.cs" />
     <Compile Include="AddActivityModule\ActivityTypeViewModel.cs" />
-    <Compile Include="AgendaModule\Objects\ActivityEventArgs.cs" />
-    <Compile Include="AgendaModule\Objects\Agenda.cs" />
-    <Compile Include="AgendaModule\Objects\AgendaDay.cs" />
-    <Compile Include="AgendaModule\AgendaScreenViewModel.cs" />
-    <Compile Include="AgendaModule\Objects\AgendaDayStatus.cs" />
-    <Compile Include="AgendaModule\ViewModels\AgendaOutletViewModel.cs" />
     <Compile Include="ArchitectureModule\AgendaDetail.cs" />
     <Compile Include="ArchitectureModule\AgendaDetailViewModel.cs" />
     <Compile Include="ArchitectureModule\AgendaHeader.cs" />
@@ -72,7 +65,6 @@
     <Compile Include="ArticlesModule\Objects\Brand.cs" />
     <Compile Include="ArticlesModule\Objects\Article.cs" />
     <Compile Include="ArticlesModule\Objects\Flavor.cs" />
-    <Compile Include="AgendaModule\AgendaDataProvider.cs" />
     <Compile Include="LoginModule2\Calendar.cs" />
     <Compile Include="LoginModule2\CalendarCancelOperation.cs" />
     <Compile Include="LoginModule2\CalendarDay.cs" />
@@ -92,7 +84,6 @@
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterEntryViewModel.cs" />
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterViewModel.cs" />
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentViewModel.cs" />
-    <Compile Include="AgendaModule\IActivityCancelReasonSelector.cs" />
     <Compile Include="LoginModule\LoginScreenViewModel.cs" />
     <Compile Include="LoginModule\Objects\AppSystem.cs" />
     <Compile Include="Objects\Activity.cs" />

@@ -7,7 +7,6 @@ namespace Atos.iFSA.AddActivityModule
 	public sealed class OutletViewModel : ViewModel
 	{
 		public Outlet Outlet { get; }
-		public bool IsSuppressed => this.Outlet.IsSuppressed;
 		public string Number { get; }
 		public string Name { get; }
 

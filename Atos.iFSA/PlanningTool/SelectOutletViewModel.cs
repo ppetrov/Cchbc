@@ -52,7 +52,7 @@ namespace Atos.iFSA.PlanningTool
 			this.Options.Add(new CategorySearchOption(this, @"All", vi => true));
 			this.SelectedSearchOption = this.Options[0];
 
-			this.NextCommand = new RelayCommand(this.Next);
+			this.NextCommand = new ActionCommand(this.Next);
 		}
 
 		private void Next()
@@ -96,7 +96,7 @@ namespace Atos.iFSA.PlanningTool
 			foreach (var outletViewModel in this.AllOutlets)
 			{
 				if (outletViewModel.Name.IndexOf(this.Search, StringComparison.OrdinalIgnoreCase) > 0 &&
-				    this.SelectedSearchOption.Search(outletViewModel))
+					this.SelectedSearchOption.Search(outletViewModel))
 					this.Outlets.Add(outletViewModel);
 			}
 		}

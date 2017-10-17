@@ -3,19 +3,19 @@ using System.Windows.Input;
 
 namespace Atos.Client.Common
 {
-	public sealed class RelayCommand : ICommand
+	public sealed class ActionCommand : ICommand
 	{
 		private readonly Action _execute;
 		private readonly Func<bool> _canExecute;
 
 		public event EventHandler CanExecuteChanged;
 
-		public RelayCommand(Action execute)
+		public ActionCommand(Action execute)
 			: this(execute, null)
 		{
 		}
 
-		public RelayCommand(Action execute, Func<bool> canExecute)
+		public ActionCommand(Action execute, Func<bool> canExecute)
 		{
 			if (execute == null) throw new ArgumentNullException(nameof(execute));
 

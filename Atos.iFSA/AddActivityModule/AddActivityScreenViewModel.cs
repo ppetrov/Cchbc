@@ -101,9 +101,9 @@ namespace Atos.iFSA.AddActivityModule
 			this.MainContext = mainContext;
 			this.DataProvider = dataProvider;
 			this.NavigationService = navigationService;
-			this.CreateActivityCommand = new RelayCommand(this.CreateActivity);
-			this.StartNewActivityCommand = new RelayCommand(this.StartNewActivity);
-			this.SwitchSuppressedOutletsCommand = new RelayCommand(this.SwitchSuppressedOutlets);
+			this.CreateActivityCommand = new ActionCommand(this.CreateActivity);
+			this.StartNewActivityCommand = new ActionCommand(this.StartNewActivity);
+			this.SwitchSuppressedOutletsCommand = new ActionCommand(this.SwitchSuppressedOutlets);
 			this.HideSuppressed = false;
 		}
 
@@ -191,10 +191,6 @@ namespace Atos.iFSA.AddActivityModule
 			this.Outlets.Clear();
 			foreach (var viewModel in this.AllOutlets)
 			{
-				if (this.HideSuppressed && viewModel.IsSuppressed)
-				{
-					continue;
-				}
 				if (viewModel.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
 				{
 					this.Outlets.Add(viewModel);

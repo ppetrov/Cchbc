@@ -20,7 +20,7 @@ namespace Atos.iFSA.PlanningTool
 			if (search == null) throw new ArgumentNullException(nameof(search));
 
 			this.ViewModel = viewModel;
-			this.ApplySearchCommand = new RelayCommand(() => this.ViewModel.ApplySearch(this));
+			this.ApplySearchCommand = new ActionCommand(() => this.ViewModel.ApplySearch(this));
 			this.Name = name;
 			this.Search = search;
 		}

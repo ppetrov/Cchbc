@@ -97,9 +97,9 @@ namespace Atos.iFSA.ArchitectureModule
 			this.CurrentSortOption = this.SortOptions[0];
 			this.IsTextSearchMatch = (vm, search) => vm.Name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
 
-			this.AddHeaderCommand = new RelayCommand(this.AddHeader);
-			this.UpdateHeaderDateCommand = new RelayCommand(this.UpdateHeaderDate);
-			this.UpdateHeaderAddressCommand = new RelayCommand(this.UpdateHeaderAddress);
+			this.AddHeaderCommand = new ActionCommand(this.AddHeader);
+			this.UpdateHeaderDateCommand = new ActionCommand(this.UpdateHeaderDate);
+			this.UpdateHeaderAddressCommand = new ActionCommand(this.UpdateHeaderAddress);
 		}
 
 		private string _headerName = string.Empty;

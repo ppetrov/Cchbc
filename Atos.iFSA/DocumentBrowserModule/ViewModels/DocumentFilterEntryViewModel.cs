@@ -44,12 +44,12 @@ namespace Atos.iFSA.DocumentBrowserModule.ViewModels
 			this.Property = property;
 			this.Entry = entry;
 			this.DocumentBrowserViewModel = documentBrowserViewModel;
-			this.AddCommand = new RelayCommand(() =>
+			this.AddCommand = new ActionCommand(() =>
 			{
 				this.IsSelected = true;
 				this.DocumentBrowserViewModel.Add(this);
 			});
-			this.RemoveCommand = new RelayCommand(() =>
+			this.RemoveCommand = new ActionCommand(() =>
 			{
 				this.IsSelected = false;
 				this.DocumentBrowserViewModel.Remove(this);

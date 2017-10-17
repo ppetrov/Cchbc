@@ -44,8 +44,8 @@ namespace Atos.iFSA.DocumentBrowserModule.ViewModels
 
 		public DocumentBrowserViewModel()
 		{
-			this.ClearCommand = new RelayCommand(this.Clear);
-			this.SearchCommand = new RelayCommand(this.Search);
+			this.ClearCommand = new ActionCommand(this.Clear);
+			this.SearchCommand = new ActionCommand(this.Search);
 		}
 
 		public async Task LoadAsync(Func<Task<IEnumerable<DocumentFilter>>> filtersProvider, Func<Task<IEnumerable<Document>>> documentsProvider)

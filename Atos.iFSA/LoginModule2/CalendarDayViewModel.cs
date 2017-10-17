@@ -25,15 +25,15 @@ namespace Atos.iFSA.LoginModule2
 			this.ViewModel = viewModel;
 			this.Date = calendarDay.Date;
 			this.Status = calendarDay.Status;
-			this.CloseDayCommand = new RelayCommand(() =>
+			this.CloseDayCommand = new ActionCommand(() =>
 			{
 				throw new NotImplementedException();
 			});
-			this.CancelDayCommand = new RelayCommand(() =>
+			this.CancelDayCommand = new ActionCommand(() =>
 			{
 				this.ViewModel.CancelDays(new[] { this });
 			});
-			this.ViewAgendaCommand = new RelayCommand(() =>
+			this.ViewAgendaCommand = new ActionCommand(() =>
 			{
 				this.ViewModel.ViewAgenda(this);
 			});

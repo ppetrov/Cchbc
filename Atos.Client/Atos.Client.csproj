@@ -45,7 +45,7 @@
     <Compile Include="Features\IFeatureManager.cs" />
     <Compile Include="Navigation\INavigationService.cs" />
     <Compile Include="DataQueryContext.cs" />
-    <Compile Include="Common\RelayCommand.cs" />
+    <Compile Include="Common\ActionCommand.cs" />
     <Compile Include="Localization\ILocalizationManager.cs" />
     <Compile Include="Localization\LocalizationKey.cs" />
     <Compile Include="Logs\ILogger.cs" />

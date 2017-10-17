@@ -43,14 +43,14 @@ namespace Atos.iFSA.LoginModule2
 			this.DataProvider = dataProvider;
 			this.LocalizationManager = localizationManager;
 			this.DataCache = dataCache;
-			this.CloseDaysCommand = new RelayCommand(this.CloseSelectedDays);
-			this.CancelDaysCommand = new RelayCommand(this.CancelSelectedDays);
+			this.CloseDaysCommand = new ActionCommand(this.CloseSelectedDays);
+			this.CancelDaysCommand = new ActionCommand(this.CancelSelectedDays);
 			this.CurrentMonth = DateTime.Today;
-			this.NextDayCommand = new RelayCommand(() =>
+			this.NextDayCommand = new ActionCommand(() =>
 			{
 				this.Load(this.CurrentMonth.AddMonths(1));
 			});
-			this.PreviousDayCommand = new RelayCommand(() =>
+			this.PreviousDayCommand = new ActionCommand(() =>
 			{
 				this.Load(this.CurrentMonth.AddMonths(-1));
 			});

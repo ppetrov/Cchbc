@@ -22,7 +22,7 @@ namespace ConsoleClient.OrderModule.ViewModels
 
 		public OrderViewModel()
 		{
-			this.SaveCommand = new RelayCommand(this.Save);
+			this.SaveCommand = new ActionCommand(this.Save);
 		}
 
 		private string _searchText;
