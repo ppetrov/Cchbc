@@ -13,7 +13,7 @@ using Atos.iFSA.Objects;
 
 namespace ConsoleClient.NewDesign
 {
-	public sealed class AgendaHomeScreenViewModel : ScreenViewModel
+	public sealed class AgendaHomePageViewModel : PageViewModel
 	{
 		private AgendaScreenViewModel AgendaScreenViewModel { get; set; }
 		private List<AgendaOutletViewModel> AllOutlets { get; } = new List<AgendaOutletViewModel>();
@@ -66,16 +66,16 @@ namespace ConsoleClient.NewDesign
 		}
 		public ObservableCollection<AgendaActivityTabViewModel> ActivityTabs { get; } = new ObservableCollection<AgendaActivityTabViewModel>();
 
-		public AgendaHomeScreenViewModel(MainContext mainContext)
+		public AgendaHomePageViewModel(MainContext mainContext)
 			: base(mainContext)
 		{
 			this.DisplaySettingsCommand = new ActionCommand(async () =>
 			{
-				var feature = new Feature(nameof(AgendaHomeScreenViewModel), nameof(DisplaySettingsCommand));
+				var feature = new Feature(nameof(AgendaHomePageViewModel), nameof(DisplaySettingsCommand));
 				try
 				{
 					this.MainContext.Save(feature);
-					await this.MainContext.GetService<INavigationService>().NavigateToAsync<AgendaMapScreenViewModel>();
+					await this.MainContext.GetService<INavigationService>().NavigateToAsync<AgendaMapPageViewModel>();
 				}
 				catch (Exception ex)
 				{
@@ -84,11 +84,11 @@ namespace ConsoleClient.NewDesign
 			});
 			this.DisplayMapCommand = new ActionCommand(async () =>
 			{
-				var feature = new Feature(nameof(AgendaHomeScreenViewModel), nameof(DisplayMapCommand));
+				var feature = new Feature(nameof(AgendaHomePageViewModel), nameof(DisplayMapCommand));
 				try
 				{
 					this.MainContext.Save(feature);
-					await this.MainContext.GetService<INavigationService>().NavigateToAsync<AgendaMapScreenViewModel>();
+					await this.MainContext.GetService<INavigationService>().NavigateToAsync<AgendaMapPageViewModel>();
 				}
 				catch (Exception ex)
 				{

@@ -5,9 +5,9 @@ using Atos.iFSA.Objects;
 
 namespace ConsoleClient.NewDesign
 {
-	public sealed class AgendaInfoScreenViewModel : ScreenViewModel
+	public sealed class AgendaInfoPageViewModel : PageViewModel
 	{
-		public AgendaInfoScreenViewModel(MainContext mainContext) : base(mainContext)
+		public AgendaInfoPageViewModel(MainContext mainContext) : base(mainContext)
 		{
 		}
 	}

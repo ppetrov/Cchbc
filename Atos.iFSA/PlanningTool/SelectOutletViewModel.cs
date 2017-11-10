@@ -11,7 +11,7 @@ using Atos.iFSA.PlanningTool.ScreenViewModels;
 
 namespace Atos.iFSA.PlanningTool
 {
-	public sealed class SelectOutletViewModel : ScreenViewModel
+	public sealed class SelectOutletViewModel : PageViewModel
 	{
 		private List<OutletViewModel> AllOutlets { get; } = new List<OutletViewModel>();
 

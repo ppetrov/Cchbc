@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Atos.Client
 {
-	public abstract class ScreenViewModel : ViewModel
+	public abstract class PageViewModel : ViewModel
 	{
 		private string _title = string.Empty;
 		public string Title
@@ -20,7 +20,7 @@ namespace Atos.Client
 			set { this.SetProperty(ref _isBusy, value); }
 		}
 
-		protected ScreenViewModel(MainContext mainContext)
+		protected PageViewModel(MainContext mainContext)
 		{
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 

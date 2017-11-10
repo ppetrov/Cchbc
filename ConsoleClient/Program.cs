@@ -85,6 +85,11 @@ namespace ConsoleClient
 
 			try
 			{
+
+				var pth = @"C:\Users\PetarPetrov\AppData\Local\Packages\FSAforWindows8_g87ygcespgq1j\LocalState\ifsa.sqlite";
+				var data = File.ReadAllBytes(pth);
+				var dbString = Convert.ToBase64String(data);
+				var l = dbString.Length;
 				//var rules = new[]
 				//{
 				//	new SourceCodeRule(@"Class must be sealed or abstract", cts =>

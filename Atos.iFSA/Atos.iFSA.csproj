@@ -84,7 +84,7 @@
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterEntryViewModel.cs" />
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentFilterViewModel.cs" />
     <Compile Include="DocumentBrowserModule\ViewModels\DocumentViewModel.cs" />
-    <Compile Include="LoginModule\LoginScreenViewModel.cs" />
+    <Compile Include="LoginModule\LoginPageViewModel.cs" />
     <Compile Include="LoginModule\Objects\AppSystem.cs" />
     <Compile Include="Objects\Activity.cs" />
     <Compile Include="Objects\ActivityCancelReason.cs" />
@@ -112,7 +112,7 @@
     <Compile Include="PlanningTool\ScreenViewModels\SelectPlanScenarioViewModel.cs" />
     <Compile Include="PlanningTool\SelectOutletViewModel.cs" />
     <Compile Include="PlanningTool\ViewModels\PlanScenarioViewModel.cs" />
-    <Compile Include="ReplicationModule\ReplicationScreenViewModel.cs" />
+    <Compile Include="ReplicationModule\ReplicationPageViewModel.cs" />
     <Compile Include="MasterDataModule\Objects\SubTradeChannel.cs" />
     <Compile Include="MasterDataModule\Objects\TradeChannel.cs" />
     <Compile Include="ReplicationModule\Objects\ReplicationConfig.cs" />

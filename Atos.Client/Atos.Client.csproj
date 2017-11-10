@@ -49,7 +49,7 @@
     <Compile Include="Localization\ILocalizationManager.cs" />
     <Compile Include="Localization\LocalizationKey.cs" />
     <Compile Include="Logs\ILogger.cs" />
-    <Compile Include="ScreenViewModel.cs" />
+    <Compile Include="PageViewModel.cs" />
     <Compile Include="Selectors\IDateTimeSelector.cs" />
     <Compile Include="Selectors\ITimeSelector.cs" />
     <Compile Include="ServiceLocator.cs" />

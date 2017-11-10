@@ -2,12 +2,12 @@ using Atos.Client;
 
 namespace Atos.iFSA.ReplicationModule
 {
-	public sealed class ReplicationScreenViewModel : ScreenViewModel
+	public sealed class ReplicationPageViewModel : PageViewModel
 	{
 		//replicaHost = userSettings.ReplicationHost;
 		//replicaPort = userSettings.ReplicationPort;
 
-		public ReplicationScreenViewModel(MainContext mainContext) : base(mainContext)
+		public ReplicationPageViewModel(MainContext mainContext) : base(mainContext)
 		{
 		}
 	}

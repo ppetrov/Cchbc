@@ -9,7 +9,7 @@ using Atos.iFSA.PlanningTool.ViewModels;
 
 namespace Atos.iFSA.PlanningTool.ScreenViewModels
 {
-	public sealed class SelectPlanScenarioViewModel : ScreenViewModel
+	public sealed class SelectPlanScenarioViewModel : PageViewModel
 	{
 		public string Title { get; } = @"Select Planning Type";
 		public ObservableCollection<PlanScenarioViewModel> Scenarios { get; } = new ObservableCollection<PlanScenarioViewModel>();

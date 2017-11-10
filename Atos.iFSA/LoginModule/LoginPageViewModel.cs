@@ -14,7 +14,7 @@ using Atos.iFSA.ReplicationModule;
 
 namespace Atos.iFSA.LoginModule
 {
-	public sealed class LoginScreenViewModel : ScreenViewModel
+	public sealed class LoginPageViewModel : PageViewModel
 	{
 		private readonly DateTime _dataDate = DateTime.Today;
 
@@ -46,7 +46,7 @@ namespace Atos.iFSA.LoginModule
 		public ICommand AdvancedCommand { get; }
 		public ICommand LoginCommand { get; }
 
-		public LoginScreenViewModel(MainContext mainContext) : base(mainContext)
+		public LoginPageViewModel(MainContext mainContext) : base(mainContext)
 		{
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 
@@ -129,7 +129,7 @@ namespace Atos.iFSA.LoginModule
 
 		private async void Login()
 		{
-			var feature = new Feature(nameof(LoginScreenViewModel), nameof(Login));
+			var feature = new Feature(nameof(LoginPageViewModel), nameof(Login));
 			try
 			{
 				this.MainContext.Save(feature);
@@ -170,7 +170,7 @@ namespace Atos.iFSA.LoginModule
 
 		private async void Advanced()
 		{
-			var feature = new Feature(nameof(LoginScreenViewModel), nameof(Advanced));
+			var feature = new Feature(nameof(LoginPageViewModel), nameof(Advanced));
 			try
 			{
 				this.MainContext.Save(feature);
@@ -185,7 +185,7 @@ namespace Atos.iFSA.LoginModule
 					}
 				}
 
-				await this.NavigationService.NavigateToAsync<ReplicationScreenViewModel>(username);
+				await this.NavigationService.NavigateToAsync<ReplicationPageViewModel>(username);
 			}
 			catch (Exception ex)
 			{
@@ -200,7 +200,7 @@ namespace Atos.iFSA.LoginModule
 
 		private static LocalizationKey GetLocalizationKey(string name)
 		{
-			return new LocalizationKey(nameof(LoginScreenViewModel), name);
+			return new LocalizationKey(nameof(LoginPageViewModel), name);
 		}
 
 		private string GetCurrentUsername()

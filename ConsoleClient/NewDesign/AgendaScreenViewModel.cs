@@ -25,10 +25,10 @@ namespace ConsoleClient.NewDesign
 				switch (value.Category)
 				{
 					case AgendaTabCategory.Home:
-						this.MainContext.GetService<INavigationService>().NavigateToAsync<AgendaHomeScreenViewModel>(this);
+						this.MainContext.GetService<INavigationService>().NavigateToAsync<AgendaHomePageViewModel>(this);
 						break;
 					case AgendaTabCategory.Info:
-						this.MainContext.GetService<INavigationService>().NavigateToAsync<AgendaInfoScreenViewModel>(this);
+						this.MainContext.GetService<INavigationService>().NavigateToAsync<AgendaInfoPageViewModel>(this);
 						break;
 					case AgendaTabCategory.History:
 						break;
